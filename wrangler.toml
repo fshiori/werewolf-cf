@@ -14,12 +14,12 @@ vars = { ENVIRONMENT = "production" }
 [[d1_databases]]
 binding = "DB"
 database_name = "werewolf-db"
-database_id = "local"  # 本地開發用
+# database_id = "YOUR_DATABASE_ID" # 在部署後更新
 
 # KV 命名空間
 [[kv_namespaces]]
 binding = "KV"
-id = "local"  # 本地開發用
+# id = "YOUR_KV_NAMESPACE_ID" # 在部署後更新
 
 # R2 儲存
 [[r2_buckets]]
@@ -44,3 +44,25 @@ class_name = "Room"
 # [[routes]]
 # pattern = "werewolf.example.com/*"
 # zone_name = "example.com"
+
+# ==================== 新增配置 ====================
+
+# 速率限制配置
+[env.production.rate_limits]
+api_requests = 100
+window_ms = 60000
+
+# 管理員配置
+[env.production.admin]
+session_ttl = 3600000 # 1 小時
+max_login_attempts = 5
+
+# 封鎖配置
+[env.production.bans]
+default_duration = 3600000 # 1 小時
+max_bans = 1000
+
+# 統計配置
+[env.production.stats]
+update_interval = 60000 # 1 分鐘
+history_days = 30

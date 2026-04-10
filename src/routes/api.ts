@@ -1,12 +1,17 @@
 /**
- * 完整 API 路由
+ * 完整 API 路由（更新版）
+ * 整合所有新功能
  */
 
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
-import { hc } from 'hono/client';
 import type { Env } from '../types';
 import { createSessionManager } from '../utils/session-manager';
+import { BanManager } from '../utils/ban-manager';
+import { StatsManager } from '../utils/stats-manager';
+import { escapeHtml, sanitizeHtml } from '../utils/security';
+import { defaultRateLimiter, apiRateLimiter } from '../utils/rate-limiter';
+import adminRoutes from './admin';
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -23,12 +28,52 @@ app.get('/', (c) => {
   });
 });
 
+// ==================== 中間件 ====================
+
+/**
+ * IP 封鎖檢查
+ */
+async function checkBan(c: any, next: any) {
+  const ip = c.req.header('CF-Connecting-IP') || 'unknown';
+  
+  const banManager = new BanManager(c.env.KV);
+  const isBanned = await banManager.isBanned(ip);
+  
+  if (isBanned) {
+    const banInfo = await banManager.getBanInfo(ip);
+    return c.json({
+      error: 'IP banned',
+      reason: banInfo?.reason || 'Violation of rules',
+      expiresAt: banInfo?.expiresAt
+    }, 403);
+  }
+
+  await next();
+}
+
+/**
+ * 速率限制
+ */
+async function rateLimit(c: any, next: any) {
+  const ip = c.req.header('CF-Connecting-IP') || 'unknown';
+  
+  if (apiRateLimiter.isRateLimited(ip)) {
+    const info = apiRateLimiter.getLimitInfo(ip);
+    return c.json({
+      error: 'Too many requests',
+      retryAfter: Math.ceil((info.resetTime - Date.now()) / 1000)
+    }, 429);
+  }
+
+  await next();
+}
+
 // ==================== 房間管理 ====================
 
 /**
  * 建立新房間
  */
-app.post('/api/rooms', async (c) => {
+app.post('/api/rooms', checkBan, rateLimit, async (c) => {
   try {
     const data = await c.req.json<{
       roomName: string;
@@ -48,6 +93,10 @@ app.post('/api/rooms', async (c) => {
       return c.json({ error: 'Invalid max user count' }, 400);
     }
 
+    // 轉義房間名稱（防止 XSS）
+    const safeRoomName = escapeHtml(data.roomName);
+    const safeComment = data.roomComment ? escapeHtml(data.roomComment) : '';
+
     // 生成房間編號
     const roomNo = Date.now();
 
@@ -61,13 +110,17 @@ app.post('/api/rooms', async (c) => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         roomNo,
-        roomName: data.roomName,
-        roomComment: data.roomComment || '',
+        roomName: safeRoomName,
+        roomComment: safeComment,
         maxUser,
         gameOption: data.gameOption || '',
         optionRole: data.optionRole || ''
       })
     }));
+
+    // 更新統計
+    const statsManager = new StatsManager(c.env.KV);
+    await statsManager.incrementRoomCount();
 
     return c.json({
       success: true,
@@ -115,7 +168,7 @@ app.delete('/api/rooms/:roomNo', async (c) => {
 /**
  * 玩家加入房間
  */
-app.post('/api/rooms/:roomNo/join', async (c) => {
+app.post('/api/rooms/:roomNo/join', checkBan, rateLimit, async (c) => {
   try {
     const roomNo = parseInt(c.req.param('roomNo'));
     const data = await c.req.json<{
@@ -135,13 +188,17 @@ app.post('/api/rooms/:roomNo/join', async (c) => {
       return c.json({ error: 'Invalid display name' }, 400);
     }
 
+    // 轉義（XSS 防護）
+    const safeUname = escapeHtml(data.uname);
+    const safeHandleName = escapeHtml(data.handleName);
+
     // 生成 session
     const sessionManager = createSessionManager(c.env.KV);
     const { sessionId, session } = createSession(
-      data.uname,
+      safeUname,
       roomNo,
       0, // userNo will be assigned
-      data.handleName,
+      safeHandleName,
       'human', // role will be assigned
       3600
     );
@@ -149,7 +206,9 @@ app.post('/api/rooms/:roomNo/join', async (c) => {
     // 儲存 session
     await sessionManager.save(session);
 
-    // TODO: 加入玩家到 Durable Object
+    // 更新統計
+    const statsManager = new StatsManager(c.env.KV);
+    await statsManager.incrementPlayerCount();
 
     return c.json({
       success: true,
@@ -197,6 +256,15 @@ app.get('/ws/:roomNo', async (c) => {
       return c.json({ error: 'Missing session token' }, 400);
     }
 
+    // IP 封鎖檢查
+    const ip = c.req.header('CF-Connecting-IP') || 'unknown';
+    const banManager = new BanManager(c.env.KV);
+    const isBanned = await banManager.isBanned(ip);
+    
+    if (isBanned) {
+      return c.json({ error: 'IP banned' }, 403);
+    }
+
     const id = c.env.ROOM.idFromName(roomNo);
     const stub = c.env.ROOM.get(id);
 
@@ -216,7 +284,7 @@ app.get('/ws/:roomNo', async (c) => {
 /**
  * 生成 Tripcode
  */
-app.post('/api/trip', async (c) => {
+app.post('/api/trip', rateLimit, async (c) => {
   try {
     const data = await c.req.json<{ password: string }>();
 
@@ -224,8 +292,13 @@ app.post('/api/trip', async (c) => {
       return c.json({ error: 'Password is required' }, 400);
     }
 
-    // TODO: 實作真實的 tripcode 生成
-    const trip = btoa(data.password).substring(0, 8);
+    // 改進的 Tripcode 生成（使用 SHA-256）
+    const encoder = new TextEncoder();
+    const data = encoder.encode(data.password + 'trip-salt');
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    const trip = hashHex.substring(0, 10);
 
     return c.json({
       success: true,
@@ -237,12 +310,45 @@ app.post('/api/trip', async (c) => {
   }
 });
 
+// ==================== 統計 ====================
+
+/**
+ * 獲取公開統計
+ */
+app.get('/api/stats', async (c) => {
+  try {
+    const statsManager = new StatsManager(c.env.KV);
+    const stats = await statsManager.getStats();
+
+    return c.json({ stats });
+  } catch (error) {
+    console.error('Get stats error:', error);
+    return c.json({ error: 'Failed to get stats' }, 500);
+  }
+});
+
+/**
+ * 獲取熱門房間
+ */
+app.get('/api/rooms/popular', async (c) => {
+  try {
+    const statsManager = new StatsManager(c.env.KV);
+    const limit = parseInt(c.req.query('limit') || '10');
+    const rooms = await statsManager.getPopularRooms(limit);
+
+    return c.json({ rooms });
+  } catch (error) {
+    console.error('Get popular rooms error:', error);
+    return c.json({ error: 'Failed to get popular rooms' }, 500);
+  }
+});
+
 // ==================== 頭像管理 ====================
 
 /**
  * 上傳頭像
  */
-app.post('/api/icons', async (c) => {
+app.post('/api/icons', checkBan, rateLimit, async (c) => {
   try {
     const formData = await c.req.formData();
     const file = formData.get('icon') as File;
@@ -356,5 +462,8 @@ app.get('/*', async (c) => {
 
   return c.text('Frontend not deployed', 404);
 });
+
+// 掛載管理員路由
+app.route('/', adminRoutes);
 
 export default app;
