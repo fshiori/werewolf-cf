@@ -1,0 +1,28 @@
+{
+  "name": "werewolf-cf",
+  "version": "1.0.0",
+  "description": "人狼遊戲 Cloudflare Workers 重構版",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "d1:create": "wrangler d1 create werewolf-db",
+    "d1:migrate": "wrangler d1 migrations apply werewolf-db --local",
+    "d1:migrate:prod": "wrangler d1 migrations apply werewolf-db",
+    "test": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": ["werewolf", "cloudflare", "workers", "game"],
+  "author": "EricChen",
+  "license": "MIT",
+  "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.1.0",
+    "@cloudflare/workers-types": "^4.20240512.0",
+    "typescript": "^5.4.5",
+    "vitest": "^1.6.0",
+    "wrangler": "^3.57.1"
+  },
+  "dependencies": {
+    "hono": "^4.3.11"
+  }
+}
