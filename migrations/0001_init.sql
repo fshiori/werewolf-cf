@@ -132,3 +132,43 @@ VALUES
   (9, '紫', '009.gif', 45, 45, '#CC00CC', 1),
   (10, '櫻花色', '010.gif', 45, 45, '#FF9999', 1)
 ON CONFLICT(icon_no) DO NOTHING;
+
+
+-- Tripcode 評分表
+CREATE TABLE IF NOT EXISTS trip_scores (
+  trip TEXT PRIMARY KEY,
+  score INTEGER NOT NULL DEFAULT 0,
+  games_played INTEGER NOT NULL DEFAULT 0,
+  human_wins INTEGER NOT NULL DEFAULT 0,
+  wolf_wins INTEGER NOT NULL DEFAULT 0,
+  fox_wins INTEGER NOT NULL DEFAULT 0,
+  last_played INTEGER NOT NULL
+);
+
+-- 遺書表
+CREATE TABLE IF NOT EXISTS wills (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  room_no INTEGER NOT NULL,
+  date INTEGER NOT NULL,
+  uname TEXT NOT NULL,
+  handle_name TEXT NOT NULL,
+  will TEXT NOT NULL,
+  time INTEGER NOT NULL
+);
+
+-- 密語表
+CREATE TABLE IF NOT EXISTS whispers (
+  id TEXT PRIMARY KEY,
+  room_no INTEGER NOT NULL,
+  date INTEGER NOT NULL,
+  from_uname TEXT NOT NULL,
+  to_uname TEXT NOT NULL,
+  message TEXT NOT NULL,
+  time INTEGER NOT NULL
+);
+
+-- 索引
+CREATE INDEX IF NOT EXISTS idx_wills_room ON wills(room_no);
+CREATE INDEX IF NOT EXISTS idx_whispers_room ON whispers(room_no);
+CREATE INDEX IF NOT EXISTS idx_whisper_from ON whispers(from_uname);
+CREATE INDEX IF NOT EXISTS idx_whisper_to ON whispers(to_uname);
