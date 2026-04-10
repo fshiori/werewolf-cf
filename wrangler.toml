@@ -2,11 +2,11 @@ name = "werewolf-cf"
 main = "src/index.ts"
 compatibility_date = "2024-01-01"
 
-# 開發環境配置
+# 本地開發
 [env.development]
 vars = { ENVIRONMENT = "development" }
 
-# 生產環境配置
+# 生產環境
 [env.production]
 vars = { ENVIRONMENT = "production" }
 
@@ -21,17 +21,26 @@ database_id = "local"  # 本地開發用
 binding = "KV"
 id = "local"  # 本地開發用
 
-# R2 儲存（頭像上傳）
+# R2 儲存
 [[r2_buckets]]
 binding = "R2"
 bucket_name = "werewolf-uploads"
+
+# 靜態資源（Assets）
+[assets]
+directory = "./public"
+binding = "ASSETS"
 
 # Durable Objects
 [[durable_objects.bindings]]
 name = "ROOM"
 class_name = "Room"
 
-# Durable Objects migrations
-[[migrations]]
-tag = "v1"
-new_classes = ["Room"]
+# Workers AI (可選，用於未來功能)
+# [ai]
+# binding = "AI"
+
+# 路由（生產環境）
+# [[routes]]
+# pattern = "werewolf.example.com/*"
+# zone_name = "example.com"
