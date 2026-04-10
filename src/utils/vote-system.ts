@@ -1,0 +1,236 @@
+/**
+ * 投票系統
+ */
+
+import type { Player, Vote } from '../types';
+
+/**
+ * 投票資料
+ */
+export interface VoteData {
+  roomNo: number;
+  date: number;
+  votes: Map<string, string>; // uname -> targetUname
+  voteCounts: Map<string, number>; // targetUname -> count
+}
+
+/**
+ * 建立投票資料
+ */
+export function createVoteData(roomNo: number, date: number): VoteData {
+  return {
+    roomNo,
+    date,
+    votes: new Map(),
+    voteCounts: new Map()
+  };
+}
+
+/**
+ * 加入投票
+ */
+export function addVote(voteData: VoteData, uname: string, targetUname: string): boolean {
+  // 檢查是否已投票
+  if (voteData.votes.has(uname)) {
+    return false;
+  }
+
+  // 移除舊投票（如果目標被重新投票）
+  if (voteData.votes.has(uname)) {
+    const oldTarget = voteData.votes.get(uname);
+    if (oldTarget) {
+      const count = voteData.voteCounts.get(oldTarget) || 0;
+      if (count === 1) {
+        voteData.voteCounts.delete(oldTarget);
+      } else {
+        voteData.voteCounts.set(oldTarget, count - 1);
+      }
+    }
+  }
+
+  // 加入新投票
+  voteData.votes.set(uname, targetUname);
+  const count = voteData.voteCounts.get(targetUname) || 0;
+  voteData.voteCounts.set(targetUname, count + 1);
+
+  return true;
+}
+
+/**
+ * 取消投票
+ */
+export function removeVote(voteData: VoteData, uname: string): boolean {
+  const target = voteData.votes.get(uname);
+  if (!target) {
+    return false;
+  }
+
+  // 減少票數
+  const count = voteData.voteCounts.get(target) || 0;
+  if (count === 1) {
+    voteData.voteCounts.delete(target);
+  } else {
+    voteData.voteCounts.set(target, count - 1);
+  }
+
+  // 移除投票
+  voteData.votes.delete(uname);
+
+  return true;
+}
+
+/**
+ * 獲得投票結果
+ * 返回得票最多的玩家
+ */
+export function getVoteResult(voteData: VoteData): string[] {
+  const maxVotes = Math.max(...voteData.voteCounts.values(), 0);
+  
+  if (maxVotes === 0) {
+    return [];
+  }
+
+  // 找出所有得票最多的玩家（可能平手）
+  const result: string[] = [];
+  for (const [target, count] of voteData.voteCounts) {
+    if (count === maxVotes) {
+      result.push(target);
+    }
+  }
+
+  return result;
+}
+
+/**
+ * 檢查是否平手
+ */
+export function isTie(voteData: VoteData): boolean {
+  const result = getVoteResult(voteData);
+  return result.length > 1;
+}
+
+/**
+ * 計算投票權重
+ */
+export function calculateWeightedVotes(
+  voteData: VoteData,
+  players: Map<string, Player>
+): Map<string, number> {
+  const weighted = new Map<string, number>();
+
+  for (const [uname, target] of voteData.votes) {
+    const player = players.get(uname);
+    if (!player || player.live !== 'live') {
+      continue;
+    }
+
+    // 權力者投票權重 x2
+    const weight = player.role === 'authority' ? 2 : 1;
+    const current = weighted.get(target) || 0;
+    weighted.set(target, current + weight);
+  }
+
+  return weighted;
+}
+
+/**
+ * 檢查投票是否完成
+ * 所有存活玩家都已投票
+ */
+export function isVoteComplete(voteData: VoteData, alivePlayers: Player[]): boolean {
+  const votedPlayers = Array.from(voteData.votes.keys()).filter(
+    uname => alivePlayers.some(p => p.uname === uname && p.live === 'live')
+  );
+
+  return votedPlayers.length === alivePlayers.length;
+}
+
+/**
+ * 處理投票處刑
+ * 處決得票最多的玩家
+ */
+export function executeVote(
+  voteData: VoteData,
+  players: Map<string, Player>
+): Player[] {
+  const result = getVoteResult(voteData);
+  const executed: Player[] = [];
+
+  for (const uname of result) {
+    const player = players.get(uname);
+    if (player && player.live === 'live') {
+      player.live = 'dead';
+      executed.push(player);
+    }
+  }
+
+  return executed;
+}
+
+/**
+ * 清空投票
+ */
+export function clearVotes(voteData: VoteData): void {
+  voteData.votes.clear();
+  voteData.voteCounts.clear();
+}
+
+/**
+ * 獲取投票統計
+ */
+export function getVoteStats(voteData: VoteData): Array<{
+  uname: string;
+  count: number;
+}> {
+  return Array.from(voteData.voteCounts.entries())
+    .map(([uname, count]) => ({ uname, count }))
+    .sort((a, b) => b.count - a.count);
+}
+
+/**
+ * 檢查玩家是否已投票
+ */
+export function hasVoted(voteData: VoteData, uname: string): boolean {
+  return voteData.votes.has(uname);
+}
+
+/**
+ * 獲取玩家的投票目標
+ */
+export function getPlayerVote(voteData: VoteData, uname: string): string | undefined {
+  return voteData.votes.get(uname);
+}
+
+/**
+ * 隨機決定平手（突然死模式）
+ */
+export function randomTieBreak(voteData: VoteData): string {
+  const result = getVoteResult(voteData);
+  if (result.length === 0) {
+    return '';
+  }
+
+  const randomIndex = Math.floor(Math.random() * result.length);
+  return result[randomIndex];
+}
+
+/**
+ * 轉換投票為資料庫格式
+ */
+export function voteToDatabase(voteData: VoteData, voteNumber: number): Vote[] {
+  const votes: Vote[] = [];
+
+  let voteTimes = 0;
+  for (const [uname, targetUname] of voteData.votes) {
+    votes.push({
+      roomNo: voteData.roomNo,
+      date: voteData.date,
+      uname,
+      targetUname,
+      voteNumber,
+      voteTimes: voteTimes++
+    });
+  }
+
+  return votes;
+}
