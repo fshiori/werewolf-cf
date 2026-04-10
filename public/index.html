@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>人狼遊戲 - Werewolf CF</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .container {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      padding: 40px;
+      max-width: 500px;
+      width: 100%;
+    }
+
+    h1 {
+      text-align: center;
+      color: #333;
+      margin-bottom: 10px;
+      font-size: 32px;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #666;
+      margin-bottom: 30px;
+      font-size: 14px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      color: #555;
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 14px;
+      transition: all 0.3s;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .room-inputs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      margin-top: 10px;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    button.secondary {
+      background: #f0f0f0;
+      color: #333;
+    }
+
+    button.secondary:hover {
+      background: #e0e0e0;
+    }
+
+    .divider {
+      text-align: center;
+      margin: 30px 0;
+      position: relative;
+    }
+
+    .divider::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: #e0e0e0;
+    }
+
+    .divider span {
+      background: white;
+      padding: 0 20px;
+      position: relative;
+      color: #999;
+      font-size: 14px;
+    }
+
+    .error {
+      background: #fee;
+      color: #c33;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-size: 14px;
+      display: none;
+    }
+
+    .error.show {
+      display: block;
+    }
+
+    .loading {
+      display: none;
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    .loading.show {
+      display: block;
+    }
+
+    .spinner {
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #667eea;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .rooms-list {
+      margin-top: 30px;
+    }
+
+    .room-item {
+      background: #f9f9f9;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .room-item:hover {
+      background: #f0f0f0;
+      transform: translateX(5px);
+    }
+
+    .room-name {
+      font-weight: 600;
+      color: #333;
+    }
+
+    .room-info {
+      font-size: 12px;
+      color: #999;
+      margin-top: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🐺 人狼遊戲</h1>
+    <p class="subtitle">Werewolf CF - Cloudflare Workers</p>
+
+    <div id="error" class="error"></div>
+
+    <div id="createRoomForm">
+      <div class="form-group">
+        <label for="roomName">房間名稱</label>
+        <input type="text" id="roomName" placeholder="例如：今晚來玩人狼" maxlength="32">
+      </div>
+
+      <div class="form-group">
+        <label for="roomComment">房間說明（選填）</label>
+        <input type="text" id="roomComment" placeholder="例如：新手歡迎" maxlength="100">
+      </div>
+
+      <div class="room-inputs">
+        <div class="form-group">
+          <label for="maxUser">最大人數</label>
+          <input type="number" id="maxUser" value="16" min="2" max="32">
+        </div>
+        <div class="form-group">
+          <label for="iconNo">頭像編號</label>
+          <input type="number" id="iconNo" value="1" min="0" max="10">
+        </div>
+      </div>
+
+      <button onclick="createRoom()">建立房間</button>
+    </div>
+
+    <div class="divider">
+      <span>或</span>
+    </div>
+
+    <div id="joinRoomForm">
+      <div class="form-group">
+        <label for="joinRoomNo">房間編號</label>
+        <input type="text" id="joinRoomNo" placeholder="輸入房間編號">
+      </div>
+
+      <div class="form-group">
+        <label for="username">使用者名稱</label>
+        <input type="text" id="username" placeholder="例如：Eric" maxlength="20">
+      </div>
+
+      <div class="form-group">
+        <label for="displayName">顯示名稱</label>
+        <input type="text" id="displayName" placeholder="例如：玩家1" maxlength="32">
+      </div>
+
+      <div class="form-group">
+        <label for="password">Tripcode 密碼（選填）</label>
+        <input type="password" id="password" placeholder="用於驗證身份">
+      </div>
+
+      <button onclick="joinRoom()">加入房間</button>
+    </div>
+
+    <div id="loading" class="loading">
+      <div class="spinner"></div>
+      <p style="margin-top: 10px; color: #999;">載入中...</p>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = window.location.origin;
+
+    function showError(message) {
+      const errorEl = document.getElementById('error');
+      errorEl.textContent = message;
+      errorEl.classList.add('show');
+      setTimeout(() => errorEl.classList.remove('show'), 5000);
+    }
+
+    function showLoading(show) {
+      document.getElementById('loading').classList.toggle('show', show);
+    }
+
+    async function createRoom() {
+      const roomName = document.getElementById('roomName').value.trim();
+      const roomComment = document.getElementById('roomComment').value.trim();
+      const maxUser = parseInt(document.getElementById('maxUser').value);
+      const iconNo = parseInt(document.getElementById('iconNo').value);
+
+      if (!roomName) {
+        showError('請輸入房間名稱');
+        return;
+      }
+
+      showLoading(true);
+
+      try {
+        const response = await fetch(`${API_BASE}/api/rooms`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ roomName, roomComment, maxUser })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          // 房間建立成功，跳轉到遊戲頁面
+          window.location.href = `/game.html?roomNo=${data.roomNo}&iconNo=${iconNo}`;
+        } else {
+          showError(data.error || '建立房間失敗');
+        }
+      } catch (error) {
+        console.error('Create room error:', error);
+        showError('網路錯誤，請稍後再試');
+      } finally {
+        showLoading(false);
+      }
+    }
+
+    async function joinRoom() {
+      const roomNo = document.getElementById('joinRoomNo').value.trim();
+      const username = document.getElementById('username').value.trim();
+      const displayName = document.getElementById('displayName').value.trim();
+      const password = document.getElementById('password').value;
+
+      if (!roomNo || !username || !displayName) {
+        showError('請填寫所有必填欄位');
+        return;
+      }
+
+      showLoading(true);
+
+      try {
+        // 生成 tripcode（如果有密碼）
+        let trip = '';
+        if (password) {
+          const tripResponse = await fetch(`${API_BASE}/api/trip`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password })
+          });
+          const tripData = await tripResponse.json();
+          trip = tripData.trip || '';
+        }
+
+        // 加入房間
+        const response = await fetch(`${API_BASE}/api/rooms/${roomNo}/join`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            uname: username,
+            handleName: displayName,
+            trip,
+            iconNo: 1,
+            sex: 'male'
+          })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          // 加入成功，儲存 session 並跳轉
+          localStorage.setItem(`session_${roomNo}`, data.sessionId);
+          window.location.href = `/game.html?roomNo=${roomNo}`;
+        } else {
+          showError(data.error || '加入房間失敗');
+        }
+      } catch (error) {
+        console.error('Join room error:', error);
+        showError('網路錯誤，請稍後再試');
+      } finally {
+        showLoading(false);
+      }
+    }
+
+    // 頁面載入時檢查 URL 參數
+    window.addEventListener('load', () => {
+      const params = new URLSearchParams(window.location.search);
+      const roomNo = params.get('roomNo');
+
+      if (roomNo) {
+        // 預填房間編號
+        document.getElementById('joinRoomNo').value = roomNo;
+      }
+    });
+  </script>
+</body>
+</html>
