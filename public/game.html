@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>遊戲中 - 人狼遊戲</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #1a1a2e;
+      color: #eee;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .header {
+      background: #16213e;
+      padding: 15px 20px;
+      border-bottom: 2px solid #0f3460;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .header h1 {
+      font-size: 20px;
+      color: #e94560;
+    }
+
+    .game-info {
+      display: flex;
+      gap: 20px;
+      font-size: 14px;
+    }
+
+    .game-info span {
+      color: #aaa;
+    }
+
+    .game-info strong {
+      color: #fff;
+    }
+
+    .main {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    .players {
+      width: 250px;
+      background: #16213e;
+      border-right: 2px solid #0f3460;
+      overflow-y: auto;
+      padding: 15px;
+    }
+
+    .player {
+      background: #1a1a2e;
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .player:hover {
+      background: #0f3460;
+      transform: translateX(5px);
+    }
+
+    .player.dead {
+      opacity: 0.5;
+      filter: grayscale(1);
+    }
+
+    .player.dead::after {
+      content: '💀';
+      position: absolute;
+      right: 10px;
+    }
+
+    .player-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: #e94560;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+
+    .player-info {
+      flex: 1;
+    }
+
+    .player-name {
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .player-status {
+      font-size: 12px;
+      color: #aaa;
+    }
+
+    .chat {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: #0f3460;
+    }
+
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .message {
+      background: #1a1a2e;
+      padding: 10px 15px;
+      border-radius: 8px;
+      max-width: 70%;
+      animation: fadeIn 0.3s;
+    }
+
+    .message.system {
+      background: #e94560;
+      color: white;
+      text-align: center;
+      max-width: 100%;
+      font-weight: 600;
+    }
+
+    .message.night {
+      background: #4a1a6e;
+      color: #c9a0ff;
+    }
+
+    .message-header {
+      font-size: 12px;
+      color: #aaa;
+      margin-bottom: 5px;
+    }
+
+    .message-content {
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .input-area {
+      padding: 15px;
+      background: #16213e;
+      border-top: 2px solid #0f3460;
+      display: flex;
+      gap: 10px;
+    }
+
+    .input-area input {
+      flex: 1;
+      padding: 12px 16px;
+      background: #1a1a2e;
+      border: 2px solid #0f3460;
+      border-radius: 8px;
+      color: #eee;
+      font-size: 14px;
+    }
+
+    .input-area input:focus {
+      outline: none;
+      border-color: #e94560;
+    }
+
+    .input-area button {
+      padding: 12px 24px;
+      background: #e94560;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .input-area button:hover {
+      background: #c9354e;
+      transform: translateY(-2px);
+    }
+
+    .input-area button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .status-bar {
+      padding: 10px 20px;
+      background: #0f3460;
+      font-size: 12px;
+      color: #aaa;
+      text-align: center;
+    }
+
+    .phase-indicator {
+      display: inline-block;
+      padding: 5px 15px;
+      border-radius: 20px;
+      font-weight: 600;
+      margin: 0 10px;
+    }
+
+    .phase-day {
+      background: #ffd700;
+      color: #333;
+    }
+
+    .phase-night {
+      background: #4a1a6e;
+      color: #c9a0ff;
+    }
+
+    .vote-panel {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #16213e;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      min-width: 400px;
+    }
+
+    .vote-panel.show {
+      display: block;
+    }
+
+    .vote-panel h2 {
+      margin-bottom: 20px;
+      color: #e94560;
+    }
+
+    .vote-options {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .vote-option {
+      padding: 12px;
+      background: #1a1a2e;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .vote-option:hover {
+      background: #0f3460;
+      transform: translateX(5px);
+    }
+
+    .vote-option.selected {
+      background: #e94560;
+    }
+
+    .close-btn {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      font-size: 24px;
+      color: #aaa;
+      cursor: pointer;
+    }
+
+    .close-btn:hover {
+      color: #e94560;
+    }
+
+    .overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 999;
+    }
+
+    .overlay.show {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🐺 房間 #<span id="roomNo"></span></h1>
+    <div class="game-info">
+      <span>第 <strong id="dayCount">1</strong> 天</span>
+      <span class="phase-indicator phase-day" id="phaseIndicator">白天</span>
+      <span>玩家: <strong id="playerCount">0</strong>/<span id="maxUser">16</span></span>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="players" id="playersList"></div>
+
+    <div class="chat">
+      <div class="messages" id="messages"></div>
+      <div class="input-area">
+        <input type="text" id="messageInput" placeholder="輸入訊息..." maxlength="500">
+        <button id="sendBtn" onclick="sendMessage()">發送</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="status-bar">
+    <span id="connectionStatus">🟢 已連線</span>
+    <span id="timeInfo"></span>
+  </div>
+
+  <div class="overlay" id="overlay"></div>
+
+  <div class="vote-panel" id="votePanel">
+    <span class="close-btn" onclick="closeVotePanel()">&times;</span>
+    <h2>投票</h2>
+    <div class="vote-options" id="voteOptions"></div>
+  </div>
+
+  <script>
+    const API_BASE = window.location.origin;
+    const params = new URLSearchParams(window.location.search);
+    const roomNo = params.get('roomNo');
+    const sessionToken = localStorage.getItem(`session_${roomNo}`);
+
+    let ws = null;
+    let roomData = null;
+    let myPlayer = null;
+    let phase = 'beforegame';
+
+    function addMessage(data, isSystem = false) {
+      const messagesDiv = document.getElementById('messages');
+      const messageEl = document.createElement('div');
+      messageEl.className = `message ${isSystem ? 'system' : data.location === 'night' ? 'night' : ''}`;
+
+      if (isSystem) {
+        messageEl.textContent = data;
+      } else {
+        const time = new Date(data.time).toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' });
+        messageEl.innerHTML = `
+          <div class="message-header">${data.handleName} - ${time}</div>
+          <div class="message-content">${data.sentence}</div>
+        `;
+      }
+
+      messagesDiv.appendChild(messageEl);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
+    function updatePlayers(players) {
+      const playersDiv = document.getElementById('playersList');
+      playersDiv.innerHTML = '';
+
+      players.forEach(player => {
+        const playerEl = document.createElement('div');
+        playerEl.className = `player ${player.live === 'dead' ? 'dead' : ''}`;
+        playerEl.innerHTML = `
+          <div class="player-icon">${player.iconNo}</div>
+          <div class="player-info">
+            <div class="player-name">${player.handleName}</div>
+            <div class="player-status">${player.live === 'dead' ? '已死亡' : '存活'}</div>
+          </div>
+        `;
+        playerEl.onclick = () => selectPlayer(player);
+        playersDiv.appendChild(playerEl);
+      });
+
+      document.getElementById('playerCount').textContent = players.length;
+    }
+
+    function connectWebSocket() {
+      const wsUrl = `${API_BASE.replace('http', 'ws')}/ws/${roomNo}?session=${sessionToken}`;
+      ws = new WebSocket(wsUrl);
+
+      ws.onopen = () => {
+        document.getElementById('connectionStatus').textContent = '🟢 已連線';
+        addMessage('已連線到伺服器', true);
+      };
+
+      ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        handleWSMessage(data);
+      };
+
+      ws.onclose = () => {
+        document.getElementById('connectionStatus').textContent = '🔴 已斷線';
+        addMessage('與伺服器斷線，5秒後重新連線...', true);
+        setTimeout(connectWebSocket, 5000);
+      };
+
+      ws.onerror = (error) => {
+        console.error('WebSocket error:', error);
+        document.getElementById('connectionStatus').textContent = '🔴 連線錯誤';
+      };
+    }
+
+    function handleWSMessage(data) {
+      switch (data.type) {
+        case 'connected':
+          roomData = data.data.room;
+          myPlayer = data.data.player;
+          updateUI();
+          break;
+
+        case 'message':
+          addMessage(data.data);
+          break;
+
+        case 'system':
+          addMessage(data.data.message, true);
+          break;
+
+        case 'phase_change':
+          phase = data.data.phase;
+          document.getElementById('phaseIndicator').textContent =
+            phase === 'day' ? '白天' : '夜晚';
+          document.getElementById('phaseIndicator').className =
+            `phase-indicator phase-${phase}`;
+          document.getElementById('dayCount').textContent = roomData.date;
+          addMessage(data.data.message, true);
+          break;
+
+        case 'game_start':
+          addMessage('遊戲開始！', true);
+          updatePlayers(data.data.players);
+          break;
+
+        case 'game_over':
+          addMessage(`遊戲結束！${data.data.message}`, true);
+          break;
+
+        case 'players_died':
+          addMessage(`${data.data.map(p => p.handleName).join('、')} 死亡了`, true);
+          break;
+
+        case 'vote_update':
+          updateVotePanel(data.data);
+          break;
+      }
+    }
+
+    function updateUI() {
+      if (!roomData) return;
+
+      document.getElementById('roomNo').textContent = roomData.roomNo;
+      document.getElementById('dayCount').textContent = roomData.date;
+      document.getElementById('maxUser').textContent = roomData.maxUser;
+      document.getElementById('phaseIndicator').textContent =
+        roomData.dayNight === 'day' ? '白天' : '夜晚';
+      document.getElementById('phaseIndicator').className =
+        `phase-indicator phase-${roomData.dayNight}`;
+    }
+
+    function sendMessage() {
+      const input = document.getElementById('messageInput');
+      const text = input.value.trim();
+
+      if (!text || !ws || ws.readyState !== WebSocket.OPEN) {
+        return;
+      }
+
+      ws.send(JSON.stringify({
+        type: 'say',
+        text: text,
+        fontType: 'normal'
+      }));
+
+      input.value = '';
+    }
+
+    function selectPlayer(player) {
+      if (!myPlayer || myPlayer.live !== 'live') return;
+
+      // TODO: 實作投票邏輯
+      console.log('Selected player:', player);
+    }
+
+    function openVotePanel() {
+      document.getElementById('overlay').classList.add('show');
+      document.getElementById('votePanel').classList.add('show');
+    }
+
+    function closeVotePanel() {
+      document.getElementById('overlay').classList.remove('show');
+      document.getElementById('votePanel').classList.remove('show');
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      if (!roomNo || !sessionToken) {
+        alert('缺少房間編號或 session');
+        window.location.href = '/';
+        return;
+      }
+
+      document.getElementById('roomNo').textContent = roomNo;
+
+      // 連線 WebSocket
+      connectWebSocket();
+
+      // Enter 發送
+      document.getElementById('messageInput').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          sendMessage();
+        }
+      });
+    });
+
+    window.onbeforeunload = () => {
+      if (ws) {
+        ws.close();
+      }
+    };
+  </script>
+</body>
+</html>
