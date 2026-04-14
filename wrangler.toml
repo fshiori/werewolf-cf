@@ -1,6 +1,7 @@
 name = "werewolf-cf"
 main = "src/index.ts"
 compatibility_date = "2024-01-01"
+account_id = "4fae982a30d8f623b835b46bba03e72c"
 
 # 本地開發
 [env.development]
@@ -14,12 +15,12 @@ vars = { ENVIRONMENT = "production" }
 [[d1_databases]]
 binding = "DB"
 database_name = "werewolf-db"
-# database_id = "YOUR_DATABASE_ID" # 在部署後更新
+database_id = "ca544085-450c-4ec9-b1fa-58b96bbdfc56"
 
 # KV 命名空間
 [[kv_namespaces]]
 binding = "KV"
-# id = "YOUR_KV_NAMESPACE_ID" # 在部署後更新
+id = "86cee32e168848aebafdb2666127a316"
 
 # R2 儲存
 [[r2_buckets]]
@@ -33,8 +34,13 @@ binding = "ASSETS"
 
 # Durable Objects
 [[durable_objects.bindings]]
-name = "ROOM"
-class_name = "Room"
+name = "WEREWOLF_ROOM"
+class_name = "WerewolfRoom"
+
+# Migrations - 初始化 SQLite storage
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["WerewolfRoom"]
 
 # Workers AI (可選，用於未來功能)
 # [ai]

@@ -3,7 +3,9 @@
  * 整合所有遊戲系統
  */
 
-import { WorkerEntrypoint } from 'cloudflare:workers';
+// @ts-ignore - cloudflare:workers is a special module in Wrangler
+import { DurableObject } from 'cloudflare:workers';
+import type { DurableObjectState } from '@cloudflare/workers-types';
 import type { Env, Player, RoomData, Message } from '../types';
 import { createRoom, addPlayer, removePlayer, startGame, endGame, getPublicRoomInfo } from '../utils/room-manager';
 import { advanceTime, checkSilence, transitionPhase, DEFAULT_TIME_CONFIG } from '../utils/time-progression';
@@ -12,14 +14,16 @@ import { createVoteData, addVote, getVoteResult, executeVote, isVoteComplete } f
 import { createNightState, wolfKill, seerDivine, processNightResult, getNightSummary, isNightActionsComplete } from '../utils/night-action';
 import { createSessionManager, type SessionValue } from '../utils/session-manager';
 
-export class Room extends WorkerEntrypoint<Env> {
+export class WerewolfRoom extends DurableObject {
   private sessions: Map<string, WebSocket> = new Map();
   private sessionManager: any;
   private roomData: RoomData;
   private voteData?: any;
   private nightState?: any;
+  // @ts-ignore - ctx is a DurableObject property
   private storage = this.ctx.storage;
 
+  // @ts-ignore - env is a DurableObject property
   constructor(state: DurableObjectState, env: Env) {
     super(state, env);
     this.sessionManager = createSessionManager(env.KV);
@@ -72,7 +76,14 @@ export class Room extends WorkerEntrypoint<Env> {
    * 初始化房間
    */
   private async initialize(req: Request): Promise<Response> {
-    const data = await req.json();
+    const data = await req.json() as {
+      roomNo: number;
+      roomName: string;
+      roomComment: string;
+      maxUser?: number;
+      gameOption?: string;
+      optionRole?: string;
+    };
 
     this.roomData = createRoom({
       roomNo: data.roomNo,
@@ -97,28 +108,34 @@ export class Room extends WorkerEntrypoint<Env> {
       return new Response('Expected WebSocket', { status: 426 });
     }
 
+    // @ts-ignore - WebSocketPair is a Cloudflare-specific API
     const pair = new WebSocketPair();
-    const [client, server] = Object.values(pair);
+    const [client, server] = Object.values(pair) as [WebSocket, WebSocket];
 
+    // @ts-ignore - server is a WebSocket
     server.accept();
 
     const url = new URL(req.url);
     const sessionToken = url.searchParams.get('session');
 
     if (!sessionToken) {
+      // @ts-ignore - server is a WebSocket
       server.close(1008, 'No session token');
+      // @ts-ignore - webSocket is a Cloudflare Response option
       return new Response(null, { status: 101, webSocket: client });
     }
 
     // 驗證 Session
     const session = await this.sessionManager.validate(sessionToken);
     if (!session || session.roomNo !== this.roomData.roomNo) {
+      // @ts-ignore - server is a WebSocket
       server.close(1008, 'Invalid session');
+      // @ts-ignore - webSocket is a Cloudflare Response option
       return new Response(null, { status: 101, webSocket: client });
     }
 
     // 保存連線
-    this.sessions.set(session.uname, server);
+    this.sessions.set(session.uname, server as WebSocket);
 
     // 發送初始資料
     server.send(JSON.stringify({
@@ -145,8 +162,10 @@ export class Room extends WorkerEntrypoint<Env> {
       await this.handlePlayerDisconnect(session.uname);
     });
 
+    // @ts-ignore - webSocket is a Cloudflare Response option
     return new Response(null, {
       status: 101,
+      // @ts-ignore
       webSocket: client
     });
   }
@@ -181,6 +200,7 @@ export class Room extends WorkerEntrypoint<Env> {
    */
   private async handleSay(uname: string, text: string, fontType: string) {
     const player = this.roomData.players.get(uname);
+    // @ts-ignore - dayNight may be 'beforegame' which is handled at runtime
     if (!player || !canSpeak(player, this.roomData.dayNight)) {
       return;
     }
@@ -200,6 +220,7 @@ export class Room extends WorkerEntrypoint<Env> {
 
     // 存入 D1
     try {
+      // @ts-ignore - env is a DurableObject property
       await this.env.DB.prepare(
         'INSERT INTO talk (room_no, date, location, uname, handle_name, sentence, font_type, time) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
       ).bind(

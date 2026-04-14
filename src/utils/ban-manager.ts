@@ -2,6 +2,8 @@
  * IP 封鎖系統
  */
 
+import type { KVNamespace } from '@cloudflare/workers-types';
+
 /**
  * 封鎖類型
  */

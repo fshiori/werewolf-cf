@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>遊戲規則 - Werewolf CF</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Microsoft JhengHei', 'PingFang TC', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+      color: #333;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+      overflow: hidden;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+      color: white;
+      padding: 40px;
+      text-align: center;
+    }
+
+    .header h1 {
+      font-size: 2.5em;
+      margin-bottom: 10px;
+    }
+
+    .header p {
+      opacity: 0.9;
+      font-size: 1.1em;
+    }
+
+    .content {
+      padding: 40px;
+    }
+
+    .section {
+      margin-bottom: 40px;
+    }
+
+    .section h2 {
+      color: #1e3c72;
+      border-bottom: 3px solid #667eea;
+      padding-bottom: 10px;
+      margin-bottom: 20px;
+      font-size: 1.8em;
+    }
+
+    .section h3 {
+      color: #2a5298;
+      margin: 20px 0 10px;
+      font-size: 1.3em;
+    }
+
+    .alert {
+      background: #fff3cd;
+      border-left: 4px solid #ffc107;
+      padding: 15px 20px;
+      margin: 20px 0;
+      border-radius: 4px;
+    }
+
+    .alert-danger {
+      background: #f8d7da;
+      border-left-color: #dc3545;
+    }
+
+    .role-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+    }
+
+    .role-table th,
+    .role-table td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .role-table th {
+      background: #f8f9fa;
+      font-weight: bold;
+      color: #1e3c72;
+    }
+
+    .role-table tr:hover {
+      background: #f8f9fa;
+    }
+
+    .role-human {
+      color: #3300CC;
+      font-weight: bold;
+    }
+
+    .role-wolf {
+      color: #cc0000;
+      font-weight: bold;
+    }
+
+    .role-fox {
+      color: #8B00FF;
+      font-weight: bold;
+    }
+
+    .back-btn {
+      display: inline-block;
+      padding: 12px 24px;
+      background: #667eea;
+      color: white;
+      text-decoration: none;
+      border-radius: 6px;
+      margin: 20px 40px;
+      transition: background 0.3s;
+    }
+
+    .back-btn:hover {
+      background: #5568d3;
+    }
+
+    ul {
+      margin-left: 20px;
+      line-height: 1.8;
+    }
+
+    .victory-condition {
+      background: #e7f3ff;
+      padding: 20px;
+      border-radius: 8px;
+      margin: 20px 0;
+    }
+
+    .victory-condition h4 {
+      color: #1e3c72;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🐺 人狼遊戲規則</h1>
+      <p>Werewolf CF - 遊戲說明書</p>
+    </div>
+
+    <div class="content">
+      <!-- 重要提醒 -->
+      <div class="alert alert-danger">
+        <strong>⚠️ 參加遊戲時必須注意的事情</strong><br>
+        「關於遊戲中的內容請不要在遊戲以外的場合進行討論。」<br>
+        如果這樣做的話遊戲將會變得沒有意思了。<br>
+        特別是當自己死亡之後把其他人的角色公開出來，請絕對不要有這種行為。
+      </div>
+
+      <!-- 遊戲目的 -->
+      <div class="section">
+        <h2>📖 遊戲目的</h2>
+        <p>
+          某個村子裡面有人狼和村民住在一起，每天晚上人狼都會襲擊村民。<br>
+          感到困擾的村民在集會所進行討論，決定一天一人，將被懷疑是人狼的人給進行處刑。<br>
+          村民是為了守護村子，人狼是為了拿下這個村子，還有不知道從哪來的妖狐和子狐在旁窺測。<br>
+          各種不同角色擔當的玩家們必須絞盡腦汁，使處刑的話題朝著對自己有利的形式發展。
+        </p>
+      </div>
+
+      <!-- 勝利條件 -->
+      <div class="section">
+        <h2>🏆 勝利條件</h2>
+        <div class="victory-condition">
+          <h4>村民的勝利</h4>
+          <p>將人狼、妖狐和子狐全滅</p>
+        </div>
+        <div class="victory-condition">
+          <h4>人狼的勝利</h4>
+          <p>殺死妖狐和子狐，並使村民的人數和人狼的人數相同或是更少</p>
+        </div>
+        <div class="victory-condition">
+          <h4>妖狐的勝利</h4>
+          <p>人狼全滅的時候、以及村民的人數和人狼的人數相同或是更少的時候，若妖狐或子狐存活就算勝利</p>
+        </div>
+        <p style="margin-top: 20px; color: #666;">
+          💡 您是否存活下來並不是您玩這個遊戲的目的。<br>
+          就算自己犧牲了，您的隊伍勝利的話則您也屬於勝利者。
+        </p>
+      </div>
+
+      <!-- 角色介紹 -->
+      <div class="section">
+        <h2>👥 角色介紹</h2>
+        <table class="role-table">
+          <thead>
+            <tr>
+              <th>角色</th>
+              <th>說明</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="role-human">村民</td>
+              <td>沒有特殊的能力。但是您的智慧和勇氣應該是可以拯救這個村子的。</td>
+            </tr>
+            <tr>
+              <td class="role-wolf">人狼</td>
+              <td>
+                可以在夜間與其他人狼共謀殺害其中一名村民。<br>
+                而且，知道自己以外的其他人狼是誰。<br>
+                在晚上可以用只有人狼才聽得懂的嚎叫聲，在人狼之間進行對話。<br>
+                人狼之間無法互相殺害。
+              </td>
+            </tr>
+            <tr>
+              <td class="role-wolf">狂人</td>
+              <td>
+                崇拜人狼的人類，若是人狼勝利的話您也將會勝利。<br>
+                但是您將被隸屬於村民的其中一人。<br>
+                雖然是屬於人狼隊伍，但是就算被占卜也是顯示「村民」。
+              </td>
+            </tr>
+            <tr>
+              <td class="role-human">預言家</td>
+              <td>
+                在夜間可以挑選一名村民進行占卜判斷是「人」還是「狼」，隔天早上占卜結果將會出現。<br>
+                占卜狂人也只會顯示「人」而已。<br>
+                如果占卜到妖狐的話妖狐將會死亡。預言家是妖狐的天敵。
+              </td>
+            </tr>
+            <tr>
+              <td class="role-human">靈媒</td>
+              <td>
+                第二天以後可以得知前一天被處刑的人是「人」還是「狼」。<br>
+                靈媒必須要消費一個晚上的時間，隔天早上才會出現結果。<br>
+                雖然是很馬後炮的能力，但是依據您的努力程度有可能對遊戲有很大的貢獻。
+              </td>
+            </tr>
+            <tr>
+              <td class="role-human">獵人</td>
+              <td>
+                死亡的時候可以帶走一名玩家。<br>
+                被人狼殺害或被處刑時可以選擇一名玩家一起死亡。
+              </td>
+            </tr>
+            <tr>
+              <td class="role-human">共有者</td>
+              <td>
+                您有不可思議的力量可以得知另一名共有者是誰。<br>
+                就算互相遠離也可以知道共有者同伴的想法。<br>
+                若公開表示自己是共有者，可以比較容易取得他人的信任。
+              </td>
+            </tr>
+            <tr>
+              <td class="role-fox">妖狐</td>
+              <td>
+                您即使被狼襲擊也不會死亡。<br>
+                但是被占卜的話就會被咒殺。<br>
+                您要隱藏自己的身分等待機會。
+              </td>
+            </tr>
+            <tr>
+              <td class="role-fox">子狐</td>
+              <td>
+                妖狐的同伴，希望妖狐陣營勝利。<br>
+                被占卜會顯示為「村民」。
+              </td>
+            </tr>
+            <tr>
+              <td class="role-wolf">背德者</td>
+              <td>
+                可以在夜晚轉化一名村民成為狂人。<br>
+                希望妖狐陣營勝利，但是被占卜會顯示「村民」。
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- 遊戲流程 -->
+      <div class="section">
+        <h2>⏱️ 遊戲流程</h2>
+        <h3>1. 等待階段</h3>
+        <p>玩家加入房間，等待房主開始遊戲</p>
+
+        <h3>2. 角色分配</h3>
+        <p>遊戲開始後，系統會隨機分配角色給每位玩家</p>
+
+        <h3>3. 白天階段</h3>
+        <ul>
+          <li>所有玩家可以在聊天室發言討論</li>
+          <li>沈默模式：60秒無發言後進入沈默模式，時間流逝速度加快 4 倍</li>
+          <li>投票階段：所有玩家投票選擇要處刑的人</li>
+          <li>得票最多者被處刑</li>
+        </ul>
+
+        <h3>4. 夜晚階段</h3>
+        <ul>
+          <li>只有特定角色可以行動（人狼、預言家、靈媒等）</li>
+          <li>人狼選擇要殺害的目標</li>
+          <li>預言家選擇要占卜的目標</li>
+          <li>其他角色執行各自的能力</li>
+        </ul>
+
+        <h3>5. 勝負判定</h3>
+        <p>每天早上會判斷是否達成勝利條件，若達成則遊戲結束</p>
+      </div>
+
+      <!-- 特殊規則 -->
+      <div class="section">
+        <h2>⚡ 特殊規則</h2>
+        <h3>沈默模式</h3>
+        <p>
+          當 60 秒內沒有玩家發言時，進入沈默模式。<br>
+          沈默模式下，時間流逝速度會加快 4 倍。<br>
+          一旦有人發言，沈默模式解除。
+        </p>
+
+        <h3>突然死</h3>
+        <p>
+          如果在限制時間內沒有完成投票，將會隨機選擇一名玩家處刑。<br>
+          請務必注意時間！
+        </p>
+
+        <h3>遺書</h3>
+        <p>
+          玩家死亡前可以留下遺書，在下一個白天會顯示給所有玩家看。<br>
+          遺書可以傳達最後的情報或遺言。
+        </p>
+
+        <h3>Tripcode</h3>
+        <p>
+          使用 Tripcode 可以驗證身份，防止冒名頂替。<br>
+          在名稱後面加上 #密碼，系統會自動生成唯一的識別碼。
+        </p>
+      </div>
+
+      <!-- 注意事項 -->
+      <div class="section">
+        <h2>📝 注意事項</h2>
+        <ul>
+          <li>請遵守遊戲規則，不要進行作弊行為</li>
+          <li>請尊重其他玩家，不要進行辱罵或人身攻擊</li>
+          <li>死亡後不要在遊戲外討論遊戲內容</li>
+          <li>請保持良好的網路禮儀</li>
+          <li>如有問題請聯繫管理員</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <a href="/" class="back-btn">← 返回首頁</a>
+</body>
+</html>

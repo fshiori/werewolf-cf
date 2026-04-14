@@ -11,7 +11,20 @@ import { StatsManager } from '../utils/stats-manager';
 import { adminRateLimiter } from '../utils/rate-limiter';
 import { escapeHtml } from '../utils/security';
 
-const app = new Hono<{ Bindings: Env }>();
+// Admin Session 類型
+interface AdminSession {
+  sessionId: string;
+  username: string;
+  createdAt: number;
+  expiresAt: number;
+}
+
+// 擴展 Hono 的 Variables
+type AdminVariables = {
+  adminSession: AdminSession;
+};
+
+const app = new Hono<{ Bindings: Env; Variables: AdminVariables }>();
 
 // CORS
 app.use('*', cors());
@@ -54,6 +67,83 @@ async function rateLimit(c: any, next: any) {
 // ==================== 管理員認證 ====================
 
 /**
+ * 調試端點：檢查 KV 值
+ */
+app.get('/api/admin/debug/kv', async (c) => {
+  try {
+    const adminManager = new AdminManager(c.env.KV);
+    const data = await c.env.KV.get('admin:default', 'json');
+
+    return c.json({
+      exists: !!data,
+      data: data,
+      type: typeof data
+    });
+  } catch (error) {
+    return c.json({
+      error: String(error),
+      message: error instanceof Error ? error.message : 'Unknown error'
+    }, 500);
+  }
+});
+
+/**
+ * 測試 Session 建立
+ */
+app.get('/api/admin/test/session', async (c) => {
+  try {
+    const { createAdminSession } = await import('../utils/admin-manager');
+    const session = createAdminSession('admin');
+
+    return c.json({
+      success: true,
+      session: session,
+      hasSessionId: !!session.sessionId,
+      hasUsername: !!session.username
+    });
+  } catch (error) {
+    return c.json({
+      error: String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    }, 500);
+  }
+});
+
+/**
+ * 管理員登入調試
+ */
+app.post('/api/admin/login/debug', async (c) => {
+  try {
+    const { username, password } = await c.req.json();
+
+    // 讀取 KV 值
+    const data = await c.env.KV.get('admin:default', 'json') as { passwordHash?: string; username?: string } | null;
+
+    // 計算雜湊（直接實作）
+    const ADMIN_SALT = 'werewolf-admin-salt-2026';
+    const encoder = new TextEncoder();
+    const data_bytes = encoder.encode(password + ADMIN_SALT);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data_bytes);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const inputHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+    return c.json({
+      input: { username, password },
+      kvData: data,
+      inputHash: inputHash,
+      storedHash: data?.passwordHash,
+      usernameMatch: data?.username === username,
+      hashMatch: data?.passwordHash === inputHash
+    });
+  } catch (error) {
+    return c.json({
+      error: String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    }, 500);
+  }
+});
+
+/**
  * 管理員登入
  */
 app.post('/api/admin/login', async (c) => {
@@ -77,8 +167,9 @@ app.post('/api/admin/login', async (c) => {
       return c.json({ error: 'Invalid credentials' }, 401);
     }
 
-    // 建立 Session
-    const session = adminManager.createAdminSession(username);
+    // 建立 Session（使用獨立函數）
+    const { createAdminSession } = await import('../utils/admin-manager');
+    const session = createAdminSession(username);
     await adminManager.saveSession(session);
 
     return c.json({

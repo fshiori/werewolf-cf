@@ -10,7 +10,7 @@ import { Hono } from 'hono';
 interface MockEnv {
   KV: any;
   DB: any;
-  ROOM: any;
+  WEREWOLF_ROOM: any;
 }
 
 class MockKV {
@@ -47,7 +47,7 @@ function createMockEnv(): MockEnv {
   return {
     KV: new MockKV(),
     DB: null,
-    ROOM: null
+    WEREWOLF_ROOM: null
   };
 }
 

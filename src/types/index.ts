@@ -2,15 +2,18 @@
  * 全域型別定義
  */
 
+import type { D1Database, KVNamespace, DurableObjectNamespace, R2Bucket, DurableObject } from '@cloudflare/workers-types';
+
 // 環境變數
 export interface Env {
   DB: D1Database;
   KV: KVNamespace;
-  ROOM: DurableObjectNamespace<Room>;
+  WEREWOLF_ROOM: DurableObjectNamespace<any>;
   R2: R2Bucket;
   ENVIRONMENT: 'development' | 'production';
   ADMIN_PASSWORD?: string;
   JWT_SECRET?: string;
+  ASSETS?: any; // 靜態資源（Cloudflare Assets Fetcher）
 }
 
 // 玩家角色類型

@@ -1,12 +1,8 @@
-import { defineWorkersConfig } from '@cloudflare/vitest-pool-workers';
+import { defineConfig } from 'vitest/config';
 
-export default defineWorkersConfig({
+export default defineConfig({
   test: {
-    poolOptions: {
-      workers: {
-        singleWorker: true,
-        minified: true,
-      },
-    },
+    globals: true,
+    environment: 'node',
   },
 });

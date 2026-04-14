@@ -2,6 +2,8 @@
  * 統計系統
  */
 
+import type { KVNamespace } from '@cloudflare/workers-types';
+
 /**
  * 統計資料
  */

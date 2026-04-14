@@ -200,6 +200,52 @@
       color: #999;
       margin-top: 5px;
     }
+
+    .nav-links {
+      margin-top: 40px;
+      padding-top: 30px;
+      border-top: 2px solid #f0f0f0;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .nav-link {
+      display: flex;
+      align-items: center;
+      padding: 12px 16px;
+      background: #f9f9f9;
+      border-radius: 8px;
+      text-decoration: none;
+      color: #333;
+      transition: all 0.3s;
+      font-size: 14px;
+    }
+
+    .nav-link:hover {
+      background: #f0f0f0;
+      transform: translateX(5px);
+    }
+
+    .nav-link .icon {
+      font-size: 20px;
+      margin-right: 10px;
+    }
+
+    .nav-link .text {
+      flex: 1;
+    }
+
+    .nav-link .text strong {
+      display: block;
+      color: #333;
+      margin-bottom: 2px;
+    }
+
+    .nav-link .text span {
+      font-size: 12px;
+      color: #999;
+    }
   </style>
 </head>
 <body>
@@ -231,6 +277,43 @@
         </div>
       </div>
 
+      <div class="form-group">
+        <label for="roomPassword">房間密碼（選填）</label>
+        <input type="password" id="roomPassword" placeholder="留空為公開房間">
+      </div>
+
+      <details style="margin-bottom: 20px;">
+        <summary style="cursor: pointer; color: #667eea; font-weight: 600; padding: 10px 0;">
+          ⚙️ 進階設定
+        </summary>
+        <div style="margin-top: 15px; padding: 15px; background: #f9f9f9; border-radius: 8px;">
+          <div class="room-inputs">
+            <div class="form-group">
+              <label for="timeLimit">投票時間限制（秒）</label>
+              <input type="number" id="timeLimit" value="300" min="60" max="1800">
+            </div>
+            <div class="form-group">
+              <label for="silenceMode">
+                <input type="checkbox" id="silenceMode" checked style="width: auto; margin-right: 8px;">
+                啟用沈默模式
+              </label>
+            </div>
+          </div>
+          <div class="room-inputs">
+            <div class="form-group">
+              <label for="allowSpectators">
+                <input type="checkbox" id="allowSpectators" checked style="width: auto; margin-right: 8px;">
+                允許觀戰
+              </label>
+            </div>
+            <div class="form-group">
+              <label for="maxSpectators">最大觀戰人數</label>
+              <input type="number" id="maxSpectators" value="10" min="0" max="50">
+            </div>
+          </div>
+        </div>
+      </details>
+
       <button onclick="createRoom()">建立房間</button>
     </div>
 
@@ -245,6 +328,11 @@
       </div>
 
       <div class="form-group">
+        <label for="joinPassword">房間密碼（如需）</label>
+        <input type="password" id="joinPassword" placeholder="私人房間需要密碼">
+      </div>
+
+      <div class="form-group">
         <label for="username">使用者名稱</label>
         <input type="text" id="username" placeholder="例如：Eric" maxlength="20">
       </div>
@@ -255,8 +343,8 @@
       </div>
 
       <div class="form-group">
-        <label for="password">Tripcode 密碼（選填）</label>
-        <input type="password" id="password" placeholder="用於驗證身份">
+        <label for="tripcodePassword">Tripcode 密碼（選填）</label>
+        <input type="password" id="tripcodePassword" placeholder="用於驗證身份">
       </div>
 
       <button onclick="joinRoom()">加入房間</button>
@@ -265,6 +353,56 @@
     <div id="loading" class="loading">
       <div class="spinner"></div>
       <p style="margin-top: 10px; color: #999;">載入中...</p>
+    </div>
+
+    <div class="nav-links">
+      <a href="/logs.html" class="nav-link">
+        <span class="icon">📜</span>
+        <span class="text">
+          <strong>遊戲記錄</strong>
+          <span>查看所有遊戲歷史</span>
+        </span>
+      </a>
+
+      <a href="/stats.html" class="nav-link">
+        <span class="icon">📊</span>
+        <span class="text">
+          <strong>個人統計</strong>
+          <span>查詢玩家資料</span>
+        </span>
+      </a>
+
+      <a href="/votes.html" class="nav-link">
+        <span class="icon">🗳️</span>
+        <span class="text">
+          <strong>投票統計</strong>
+          <span>查看投票記錄</span>
+        </span>
+      </a>
+
+      <a href="/rule.html" class="nav-link">
+        <span class="icon">📖</span>
+        <span class="text">
+          <strong>遊戲規則</strong>
+          <span>新手必讀</span>
+        </span>
+      </a>
+
+      <a href="/settings.html" class="nav-link">
+        <span class="icon">⚙️</span>
+        <span class="text">
+          <strong>玩家設定</strong>
+          <span>NG 用戶管理</span>
+        </span>
+      </a>
+
+      <a href="/manage.html" class="nav-link">
+        <span class="icon">🛡️</span>
+        <span class="text">
+          <strong>管理面板</strong>
+          <span>黑白名單</span>
+        </span>
+      </a>
     </div>
   </div>
 
@@ -287,6 +425,11 @@
       const roomComment = document.getElementById('roomComment').value.trim();
       const maxUser = parseInt(document.getElementById('maxUser').value);
       const iconNo = parseInt(document.getElementById('iconNo').value);
+      const roomPassword = document.getElementById('roomPassword').value.trim();
+      const timeLimit = parseInt(document.getElementById('timeLimit').value);
+      const silenceMode = document.getElementById('silenceMode').checked;
+      const allowSpectators = document.getElementById('allowSpectators').checked;
+      const maxSpectators = parseInt(document.getElementById('maxSpectators').value);
 
       if (!roomName) {
         showError('請輸入房間名稱');
@@ -296,17 +439,35 @@
       showLoading(true);
 
       try {
+        // 準備遊戲選項 JSON
+        const gameOption = JSON.stringify({
+          timeLimit,
+          silenceMode,
+          allowSpectators,
+          maxSpectators
+        });
+
         const response = await fetch(`${API_BASE}/api/rooms`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ roomName, roomComment, maxUser })
+          body: JSON.stringify({
+            roomName,
+            roomComment,
+            maxUser,
+            gameOption,
+            password: roomPassword || undefined
+          })
         });
 
         const data = await response.json();
 
         if (data.success) {
-          // 房間建立成功，跳轉到遊戲頁面
-          window.location.href = `/game.html?roomNo=${data.roomNo}&iconNo=${iconNo}`;
+          // 房間建立成功，儲存房主密碼（如果有）
+          if (roomPassword) {
+            sessionStorage.setItem(`room_password_${data.roomNo}`, roomPassword);
+          }
+          // 跳轉到遊戲頁面
+          window.location.href = `/game.html?roomNo=${data.roomNo}&iconNo=${iconNo}&isHost=true`;
         } else {
           showError(data.error || '建立房間失敗');
         }
@@ -320,9 +481,10 @@
 
     async function joinRoom() {
       const roomNo = document.getElementById('joinRoomNo').value.trim();
+      const joinPassword = document.getElementById('joinPassword').value.trim();
       const username = document.getElementById('username').value.trim();
       const displayName = document.getElementById('displayName').value.trim();
-      const password = document.getElementById('password').value;
+      const tripcodePassword = document.getElementById('tripcodePassword').value;
 
       if (!roomNo || !username || !displayName) {
         showError('請填寫所有必填欄位');
@@ -332,13 +494,30 @@
       showLoading(true);
 
       try {
+        // 先檢查房間是否存在並驗證密碼
+        const roomResponse = await fetch(`${API_BASE}/api/rooms/${roomNo}`);
+        if (!roomResponse.ok) {
+          showError('房間不存在');
+          showLoading(false);
+          return;
+        }
+
+        const roomData = await roomResponse.json();
+
+        // 檢查是否為私人房間
+        if (roomData.is_private && roomData.password !== joinPassword) {
+          showError('房間密碼錯誤');
+          showLoading(false);
+          return;
+        }
+
         // 生成 tripcode（如果有密碼）
         let trip = '';
-        if (password) {
+        if (tripcodePassword) {
           const tripResponse = await fetch(`${API_BASE}/api/trip`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ password })
+            body: JSON.stringify({ password: tripcodePassword })
           });
           const tripData = await tripResponse.json();
           trip = tripData.trip || '';
@@ -353,15 +532,19 @@
             handleName: displayName,
             trip,
             iconNo: 1,
-            sex: 'male'
+            sex: 'male',
+            password: joinPassword
           })
         });
 
         const data = await response.json();
 
         if (data.success) {
-          // 加入成功，儲存 session 並跳轉
+          // 加入成功，儲存 session 和密碼
           localStorage.setItem(`session_${roomNo}`, data.sessionId);
+          if (joinPassword) {
+            sessionStorage.setItem(`room_password_${roomNo}`, joinPassword);
+          }
           window.location.href = `/game.html?roomNo=${roomNo}`;
         } else {
           showError(data.error || '加入房間失敗');
