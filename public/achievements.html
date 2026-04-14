@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>成就殿堂 - Werewolf CF</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Microsoft JhengHei', 'PingFang TC', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .header {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .header h1 {
+      color: #1e3c72;
+      margin-bottom: 8px;
+    }
+
+    .header p {
+      color: #666;
+    }
+
+    .back-link {
+      display: inline-block;
+      padding: 10px 20px;
+      background: white;
+      color: #667eea;
+      text-decoration: none;
+      border-radius: 6px;
+      margin-bottom: 20px;
+      transition: all 0.3s;
+      font-weight: bold;
+    }
+
+    .back-link:hover {
+      background: #f8f9fa;
+      transform: translateX(-5px);
+    }
+
+    .search-box {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+
+    .search-box h2 {
+      color: #1e3c72;
+      margin-bottom: 15px;
+    }
+
+    .search-form {
+      display: flex;
+      gap: 15px;
+      align-items: center;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      padding: 12px 20px;
+      border: 2px solid #667eea;
+      border-radius: 6px;
+      font-size: 16px;
+      outline: none;
+      transition: border-color 0.3s;
+    }
+
+    input[type="text"]:focus {
+      border-color: #764ba2;
+    }
+
+    button {
+      padding: 12px 30px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-weight: bold;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    .player-info {
+      background: white;
+      padding: 20px 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+      display: none;
+    }
+
+    .player-info.active {
+      display: block;
+    }
+
+    .player-info h2 {
+      color: #1e3c72;
+      margin-bottom: 10px;
+    }
+
+    .player-info .progress {
+      background: #f0f0f0;
+      border-radius: 10px;
+      height: 24px;
+      overflow: hidden;
+      margin-top: 10px;
+    }
+
+    .player-info .progress-bar {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      height: 100%;
+      border-radius: 10px;
+      transition: width 0.5s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    .section-title {
+      background: white;
+      padding: 15px 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      margin-bottom: 15px;
+      color: #1e3c72;
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    .achievements-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 15px;
+      margin-bottom: 30px;
+    }
+
+    .achievement-card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      transition: all 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .achievement-card.unlocked {
+      border: 2px solid #667eea;
+      background: linear-gradient(135deg, #ffffff 0%, #f0ecff 100%);
+    }
+
+    .achievement-card.unlocked::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .achievement-card.locked {
+      opacity: 0.5;
+      filter: grayscale(0.8);
+      border: 2px solid transparent;
+    }
+
+    .achievement-card.unlocked:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 30px rgba(102, 126, 234, 0.3);
+    }
+
+    .achievement-icon {
+      font-size: 40px;
+      min-width: 50px;
+      text-align: center;
+    }
+
+    .achievement-info {
+      flex: 1;
+    }
+
+    .achievement-name {
+      font-weight: bold;
+      color: #1e3c72;
+      font-size: 16px;
+      margin-bottom: 4px;
+    }
+
+    .achievement-desc {
+      color: #888;
+      font-size: 14px;
+    }
+
+    .achievement-date {
+      font-size: 12px;
+      color: #aaa;
+      margin-top: 4px;
+    }
+
+    .locked-badge {
+      background: #e0e0e0;
+      color: #999;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: bold;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #666;
+    }
+
+    .error {
+      background: #ffebee;
+      padding: 20px;
+      border-radius: 12px;
+      color: #c62828;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    @media (max-width: 600px) {
+      .search-form {
+        flex-direction: column;
+      }
+      input[type="text"] {
+        width: 100%;
+      }
+      button {
+        width: 100%;
+      }
+      .achievements-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <a href="/" class="back-link">← 返回首頁</a>
+
+    <div class="header">
+      <h1>🏆 成就殿堂</h1>
+      <p>完成各種挑戰，解鎖專屬成就</p>
+    </div>
+
+    <div class="search-box">
+      <h2>🔍 查詢成就</h2>
+      <div class="search-form">
+        <input type="text" id="tripInput" placeholder="輸入 Tripcode（例如：abc1234567）">
+        <button onclick="searchAchievements()">查詢</button>
+      </div>
+    </div>
+
+    <div id="playerInfo" class="player-info">
+      <h2>🎮 玩家：<span id="tripDisplay"></span></h2>
+      <p id="achievementCount"></p>
+      <div class="progress">
+        <div class="progress-bar" id="progressBar">0%</div>
+      </div>
+    </div>
+
+    <div class="section-title">🎖️ 所有成就</div>
+    <div class="achievements-grid" id="achievementsGrid">
+      <div class="loading">載入中...</div>
+    </div>
+  </div>
+
+  <script>
+    let allDefinitions = [];
+    let unlockedKeys = new Set();
+
+    // 載入成就定義
+    async function loadDefinitions() {
+      try {
+        const response = await fetch('/api/achievements/definitions');
+        const data = await response.json();
+        allDefinitions = data.achievements || [];
+        renderAchievements();
+      } catch (error) {
+        console.error('Failed to load definitions:', error);
+        document.getElementById('achievementsGrid').innerHTML =
+          '<div class="error">無法載入成就定義</div>';
+      }
+    }
+
+    // 搜尋成就
+    async function searchAchievements() {
+      const trip = document.getElementById('tripInput').value.trim();
+      if (!trip) {
+        alert('請輸入 Tripcode');
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/achievements/${encodeURIComponent(trip)}`);
+        const data = await response.json();
+
+        if (response.ok) {
+          unlockedKeys = new Set(
+            (data.achievements || []).map(a => a.achievement_key)
+          );
+
+          // 顯示玩家資訊
+          const playerInfo = document.getElementById('playerInfo');
+          document.getElementById('tripDisplay').textContent = trip;
+
+          const unlocked = unlockedKeys.size;
+          const total = allDefinitions.length;
+          const percent = total > 0 ? Math.round(unlocked / total * 100) : 0;
+
+          document.getElementById('achievementCount').textContent =
+            `已解鎖 ${unlocked} / ${total} 個成就`;
+
+          const progressBar = document.getElementById('progressBar');
+          progressBar.style.width = percent + '%';
+          progressBar.textContent = percent + '%';
+
+          playerInfo.classList.add('active');
+
+          renderAchievements(data.achievements || []);
+        } else {
+          document.getElementById('achievementsGrid').innerHTML =
+            `<div class="error">${data.error || '查詢失敗'}</div>`;
+        }
+      } catch (error) {
+        console.error('Failed to search achievements:', error);
+        alert('查詢失敗');
+      }
+    }
+
+    // 渲染成就卡片
+    function renderAchievements(unlockedList) {
+      const grid = document.getElementById('achievementsGrid');
+
+      if (allDefinitions.length === 0) {
+        grid.innerHTML = '<div class="loading">載入中...</div>';
+        return;
+      }
+
+      // 建立 unlocked_at 對照表
+      const unlockDateMap = {};
+      if (unlockedList) {
+        unlockedList.forEach(a => {
+          unlockDateMap[a.achievement_key] = a.unlocked_at;
+        });
+      }
+
+      grid.innerHTML = allDefinitions.map(def => {
+        const isUnlocked = unlockedKeys.has(def.key);
+        const dateStr = isUnlocked && unlockDateMap[def.key]
+          ? new Date(unlockDateMap[def.key]).toLocaleDateString('zh-TW')
+          : '';
+
+        return `
+          <div class="achievement-card ${isUnlocked ? 'unlocked' : 'locked'}">
+            <div class="achievement-icon">${def.icon}</div>
+            <div class="achievement-info">
+              <div class="achievement-name">${def.name}</div>
+              <div class="achievement-desc">${def.description}</div>
+              ${isUnlocked
+                ? `<div class="achievement-date">✅ 解鎖於 ${dateStr}</div>`
+                : '<span class="locked-badge">🔒 未解鎖</span>'
+              }
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Enter 鍵搜尋
+    document.getElementById('tripInput').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        searchAchievements();
+      }
+    });
+
+    // 初始化
+    loadDefinitions();
+  </script>
+</body>
+</html>

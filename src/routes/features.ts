@@ -952,4 +952,246 @@ app.get('/api/game-events/:roomNo', async (c) => {
   }
 });
 
+// ==================== 戰局回放 ====================
+
+/**
+ * 獲取完整遊戲回放資料
+ * GET /api/replay/:roomNo
+ */
+app.get('/api/replay/:roomNo', async (c) => {
+  try {
+    const roomNo = c.req.param('roomNo');
+
+    // 1. 取得遊戲摘要
+    const gameStmt = c.env.DB.prepare('SELECT * FROM game_logs WHERE room_no = ?');
+    const gameResult = await gameStmt.bind(roomNo).all();
+
+    if (gameResult.results.length === 0) {
+      return c.json({ error: 'Game not found' }, 404);
+    }
+
+    // 2. 取得事件時間軸
+    const eventsStmt = c.env.DB.prepare(
+      'SELECT * FROM game_events WHERE room_no = ? ORDER BY date ASC, time ASC'
+    );
+    const eventsResult = await eventsStmt.bind(roomNo).all();
+
+    // 3. 取得投票記錄
+    const votesStmt = c.env.DB.prepare(
+      'SELECT * FROM vote_history WHERE room_no = ? ORDER BY date ASC, time ASC'
+    );
+    const votesResult = await votesStmt.bind(roomNo).all();
+
+    // 4. 取得遺書
+    const willsStmt = c.env.DB.prepare(
+      'SELECT * FROM wills WHERE room_no = ? ORDER BY date ASC, time ASC'
+    );
+    const willsResult = await willsStmt.bind(roomNo).all();
+
+    return c.json({
+      game: gameResult.results[0],
+      events: eventsResult.results,
+      votes: votesResult.results,
+      wills: willsResult.results,
+    });
+  } catch (error) {
+    console.error('Get replay error:', error);
+    return c.json({ error: 'Failed to get replay data' }, 500);
+  }
+});
+
+// ==================== 成就系統 ====================
+
+/**
+ * 成就定義（寫在程式碼中，不存 DB）
+ */
+const ACHIEVEMENT_DEFINITIONS: Record<string, { key: string; name: string; description: string; icon: string }> = {
+  first_win: {
+    key: 'first_win',
+    name: '🏆 初次勝利',
+    description: '贏得第一場遊戲',
+    icon: '🏆'
+  },
+  wolf_master: {
+    key: 'wolf_master',
+    name: '🐺 狼王',
+    description: '以狼人身分獲勝 5 次',
+    icon: '🐺'
+  },
+  seer_expert: {
+    key: 'seer_expert',
+    name: '🔮 占卜大師',
+    description: '以預言家身分獲勝 3 次',
+    icon: '🔮'
+  },
+  hunter_master: {
+    key: 'hunter_master',
+    name: '🏹 獵人宗師',
+    description: '以獵人身分獲勝 3 次',
+    icon: '🏹'
+  },
+  survivor: {
+    key: 'survivor',
+    name: '🛡️ 生存專家',
+    description: '存活 5 場遊戲',
+    icon: '🛡️'
+  },
+  veteran: {
+    key: 'veteran',
+    name: '🎖️ 老兵',
+    description: '遊玩 50 場遊戲',
+    icon: '🎖️'
+  },
+  popular: {
+    key: 'popular',
+    name: '⭐ 人氣之星',
+    description: '被觀戰 10 次',
+    icon: '⭐'
+  },
+  bbs_active: {
+    key: 'bbs_active',
+    name: '📝 社群活躍',
+    description: '在 BBS 發文 10 篇',
+    icon: '📝'
+  },
+  streak_win: {
+    key: 'streak_win',
+    name: '🔥 連勝達人',
+    description: '連續獲勝 3 場',
+    icon: '🔥'
+  },
+  perfect_game: {
+    key: 'perfect_game',
+    name: '💎 完美對局',
+    description: '在一場遊戲中存活並獲勝',
+    icon: '💎'
+  }
+};
+
+/**
+ * 取得所有成就定義
+ */
+app.get('/api/achievements/definitions', (c) => {
+  return c.json({
+    achievements: Object.values(ACHIEVEMENT_DEFINITIONS)
+  });
+});
+
+/**
+ * 取得玩家成就列表
+ */
+app.get('/api/achievements/:trip', async (c) => {
+  try {
+    const trip = c.req.param('trip');
+    const stmt = c.env.DB.prepare(
+      'SELECT achievement_key, unlocked_at FROM achievements WHERE trip = ? ORDER BY unlocked_at ASC'
+    );
+    const result = await stmt.bind(trip).all();
+
+    return c.json({
+      trip,
+      achievements: result.results,
+      count: result.results.length,
+      definitions: ACHIEVEMENT_DEFINITIONS
+    });
+  } catch (error) {
+    console.error('Get achievements error:', error);
+    return c.json({ error: 'Failed to get achievements' }, 500);
+  }
+});
+
+/**
+ * 檢查並解鎖新成就
+ * Body: { trip: string, stats?: {...} }
+ */
+app.post('/api/achievements/check', async (c) => {
+  try {
+    const data = await c.req.json<{
+      trip: string;
+      stats?: {
+        human_wins?: number;
+        wolf_wins?: number;
+        fox_wins?: number;
+        total_games?: number;
+        survivor_count?: number;
+        role_history?: string;
+        watch_count?: number;
+        bbs_post_count?: number;
+        streak_wins?: number;
+        perfect_games?: number;
+      };
+    }>();
+
+    if (!data.trip) {
+      return c.json({ error: 'trip is required' }, 400);
+    }
+
+    const stats = data.stats || {};
+    const newlyUnlocked: string[] = [];
+
+    // 取得已解鎖的成就
+    const existingStmt = c.env.DB.prepare(
+      'SELECT achievement_key FROM achievements WHERE trip = ?'
+    );
+    const existingResult = await existingStmt.bind(data.trip).all();
+    const unlockedKeys = new Set(
+      (existingResult.results as { achievement_key: string }[]).map(r => r.achievement_key)
+    );
+
+    // 解析 role_history
+    let roleHistory: Record<string, number> = {};
+    if (stats.role_history) {
+      try {
+        roleHistory = JSON.parse(stats.role_history) as Record<string, number>;
+      } catch (e) {
+        // ignore
+      }
+    }
+
+    const totalWins = (stats.human_wins || 0) + (stats.wolf_wins || 0) + (stats.fox_wins || 0);
+
+    // 檢查各成就
+    const checks: [string, boolean][] = [
+      ['first_win', totalWins >= 1],
+      ['wolf_master', (stats.wolf_wins || 0) >= 5],
+      ['seer_expert', (roleHistory['mage'] || 0) >= 3],
+      ['hunter_master', (roleHistory['guard'] || 0) >= 3],
+      ['survivor', (stats.survivor_count || 0) >= 5],
+      ['veteran', (stats.total_games || 0) >= 50],
+      ['popular', (stats.watch_count || 0) >= 10],
+      ['bbs_active', (stats.bbs_post_count || 0) >= 10],
+      ['streak_win', (stats.streak_wins || 0) >= 3],
+      ['perfect_game', (stats.perfect_games || 0) >= 1],
+    ];
+
+    const now = Date.now();
+    for (const [key, passed] of checks) {
+      if (passed && !unlockedKeys.has(key)) {
+        const insertStmt = c.env.DB.prepare(
+          'INSERT OR IGNORE INTO achievements (trip, achievement_key, unlocked_at) VALUES (?, ?, ?)'
+        );
+        await insertStmt.bind(data.trip, key, now).all();
+        newlyUnlocked.push(key);
+      }
+    }
+
+    // 取得更新後的完整成就列表
+    const updatedStmt = c.env.DB.prepare(
+      'SELECT achievement_key, unlocked_at FROM achievements WHERE trip = ? ORDER BY unlocked_at ASC'
+    );
+    const updatedResult = await updatedStmt.bind(data.trip).all();
+
+    return c.json({
+      success: true,
+      trip: data.trip,
+      newlyUnlocked,
+      achievements: updatedResult.results,
+      count: updatedResult.results.length
+    });
+  } catch (error) {
+    console.error('Check achievements error:', error);
+    return c.json({ error: 'Failed to check achievements' }, 500);
+  }
+});
+
 export default app;

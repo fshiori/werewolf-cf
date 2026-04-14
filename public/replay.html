@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>戰局回放 - 人狼CF</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', 'Noto Sans TC', sans-serif;
+    background: linear-gradient(135deg, #2d1b69 0%, #6c3483 40%, #8e44ad 70%, #a569bd 100%);
+    min-height: 100vh;
+    color: #333;
+  }
+
+  /* Header */
+  .header {
+    background: rgba(0,0,0,0.3);
+    backdrop-filter: blur(10px);
+    padding: 16px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+  }
+  .header h1 {
+    color: #fff;
+    font-size: 1.4rem;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  }
+  .header a {
+    color: #d4b5ff;
+    text-decoration: none;
+    font-size: 0.9rem;
+    padding: 6px 16px;
+    border: 1px solid rgba(212,181,255,0.4);
+    border-radius: 20px;
+    transition: all 0.2s;
+  }
+  .header a:hover { background: rgba(212,181,255,0.15); color: #fff; }
+
+  .container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+
+  /* Card */
+  .card {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+
+  /* Room Selector */
+  .selector-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: #4a235a;
+  }
+  .room-list {
+    display: grid;
+    gap: 8px;
+    max-height: 240px;
+    overflow-y: auto;
+  }
+  .room-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    border-radius: 10px;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: all 0.2s;
+    background: #f8f4fc;
+  }
+  .room-item:hover { border-color: #8e44ad; background: #f0e6fa; }
+  .room-item.active { border-color: #6c3483; background: #e8d5f5; }
+  .room-item .room-no { font-weight: 700; color: #6c3483; font-size: 1rem; }
+  .room-item .room-name { color: #666; font-size: 0.85rem; margin-top: 2px; }
+  .room-item .room-meta { text-align: right; font-size: 0.8rem; color: #999; }
+  .room-item .winner-badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-top: 4px;
+  }
+  .winner-badge.human { background: #d5f5e3; color: #1e8449; }
+  .winner-badge.wolf { background: #fadbd8; color: #c0392b; }
+  .winner-badge.fox { background: #fdebd0; color: #d35400; }
+  .winner-badge.draw { background: #eaecee; color: #717d7e; }
+  .winner-badge.other { background: #ebdef0; color: #7d3c98; }
+
+  /* Game Summary */
+  .game-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .summary-item {
+    text-align: center;
+    padding: 14px 10px;
+    background: #f8f4fc;
+    border-radius: 12px;
+  }
+  .summary-item .label { font-size: 0.75rem; color: #999; text-transform: uppercase; letter-spacing: 0.5px; }
+  .summary-item .value { font-size: 1.3rem; font-weight: 700; color: #4a235a; margin-top: 4px; }
+
+  /* Playback Controls */
+  .controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    background: linear-gradient(135deg, #4a235a, #6c3483);
+    border-radius: 12px;
+    margin-bottom: 20px;
+  }
+  .controls button {
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: #fff;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .controls button:hover { background: rgba(255,255,255,0.3); }
+  .controls button:disabled { opacity: 0.3; cursor: not-allowed; }
+  .controls .progress-bar {
+    flex: 1;
+    height: 8px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 4px;
+    cursor: pointer;
+    position: relative;
+  }
+  .controls .progress-fill {
+    height: 100%;
+    background: #d4b5ff;
+    border-radius: 4px;
+    transition: width 0.3s;
+  }
+  .controls .step-info {
+    color: rgba(255,255,255,0.8);
+    font-size: 0.85rem;
+    min-width: 80px;
+    text-align: right;
+  }
+  .speed-label {
+    color: #d4b5ff;
+    font-size: 0.8rem;
+    font-weight: 600;
+    min-width: 30px;
+    text-align: center;
+  }
+
+  /* Timeline */
+  .timeline { position: relative; padding-left: 36px; }
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 14px;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: linear-gradient(to bottom, #8e44ad, #d4b5ff);
+    border-radius: 2px;
+  }
+
+  .day-group { margin-bottom: 24px; }
+  .day-header {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(135deg, #6c3483, #8e44ad);
+    color: #fff;
+    padding: 8px 18px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    margin-bottom: 12px;
+    margin-left: -22px;
+    box-shadow: 0 2px 8px rgba(108,52,131,0.3);
+  }
+
+  .event-item {
+    position: relative;
+    margin-bottom: 12px;
+    padding: 14px 18px;
+    background: #f8f4fc;
+    border-radius: 12px;
+    border-left: 4px solid #d4b5ff;
+    opacity: 0.35;
+    transform: translateY(4px);
+    transition: all 0.4s ease;
+  }
+  .event-item.revealed {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .event-item::before {
+    content: '';
+    position: absolute;
+    left: -46px;
+    top: 16px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #d4b5ff;
+    border: 3px solid #fff;
+    box-shadow: 0 0 0 2px #8e44ad;
+  }
+  .event-item.revealed::before {
+    animation: pulse 0.5s ease;
+  }
+  @keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.5); }
+    100% { transform: scale(1); }
+  }
+  .event-icon { font-size: 1.3rem; margin-right: 8px; vertical-align: middle; }
+  .event-type {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #8e44ad;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .event-desc { font-size: 0.95rem; color: #444; line-height: 1.5; }
+  .event-meta { font-size: 0.75rem; color: #aaa; margin-top: 6px; }
+
+  /* Vote section inside timeline */
+  .vote-block {
+    background: #fef9e7;
+    border-left-color: #f39c12;
+    margin-left: 20px;
+  }
+  .vote-detail {
+    font-size: 0.85rem;
+    color: #666;
+    margin-top: 6px;
+    padding: 8px 12px;
+    background: rgba(243,156,18,0.08);
+    border-radius: 8px;
+  }
+  .vote-detail span { margin-right: 14px; }
+  .vote-arrow { color: #e67e22; font-weight: 600; }
+
+  /* Will section */
+  .will-block {
+    background: #eaf2f8;
+    border-left-color: #2980b9;
+    margin-left: 20px;
+  }
+  .will-content {
+    font-style: italic;
+    color: #555;
+    margin-top: 8px;
+    padding: 10px 14px;
+    background: rgba(41,128,185,0.06);
+    border-radius: 8px;
+    border-left: 3px solid #3498db;
+  }
+
+  /* Death section */
+  .death-block {
+    background: #fdedec;
+    border-left-color: #e74c3c;
+  }
+
+  /* Empty state */
+  .empty-state {
+    text-align: center;
+    padding: 48px 24px;
+    color: rgba(255,255,255,0.6);
+  }
+  .empty-state .icon { font-size: 3rem; margin-bottom: 12px; }
+  .empty-state p { font-size: 0.95rem; }
+
+  /* Loading */
+  .loading {
+    text-align: center;
+    padding: 40px;
+    color: #8e44ad;
+    font-size: 1rem;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(142,68,173,0.3); border-radius: 3px; }
+
+  /* Responsive */
+  @media (max-width: 600px) {
+    .container { padding: 12px; }
+    .card { padding: 16px; }
+    .game-summary { grid-template-columns: repeat(2, 1fr); }
+    .controls { flex-wrap: wrap; }
+    .timeline { padding-left: 28px; }
+    .timeline::before { left: 10px; }
+    .event-item::before { left: -38px; }
+    .day-header { margin-left: -18px; font-size: 0.85rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>⚔️ 戰局回放</h1>
+  <a href="/">🏠 回到首頁</a>
+</div>
+
+<div class="container">
+  <!-- Room List -->
+  <div class="card" id="roomListCard">
+    <div class="selector-title">📋 選擇房間</div>
+    <div class="loading" id="roomLoading">載入中...</div>
+    <div class="room-list" id="roomList" style="display:none;"></div>
+  </div>
+
+  <!-- Game Replay -->
+  <div id="replayArea" style="display:none;">
+    <!-- Summary -->
+    <div class="card" id="summaryCard"></div>
+
+    <!-- Controls -->
+    <div class="controls" id="controls">
+      <button id="btnPrev" title="上一個事件">⏮</button>
+      <button id="btnPlay" title="播放/暫停">▶️</button>
+      <button id="btnNext" title="下一個事件">⏭</button>
+      <button id="btnSpeed" title="切換速度">1x</button>
+      <div class="progress-bar" id="progressBar">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+      <div class="step-info" id="stepInfo">0 / 0</div>
+    </div>
+
+    <!-- Timeline -->
+    <div class="card">
+      <div class="timeline" id="timeline"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const API_BASE = '';  // same origin
+
+// Event icon map
+const EVENT_ICONS = {
+  game_start: '🎮',
+  day_start: '☀️',
+  night_start: '🌙',
+  vote: '🗳️',
+  death: '💀',
+  will: '📝',
+  whisper: '🔒',
+  system: '⚙️',
+};
+
+const EVENT_LABELS = {
+  game_start: '遊戲開始',
+  day_start: '白天開始',
+  night_start: '夜晚來臨',
+  vote: '投票',
+  death: '死亡',
+  will: '遺書',
+  whisper: '密語',
+  system: '系統',
+};
+
+// State
+let currentData = null;
+let allItems = [];       // flat list of { type: 'event'|'vote'|'will', data, sortKey, day }
+let currentStep = -1;
+let playing = false;
+let playTimer = null;
+let speed = 1;           // 1x, 2x, 4x
+const SPEEDS = [1, 2, 4];
+let speedIdx = 0;
+let currentRoomNo = null;
+
+// ---- Init ----
+async function init() {
+  await loadRoomList();
+  document.getElementById('btnPlay').addEventListener('click', togglePlay);
+  document.getElementById('btnPrev').addEventListener('click', prevStep);
+  document.getElementById('btnNext').addEventListener('click', nextStep);
+  document.getElementById('btnSpeed').addEventListener('click', cycleSpeed);
+  document.getElementById('progressBar').addEventListener('click', onProgressClick);
+}
+
+// ---- Room List ----
+async function loadRoomList() {
+  const loading = document.getElementById('roomLoading');
+  const list = document.getElementById('roomList');
+  try {
+    const res = await fetch(`${API_BASE}/api/game-logs?limit=100`);
+    const json = await res.json();
+    const logs = json.logs || [];
+
+    if (logs.length === 0) {
+      loading.textContent = '尚無遊戲記錄';
+      return;
+    }
+
+    loading.style.display = 'none';
+    list.style.display = 'grid';
+
+    logs.forEach(log => {
+      const item = document.createElement('div');
+      item.className = 'room-item';
+      item.dataset.roomNo = log.room_no;
+
+      const winnerClass = getWinnerClass(log.winner);
+      const dateStr = log.created_at ? new Date(log.created_at).toLocaleString('zh-TW') : '';
+
+      item.innerHTML = `
+        <div>
+          <div class="room-no">#${log.room_no}</div>
+          <div class="room-name">${escapeHtml(log.room_name)}</div>
+          <div><span class="winner-badge ${winnerClass}">${escapeHtml(log.winner)}</span></div>
+        </div>
+        <div class="room-meta">
+          <div>${log.total_days}天 ${log.player_count || '?'}人</div>
+          <div>${dateStr}</div>
+        </div>
+      `;
+      item.addEventListener('click', () => loadReplay(log.room_no, item));
+      list.appendChild(item);
+    });
+  } catch (e) {
+    loading.textContent = '載入失敗：' + e.message;
+  }
+}
+
+function getWinnerClass(w) {
+  if (!w) return 'other';
+  const l = w.toLowerCase();
+  if (l.includes('human') || l.includes('村') || l.includes('人')) return 'human';
+  if (l.includes('wolf') || l.includes('狼')) return 'wolf';
+  if (l.includes('fox') || l.includes('狐')) return 'fox';
+  if (l.includes('draw') || l.includes('平')) return 'draw';
+  return 'other';
+}
+
+// ---- Load Replay ----
+async function loadReplay(roomNo, itemEl) {
+  // Highlight selected room
+  document.querySelectorAll('.room-item').forEach(el => el.classList.remove('active'));
+  if (itemEl) itemEl.classList.add('active');
+
+  currentRoomNo = roomNo;
+  stopPlay();
+
+  const area = document.getElementById('replayArea');
+  const summary = document.getElementById('summaryCard');
+  summary.innerHTML = '<div class="loading">載入回放資料...</div>';
+  area.style.display = 'block';
+
+  try {
+    const res = await fetch(`${API_BASE}/api/replay/${roomNo}`);
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || 'Failed');
+    }
+    currentData = await res.json();
+    buildTimeline();
+    renderSummary();
+    currentStep = -1;
+    showStep(0);
+  } catch (e) {
+    summary.innerHTML = `<div class="empty-state"><div class="icon">❌</div><p>載入失敗：${escapeHtml(e.message)}</p></div>`;
+  }
+}
+
+// ---- Build flat item list ----
+function buildTimeline() {
+  allItems = [];
+  const { events = [], votes = [], wills: willItems = [] } = currentData;
+
+  // Events
+  events.forEach(ev => {
+    allItems.push({ type: 'event', data: ev, sortKey: ev.time, day: ev.date });
+  });
+
+  // Votes (grouped by date)
+  const voteByDate = {};
+  (votes || []).forEach(v => {
+    if (!voteByDate[v.date]) voteByDate[v.date] = [];
+    voteByDate[v.date].push(v);
+  });
+  Object.keys(voteByDate).forEach(date => {
+    const vs = voteByDate[date];
+    const time = vs[0]?.time || 0;
+    allItems.push({ type: 'vote_group', data: vs, sortKey: time, day: parseInt(date) });
+  });
+
+  // Wills
+  willItems.forEach(w => {
+    allItems.push({ type: 'will', data: w, sortKey: w.time, day: w.date });
+  });
+
+  // Sort: by day ASC, then by sortKey ASC
+  allItems.sort((a, b) => {
+    if (a.day !== b.day) return a.day - b.day;
+    return a.sortKey - b.sortKey;
+  });
+}
+
+// ---- Render Summary ----
+function renderSummary() {
+  const g = currentData.game;
+  const card = document.getElementById('summaryCard');
+
+  let rolesHtml = '';
+  try {
+    const roles = typeof g.roles === 'string' ? JSON.parse(g.roles) : g.roles;
+    if (roles && typeof roles === 'object') {
+      Object.entries(roles).forEach(([r, c]) => {
+        rolesHtml += `<span style="display:inline-block;background:#f0e6fa;padding:2px 10px;border-radius:12px;font-size:0.8rem;margin:3px;color:#4a235a;">${escapeHtml(String(r))}×${escapeHtml(String(c))}</span>`;
+      });
+    }
+  } catch (e) {
+    if (g.roles) rolesHtml = `<span style="font-size:0.85rem;color:#666;">${escapeHtml(String(g.roles))}</span>`;
+  }
+
+  const dateStr = g.created_at ? new Date(g.created_at).toLocaleString('zh-TW') : '';
+
+  card.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <div>
+        <h2 style="font-size:1.3rem;color:#4a235a;">#${g.room_no} ${escapeHtml(g.room_name)}</h2>
+        <div style="font-size:0.8rem;color:#999;margin-top:4px;">${dateStr}</div>
+      </div>
+      <span class="winner-badge ${getWinnerClass(g.winner)}" style="font-size:1rem;padding:6px 20px;">${escapeHtml(g.winner)}</span>
+    </div>
+    <div class="game-summary">
+      <div class="summary-item"><div class="label">總天數</div><div class="value">${g.total_days}</div></div>
+      <div class="summary-item"><div class="label">玩家數</div><div class="value">${g.player_count || '?'}</div></div>
+      <div class="summary-item"><div class="label">事件數</div><div class="value">${(currentData.events || []).length}</div></div>
+      <div class="summary-item"><div class="label">投票數</div><div class="value">${(currentData.votes || []).length}</div></div>
+    </div>
+    ${rolesHtml ? '<div style="margin-top:8px;"><strong style="font-size:0.85rem;color:#6c3483;">角色配置：</strong>' + rolesHtml + '</div>' : ''}
+  `;
+}
+
+// ---- Render Timeline ----
+function renderTimeline() {
+  const timeline = document.getElementById('timeline');
+  timeline.innerHTML = '';
+
+  // Group by day
+  const groups = {};
+  allItems.forEach((item, idx) => {
+    const d = item.day || 0;
+    if (!groups[d]) groups[d] = [];
+    groups[d].push({ ...item, idx });
+  });
+
+  const dayKeys = Object.keys(groups).map(Number).sort((a, b) => a - b);
+
+  dayKeys.forEach(day => {
+    const dayGroup = document.createElement('div');
+    dayGroup.className = 'day-group';
+
+    const header = document.createElement('div');
+    header.className = 'day-header';
+    header.textContent = day === 0 ? '🎮 遊戲開始' : `📅 第 ${day} 天`;
+    dayGroup.appendChild(header);
+
+    groups[day].forEach(item => {
+      const el = document.createElement('div');
+      el.className = 'event-item';
+      el.dataset.idx = item.idx;
+
+      if (item.type === 'event') {
+        const ev = item.data;
+        const icon = EVENT_ICONS[ev.event_type] || '⚙️';
+        const label = EVENT_LABELS[ev.event_type] || ev.event_type;
+        const blockClass = ev.event_type === 'death' ? ' death-block' : '';
+        el.className += blockClass;
+        el.innerHTML = `
+          <div class="event-type"><span class="event-icon">${icon}</span>${escapeHtml(label)}</div>
+          <div class="event-desc">${escapeHtml(ev.description)}</div>
+          ${ev.related_uname ? `<div class="event-meta">相關玩家：${escapeHtml(ev.related_uname)}</div>` : ''}
+        `;
+      } else if (item.type === 'vote_group') {
+        const vs = item.data;
+        let voteHtml = '';
+        vs.forEach(v => {
+          voteHtml += `<span>${escapeHtml(v.voter_uname)} <span class="vote-arrow">→</span> ${escapeHtml(v.target_uname)}</span>`;
+        });
+        el.className += ' vote-block';
+        el.innerHTML = `
+          <div class="event-type"><span class="event-icon">🗳️</span>投票結果</div>
+          <div class="vote-detail">${voteHtml}</div>
+          <div class="event-meta">第 ${vs[0]?.date || item.day} 天</div>
+        `;
+      } else if (item.type === 'will') {
+        const w = item.data;
+        el.className += ' will-block';
+        el.innerHTML = `
+          <div class="event-type"><span class="event-icon">📝</span>遺書</div>
+          <div style="font-size:0.85rem;color:#555;margin-bottom:4px;">by <strong>${escapeHtml(w.handle_name || w.uname)}</strong></div>
+          <div class="will-content">${escapeHtml(w.will)}</div>
+          <div class="event-meta">第 ${w.date} 天</div>
+        `;
+      }
+
+      dayGroup.appendChild(el);
+    });
+
+    timeline.appendChild(dayGroup);
+  });
+}
+
+// ---- Step Controls ----
+function showStep(step) {
+  if (allItems.length === 0) return;
+  currentStep = Math.max(0, Math.min(step, allItems.length - 1));
+
+  // Reveal items up to currentStep
+  document.querySelectorAll('.event-item').forEach(el => {
+    const idx = parseInt(el.dataset.idx);
+    if (idx <= currentStep) {
+      el.classList.add('revealed');
+      // Scroll into view if this is the current item
+      if (idx === currentStep) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    } else {
+      el.classList.remove('revealed');
+    }
+  });
+
+  // Update progress
+  const pct = allItems.length > 0 ? ((currentStep + 1) / allItems.length * 100) : 0;
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('stepInfo').textContent = `${currentStep + 1} / ${allItems.length}`;
+
+  // Update buttons
+  document.getElementById('btnPrev').disabled = currentStep <= 0;
+  document.getElementById('btnNext').disabled = currentStep >= allItems.length - 1;
+}
+
+function nextStep() {
+  if (currentStep < allItems.length - 1) {
+    showStep(currentStep + 1);
+  } else {
+    stopPlay();
+  }
+}
+
+function prevStep() {
+  showStep(currentStep - 1);
+}
+
+function togglePlay() {
+  if (playing) {
+    stopPlay();
+  } else {
+    startPlay();
+  }
+}
+
+function startPlay() {
+  if (allItems.length === 0) return;
+  if (currentStep >= allItems.length - 1) {
+    currentStep = -1;
+    renderTimeline();
+  }
+  playing = true;
+  document.getElementById('btnPlay').textContent = '⏸️';
+  scheduleNext();
+}
+
+function stopPlay() {
+  playing = false;
+  clearTimeout(playTimer);
+  playTimer = null;
+  document.getElementById('btnPlay').textContent = '▶️';
+}
+
+function scheduleNext() {
+  if (!playing) return;
+  const interval = 1500 / speed;
+  playTimer = setTimeout(() => {
+    if (currentStep < allItems.length - 1) {
+      nextStep();
+      scheduleNext();
+    } else {
+      stopPlay();
+    }
+  }, interval);
+}
+
+function cycleSpeed() {
+  speedIdx = (speedIdx + 1) % SPEEDS.length;
+  speed = SPEEDS[speedIdx];
+  document.getElementById('btnSpeed').textContent = speed + 'x';
+}
+
+function onProgressClick(e) {
+  if (allItems.length === 0) return;
+  const bar = document.getElementById('progressBar');
+  const rect = bar.getBoundingClientRect();
+  const pct = (e.clientX - rect.left) / rect.width;
+  const step = Math.round(pct * allItems.length) - 1;
+  showStep(step);
+}
+
+// ---- Utils ----
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+// ---- Start ----
+init();
+</script>
+</body>
+</html>
