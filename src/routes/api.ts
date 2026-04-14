@@ -6,12 +6,13 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import type { Env } from '../types';
-import { createSessionManager } from '../utils/session-manager';
+import { createSessionManager, createSession } from '../utils/session-manager';
 import { BanManager } from '../utils/ban-manager';
 import { StatsManager } from '../utils/stats-manager';
 import { escapeHtml, sanitizeHtml } from '../utils/security';
 import { defaultRateLimiter, apiRateLimiter } from '../utils/rate-limiter';
 import adminRoutes from './admin';
+import featuresRoutes from './features';
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -71,6 +72,47 @@ async function rateLimit(c: any, next: any) {
 // ==================== 房間管理 ====================
 
 /**
+ * 調試：測試 Session 建立流程
+ */
+app.post('/api/debug/session', async (c) => {
+  try {
+    const data = await c.req.json<{
+      uname: string;
+      handleName: string;
+    }>();
+
+    const sessionManager = createSessionManager(c.env.KV);
+    const { sessionId, session } = createSession(
+      data.uname,
+      12345,
+      0,
+      data.handleName,
+      'human',
+      3600
+    );
+
+    // 儲存 session
+    await sessionManager.save(session);
+
+    // 讀回驗證
+    const saved = await sessionManager.get(sessionId);
+
+    return c.json({
+      success: true,
+      sessionId,
+      session,
+      saved: !!saved,
+      savedSession: saved
+    });
+  } catch (error) {
+    return c.json({
+      error: String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    }, 500);
+  }
+});
+
+/**
  * 建立新房間
  */
 app.post('/api/rooms', checkBan, rateLimit, async (c) => {
@@ -101,8 +143,8 @@ app.post('/api/rooms', checkBan, rateLimit, async (c) => {
     const roomNo = Date.now();
 
     // 建立 Durable Object
-    const id = c.env.ROOM.idFromName(roomNo.toString());
-    const stub = c.env.ROOM.get(id);
+    const id = c.env.WEREWOLF_ROOM.idFromName(roomNo.toString());
+    const stub = c.env.WEREWOLF_ROOM.get(id);
 
     // 初始化
     await stub.fetch(new Request('https://dummy/init', {
@@ -139,12 +181,11 @@ app.post('/api/rooms', checkBan, rateLimit, async (c) => {
 app.get('/api/rooms/:roomNo', async (c) => {
   try {
     const roomNo = c.req.param('roomNo');
-    const id = c.env.ROOM.idFromName(roomNo);
-    const stub = c.env.ROOM.get(id);
+    const id = c.env.WEREWOLF_ROOM.idFromName(roomNo);
+    const stub = c.env.WEREWOLF_ROOM.get(id);
 
-    const response = await stub.fetch(
-      new Request('https://dummy/info')
-    );
+    // @ts-ignore - TypeScript has trouble with Request type inference in Workers
+    const response = await stub.fetch(new Request('https://dummy/info'));
 
     const data = await response.json();
 
@@ -265,8 +306,8 @@ app.get('/ws/:roomNo', async (c) => {
       return c.json({ error: 'IP banned' }, 403);
     }
 
-    const id = c.env.ROOM.idFromName(roomNo);
-    const stub = c.env.ROOM.get(id);
+    const id = c.env.WEREWOLF_ROOM.idFromName(roomNo);
+    const stub = c.env.WEREWOLF_ROOM.get(id);
 
     const url = new URL(c.req.url);
     url.pathname = '/ws';
@@ -294,8 +335,8 @@ app.post('/api/trip', rateLimit, async (c) => {
 
     // 改進的 Tripcode 生成（使用 SHA-256）
     const encoder = new TextEncoder();
-    const data = encoder.encode(data.password + 'trip-salt');
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const encoded = encoder.encode(data.password + 'trip-salt');
+    const hashBuffer = await crypto.subtle.digest('SHA-256', encoded);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
     const trip = hashHex.substring(0, 10);
@@ -368,9 +409,16 @@ app.post('/api/icons', checkBan, rateLimit, async (c) => {
       return c.json({ error: 'File too large (max 100KB)' }, 400);
     }
 
+    // 將 File 轉換為 ArrayBuffer
+    const arrayBuffer = await file.arrayBuffer();
+
     // 存入 R2
     const key = `icons/${Date.now()}_${name}`;
-    await c.env.R2.put(key, file);
+    await c.env.R2.put(key, arrayBuffer, {
+      httpMetadata: {
+        contentType: file.type
+      }
+    });
 
     return c.json({
       success: true,
@@ -415,16 +463,22 @@ app.get('/icons/:filename', async (c) => {
       return c.text('Not found', 404);
     }
 
-    const headers = new Headers();
+    const headers = new Headers() as any;
     object.writeHttpMetadata(headers);
     headers.set('etag', object.httpEtag);
 
-    return new Response(object.body, { headers });
+    return new Response(object.body as any, { headers });
   } catch (error) {
     console.error('Get icon error:', error);
     return c.text('Failed to get icon', 500);
   }
 });
+
+// 掛載管理員路由
+app.route('/', adminRoutes);
+
+// 掛載新功能路由
+app.route('/', featuresRoutes);
 
 // ==================== 靜態檔案 ====================
 
@@ -435,9 +489,9 @@ app.get('/*', async (c) => {
   const url = new URL(c.req.url);
   const path = url.pathname;
 
-  // 如果是 API 請求，返回 404
+  // 跳過 API 和 WebSocket 請求（由其他路由處理）
   if (path.startsWith('/api') || path.startsWith('/ws')) {
-    return c.text('Not found', 404);
+    return c.notFound();
   }
 
   // 預設返回 index.html（SPA）
@@ -462,8 +516,5 @@ app.get('/*', async (c) => {
 
   return c.text('Frontend not deployed', 404);
 });
-
-// 掛載管理員路由
-app.route('/', adminRoutes);
 
 export default app;

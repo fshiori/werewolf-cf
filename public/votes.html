@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>投票統計 - Werewolf CF</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Microsoft JhengHei', 'PingFang TC', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .header {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .search-box {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+
+    .search-form {
+      display: flex;
+      gap: 15px;
+      align-items: center;
+    }
+
+    input[type="text"], input[type="number"] {
+      flex: 1;
+      padding: 12px 20px;
+      border: 2px solid #667eea;
+      border-radius: 6px;
+      font-size: 16px;
+    }
+
+    button {
+      padding: 12px 30px;
+      background: #667eea;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    button:hover {
+      background: #5568d3;
+    }
+
+    .vote-card {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+
+    .vote-day {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .vote-day h2 {
+      font-size: 24px;
+      margin-bottom: 5px;
+    }
+
+    .vote-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    .vote-table th,
+    .vote-table td {
+      padding: 15px;
+      text-align: left;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .vote-table th {
+      background: #f8f9fa;
+      font-weight: bold;
+      color: #1e3c72;
+    }
+
+    .vote-table tr:hover {
+      background: #f8f9fa;
+    }
+
+    .vote-type-normal {
+      color: #1976d2;
+      font-weight: bold;
+    }
+
+    .vote-type-rush {
+      color: #c62828;
+      font-weight: bold;
+    }
+
+    .vote-type-random {
+      color: #ff9800;
+      font-weight: bold;
+    }
+
+    .vote-summary {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 8px;
+      margin-top: 20px;
+    }
+
+    .vote-summary h3 {
+      color: #1e3c72;
+      margin-bottom: 15px;
+    }
+
+    .summary-bar {
+      margin-bottom: 15px;
+    }
+
+    .summary-label {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 5px;
+      color: #666;
+    }
+
+    .progress-bar {
+      height: 30px;
+      background: #f0f0f0;
+      border-radius: 15px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+      transition: width 0.5s ease;
+    }
+
+    .back-link {
+      display: inline-block;
+      padding: 10px 20px;
+      background: white;
+      color: #667eea;
+      text-decoration: none;
+      border-radius: 6px;
+      margin-bottom: 20px;
+      transition: all 0.3s;
+    }
+
+    .back-link:hover {
+      background: #f8f9fa;
+      transform: translateX(-5px);
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #666;
+    }
+
+    .no-votes {
+      text-align: center;
+      padding: 60px;
+      color: #666;
+    }
+
+    .error {
+      background: #ffebee;
+      padding: 20px;
+      border-radius: 8px;
+      color: #c62828;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <a href="/" class="back-link">← 返回首頁</a>
+
+    <div class="header">
+      <h1>📊 投票統計</h1>
+      <p>查看遊戲中的投票記錄</p>
+    </div>
+
+    <div class="search-box">
+      <div class="search-form">
+        <input type="number" id="roomNoInput" placeholder="輸入房間編號" min="1">
+        <input type="number" id="dateInput" placeholder="指定天數（選填）" min="1">
+        <button onclick="loadVotes()">查詢</button>
+      </div>
+    </div>
+
+    <div id="votesContainer"></div>
+  </div>
+
+  <script>
+    // 載入投票記錄
+    async function loadVotes() {
+      const roomNo = document.getElementById('roomNoInput').value.trim();
+      const date = document.getElementById('dateInput').value.trim();
+
+      if (!roomNo) {
+        alert('請輸入房間編號');
+        return;
+      }
+
+      let url = `/api/vote-history/${roomNo}`;
+      if (date) {
+        url += `?date=${date}`;
+      }
+
+      try {
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if (data.votes && data.votes.length > 0) {
+          displayVotes(data.votes);
+        } else {
+          document.getElementById('votesContainer').innerHTML =
+            '<div class="no-votes">📭 該房間沒有投票記錄</div>';
+        }
+      } catch (error) {
+        console.error('Failed to load votes:', error);
+        document.getElementById('votesContainer').innerHTML =
+          '<div class="error">❌ 載入失敗，請檢查房間編號</div>';
+      }
+    }
+
+    // 顯示投票記錄
+    function displayVotes(votes) {
+      // 按天分組
+      const votesByDay = {};
+      votes.forEach(vote => {
+        if (!votesByDay[vote.date]) {
+          votesByDay[vote.date] = [];
+        }
+        votesByDay[vote.date].push(vote);
+      });
+
+      const container = document.getElementById('votesContainer');
+      container.innerHTML = '';
+
+      // 按天顯示
+      Object.keys(votesByDay).sort((a, b) => a - b).forEach(day => {
+        const dayVotes = votesByDay[day];
+        const voteSummary = calculateVoteSummary(dayVotes);
+
+        const dayCard = document.createElement('div');
+        dayCard.className = 'vote-card';
+        dayCard.innerHTML = `
+          <div class="vote-day">
+            <h2>第 ${day} 天</h2>
+            <p>共 ${dayVotes.length} 票</p>
+          </div>
+
+          <table class="vote-table">
+            <thead>
+              <tr>
+                <th>投票者</th>
+                <th>目標</th>
+                <th>投票類型</th>
+                <th>時間</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${dayVotes.map(vote => `
+                <tr>
+                  <td><strong>${escapeHtml(vote.voter_uname)}</strong></td>
+                  <td><strong>${escapeHtml(vote.target_uname)}</strong></td>
+                  <td><span class="vote-type-${vote.vote_type || 'normal'}">${getVoteTypeName(vote.vote_type)}</span></td>
+                  <td>${new Date(vote.time).toLocaleTimeString('zh-TW')}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+
+          <div class="vote-summary">
+            <h3>投票結果統計</h3>
+            ${voteSummary.map(summary => `
+              <div class="summary-bar">
+                <div class="summary-label">
+                  <span><strong>${escapeHtml(summary.target)}</strong></span>
+                  <span>${summary.count} 票 (${summary.percentage}%)</span>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill" style="width: ${summary.percentage}%"></div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        `;
+
+        container.appendChild(dayCard);
+      });
+    }
+
+    // 計算投票統計
+    function calculateVoteSummary(votes) {
+      const summary = {};
+
+      votes.forEach(vote => {
+        if (!summary[vote.target_uname]) {
+          summary[vote.target_uname] = 0;
+        }
+        summary[vote.target_uname]++;
+      });
+
+      const total = votes.length;
+
+      return Object.entries(summary)
+        .map(([target, count]) => ({
+          target,
+          count,
+          percentage: ((count / total) * 100).toFixed(1)
+        }))
+        .sort((a, b) => b.count - a.count);
+    }
+
+    // 獲取投票類型名稱
+    function getVoteTypeName(type) {
+      const types = {
+        normal: '一般',
+        rush: '急行',
+        random: '隨機'
+      };
+      return types[type] || '一般';
+    }
+
+    // HTML 轉義
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // Enter 鍵搜尋
+    document.getElementById('roomNoInput').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        loadVotes();
+      }
+    });
+
+    document.getElementById('dateInput').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        loadVotes();
+      }
+    });
+  </script>
+</body>
+</html>

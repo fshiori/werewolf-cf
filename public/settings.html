@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>玩家設定 - Werewolf CF</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Microsoft JhengHei', 'PingFang TC', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .header {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .card {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+
+    .card h2 {
+      color: #1e3c72;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      color: #555;
+      font-weight: 600;
+    }
+
+    input[type="text"], textarea {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 14px;
+      transition: border-color 0.3s;
+    }
+
+    input[type="text"]:focus, textarea:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    button {
+      padding: 12px 24px;
+      background: #667eea;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    button:hover {
+      background: #5568d3;
+    }
+
+    button.danger {
+      background: #f44336;
+    }
+
+    button.danger:hover {
+      background: #d32f2f;
+    }
+
+    .ng-list {
+      margin-top: 20px;
+    }
+
+    .ng-item {
+      background: #f9f9f9;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .ng-info {
+      flex: 1;
+    }
+
+    .ng-trip {
+      font-weight: bold;
+      color: #1e3c72;
+      margin-bottom: 5px;
+    }
+
+    .ng-reason {
+      font-size: 12px;
+      color: #999;
+    }
+
+    .back-link {
+      display: inline-block;
+      padding: 10px 20px;
+      background: white;
+      color: #667eea;
+      text-decoration: none;
+      border-radius: 6px;
+      margin-bottom: 20px;
+      transition: all 0.3s;
+    }
+
+    .back-link:hover {
+      background: #f8f9fa;
+      transform: translateX(-5px);
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #999;
+    }
+
+    .error {
+      background: #ffebee;
+      color: #c62828;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      display: none;
+    }
+
+    .error.show {
+      display: block;
+    }
+
+    .success {
+      background: #e8f5e9;
+      color: #2e7d32;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      display: none;
+    }
+
+    .success.show {
+      display: block;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px;
+      color: #999;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .tab {
+      flex: 1;
+      padding: 12px;
+      background: white;
+      border: 2px solid #667eea;
+      border-radius: 8px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-weight: 600;
+    }
+
+    .tab.active {
+      background: #667eea;
+      color: white;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <a href="/" class="back-link">← 返回首頁</a>
+
+    <div class="header">
+      <h1>⚙️ 玩家設定</h1>
+      <p>管理您的 NG 用戶和個人偏好</p>
+    用戶目前沒有登入，請在遊戲中查看個人設定</p>
+
+    <div id="settingsContent" style="display: none;">
+      <div class="tabs">
+        <div class="tab active" onclick="switchTab('ng')">NG 用戶</div>
+        <div class="tab" onclick="switchTab('profile')">個人資料</div>
+      </div>
+
+      <!-- NG 用戶 -->
+      <div id="ngTab" class="tab-content active">
+        <div class="card">
+          <h2>🚫 新增 NG 用戶</h2>
+          <div id="ngError" class="error"></div>
+          <div id="ngSuccess" class="success"></div>
+
+          <div class="form-group">
+            <label for="ngTrip">對方 Tripcode</label>
+            <input type="text" id="ngTrip" placeholder="輸入不想一起玩的玩家 Tripcode">
+          </div>
+
+          <div class="form-group">
+            <label for="ngReason">原因（選填）</label>
+            <textarea id="ngReason" placeholder="例如：玩法不合、言語粗魯等"></textarea>
+          </div>
+
+          <button onclick="addNgUser()">新增 NG 用戶</button>
+        </div>
+
+        <div class="card">
+          <h2>📋 我的 NG 清單</h2>
+          <div id="ngList" class="ng-list">
+            <div class="loading">載入中...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 個人資料 -->
+      <div id="profileTab" class="tab-content">
+        <div class="card">
+          <h2>👤 個人資料</h2>
+          <div class="form-group">
+            <label>您的 Tripcode</label>
+            <input type="text" id="myTrip" readonly style="background: #f5f5f5;">
+          </div>
+
+          <div class="form-group">
+            <label>預設顯示名稱</label>
+            <input type="text" id="defaultName" placeholder="設定預設顯示名稱">
+          </div>
+
+          <div class="form-group">
+            <label>預設頭像編號</label>
+            <input type="number" id="defaultIcon" min="0" max="10" value="1">
+          </div>
+
+          <button onclick="saveProfile()">儲存設定</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentUserTrip = '';
+
+    // 頁面載入時檢查登入狀態
+    document.addEventListener('DOMContentLoaded', () => {
+      checkLoginStatus();
+    });
+
+    // 檢查登入狀態
+    function checkLoginStatus() {
+      // 從 localStorage 獲取最近的 tripcode
+      const keys = Object.keys(localStorage);
+      const tripKeys = keys.filter(key => key.startsWith('session_'));
+
+      if (tripKeys.length > 0) {
+        // 從最近的一個 session 中獲取 tripcode
+        // 注意：這需要從 session 中解析，這裡先簡化處理
+        document.getElementById('settingsContent').style.display = 'block';
+        document.querySelector('.header p').textContent = '管理您的 NG 用戶和個人偏好';
+        loadNgList();
+      } else {
+        // 未登入，顯示提示訊息
+        document.querySelector('.header p').textContent = '請先加入遊戲以使用此功能';
+      }
+    }
+
+    // 切換 Tab
+    function switchTab(tab) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+      if (tab === 'ng') {
+        document.querySelector('.tab:nth-child(1)').classList.add('active');
+        document.getElementById('ngTab').classList.add('active');
+      } else {
+        document.querySelector('.tab:nth-child(2)').classList.add('active');
+        document.getElementById('profileTab').classList.add('active');
+      }
+    }
+
+    // 新增 NG 用戶
+    async function addNgUser() {
+      const ngTrip = document.getElementById('ngTrip').value.trim();
+      const reason = document.getElementById('ngReason').value.trim();
+
+      if (!ngTrip) {
+        showNgError('請輸入對方 Tripcode');
+        return;
+      }
+
+      if (!currentUserTrip) {
+        showNgError('請先登入');
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/ng-users', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            trip: currentUserTrip,
+            ngTrip,
+            reason
+          })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          showNgSuccess('NG 用戶新增成功');
+          document.getElementById('ngTrip').value = '';
+          document.getElementById('ngReason').value = '';
+          loadNgList();
+        } else {
+          showNgError(data.error || '新增失敗');
+        }
+      } catch (error) {
+        console.error('Add NG user error:', error);
+        showNgError('網路錯誤，請稍後再試');
+      }
+    }
+
+    // 載入 NG 清單
+    async function loadNgList() {
+      if (!currentUserTrip) {
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/ng-users/${currentUserTrip}`);
+        const data = await response.json();
+
+        const container = document.getElementById('ngList');
+
+        if (data.ngUsers && data.ngUsers.length > 0) {
+          container.innerHTML = data.ngUsers.map(ng => `
+            <div class="ng-item">
+              <div class="ng-info">
+                <div class="ng-trip"><code>${escapeHtml(ng.ng_trip)}</code></div>
+                ${ng.reason ? `<div class="ng-reason">${escapeHtml(ng.reason)}</div>` : ''}
+              </div>
+              <button class="danger" onclick="removeNgUser(${ng.id})">移除</button>
+            </div>
+          `).join('');
+        } else {
+          container.innerHTML = '<div class="empty-state">📭 尚沒有 NG 用戶</div>';
+        }
+      } catch (error) {
+        console.error('Load NG list error:', error);
+        document.getElementById('ngList').innerHTML = '<div class="error">載入失敗</div>';
+      }
+    }
+
+    // 移除 NG 用戶
+    async function removeNgUser(id) {
+      if (!confirm('確定要移除此 NG 用戶嗎？')) {
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/ng-users/${id}`, {
+          method: 'DELETE'
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          showNgSuccess('NG 用戶已移除');
+          loadNgList();
+        } else {
+          showNgError(data.error || '移除失敗');
+        }
+      } catch (error) {
+        console.error('Remove NG user error:', error);
+        showNgError('網路錯誤，請稍後再試');
+      }
+    }
+
+    // 儲存個人資料
+    function saveProfile() {
+      const defaultName = document.getElementById('defaultName').value.trim();
+      const defaultIcon = document.getElementById('defaultIcon').value;
+
+      // 儲存到 localStorage
+      localStorage.setItem('default_name', defaultName);
+      localStorage.setItem('default_icon', defaultIcon);
+
+      showNgSuccess('設定已儲存');
+    }
+
+    // 顯示錯誤訊息
+    function showNgError(message) {
+      const errorEl = document.getElementById('ngError');
+      errorEl.textContent = message;
+      errorEl.classList.add('show');
+      setTimeout(() => errorEl.classList.remove('show'), 5000);
+    }
+
+    // 顯示成功訊息
+    function showNgSuccess(message) {
+      const successEl = document.getElementById('ngSuccess');
+      successEl.textContent = message;
+      successEl.classList.add('show');
+      setTimeout(() => successEl.classList.remove('show'), 3000);
+    }
+
+    // HTML 轉義
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+  </script>
+</body>
+</html>

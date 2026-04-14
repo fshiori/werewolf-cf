@@ -40,6 +40,13 @@ export async function hashPassword(password: string): Promise<string> {
 }
 
 /**
+ * SHA-256 雜湊 (別名)
+ */
+export async function sha256(input: string): Promise<string> {
+  return hashPassword(input);
+}
+
+/**
  * 驗證管理員密碼
  */
 export async function verifyAdminPassword(password: string, hash: string): Promise<boolean> {

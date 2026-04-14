@@ -30,7 +30,7 @@ function createMockEnv(): Env {
       get: async () => null,
       list: async () => ({ objects: [] })
     } as any,
-    ROOM: {
+    WEREWOLF_ROOM: {
       idFromName: () => ({
         get: () => ({
           fetch: async () => new Response(JSON.stringify({}), { status: 200 })

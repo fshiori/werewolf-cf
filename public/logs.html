@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>遊戲記錄 - Werewolf CF</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Microsoft JhengHei', 'PingFang TC', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .header {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .header h1 {
+      color: #1e3c72;
+      margin-bottom: 10px;
+    }
+
+    .filters {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .filter-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    select, button {
+      padding: 10px 20px;
+      border: 2px solid #667eea;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+      background: white;
+      color: #333;
+    }
+
+    select:hover, button:hover {
+      background: #f8f9fa;
+    }
+
+    .btn-primary {
+      background: #667eea;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #5568d3;
+    }
+
+    .logs-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+      gap: 20px;
+    }
+
+    .log-card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      transition: transform 0.3s, box-shadow 0.3s;
+      cursor: pointer;
+    }
+
+    .log-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+    }
+
+    .log-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      padding-bottom: 15px;
+      border-bottom: 2px solid #f0f0f0;
+    }
+
+    .log-room-name {
+      font-size: 18px;
+      font-weight: bold;
+      color: #1e3c72;
+    }
+
+    .log-winner {
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    .winner-human {
+      background: #e3f2fd;
+      color: #1976d2;
+    }
+
+    .winner-wolf {
+      background: #ffebee;
+      color: #c62828;
+    }
+
+    .winner-fox {
+      background: #f3e5f5;
+      color: #7b1fa2;
+    }
+
+    .log-stats {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+
+    .stat-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px;
+      background: #f8f9fa;
+      border-radius: 6px;
+    }
+
+    .stat-label {
+      color: #666;
+      font-size: 14px;
+    }
+
+    .stat-value {
+      font-weight: bold;
+      color: #1e3c72;
+    }
+
+    .log-roles {
+      margin-top: 15px;
+      padding-top: 15px;
+      border-top: 2px solid #f0f0f0;
+    }
+
+    .role-tag {
+      display: inline-block;
+      padding: 4px 10px;
+      margin: 3px;
+      border-radius: 12px;
+      font-size: 12px;
+      background: #f0f0f0;
+      color: #666;
+    }
+
+    .log-time {
+      color: #999;
+      font-size: 12px;
+      margin-top: 10px;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: white;
+      font-size: 18px;
+    }
+
+    .no-logs {
+      text-align: center;
+      padding: 60px;
+      background: white;
+      border-radius: 12px;
+      color: #666;
+    }
+
+    .back-link {
+      display: inline-block;
+      padding: 10px 20px;
+      background: white;
+      color: #667eea;
+      text-decoration: none;
+      border-radius: 6px;
+      margin-bottom: 20px;
+      transition: all 0.3s;
+    }
+
+    .back-link:hover {
+      background: #f8f9fa;
+      transform: translateX(-5px);
+    }
+
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      max-width: 800px;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: #999;
+    }
+
+    .close-btn:hover {
+      color: #333;
+    }
+
+    .detail-section {
+      margin-bottom: 20px;
+      padding: 15px;
+      background: #f8f9fa;
+      border-radius: 8px;
+    }
+
+    .detail-section h3 {
+      color: #1e3c72;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <a href="/" class="back-link">← 返回首頁</a>
+
+    <div class="header">
+      <h1>📜 遊戲記錄</h1>
+      <p>查看所有已完成的遊戲歷史記錄</p>
+    </div>
+
+    <div class="filters">
+      <div class="filter-group">
+        <label>勝利陣營：</label>
+        <select id="winnerFilter">
+          <option value="">全部</option>
+          <option value="human">村民陣營</option>
+          <option value="wolf">人狼陣營</option>
+          <option value="fox">妖狐陣營</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label>顯示數量：</label>
+        <select id="limitFilter">
+          <option value="20">20 筆</option>
+          <option value="50" selected>50 筆</option>
+          <option value="100">100 筆</option>
+        </select>
+      </div>
+
+      <button class="btn-primary" onclick="loadLogs()">🔄 重新整理</button>
+    </div>
+
+    <div id="logsContainer" class="logs-grid">
+      <div class="loading">載入中...</div>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div id="logModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="modalTitle">遊戲詳細記錄</h2>
+        <button class="close-btn" onclick="closeModal()">×</button>
+      </div>
+      <div id="modalBody"></div>
+    </div>
+  </div>
+
+  <script>
+    let currentLogs = [];
+
+    // 頁面載入時獲取記錄
+    document.addEventListener('DOMContentLoaded', () => {
+      loadLogs();
+    });
+
+    // 載入遊戲記錄
+    async function loadLogs() {
+      const winnerFilter = document.getElementById('winnerFilter').value;
+      const limitFilter = document.getElementById('limitFilter').value;
+
+      let url = '/api/game-logs?limit=' + limitFilter;
+      if (winnerFilter) {
+        url += '&winner=' + winnerFilter;
+      }
+
+      try {
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if (data.logs && data.logs.length > 0) {
+          currentLogs = data.logs;
+          displayLogs(data.logs);
+        } else {
+          document.getElementById('logsContainer').innerHTML =
+            '<div class="no-logs">📭 尚沒有遊戲記錄</div>';
+        }
+      } catch (error) {
+        console.error('Failed to load logs:', error);
+        document.getElementById('logsContainer').innerHTML =
+          '<div class="no-logs">❌ 載入失敗</div>';
+      }
+    }
+
+    // 顯示遊戲記錄
+    function displayLogs(logs) {
+      const container = document.getElementById('logsContainer');
+      container.innerHTML = logs.map(log => {
+        const winnerClass = `winner-${log.winner}`;
+        const winnerText = {
+          human: '村民勝',
+          wolf: '人狼勝',
+          fox: '妖狐勝'
+        }[log.winner] || log.winner;
+
+        const date = new Date(log.created_at).toLocaleString('zh-TW');
+
+        return `
+          <div class="log-card" onclick="showLogDetail(${log.room_no})">
+            <div class="log-header">
+              <div class="log-room-name">${escapeHtml(log.room_name)}</div>
+              <div class="log-winner ${winnerClass}">${winnerText}</div>
+            </div>
+
+            <div class="log-stats">
+              <div class="stat-item">
+                <span class="stat-label">房間編號</span>
+                <span class="stat-value">#${log.room_no}</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">遊戲天數</span>
+                <span class="stat-value">${log.total_days} 天</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">玩家數</span>
+                <span class="stat-value">${log.player_count} 人</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">時間</span>
+                <span class="stat-value">${date}</span>
+              </div>
+            </div>
+
+            <div class="log-roles">
+              <strong>角色分配：</strong>
+              ${parseRoles(log.roles)}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // 解析角色 JSON
+    function parseRoles(rolesStr) {
+      try {
+        const roles = JSON.parse(rolesStr);
+        return Object.entries(roles).map(([role, count]) =>
+          `<span class="role-tag">${getRoleName(role)} × ${count}</span>`
+        ).join('');
+      } catch (e) {
+        return '<span class="role-tag">' + escapeHtml(rolesStr) + '</span>';
+      }
+    }
+
+    // 獲取角色名稱
+    function getRoleName(role) {
+      const names = {
+        human: '村民',
+        wolf: '人狼',
+        seer: '預言家',
+        medium: '靈媒',
+        hunter: '獵人',
+        common: '共有者',
+        mad: '狂人',
+        fox: '妖狐',
+        child_fox: '子狐',
+        traitor: '背德者'
+      };
+      return names[role] || role;
+    }
+
+    // 顯示詳細記錄
+    async function showLogDetail(roomNo) {
+      try {
+        const response = await fetch(`/api/game-logs/${roomNo}`);
+        const log = await response.json();
+
+        document.getElementById('modalTitle').textContent = log.room_name;
+
+        const deathOrder = log.death_order ? JSON.parse(log.death_order) : [];
+        const keyEvents = log.key_events ? JSON.parse(log.key_events) : [];
+
+        document.getElementById('modalBody').innerHTML = `
+          <div class="detail-section">
+            <h3>遊戲資訊</h3>
+            <p><strong>房間編號：</strong> #${log.room_no}</p>
+            <p><strong>勝利陣營：</strong> ${getRoleName(log.winner)}</p>
+            <p><strong>遊戲天數：</strong> ${log.total_days} 天</p>
+            <p><strong>玩家數：</strong> ${log.player_count} 人</p>
+            <p><strong>結束時間：</strong> ${new Date(log.created_at).toLocaleString('zh-TW')}</p>
+          </div>
+
+          <div class="detail-section">
+            <h3>角色分配</h3>
+            ${parseRoles(log.roles)}
+          </div>
+
+          ${deathOrder.length > 0 ? `
+            <div class="detail-section">
+              <h3>死亡順序</h3>
+              <ol>
+                ${deathOrder.map(item => `
+                  <li>${escapeHtml(item.day)} 日：${escapeHtml(item.uname)} (${getRoleName(item.role)})</li>
+                `).join('')}
+              </ol>
+            </div>
+          ` : ''}
+
+          ${keyEvents.length > 0 ? `
+            <div class="detail-section">
+              <h3>關鍵事件</h3>
+              <ul>
+                ${keyEvents.map(event => `
+                  <li>${escapeHtml(event)}</li>
+                `).join('')}
+              </ul>
+            </div>
+          ` : ''}
+        `;
+
+        document.getElementById('logModal').classList.add('active');
+      } catch (error) {
+        console.error('Failed to load log detail:', error);
+        alert('載入詳細記錄失敗');
+      }
+    }
+
+    // 關閉 Modal
+    function closeModal() {
+      document.getElementById('logModal').classList.remove('active');
+    }
+
+    // 點擊 Modal 外部關閉
+    document.getElementById('logModal').addEventListener('click', (e) => {
+      if (e.target.id === 'logModal') {
+        closeModal();
+      }
+    });
+
+    // HTML 轉義
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // 監聽過濾器變化
+    document.getElementById('winnerFilter').addEventListener('change', loadLogs);
+    document.getElementById('limitFilter').addEventListener('change', loadLogs);
+  </script>
+</body>
+</html>

@@ -2,6 +2,7 @@
  * Session 管理
  */
 
+import type { KVNamespace } from '@cloudflare/workers-types';
 import type { SessionData } from '../types';
 
 /**

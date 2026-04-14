@@ -2,6 +2,7 @@
  * 管理員系統
  */
 
+import type { KVNamespace } from '@cloudflare/workers-types';
 import { sha256 } from './crypto';
 
 /**
@@ -28,15 +29,16 @@ const ADMIN_SALT = 'werewolf-admin-salt-2026';
 /**
  * 建立管理員密碼雜湊
  */
-export function hashAdminPassword(password: string): string {
+export async function hashAdminPassword(password: string): Promise<string> {
   return sha256(password + ADMIN_SALT);
 }
 
 /**
  * 驗證管理員密碼
  */
-export function verifyAdminPassword(password: string, hash: string): boolean {
-  return hashAdminPassword(password) === hash;
+export async function verifyAdminPassword(password: string, hash: string): Promise<boolean> {
+  const passwordHash = await hashAdminPassword(password);
+  return passwordHash === hash;
 }
 
 /**
@@ -88,7 +90,7 @@ export class AdminManager {
   async createDefaultAdmin(username: string, password: string): Promise<void> {
     const admin: AdminData = {
       username,
-      passwordHash: hashAdminPassword(password),
+      passwordHash: await hashAdminPassword(password),
       createdAt: Date.now()
     };
 
@@ -100,18 +102,18 @@ export class AdminManager {
    */
   async verifyAdminLogin(username: string, password: string): Promise<boolean> {
     const data = await this.kv.get('admin:default', 'json');
-    
+
     if (!data || typeof data !== 'object') {
       return false;
     }
 
     const admin = data as AdminData;
-    
+
     if (admin.username !== username) {
       return false;
     }
 
-    return verifyAdminPassword(password, admin.passwordHash);
+    return await verifyAdminPassword(password, admin.passwordHash);
   }
 
   /**

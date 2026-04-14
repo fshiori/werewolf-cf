@@ -2,6 +2,7 @@
   "name": "werewolf-cf",
   "version": "1.0.0",
   "description": "人狼遊戲 Cloudflare Workers 重構版",
+  "type": "module",
   "main": "src/index.ts",
   "scripts": {
     "dev": "wrangler dev",
@@ -12,14 +13,19 @@
     "test": "vitest",
     "typecheck": "tsc --noEmit"
   },
-  "keywords": ["werewolf", "cloudflare", "workers", "game"],
+  "keywords": [
+    "werewolf",
+    "cloudflare",
+    "workers",
+    "game"
+  ],
   "author": "EricChen",
   "license": "MIT",
   "devDependencies": {
-    "@cloudflare/vitest-pool-workers": "^0.1.0",
+    "@cloudflare/vitest-pool-workers": "^0.14.6",
     "@cloudflare/workers-types": "^4.20240512.0",
     "typescript": "^5.4.5",
-    "vitest": "^1.6.0",
+    "vitest": "^4.1.4",
     "wrangler": "^3.57.1"
   },
   "dependencies": {

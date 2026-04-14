@@ -228,7 +228,8 @@ export function voteToDatabase(voteData: VoteData, voteNumber: number): Vote[] {
       uname,
       targetUname,
       voteNumber,
-      voteTimes: voteTimes++
+      voteTimes: voteTimes++,
+      situation: 'normal' // 預設情況
     });
   }
 
