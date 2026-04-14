@@ -700,6 +700,194 @@ app.get('/api/spectate/:roomNo', async (c) => {
   }
 });
 
+// ==================== 遺書系統 ====================
+
+/**
+ * 儲存遺書（玩家死亡前留訊息）
+ */
+app.post('/api/wills', async (c) => {
+  try {
+    const data = await c.req.json<{
+      roomNo: number;
+      date: number;
+      uname: string;
+      handleName: string;
+      will: string;
+    }>();
+
+    if (!data.roomNo || !data.uname || !data.will) {
+      return c.json({ error: 'Missing required fields' }, 400);
+    }
+
+    if (data.will.length > 500) {
+      return c.json({ error: 'Will too long (max 500 chars)' }, 400);
+    }
+
+    const safeWill = escapeHtml(data.will);
+
+    const stmt = c.env.DB.prepare(`
+      INSERT INTO wills (room_no, date, uname, handle_name, will, time)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `);
+
+    await stmt.bind(
+      data.roomNo,
+      data.date,
+      data.uname,
+      data.handleName || data.uname,
+      safeWill,
+      Date.now()
+    ).all();
+
+    return c.json({ success: true, message: 'Will saved' });
+  } catch (error) {
+    console.error('Save will error:', error);
+    return c.json({ error: 'Failed to save will' }, 500);
+  }
+});
+
+/**
+ * 獲取房間的所有遺書
+ */
+app.get('/api/wills/:roomNo', async (c) => {
+  try {
+    const roomNo = c.req.param('roomNo');
+    const stmt = c.env.DB.prepare(
+      'SELECT * FROM wills WHERE room_no = ? ORDER BY date ASC, time ASC'
+    );
+    const result = await stmt.bind(roomNo).all();
+
+    return c.json({ wills: result.results });
+  } catch (error) {
+    console.error('Get wills error:', error);
+    return c.json({ error: 'Failed to get wills' }, 500);
+  }
+});
+
+/**
+ * 獲取特定日期的遺書
+ */
+app.get('/api/wills/:roomNo/:date', async (c) => {
+  try {
+    const roomNo = c.req.param('roomNo');
+    const date = c.req.param('date');
+    const stmt = c.env.DB.prepare(
+      'SELECT * FROM wills WHERE room_no = ? AND date = ? ORDER BY time ASC'
+    );
+    const result = await stmt.bind(roomNo, date).all();
+
+    return c.json({ wills: result.results });
+  } catch (error) {
+    console.error('Get wills by date error:', error);
+    return c.json({ error: 'Failed to get wills' }, 500);
+  }
+});
+
+// ==================== 密語系統 ====================
+
+/**
+ * 傳送密語（夜晚特定角色可密語）
+ */
+app.post('/api/whispers', async (c) => {
+  try {
+    const data = await c.req.json<{
+      roomNo: number;
+      date: number;
+      from: string;
+      to: string;
+      message: string;
+    }>();
+
+    if (!data.roomNo || !data.from || !data.to || !data.message) {
+      return c.json({ error: 'Missing required fields' }, 400);
+    }
+
+    if (data.message.length > 300) {
+      return c.json({ error: 'Message too long (max 300 chars)' }, 400);
+    }
+
+    const id = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const safeMessage = escapeHtml(data.message);
+
+    const stmt = c.env.DB.prepare(`
+      INSERT INTO whispers (id, room_no, date, from_uname, to_uname, message, time)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    await stmt.bind(
+      id,
+      data.roomNo,
+      data.date,
+      data.from,
+      data.to,
+      safeMessage,
+      Date.now()
+    ).all();
+
+    return c.json({ success: true, id, message: 'Whisper sent' });
+  } catch (error) {
+    console.error('Send whisper error:', error);
+    return c.json({ error: 'Failed to send whisper' }, 500);
+  }
+});
+
+/**
+ * 獲取房間的密語列表
+ */
+app.get('/api/whispers/:roomNo', async (c) => {
+  try {
+    const roomNo = c.req.param('roomNo');
+    const date = c.req.query('date');
+    const uname = c.req.query('uname'); // 只看特定玩家的密語
+
+    let query = 'SELECT * FROM whispers WHERE room_no = ?';
+    const params: any[] = [roomNo];
+
+    if (date) {
+      query += ' AND date = ?';
+      params.push(date);
+    }
+    if (uname) {
+      query += ' AND (from_uname = ? OR to_uname = ?)';
+      params.push(uname, uname);
+    }
+
+    query += ' ORDER BY date ASC, time ASC';
+
+    const stmt = c.env.DB.prepare(query);
+    const result = await stmt.bind(...params).all();
+
+    return c.json({ whispers: result.results });
+  } catch (error) {
+    console.error('Get whispers error:', error);
+    return c.json({ error: 'Failed to get whispers' }, 500);
+  }
+});
+
+/**
+ * 獲取玩家未讀密語數量
+ */
+app.get('/api/whispers/:roomNo/unread/:uname', async (c) => {
+  try {
+    const roomNo = c.req.param('roomNo');
+    const uname = c.req.param('uname');
+    const since = parseInt(c.req.query('since') || '0');
+
+    const stmt = c.env.DB.prepare(`
+      SELECT COUNT(*) as count FROM whispers
+      WHERE room_no = ? AND to_uname = ? AND time > ?
+    `);
+    const result = await stmt.bind(roomNo, uname, since).all();
+
+    const count = (result.results[0] as { count?: number } | undefined)?.count || 0;
+
+    return c.json({ unreadCount: count });
+  } catch (error) {
+    console.error('Get unread whispers error:', error);
+    return c.json({ error: 'Failed to get unread count' }, 500);
+  }
+});
+
 // ==================== 遊戲事件記錄 ====================
 
 /**

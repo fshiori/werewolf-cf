@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BBS 討論板 - 人狼遊戲</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      padding: 40px;
+      max-width: 800px;
+      width: 100%;
+    }
+
+    h1 {
+      text-align: center;
+      color: #333;
+      margin-bottom: 6px;
+      font-size: 28px;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #666;
+      margin-bottom: 24px;
+      font-size: 14px;
+    }
+
+    .back-link {
+      display: inline-block;
+      color: #667eea;
+      text-decoration: none;
+      font-size: 14px;
+      margin-bottom: 16px;
+      cursor: pointer;
+    }
+
+    .back-link:hover {
+      text-decoration: underline;
+    }
+
+    /* ---------- error / loading ---------- */
+    .error {
+      background: #fee;
+      color: #c33;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-size: 14px;
+      display: none;
+    }
+    .error.show { display: block; }
+
+    .loading {
+      display: none;
+      text-align: center;
+      padding: 30px 0;
+    }
+    .loading.show { display: block; }
+
+    .spinner {
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #667eea;
+      border-radius: 50%;
+      width: 36px;
+      height: 36px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto;
+    }
+
+    @keyframes spin {
+      0%   { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* ---------- form ---------- */
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      color: #555;
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    input, textarea {
+      width: 100%;
+      padding: 10px 14px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+      transition: border-color 0.3s, box-shadow 0.3s;
+    }
+
+    input:focus, textarea:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    button, .btn {
+      display: inline-block;
+      padding: 10px 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-decoration: none;
+    }
+
+    button:hover, .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    }
+
+    button:active, .btn:active {
+      transform: translateY(0);
+    }
+
+    button.secondary {
+      background: #f0f0f0;
+      color: #333;
+    }
+    button.secondary:hover {
+      background: #e0e0e0;
+    }
+
+    button.full-width, .btn.full-width {
+      width: 100%;
+    }
+
+    .form-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 6px;
+    }
+
+    /* ---------- thread list ---------- */
+    .thread-list { margin-bottom: 20px; }
+
+    .thread-item {
+      background: #f9f9f9;
+      padding: 14px 16px;
+      border-radius: 10px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      transition: all 0.3s;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .thread-item:hover {
+      background: #f0f0ff;
+      transform: translateX(4px);
+    }
+
+    .thread-meta {
+      min-width: 90px;
+      font-size: 12px;
+      color: #999;
+      text-align: right;
+      white-space: nowrap;
+      padding-top: 2px;
+    }
+
+    .thread-body { flex: 1; min-width: 0; }
+
+    .thread-title {
+      font-weight: 600;
+      color: #333;
+      font-size: 15px;
+      margin-bottom: 4px;
+      word-break: break-word;
+    }
+
+    .thread-info {
+      font-size: 12px;
+      color: #999;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .tag {
+      display: inline-block;
+      padding: 1px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      color: white;
+      vertical-align: middle;
+    }
+    .tag-pin  { background: #e74c3c; }
+    .tag-lock { background: #95a5a6; }
+
+    /* ---------- thread detail ---------- */
+    .post-card {
+      background: #f9f9f9;
+      padding: 16px;
+      border-radius: 10px;
+      margin-bottom: 12px;
+    }
+
+    .post-card.op {
+      background: #f0f0ff;
+      border-left: 4px solid #667eea;
+    }
+
+    .post-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .post-author {
+      font-weight: 600;
+      color: #333;
+      font-size: 14px;
+    }
+
+    .post-time {
+      font-size: 12px;
+      color: #999;
+    }
+
+    .post-content {
+      font-size: 14px;
+      color: #444;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .post-number {
+      font-size: 12px;
+      color: #667eea;
+      font-weight: 600;
+    }
+
+    .thread-title-detail {
+      font-size: 20px;
+      font-weight: 700;
+      color: #333;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid #e0e0e0;
+    }
+
+    .replies-section {
+      margin-top: 20px;
+      margin-bottom: 24px;
+    }
+
+    .replies-section h3 {
+      font-size: 16px;
+      color: #555;
+      margin-bottom: 12px;
+    }
+
+    /* ---------- pagination ---------- */
+    .pagination {
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+      margin: 20px 0;
+      flex-wrap: wrap;
+    }
+
+    .pagination button {
+      padding: 8px 14px;
+      font-size: 13px;
+      min-width: 36px;
+      text-align: center;
+    }
+
+    .pagination button.active {
+      background: #333;
+      cursor: default;
+    }
+
+    .pagination button.active:hover {
+      transform: none;
+      box-shadow: none;
+    }
+
+    .pagination button:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    /* ---------- collapsible form ---------- */
+    .collapsible-header {
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .collapsible-body {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+    }
+
+    .collapsible-body.open {
+      max-height: 600px;
+    }
+
+    /* ---------- footer nav ---------- */
+    .footer-nav {
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 2px solid #f0f0e0;
+      text-align: center;
+    }
+
+    .footer-nav a {
+      color: #667eea;
+      text-decoration: none;
+      font-size: 14px;
+    }
+
+    .footer-nav a:hover {
+      text-decoration: underline;
+    }
+
+    .empty-state {
+      text-align: center;
+      color: #999;
+      padding: 40px 0;
+      font-size: 15px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📋 BBS 討論板</h1>
+    <p class="subtitle">人狼遊戲 - Werewolf CF</p>
+
+    <div id="error" class="error"></div>
+    <div id="loading" class="loading"><div class="spinner"></div></div>
+
+    <!-- ============ LIST VIEW ============ -->
+    <div id="listView">
+      <!-- New thread form -->
+      <details id="newThreadToggle" style="margin-bottom: 20px;">
+        <summary class="collapsible-header" style="padding: 12px 16px; background: #f9f9ff; border-radius: 8px; color: #667eea; font-weight: 600; font-size: 15px;">
+          ✏️ 發表新主題
+        </summary>
+        <div style="margin-top: 12px; padding: 16px; background: #fafafa; border-radius: 8px;">
+          <div class="form-group">
+            <label for="newTitle">標題 *</label>
+            <input type="text" id="newTitle" placeholder="輸入主題標題" maxlength="120">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="newName">名稱（暱稱）</label>
+              <input type="text" id="newName" placeholder="匿名" maxlength="32">
+            </div>
+            <div class="form-group">
+              <label for="newTrip">Tripcode（選填）</label>
+              <input type="text" id="newTrip" placeholder="#password" maxlength="64">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="newContent">內容 *</label>
+            <textarea id="newContent" placeholder="輸入內容..."></textarea>
+          </div>
+          <button onclick="createThread()">發表主題</button>
+        </div>
+      </details>
+
+      <div id="threadList" class="thread-list"></div>
+      <div id="pagination" class="pagination"></div>
+    </div>
+
+    <!-- ============ THREAD VIEW ============ -->
+    <div id="threadView" style="display: none;">
+      <span class="back-link" onclick="showList()">&larr; 返回列表</span>
+      <div id="threadDetail"></div>
+
+      <div class="replies-section">
+        <h3>💬 回覆</h3>
+        <div id="repliesList"></div>
+      </div>
+
+      <details id="replyToggle" style="margin-top: 16px;">
+        <summary class="collapsible-header" style="padding: 12px 16px; background: #f9f9ff; border-radius: 8px; color: #667eea; font-weight: 600; font-size: 14px;">
+          ✏️ 發表回覆
+        </summary>
+        <div style="margin-top: 12px; padding: 16px; background: #fafafa; border-radius: 8px;">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="replyName">名稱（暱稱）</label>
+              <input type="text" id="replyName" placeholder="匿名" maxlength="32">
+            </div>
+            <div class="form-group">
+              <label for="replyTrip">Tripcode（選填）</label>
+              <input type="text" id="replyTrip" placeholder="#password" maxlength="64">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="replyContent">內容 *</label>
+            <textarea id="replyContent" placeholder="輸入回覆內容..." style="min-height: 80px;"></textarea>
+          </div>
+          <div class="form-actions">
+            <button onclick="postReply()">送出回覆</button>
+          </div>
+        </div>
+      </details>
+    </div>
+
+    <div class="footer-nav">
+      <a href="/">🏠 返回首頁</a>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = window.location.origin;
+    const PER_PAGE = 20;
+
+    let currentView = 'list';
+    let currentThreadId = null;
+    let currentPage = 1;
+    let totalPages = 1;
+
+    // ---------- helpers ----------
+    function esc(str) {
+      // textContent is used everywhere, this is belt-and-suspenders
+      const d = document.createElement('div');
+      d.textContent = str || '';
+      return d.innerHTML;
+    }
+
+    function showError(msg) {
+      const el = document.getElementById('error');
+      el.textContent = msg;
+      el.classList.add('show');
+      setTimeout(() => el.classList.remove('show'), 5000);
+    }
+
+    function setLoading(on) {
+      document.getElementById('loading').classList.toggle('show', on);
+    }
+
+    function formatDate(ts) {
+      if (!ts) return '';
+      const d = new Date(ts);
+      const pad = n => String(n).padStart(2, '0');
+      return `${d.getFullYear()}/${pad(d.getMonth() + 1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    }
+
+    function formatReplyCount(n) {
+      if (n == null) return '0 回覆';
+      if (n === 0) return '無回覆';
+      return n + ' 回覆';
+    }
+
+    // ---------- XSS-safe text setter ----------
+    function setText(el, text) {
+      el.textContent = text || '';
+    }
+
+    // ---------- views ----------
+    function showList() {
+      currentView = 'list';
+      currentThreadId = null;
+      document.getElementById('listView').style.display = '';
+      document.getElementById('threadView').style.display = 'none';
+      window.location.hash = '';
+      loadThreads(currentPage);
+    }
+
+    function showThread(id) {
+      currentView = 'thread';
+      currentThreadId = id;
+      document.getElementById('listView').style.display = 'none';
+      document.getElementById('threadView').style.display = '';
+      window.location.hash = 't' + id;
+      loadThread(id);
+    }
+
+    // ---------- API ----------
+    async function loadThreads(page) {
+      setLoading(true);
+      try {
+        const res = await fetch(`${API_BASE}/api/bbs?page=${page}&limit=${PER_PAGE}`);
+        if (!res.ok) throw new Error('載入失敗');
+        const data = await res.json();
+
+        const threads = data.threads || data.data || data || [];
+        const total   = data.total  ?? threads.length;
+        totalPages    = Math.max(1, Math.ceil(total / PER_PAGE));
+        currentPage   = page || 1;
+
+        renderThreadList(threads);
+        renderPagination();
+      } catch (e) {
+        console.error(e);
+        showError('無法載入討論串列表：' + e.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    async function loadThread(id) {
+      setLoading(true);
+      try {
+        const res = await fetch(`${API_BASE}/api/bbs/${encodeURIComponent(id)}`);
+        if (!res.ok) throw new Error('載入失敗');
+        const data = await res.json();
+        renderThreadDetail(data);
+      } catch (e) {
+        console.error(e);
+        showError('無法載入討論串：' + e.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    async function createThread() {
+      const title   = document.getElementById('newTitle').value.trim();
+      const name    = document.getElementById('newName').value.trim() || '匿名';
+      const trip    = document.getElementById('newTrip').value.trim();
+      const content = document.getElementById('newContent').value.trim();
+
+      if (!title) { showError('請輸入標題'); return; }
+      if (!content) { showError('請輸入內容'); return; }
+
+      setLoading(true);
+      try {
+        const body = { title, name, content };
+        if (trip) body.trip = trip;
+
+        const res = await fetch(`${API_BASE}/api/bbs`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        const data = await res.json();
+        if (!res.ok || data.error) throw new Error(data.error || '建立失敗');
+
+        document.getElementById('newTitle').value = '';
+        document.getElementById('newContent').value = '';
+        document.getElementById('newTrip').value = '';
+
+        showThread(data.id || data.threadId || data.no);
+      } catch (e) {
+        console.error(e);
+        showError('建立主題失敗：' + e.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    async function postReply() {
+      const name    = document.getElementById('replyName').value.trim() || '匿名';
+      const trip    = document.getElementById('replyTrip').value.trim();
+      const content = document.getElementById('replyContent').value.trim();
+
+      if (!content) { showError('請輸入回覆內容'); return; }
+
+      setLoading(true);
+      try {
+        const body = { name, content };
+        if (trip) body.trip = trip;
+
+        const res = await fetch(`${API_BASE}/api/bbs/${encodeURIComponent(currentThreadId)}/reply`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        const data = await res.json();
+        if (!res.ok || data.error) throw new Error(data.error || '回覆失敗');
+
+        document.getElementById('replyContent').value = '';
+        loadThread(currentThreadId);
+      } catch (e) {
+        console.error(e);
+        showError('回覆失敗：' + e.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    // ---------- renderers ----------
+    function renderThreadList(threads) {
+      const container = document.getElementById('threadList');
+      container.innerHTML = '';
+
+      if (!threads.length) {
+        const p = document.createElement('p');
+        setText(p, '尚無任何討論串，來發表第一篇吧！');
+        p.className = 'empty-state';
+        container.appendChild(p);
+        return;
+      }
+
+      threads.forEach(t => {
+        const item = document.createElement('div');
+        item.className = 'thread-item';
+        item.onclick = () => showThread(t.id || t.threadId || t.no);
+
+        const id = t.id || t.threadId || t.no;
+
+        // meta (right)
+        const meta = document.createElement('div');
+        meta.className = 'thread-meta';
+        const dateSpan = document.createElement('span');
+        setText(dateSpan, formatDate(t.createdAt || t.created_at));
+        meta.appendChild(dateSpan);
+        const replySpan = document.createElement('span');
+        setText(replySpan, formatReplyCount(t.replyCount || t.reply_count || t.replies));
+        meta.appendChild(replySpan);
+
+        // body
+        const body = document.createElement('div');
+        body.className = 'thread-body';
+
+        // title row
+        const titleRow = document.createElement('div');
+        titleRow.className = 'thread-title';
+        // tags
+        if (t.pinned) {
+          const tag = document.createElement('span');
+          tag.className = 'tag tag-pin';
+          tag.textContent = '📌 置頂';
+          titleRow.appendChild(tag);
+          titleRow.appendChild(document.createTextNode(' '));
+        }
+        if (t.locked) {
+          const tag = document.createElement('span');
+          tag.className = 'tag tag-lock';
+          tag.textContent = '🔒 鎖定';
+          titleRow.appendChild(tag);
+          titleRow.appendChild(document.createTextNode(' '));
+        }
+        const titleText = document.createTextNode(t.title || '(無標題)');
+        titleRow.appendChild(titleText);
+        body.appendChild(titleRow);
+
+        // info row
+        const info = document.createElement('div');
+        info.className = 'thread-info';
+        const author = document.createElement('span');
+        setText(author, (t.author || t.name || '匿名') + (t.trip ? ' ◆' + t.trip : ''));
+        info.appendChild(author);
+        body.appendChild(info);
+
+        item.appendChild(body);
+        item.appendChild(meta);
+        container.appendChild(item);
+      });
+    }
+
+    function renderThreadDetail(data) {
+      const detail = document.getElementById('threadDetail');
+      const replies = document.getElementById('repliesList');
+      detail.innerHTML = '';
+      replies.innerHTML = '';
+
+      const t = data.thread || data;
+
+      // title bar
+      const titleEl = document.createElement('div');
+      titleEl.className = 'thread-title-detail';
+      if (t.pinned) {
+        const tag = document.createElement('span');
+        tag.className = 'tag tag-pin';
+        tag.textContent = '📌 置頂';
+        titleEl.appendChild(tag);
+        titleEl.appendChild(document.createTextNode(' '));
+      }
+      if (t.locked) {
+        const tag = document.createElement('span');
+        tag.className = 'tag tag-lock';
+        tag.textContent = '🔒 鎖定';
+        titleEl.appendChild(tag);
+        titleEl.appendChild(document.createTextNode(' '));
+      }
+      titleEl.appendChild(document.createTextNode(t.title || '(無標題)'));
+      detail.appendChild(titleEl);
+
+      // OP post
+      const opCard = document.createElement('div');
+      opCard.className = 'post-card op';
+
+      const opHeader = document.createElement('div');
+      opHeader.className = 'post-header';
+
+      const opAuthor = document.createElement('span');
+      opAuthor.className = 'post-author';
+      const authorText = (t.author || t.name || '匿名') + (t.trip ? ' ◆' + t.trip : '');
+      setText(opAuthor, authorText);
+      opHeader.appendChild(opAuthor);
+
+      const opTime = document.createElement('span');
+      opTime.className = 'post-time';
+      setText(opTime, formatDate(t.createdAt || t.created_at));
+      opHeader.appendChild(opTime);
+
+      opCard.appendChild(opHeader);
+
+      const opContent = document.createElement('div');
+      opContent.className = 'post-content';
+      setText(opContent, t.content || t.body || '');
+      opCard.appendChild(opContent);
+
+      detail.appendChild(opCard);
+
+      // replies
+      const replyList = data.replies || t.replies || [];
+
+      if (replyList.length === 0) {
+        const empty = document.createElement('p');
+        setText(empty, '尚無回覆');
+        empty.style.color = '#999';
+        empty.style.fontSize = '14px';
+        replies.appendChild(empty);
+      } else {
+        replyList.forEach((r, idx) => {
+          const card = document.createElement('div');
+          card.className = 'post-card';
+
+          const header = document.createElement('div');
+          header.className = 'post-header';
+
+          const numSpan = document.createElement('span');
+          numSpan.className = 'post-number';
+          setText(numSpan, '#' + (idx + 1));
+          header.appendChild(numSpan);
+
+          const author = document.createElement('span');
+          author.className = 'post-author';
+          const aText = (r.author || r.name || '匿名') + (r.trip ? ' ◆' + r.trip : '');
+          setText(author, aText);
+          header.appendChild(author);
+
+          const time = document.createElement('span');
+          time.className = 'post-time';
+          setText(time, formatDate(r.createdAt || r.created_at));
+          header.appendChild(time);
+
+          card.appendChild(header);
+
+          const content = document.createElement('div');
+          content.className = 'post-content';
+          setText(content, r.content || r.body || '');
+          card.appendChild(content);
+
+          replies.appendChild(card);
+        });
+      }
+
+      // Hide reply form if locked
+      const replyToggle = document.getElementById('replyToggle');
+      if (t.locked) {
+        replyToggle.style.display = 'none';
+      } else {
+        replyToggle.style.display = '';
+      }
+    }
+
+    function renderPagination() {
+      const container = document.getElementById('pagination');
+      container.innerHTML = '';
+
+      if (totalPages <= 1) return;
+
+      // prev
+      const prev = document.createElement('button');
+      setText(prev, '‹ 上一頁');
+      prev.disabled = currentPage <= 1;
+      prev.onclick = () => loadThreads(currentPage - 1);
+      container.appendChild(prev);
+
+      // page numbers (show max 7 around current)
+      const pages = computeVisiblePages(currentPage, totalPages, 7);
+      pages.forEach(p => {
+        if (p === '...') {
+          const dots = document.createElement('button');
+          dots.disabled = true;
+          dots.className = 'secondary';
+          setText(dots, '…');
+          container.appendChild(dots);
+        } else {
+          const btn = document.createElement('button');
+          setText(btn, String(p));
+          if (p === currentPage) btn.className = 'active';
+          btn.onclick = () => loadThreads(p);
+          container.appendChild(btn);
+        }
+      });
+
+      // next
+      const next = document.createElement('button');
+      setText(next, '下一頁 ›');
+      next.disabled = currentPage >= totalPages;
+      next.onclick = () => loadThreads(currentPage + 1);
+      container.appendChild(next);
+    }
+
+    function computeVisiblePages(current, total, maxVisible) {
+      if (total <= maxVisible) {
+        return Array.from({ length: total }, (_, i) => i + 1);
+      }
+      const pages = [];
+      const half = Math.floor(maxVisible / 2);
+      let start = Math.max(2, current - half + 1);
+      let end = Math.min(total - 1, start + maxVisible - 3);
+      if (start > 2) start = Math.max(2, end - maxVisible + 4);
+
+      pages.push(1);
+      if (start > 2) pages.push('...');
+      for (let i = start; i <= end; i++) pages.push(i);
+      if (end < total - 1) pages.push('...');
+      if (total > 1) pages.push(total);
+      return pages;
+    }
+
+    // ---------- router ----------
+    function handleRoute() {
+      const hash = window.location.hash.replace('#', '');
+      if (hash.startsWith('t')) {
+        const id = hash.substring(1);
+        if (id && id !== String(currentThreadId)) {
+          showThread(id);
+        }
+      } else if (currentView !== 'list') {
+        showList();
+      }
+    }
+
+    window.addEventListener('hashchange', handleRoute);
+
+    // ---------- init ----------
+    (function init() {
+      const hash = window.location.hash.replace('#', '');
+      if (hash.startsWith('t')) {
+        showThread(hash.substring(1));
+      } else {
+        showList();
+      }
+    })();
+  </script>
+</body>
+</html>
