@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>版本資訊 - 人狼遊戲 Werewolf CF</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans TC', sans-serif;
+      display: flex; align-items: center; justify-content: center;
+      padding: 20px;
+    }
+    .card {
+      background: #fff; border-radius: 16px; padding: 40px;
+      max-width: 560px; width: 100%; box-shadow: 0 8px 32px rgba(0,0,0,.18);
+    }
+    h1 { font-size: 1.6rem; margin-bottom: 4px; color: #333; }
+    .version { color: #764ba2; font-weight: 700; margin-bottom: 20px; }
+    h2 { font-size: 1.05rem; color: #555; margin: 20px 0 10px; border-bottom: 2px solid #eee; padding-bottom: 6px; }
+    .tech-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+    .tech-tags span {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #fff; padding: 4px 12px; border-radius: 20px; font-size: .82rem;
+    }
+    .features { list-style: none; columns: 2; column-gap: 16px; }
+    .features li { font-size: .92rem; color: #444; padding: 3px 0; }
+    .features li::before { content: '🐺 '; font-size: .85rem; }
+    .links { margin-top: 24px; display: flex; flex-wrap: wrap; gap: 12px; }
+    .links a {
+      display: inline-block; padding: 8px 20px; border-radius: 8px;
+      text-decoration: none; font-size: .9rem; font-weight: 600;
+    }
+    .links .home {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff;
+    }
+    .links .github { border: 2px solid #764ba2; color: #764ba2; }
+    .license { margin-top: 18px; font-size: .8rem; color: #999; }
+    @media (max-width: 480px) {
+      .card { padding: 24px; }
+      .features { columns: 1; }
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>🐺 人狼遊戲 Werewolf CF</h1>
+    <p class="version">v1.0.0</p>
+
+    <h2>技術棧</h2>
+    <div class="tech-tags">
+      <span>Cloudflare Workers</span><span>D1</span><span>KV</span><span>R2</span>
+      <span>Durable Objects</span><span>Hono</span><span>TypeScript</span><span>WebSocket</span>
+    </div>
+
+    <h2>功能特色</h2>
+    <ul class="features">
+      <li>即時多人遊戲</li><li>WebSocket 通訊</li>
+      <li>角色扮演系統</li><li>投票系統</li>
+      <li>遺書系統</li><li>密語系統</li>
+      <li>BBS 討論板</li><li>遊戲記錄與回放</li>
+      <li>玩家統計與排行榜</li><li>黑白名單管理</li>
+      <li>觀戰模式</li><li>IP 封鎖</li>
+    </ul>
+
+    <div class="links">
+      <a href="/" class="home">🏠 回到首頁</a>
+      <a href="https://github.com/fshiori/werewolf-cf" target="_blank" class="github">GitHub</a>
+    </div>
+
+    <p class="license">MIT License</p>
+  </div>
+</body>
+</html>

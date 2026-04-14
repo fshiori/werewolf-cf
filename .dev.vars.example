@@ -1,0 +1,12 @@
+# Werewolf CF 環境變數範例
+# 複製此檔案為 .dev.vars 並填入實際值
+
+# 管理員密碼（SHA-256 雜湊）
+# 預設：test123456 的 SHA-256
+ADMIN_PASSWORD_HASH=9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08
+
+# 管理員 Session 密鑰
+ADMIN_SESSION_SECRET=your-secret-key-here
+
+# 如果需要自訂域名
+# CUSTOM_DOMAIN=werewolf.example.com
