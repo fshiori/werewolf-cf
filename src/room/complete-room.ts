@@ -134,6 +134,27 @@ export class WerewolfRoom extends DurableObject {
       return new Response(null, { status: 101, webSocket: client });
     }
 
+    // 嘗試加入玩家到房間（如果尚未加入）
+    let player = this.roomData.players.get(session.uname);
+    if (!player) {
+      const newPlayer: Player = {
+        userNo: this.roomData.players.size + 1,
+        uname: session.uname,
+        handleName: session.handleName || session.uname,
+        trip: (session as any).trip || '',
+        iconNo: (session as any).iconNo || 1,
+        sex: (session as any).sex || 'male',
+        role: 'human',
+        live: 'live',
+        score: 0,
+        sessionId: sessionToken,
+        ipAddress: req.headers.get('CF-Connecting-IP') || undefined,
+      };
+      addPlayer(this.roomData, newPlayer);
+      await this.saveState();
+      player = newPlayer;
+    }
+
     // 保存連線
     this.sessions.set(session.uname, server as WebSocket);
 
