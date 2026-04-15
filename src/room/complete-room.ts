@@ -365,6 +365,9 @@ export class WerewolfRoom extends DurableObject {
       return;
     }
 
+    // 初始化投票資料（遊戲從白天開始，需要投票資料）
+    this.voteData = createVoteData(this.roomData.roomNo, this.roomData.date);
+
     // 通知所有玩家
     for (const [playerUname, ws] of this.sessions) {
       const player = this.roomData.players.get(playerUname);
