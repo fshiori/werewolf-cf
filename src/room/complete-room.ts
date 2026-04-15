@@ -486,7 +486,21 @@ export class WerewolfRoom extends DurableObject {
     const victory = checkVictory(Array.from(this.roomData.players.values()));
     if (victory) {
       await this.endGame(victory);
+      return;
     }
+
+    // 投票結束 → 進入夜晚
+    this.roomData.dayNight = 'night';
+    this.nightState = createNightState(this.roomData.roomNo, this.roomData.date);
+    this.broadcast({
+      type: 'phase_change',
+      data: {
+        phase: 'night',
+        message: '夜幕降临，请关闭灯光...'
+      }
+    });
+
+    await this.saveState();
   }
 
   /**
