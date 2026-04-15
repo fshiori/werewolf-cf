@@ -6,7 +6,7 @@
 // @ts-ignore - cloudflare:workers is a special module in Wrangler
 import { DurableObject } from 'cloudflare:workers';
 import type { DurableObjectState } from '@cloudflare/workers-types';
-import type { Env, Player, RoomData, Message } from '../types';
+import type { Env, Player, RoomData, Message, Role } from '../types';
 import { createRoom, addPlayer, removePlayer, startGame, endGame, getPublicRoomInfo } from '../utils/room-manager';
 import { advanceTime, checkSilence, transitionPhase, DEFAULT_TIME_CONFIG } from '../utils/time-progression';
 import { assignRoles, checkVictory, canSpeak, getRoleTeam } from '../utils/role-system';
@@ -540,15 +540,60 @@ export class WerewolfRoom extends DurableObject {
 
   /**
    * 解析角色配置
+   * 格式: "role:count,role:count,..." 例如 "wolf:2,human:4,mage:1,guard:1"
    */
-  private parseRoleConfig(config: string): Record<string, number> {
-    // TODO: 實作完整的角色配置解析
-    return {
-      human: 4,
-      wolf: 2,
-      mage: 1,
-      seer: 0,
-      necromancer: 1
-    };
+  private parseRoleConfig(config: string): Record<Role, number> {
+    const roleConfig: Partial<Record<Role, number>> = {};
+
+    if (!config || !config.trim()) {
+      // 沒有配置時使用預設基本局
+      return { human: 4, wolf: 2, mage: 1, guard: 1 } as Record<Role, number>;
+    }
+
+    // 解析 "role:count" 格式
+    const parts = config.split(',');
+    for (const part of parts) {
+      const trimmed = part.trim();
+      if (!trimmed) continue;
+
+      const colonIndex = trimmed.indexOf(':');
+      if (colonIndex === -1) continue;
+
+      const role = trimmed.substring(0, colonIndex).trim() as Role;
+      const count = parseInt(trimmed.substring(colonIndex + 1).trim());
+
+      if (isNaN(count) || count < 0) continue;
+
+      // 驗證角色名稱（基本驗證）
+      const validRoles: Role[] = [
+        'human', 'wolf', 'wolf_partner', 'mage', 'necromancer', 'mad',
+        'guard', 'common', 'common_partner', 'fox', 'betr', 'betr_partner',
+        'fosi', 'poison', 'wfbig', 'authority', 'lovers', 'lovers_partner', 'cat'
+      ];
+      if (validRoles.includes(role)) {
+        roleConfig[role] = count;
+      }
+    }
+
+    // 處理夥伴角色（自動根據主角色數量添加）
+    if (roleConfig.wolf && (roleConfig.wolf || 0) > 1) {
+      roleConfig.wolf_partner = (roleConfig.wolf || 0) - 1;
+    }
+    if (roleConfig.common && (roleConfig.common || 0) > 1) {
+      roleConfig.common_partner = (roleConfig.common || 0) - 1;
+    }
+    if (roleConfig.betr && (roleConfig.betr || 0) > 1) {
+      roleConfig.betr_partner = (roleConfig.betr || 0) - 1;
+    }
+    if (roleConfig.lovers && (roleConfig.lovers || 0) > 1) {
+      roleConfig.lovers_partner = (roleConfig.lovers || 0) - 1;
+    }
+
+    // 確保 human 至少為 0
+    if (roleConfig.human === undefined) {
+      roleConfig.human = 0;
+    }
+
+    return roleConfig as Record<Role, number>;
   }
 }

@@ -201,6 +201,176 @@
       margin-top: 5px;
     }
 
+    /* 角色配置面板 */
+    .role-config {
+      margin-top: 15px;
+      padding: 15px;
+      background: #f9f9f9;
+      border-radius: 8px;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .role-config-title {
+      font-weight: 600;
+      font-size: 14px;
+      color: #555;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .role-total {
+      font-size: 13px;
+      color: #999;
+    }
+
+    .role-team-header {
+      font-size: 12px;
+      font-weight: 600;
+      color: #999;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin: 12px 0 6px;
+      padding-bottom: 4px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .role-team-header:first-of-type {
+      margin-top: 0;
+    }
+
+    .role-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 0;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .role-row:last-child {
+      border-bottom: none;
+    }
+
+    .role-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+    }
+
+    .role-icon {
+      font-size: 18px;
+      width: 24px;
+      text-align: center;
+    }
+
+    .role-name {
+      font-size: 13px;
+      color: #333;
+      font-weight: 500;
+    }
+
+    .role-desc {
+      font-size: 11px;
+      color: #999;
+      margin-left: auto;
+      margin-right: 10px;
+      white-space: nowrap;
+    }
+
+    .role-controls {
+      display: flex;
+      align-items: center;
+      gap: 0;
+    }
+
+    .role-btn {
+      width: 28px;
+      height: 28px;
+      border: 1px solid #ddd;
+      background: white;
+      border-radius: 4px;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #666;
+      transition: all 0.2s;
+      padding: 0;
+      margin: 0;
+    }
+
+    .role-btn:hover {
+      background: #667eea;
+      color: white;
+      border-color: #667eea;
+    }
+
+    .role-btn:active {
+      transform: scale(0.95);
+    }
+
+    .role-count {
+      width: 36px;
+      text-align: center;
+      font-size: 14px;
+      font-weight: 600;
+      color: #333;
+      border: none;
+      background: none;
+    }
+
+    .role-total-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-left: 4px;
+    }
+
+    .role-total-badge.ok {
+      background: #d4edda;
+      color: #155724;
+    }
+
+    .role-total-badge.warn {
+      background: #fff3cd;
+      color: #856404;
+    }
+
+    .role-total-badge.error {
+      background: #f8d7da;
+      color: #721c24;
+    }
+
+    .role-preset-btns {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    .role-preset-btn {
+      padding: 4px 10px;
+      font-size: 11px;
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      cursor: pointer;
+      color: #666;
+      transition: all 0.2s;
+    }
+
+    .role-preset-btn:hover {
+      background: #667eea;
+      color: white;
+      border-color: #667eea;
+    }
+
     .nav-links {
       margin-top: 40px;
       padding-top: 30px;
@@ -309,6 +479,196 @@
             <div class="form-group">
               <label for="maxSpectators">最大觀戰人數</label>
               <input type="number" id="maxSpectators" value="10" min="0" max="50">
+            </div>
+          </div>
+
+          <!-- 角色配置 -->
+          <div class="role-config" id="roleConfig">
+            <div class="role-config-title">
+              <span>🎭 角色配置</span>
+              <span class="role-total" id="roleTotal">合計: 0 / 16人</span>
+            </div>
+
+            <!-- 預設模板 -->
+            <div class="role-preset-btns" id="rolePresets">
+              <button class="role-preset-btn" onclick="applyPreset('basic')">🎯 基本局 8人</button>
+              <button class="role-preset-btn" onclick="applyPreset('standard')">⚔️ 標準局 16人</button>
+              <button class="role-preset-btn" onclick="applyPreset('chaos')">🌪️ 混亂局</button>
+              <button class="role-preset-btn" onclick="applyPreset('clear')">🗑️ 清空</button>
+            </div>
+
+            <div class="role-team-header">🐺 狼人陣營</div>
+            <div class="role-row" data-role="wolf">
+              <div class="role-info">
+                <span class="role-icon">🐺</span>
+                <span class="role-name">狼人</span>
+                <span class="role-desc">夜晚襲擊</span>
+              </div>
+              <div class="role-controls">
+                <button class="role-btn" onclick="changeRole('wolf', -1)">−</button>
+                <span class="role-count" id="role_wolf">0</span>
+                <button class="role-btn" onclick="changeRole('wolf', 1)">+</button>
+              </div>
+            </div>
+            <div class="role-row" data-role="wfbig">
+              <div class="role-info">
+                <span class="role-icon">👹</span>
+                <span class="role-name">大狼</span>
+                <span class="role-desc">+1襲擊權</span>
+              </div>
+              <div class="role-controls">
+                <button class="role-btn" onclick="changeRole('wfbig', -1)">−</button>
+                <span class="role-count" id="role_wfbig">0</span>
+                <button class="role-btn" onclick="changeRole('wfbig', 1)">+</button>
+              </div>
+            </div>
+            <div class="role-row" data-role="mad">
+              <div class="role-info">
+                <span class="role-icon">🤪</span>
+                <span class="role-name">狂人</span>
+                <span class="role-desc">狼人陣營人類</span>
+              </div>
+              <div class="role-controls">
+                <button class="role-btn" onclick="changeRole('mad', -1)">−</button>
+                <span class="role-count" id="role_mad">0</span>
+                <button class="role-btn" onclick="changeRole('mad', 1)">+</button>
+              </div>
+            </div>
+
+            <div class="role-team-header">👥 村民陣營</div>
+            <div class="role-row" data-role="human">
+              <div class="role-info">
+                <span class="role-icon">👤</span>
+                <span class="role-name">村民</span>
+                <span class="role-desc">一般村民</span>
+              </div>
+              <div class="role-controls">
+                <button class="role-btn" onclick="changeRole('human', -1)">−</button>
+                <span class="role-count" id="role_human">0</span>
+                <button class="role-btn" onclick="changeRole('human', 1)">+</button>
+              </div>
+            </div>
+            <div class="role-row" data-role="mage">
+              <div class="role-info">
+                <span class="role-icon">🔮</span>
+                <span class="role-name">預言家</span>
+                <span class="role-desc">占卜角色</span>
+              </div>
+              <div class="role-controls">
+                <button class="role-btn" onclick="changeRole('mage', -1)">−</button>
+                <span class="role-count" id="role_mage">0</span>
+                <button class="role-btn" onclick="changeRole('mage', 1)">+</button>
+              </div>
+            </div>
+            <div class="role-row" data-role="necromancer">
+              <div class="role-info">
+                <span class="role-icon">💀</span>
+                <span class="role-name">靈媒</span>
+                <span class="role-desc">驗證死亡角色</span>
+              </div>
+              <div class="role-controls">
+                <button class="role-btn" onclick="changeRole('necromancer', -1)">−</button>
+                <span class="role-count" id="role_necromancer">0</span>
+                <button class="role-btn" onclick="changeRole('necromancer', 1)">+</button>
+              </div>
+            </div>
+            <div class="role-row" data-role="guard">
+              <div class="role-info">
+                <span class="role-icon">🏹</span>
+                <span class="role-name">獵人</span>
+                <span class="role-desc">死亡時可帶走一人</span>
+              </div>
+              <div class="role-controls">
+                <button class="role-btn" onclick="changeRole('guard', -1)">−</button>
+                <span class="role-count" id="role_guard">0</span>
+                <button class="role-btn" onclick="changeRole('guard', 1)">+</button>
+              </div>
+            </div>
+            <div class="role-row" data-role="common">
+              <div class="role-info">
+                <span class="role-icon">🤝</span>
+                <span class="role-name">共有者</span>
+                <span class="role-desc">知道彼此身份</span>
+              </div>
+              <div class="role-controls">
+                <button class="role-btn" onclick="changeRole('common', -1)">−</button>
+                <span class="role-count" id="role_common">0</span>
+                <button class="role-btn" onclick="changeRole('common', 1)">+</button>
+              </div>
+            </div>
+            <div class="role-row" data-role="authority">
+              <div class="role-info">
+                <span class="role-icon">👑</span>
+                <span class="role-name">權力者</span>
+                <span class="role-desc">投票權重x2</span>
+              </div>
+              <div class="role-controls">
+                <button class="role-btn" onclick="changeRole('authority', -1)">−</button>
+                <span class="role-count" id="role_authority">0</span>
+                <button class="role-btn" onclick="changeRole('authority', 1)">+</button>
+              </div>
+            </div>
+            <div class="role-row" data-role="lovers">
+              <div class="role-info">
+                <span class="role-icon">💕</span>
+                <span class="role-name">戀人</span>
+                <span class="role-desc">知道彼此身份</span>
+              </div>
+              <div class="role-controls">
+                <button class="role-btn" onclick="changeRole('lovers', -1)">−</button>
+                <span class="role-count" id="role_lovers">0</span>
+                <button class="role-btn" onclick="changeRole('lovers', 1)">+</button>
+              </div>
+            </div>
+            <div class="role-row" data-role="poison">
+              <div class="role-info">
+                <span class="role-icon">☠️</span>
+                <span class="role-name">埋毒者</span>
+                <span class="role-desc">夜晚毒殺</span>
+              </div>
+              <div class="role-controls">
+                <button class="role-btn" onclick="changeRole('poison', -1)">−</button>
+                <span class="role-count" id="role_poison">0</span>
+                <button class="role-btn" onclick="changeRole('poison', 1)">+</button>
+              </div>
+            </div>
+            <div class="role-row" data-role="cat">
+              <div class="role-info">
+                <span class="role-icon">🐱</span>
+                <span class="role-name">貓又</span>
+                <span class="role-desc">死亡反擊</span>
+              </div>
+              <div class="role-controls">
+                <button class="role-btn" onclick="changeRole('cat', -1)">−</button>
+                <span class="role-count" id="role_cat">0</span>
+                <button class="role-btn" onclick="changeRole('cat', 1)">+</button>
+              </div>
+            </div>
+
+            <div class="role-team-header">🦊 第三陣營</div>
+            <div class="role-row" data-role="fox">
+              <div class="role-info">
+                <span class="role-icon">🦊</span>
+                <span class="role-name">妖狐</span>
+                <span class="role-desc">獨立勝利條件</span>
+              </div>
+              <div class="role-controls">
+                <button class="role-btn" onclick="changeRole('fox', -1)">−</button>
+                <span class="role-count" id="role_fox">0</span>
+                <button class="role-btn" onclick="changeRole('fox', 1)">+</button>
+              </div>
+            </div>
+            <div class="role-row" data-role="betr">
+              <div class="role-info">
+                <span class="role-icon">🎭</span>
+                <span class="role-name">背德者</span>
+                <span class="role-desc">可轉陣營</span>
+              </div>
+              <div class="role-controls">
+                <button class="role-btn" onclick="changeRole('betr', -1)">−</button>
+                <span class="role-count" id="role_betr">0</span>
+                <button class="role-btn" onclick="changeRole('betr', 1)">+</button>
+              </div>
             </div>
           </div>
         </div>
@@ -433,6 +793,77 @@
   <script>
     const API_BASE = window.location.origin;
 
+    // ===== 角色配置系統 =====
+    const ROLES = ['wolf', 'wfbig', 'mad', 'human', 'mage', 'necromancer', 'guard', 'common', 'authority', 'lovers', 'poison', 'cat', 'fox', 'betr'];
+    const roleCounts = {};
+    ROLES.forEach(r => roleCounts[r] = 0);
+
+    // 預設模板
+    const PRESETS = {
+      basic: { human: 4, wolf: 2, mage: 1, guard: 1 },  // 8人
+      standard: { human: 8, wolf: 3, mage: 1, necromancer: 1, guard: 1, mad: 1, fox: 1 }, // 16人
+      chaos: { human: 4, wolf: 2, wfbig: 1, mad: 1, mage: 1, necromancer: 1, guard: 1, common: 2, authority: 1, fox: 1, betr: 1, poison: 1, cat: 1, lovers: 2 }, // 19人
+      clear: {}
+    };
+
+    function changeRole(role, delta) {
+      const newVal = roleCounts[role] + delta;
+      if (newVal < 0 || newVal > 9) return;
+      roleCounts[role] = newVal;
+      document.getElementById('role_' + role).textContent = newVal;
+      updateRoleTotal();
+    }
+
+    function updateRoleTotal() {
+      const total = Object.values(roleCounts).reduce((a, b) => a + b, 0);
+      const maxUser = parseInt(document.getElementById('maxUser').value) || 16;
+      const el = document.getElementById('roleTotal');
+      el.textContent = `合計: ${total} / ${maxUser}人`;
+
+      // 更新 badge 顏色
+      const badge = el.querySelector('.role-total-badge') || document.createElement('span');
+      badge.className = 'role-total-badge';
+      if (total === 0) {
+        badge.classList.add('warn');
+        badge.textContent = '⚠️ 未設定';
+      } else if (total <= maxUser) {
+        badge.classList.add('ok');
+        badge.textContent = '✓';
+      } else {
+        badge.classList.add('error');
+        badge.textContent = '✗ 超出';
+      }
+      if (!el.querySelector('.role-total-badge')) el.appendChild(badge);
+    }
+
+    function applyPreset(name) {
+      const preset = PRESETS[name];
+      ROLES.forEach(r => {
+        roleCounts[r] = preset[r] || 0;
+        document.getElementById('role_' + r).textContent = roleCounts[r];
+      });
+      updateRoleTotal();
+    }
+
+    // 監聽 maxUser 變化自動更新
+    document.getElementById('maxUser').addEventListener('change', updateRoleTotal);
+
+    function getOptionRole() {
+      // 序列化為 URL-safe 格式: role:count,role:count,...
+      const parts = [];
+      for (const [role, count] of Object.entries(roleCounts)) {
+        if (count > 0) parts.push(`${role}:${count}`);
+      }
+      return parts.join(',');
+    }
+
+    // 頁面載入時預設套用基本局
+    window.addEventListener('load', () => {
+      applyPreset('basic');
+    });
+
+    // ===== 主功能 =====
+
     function showError(message) {
       const errorEl = document.getElementById('error');
       errorEl.textContent = message;
@@ -454,9 +885,21 @@
       const silenceMode = document.getElementById('silenceMode').checked;
       const allowSpectators = document.getElementById('allowSpectators').checked;
       const maxSpectators = parseInt(document.getElementById('maxSpectators').value);
+      const optionRole = getOptionRole();
 
       if (!roomName) {
         showError('請輸入房間名稱');
+        return;
+      }
+
+      // 檢查角色配置
+      const totalRoles = Object.values(roleCounts).reduce((a, b) => a + b, 0);
+      if (totalRoles === 0) {
+        showError('請設定至少一個角色，或使用預設模板');
+        return;
+      }
+      if (totalRoles > maxUser) {
+        showError(`角色總數(${totalRoles})超過最大人數(${maxUser})`);
         return;
       }
 
@@ -479,6 +922,7 @@
             roomComment,
             maxUser,
             gameOption,
+            optionRole,
             password: roomPassword || undefined
           })
         });
