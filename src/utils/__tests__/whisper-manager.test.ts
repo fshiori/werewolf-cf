@@ -10,51 +10,83 @@ class MockDB {
   private whispers: WhisperMessage[] = [];
 
   prepare(sql: string) {
-    return {
+    const self = this;
+    const stmt: any = {
+      _sql: sql,
+      _params: [] as any[],
       bind: (...params: any[]) => {
-        return {
-          run: async () => {
-            if (sql.includes('INSERT')) {
-              const whisper: WhisperMessage = {
-                id: params[0],
-                roomNo: params[1],
-                date: params[2],
-                from: params[3],
-                to: params[4],
-                message: params[5],
-                time: params[6] * 1000
-              };
-              this.whispers.push(whisper);
-            }
-            if (sql.includes('DELETE')) {
-              this.whispers = this.whispers.filter(w => w.roomNo !== params[0]);
-            }
-            return { success: true };
-          },
-          first: async () => {
-            return null;
-          },
-          all: async () => {
-            if (sql.includes('from_uname = ? OR to_uname = ?')) {
-              const filtered = this.whispers.filter(
-                w => w.roomNo === params[0] && 
-                     (w.from === params[1] || w.to === params[1])
-              );
-              return { results: filtered.reverse().slice(0, params[2] || 50) };
-            }
-            if (sql.includes('AND (from_uname = ? AND to_uname = ?) OR (from_uname = ? AND to_uname = ?)')) {
-              const filtered = this.whispers.filter(
-                w => w.roomNo === params[0] &&
-                     ((w.from === params[1] && w.to === params[2]) ||
-                      (w.from === params[2] && w.to === params[1]))
-              );
-              return { results: filtered.slice(0, params[4] || 50) };
-            }
-            return { results: [] };
+        stmt._params = params;
+        return stmt;
+      },
+      run: async () => {
+        const p = stmt._params;
+        if (sql.includes('INSERT')) {
+          const whisper: WhisperMessage = {
+            id: p[0],
+            roomNo: p[1],
+            date: p[2],
+            from: p[3],
+            to: p[4],
+            message: p[5],
+            time: p[6] * 1000
+          };
+          self.whispers.push(whisper);
+        }
+        if (sql.includes('DELETE')) {
+          self.whispers = self.whispers.filter(w => w.roomNo !== p[0]);
+        }
+        return { success: true };
+      },
+      first: async () => {
+        const p = stmt._params;
+        // SELECT COUNT(*) as count FROM whispers WHERE room_no = ?
+        if (sql.includes('COUNT(*)') && !sql.includes('DISTINCT')) {
+          return { count: self.whispers.filter(w => w.roomNo === p[0]).length };
+        }
+        // SELECT COUNT(DISTINCT ...) as count FROM whispers WHERE room_no = ?
+        if (sql.includes('COUNT(DISTINCT')) {
+          const roomWhispers = self.whispers.filter(w => w.roomNo === p[0]);
+          const pairs = new Set<string>();
+          for (const w of roomWhispers) {
+            const key = [w.from, w.to].sort().join('-');
+            pairs.add(key);
           }
-        };
+          return { count: pairs.size };
+        }
+        return null;
+      },
+      all: async () => {
+        const p = stmt._params;
+        // SELECT * FROM whispers WHERE room_no = ? AND (from_uname = ? OR to_uname = ?)
+        // bind params: [roomNo, uname, uname, limit]
+        if (sql.includes('from_uname = ? OR to_uname = ?')) {
+          const roomNo = p[0];
+          const uname = p[1];
+          const limit = p[3];
+          const filtered = self.whispers.filter(
+            w => w.roomNo === roomNo &&
+                 (w.from === uname || w.to === uname)
+          );
+          return { results: filtered.reverse().slice(0, limit || 50) };
+        }
+        // SELECT * FROM whispers WHERE room_no = ? AND ((from_uname = ? AND to_uname = ?) OR ...)
+        // bind params: [roomNo, uname1, uname2, uname2, uname1, limit]
+        if (sql.includes('from_uname = ? AND to_uname = ?')) {
+          const roomNo = p[0];
+          const uname1 = p[1];
+          const uname2 = p[2];
+          const limit = p[5];
+          const filtered = self.whispers.filter(
+            w => w.roomNo === roomNo &&
+                 ((w.from === uname1 && w.to === uname2) ||
+                  (w.from === uname2 && w.to === uname1))
+          );
+          return { results: filtered.slice(0, limit || 50) };
+        }
+        return { results: [] };
       }
     };
+    return stmt;
   }
 }
 

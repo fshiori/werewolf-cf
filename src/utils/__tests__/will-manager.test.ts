@@ -10,53 +10,81 @@ class MockDB {
   private wills: WillData[] = [];
 
   prepare(sql: string) {
-    return {
+    const self = this;
+    const stmt: any = {
+      _sql: sql,
+      _params: [] as any[],
       bind: (...params: any[]) => {
-        return {
-          run: async () => {
-            if (sql.includes('INSERT')) {
-              const will: WillData = {
-                roomNo: params[0],
-                date: params[1],
-                uname: params[2],
-                handleName: params[3],
-                will: params[4],
-                time: params[5] * 1000
-              };
-              this.wills.push(will);
-            }
-            if (sql.includes('DELETE')) {
-              this.wills = this.wills.filter(w => w.roomNo !== params[0]);
-            }
-            return { success: true };
-          },
-          first: async () => {
-            if (sql.includes('COUNT(*)')) {
-              return { count: this.wills.filter(w => w.uname === params[1]).length };
-            }
-            if (sql.includes('AVG')) {
-              const roomWills = this.wills.filter(w => w.roomNo === params[0]);
-              const avgLen = roomWills.reduce((sum, w) => sum + w.will.length, 0) / roomWills.length;
-              return { count: roomWills.length, avg_length: avgLen || 0 };
-            }
-            return null;
-          },
-          all: async () => {
-            if (sql.includes('WHERE room_no = ?')) {
-              if (sql.includes('AND date = ?')) {
-                return { results: this.wills.filter(w => w.roomNo === params[0] && w.date === params[1]) };
-              }
-              if (sql.includes('AND uname = ?')) {
-                const filtered = this.wills.filter(w => w.roomNo === params[0] && w.uname === params[1]);
-                return { results: filtered.length > 0 ? [filtered[filtered.length - 1]] : [] };
-              }
-              return { results: this.wills.filter(w => w.roomNo === params[0]) };
-            }
-            return { results: [] };
+        stmt._params = params;
+        return stmt;
+      },
+      run: async () => {
+        const p = stmt._params;
+        if (sql.includes('INSERT')) {
+          const will: WillData = {
+            roomNo: p[0],
+            date: p[1],
+            uname: p[2],
+            handleName: p[3],
+            will: p[4],
+            time: p[5] * 1000
+          };
+          self.wills.push(will);
+        }
+        if (sql.includes('DELETE')) {
+          self.wills = self.wills.filter(w => w.roomNo !== p[0]);
+        }
+        return { success: true };
+      },
+      first: async () => {
+        const p = stmt._params;
+        // SELECT COUNT(*) as count FROM wills WHERE room_no = ? AND uname = ?
+        if (sql.includes('COUNT(*)') && !sql.includes('AVG')) {
+          const roomNo = p[0];
+          const uname = p[1];
+          if (uname !== undefined) {
+            return { count: self.wills.filter(w => w.roomNo === roomNo && w.uname === uname).length };
           }
-        };
+          return { count: self.wills.filter(w => w.roomNo === roomNo).length };
+        }
+        // SELECT COUNT(*) as count, AVG(LENGTH(will)) as avg_length FROM wills WHERE room_no = ?
+        if (sql.includes('AVG')) {
+          const roomNo = p[0];
+          const roomWills = self.wills.filter(w => w.roomNo === roomNo);
+          const avgLen = roomWills.length > 0
+            ? roomWills.reduce((sum, w) => sum + w.will.length, 0) / roomWills.length
+            : 0;
+          return { count: roomWills.length, avg_length: avgLen || 0 };
+        }
+        // SELECT * FROM wills WHERE room_no = ? AND uname = ? ORDER BY date DESC LIMIT 1
+        if (sql.includes('WHERE room_no = ?') && sql.includes('AND uname = ?') && !sql.includes('COUNT')) {
+          const roomNo = p[0];
+          const uname = p[1];
+          const filtered = self.wills.filter(w => w.roomNo === roomNo && w.uname === uname);
+          if (filtered.length > 0) {
+            // Return the last one (most recent, simulating ORDER BY date DESC LIMIT 1)
+            return filtered[filtered.length - 1];
+          }
+          return null;
+        }
+        return null;
+      },
+      all: async () => {
+        const p = stmt._params;
+        if (sql.includes('WHERE room_no = ?')) {
+          if (sql.includes('AND date = ?')) {
+            return { results: self.wills.filter(w => w.roomNo === p[0] && w.date === p[1]) };
+          }
+          if (sql.includes('AND uname = ?')) {
+            const filtered = self.wills.filter(w => w.roomNo === p[0] && w.uname === p[1]);
+            return { results: filtered.length > 0 ? [filtered[filtered.length - 1]] : [] };
+          }
+          return { results: self.wills.filter(w => w.roomNo === p[0]) };
+        }
+        return { results: [] };
       }
     };
+    return stmt;
   }
 }
 

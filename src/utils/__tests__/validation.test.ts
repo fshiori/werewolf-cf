@@ -10,7 +10,7 @@ import {
   validateTripcode,
   sanitizeHTML,
   convertEmoticons
-} from '../src/utils/validation';
+} from '../validation';
 
 describe('Validation Utils', () => {
   describe('validateUsername', () => {
@@ -97,7 +97,7 @@ describe('Validation Utils', () => {
     });
 
     it('應該處理混合內容', () => {
-      expect(sanitizeHTML('<div>Hello</div>')).toBe('&lt;div&gt;Hello&lt;/div&gt;');
+      expect(sanitizeHTML('<div>Hello</div>')).toBe('&lt;div&gt;Hello&lt;&#x2F;div&gt;');
     });
   });
 

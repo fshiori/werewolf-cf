@@ -67,7 +67,7 @@ describe('Vote System', () => {
       
       expect(success).toBe(true);
       expect(voteData.votes.has('player1')).toBe(false);
-      expect(voteData.voteCounts.get('player2')).toBe(0);
+      expect(voteData.voteCounts.get('player2')).toBeFalsy(); // deleted when count reaches 0
     });
 
     it('取消不存在的投票應該失敗', () => {

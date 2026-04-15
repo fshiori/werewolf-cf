@@ -46,27 +46,27 @@ class MockKV {
 
 describe('Admin System', () => {
   describe('密碼雜湊', () => {
-    it('應該產生一致的雜湊值', () => {
+    it('應該產生一致的雜湊值', async () => {
       const password = 'test123456';
-      const hash1 = hashAdminPassword(password);
-      const hash2 = hashAdminPassword(password);
+      const hash1 = await hashAdminPassword(password);
+      const hash2 = await hashAdminPassword(password);
       
       expect(hash1).toBe(hash2);
     });
 
-    it('不同密碼應該產生不同雜湊', () => {
-      const hash1 = hashAdminPassword('password1');
-      const hash2 = hashAdminPassword('password2');
+    it('不同密碼應該產生不同雜湊', async () => {
+      const hash1 = await hashAdminPassword('password1');
+      const hash2 = await hashAdminPassword('password2');
       
       expect(hash1).not.toBe(hash2);
     });
 
-    it('應該正確驗證密碼', () => {
+    it('應該正確驗證密碼', async () => {
       const password = 'test123456';
-      const hash = hashAdminPassword(password);
+      const hash = await hashAdminPassword(password);
       
-      expect(verifyAdminPassword(password, hash)).toBe(true);
-      expect(verifyAdminPassword('wrong', hash)).toBe(false);
+      expect(await verifyAdminPassword(password, hash)).toBe(true);
+      expect(await verifyAdminPassword('wrong', hash)).toBe(false);
     });
   });
 

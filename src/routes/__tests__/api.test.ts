@@ -12,7 +12,7 @@ function createMockEnv(): Env {
   return {
     DB: {
       prepare: () => ({
-        bind: () => ({
+        bind: (..._args: any[]) => ({
           run: async () => ({ success: true }),
           first: async () => null,
           all: async () => ({ results: [] })
@@ -31,10 +31,9 @@ function createMockEnv(): Env {
       list: async () => ({ objects: [] })
     } as any,
     WEREWOLF_ROOM: {
-      idFromName: () => ({
-        get: () => ({
-          fetch: async () => new Response(JSON.stringify({}), { status: 200 })
-        })
+      idFromName: (name: string) => name,
+      get: (_id: string) => ({
+        fetch: async () => new Response(JSON.stringify({}), { status: 200 })
       })
     } as any,
     ASSETS: {
@@ -53,6 +52,11 @@ describe('API Routes', () => {
     app.route('/', api);
   });
 
+  // Helper to make requests with env bindings
+  async function request(path: string, init?: RequestInit): Promise<Response> {
+    return app.request(new Request(`http://localhost${path}`, init), undefined, mockEnv);
+  }
+
   describe('健康檢查', () => {
     it('GET / 應該返回健康狀態', async () => {
       const response = await app.request('/');
@@ -67,7 +71,7 @@ describe('API Routes', () => {
 
   describe('建立房間', () => {
     it('POST /api/rooms 應該建立新房間', async () => {
-      const response = await app.request('/api/rooms', {
+      const response = await request('/api/rooms', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -85,7 +89,7 @@ describe('API Routes', () => {
     });
 
     it('缺少房間名稱應該返回錯誤', async () => {
-      const response = await app.request('/api/rooms', {
+      const response = await request('/api/rooms', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -100,7 +104,7 @@ describe('API Routes', () => {
     });
 
     it('房間名稱太長應該返回錯誤', async () => {
-      const response = await app.request('/api/rooms', {
+      const response = await request('/api/rooms', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -112,7 +116,7 @@ describe('API Routes', () => {
     });
 
     it('無效的人數限制應該返回錯誤', async () => {
-      const response = await app.request('/api/rooms', {
+      const response = await request('/api/rooms', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -127,7 +131,7 @@ describe('API Routes', () => {
 
   describe('獲取房間資訊', () => {
     it('GET /api/rooms/:roomNo 應該返回房間資訊', async () => {
-      const response = await app.request('/api/rooms/123');
+      const response = await request('/api/rooms/123');
       
       expect(response.status).toBe(200);
       
@@ -138,7 +142,7 @@ describe('API Routes', () => {
 
   describe('Tripcode 生成', () => {
     it('POST /api/trip 應該生成 tripcode', async () => {
-      const response = await app.request('/api/trip', {
+      const response = await request('/api/trip', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -155,7 +159,7 @@ describe('API Routes', () => {
     });
 
     it('缺少密碼應該返回錯誤', async () => {
-      const response = await app.request('/api/trip', {
+      const response = await request('/api/trip', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({})
@@ -171,7 +175,7 @@ describe('API Routes', () => {
       formData.append('icon', new Blob(['test'], { type: 'image/png' }), 'test.png');
       formData.append('name', 'test');
       
-      const response = await app.request('/api/icons', {
+      const response = await request('/api/icons', {
         method: 'POST',
         body: formData
       });
@@ -187,7 +191,7 @@ describe('API Routes', () => {
       const formData = new FormData();
       formData.append('name', 'test');
       
-      const response = await app.request('/api/icons', {
+      const response = await request('/api/icons', {
         method: 'POST',
         body: formData
       });
@@ -198,7 +202,7 @@ describe('API Routes', () => {
 
   describe('頭像列表', () => {
     it('GET /api/icons 應該返回頭像列表', async () => {
-      const response = await app.request('/api/icons');
+      const response = await request('/api/icons');
       
       expect(response.status).toBe(200);
       
