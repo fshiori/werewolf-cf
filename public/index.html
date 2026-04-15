@@ -612,6 +612,12 @@
         </span>
       </a>
     </div>
+
+    <!-- 房間列表 -->
+    <div id="roomList" style="margin-top:20px;">
+      <h3 style="color:#555;font-size:14px;margin-bottom:10px;">📋 現有房間</h3>
+      <div id="roomListContent" style="text-align:center;color:#999;font-size:13px;">載入中...</div>
+    </div>
   </div>
 
   <script>
@@ -755,6 +761,7 @@
     // 頁面載入
     window.addEventListener('load', () => {
       updateRolePreview();
+      loadRoomList();
     });
 
     // ===== 主功能 =====
@@ -768,6 +775,30 @@
 
     function showLoading(show) {
       document.getElementById('loading').classList.toggle('show', show);
+    }
+
+    async function loadRoomList() {
+      try {
+        const res = await fetch(`${API_BASE}/api/rooms`);
+        const data = await res.json();
+        const container = document.getElementById('roomListContent');
+        if (!data.rooms || data.rooms.length === 0) {
+          container.innerHTML = '<span style="color:#aaa;">目前沒有等待中的房間</span>';
+          return;
+        }
+        const statusMap = { waiting: '🟢 等待中', playing: '🔴 遊戲中', finished: '⚫ 已結束' };
+        container.innerHTML = data.rooms.map(r => `
+          <div style="background:#f8f9fa;border-radius:8px;padding:10px 14px;margin-bottom:8px;text-align:left;cursor:pointer;" onclick="document.getElementById('joinRoomNo').value='${r.room_no}';document.getElementById('username').focus();">
+            <div style="font-weight:600;color:#333;font-size:14px;">${r.room_name || '未命名房間'}</div>
+            <div style="font-size:12px;color:#888;margin-top:2px;">
+              ${statusMap[r.status] || r.status} · ${r.player_count || 0}/${r.max_user}人 · ${r.is_private ? '🔒 私人' : '🌐 公開'}
+              ${r.room_comment ? ' · ' + r.room_comment : ''}
+            </div>
+          </div>
+        `).join('');
+      } catch (e) {
+        document.getElementById('roomListContent').innerHTML = '<span style="color:#ccc;">載入失敗</span>';
+      }
     }
 
     async function createRoom() {
@@ -808,8 +839,26 @@
           if (roomPassword) {
             sessionStorage.setItem(`room_password_${data.roomNo}`, roomPassword);
           }
-          // 跳轉到遊戲頁面
-          window.location.href = `/game.html?roomNo=${data.roomNo}&iconNo=${iconNo}&isHost=true`;
+          // 以房主身份自動加入房間，取得 session
+          const hostName = document.getElementById('username').value.trim() || '房主';
+          const joinResp = await fetch(`${API_BASE}/api/rooms/${data.roomNo}/join`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              uname: hostName,
+              handleName: hostName,
+              trip: '',
+              iconNo: iconNo,
+              sex: 'male'
+            })
+          });
+          const joinData = await joinResp.json();
+          if (joinData.success) {
+            localStorage.setItem(`session_${data.roomNo}`, joinData.sessionId);
+            window.location.href = `/game.html?roomNo=${data.roomNo}&iconNo=${iconNo}&isHost=true`;
+          } else {
+            showError(joinData.error || '加入房間失敗');
+          }
         } else {
           showError(data.error || '建立房間失敗');
         }
