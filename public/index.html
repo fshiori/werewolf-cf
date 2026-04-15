@@ -280,96 +280,7 @@
       white-space: nowrap;
     }
 
-    .role-controls {
-      display: flex;
-      align-items: center;
-      gap: 0;
-    }
 
-    .role-btn {
-      width: 28px;
-      height: 28px;
-      border: 1px solid #ddd;
-      background: white;
-      border-radius: 4px;
-      font-size: 16px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #666;
-      transition: all 0.2s;
-      padding: 0;
-      margin: 0;
-    }
-
-    .role-btn:hover {
-      background: #667eea;
-      color: white;
-      border-color: #667eea;
-    }
-
-    .role-btn:active {
-      transform: scale(0.95);
-    }
-
-    .role-count {
-      width: 36px;
-      text-align: center;
-      font-size: 14px;
-      font-weight: 600;
-      color: #333;
-      border: none;
-      background: none;
-    }
-
-    .role-total-badge {
-      display: inline-block;
-      padding: 2px 8px;
-      border-radius: 10px;
-      font-size: 12px;
-      font-weight: 600;
-      margin-left: 4px;
-    }
-
-    .role-total-badge.ok {
-      background: #d4edda;
-      color: #155724;
-    }
-
-    .role-total-badge.warn {
-      background: #fff3cd;
-      color: #856404;
-    }
-
-    .role-total-badge.error {
-      background: #f8d7da;
-      color: #721c24;
-    }
-
-    .role-preset-btns {
-      display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
-      margin-top: 10px;
-    }
-
-    .role-preset-btn {
-      padding: 4px 10px;
-      font-size: 11px;
-      background: white;
-      border: 1px solid #ddd;
-      border-radius: 12px;
-      cursor: pointer;
-      color: #666;
-      transition: all 0.2s;
-    }
-
-    .role-preset-btn:hover {
-      background: #667eea;
-      color: white;
-      border-color: #667eea;
-    }
 
     .nav-links {
       margin-top: 40px;
@@ -482,195 +393,108 @@
             </div>
           </div>
 
-          <!-- 角色配置 -->
+          <!-- 角色追加與調整（依原版 DIAM 邏輯） -->
           <div class="role-config" id="roleConfig">
             <div class="role-config-title">
-              <span>🎭 角色配置</span>
-              <span class="role-total" id="roleTotal">合計: 0 / 16人</span>
+              <span>🎭 角色追加與調整</span>
+              <span class="role-hint" id="roleHint">基本角色依人數自動分配</span>
             </div>
 
-            <!-- 預設模板 -->
-            <div class="role-preset-btns" id="rolePresets">
-              <button class="role-preset-btn" onclick="applyPreset('basic')">🎯 基本局 8人</button>
-              <button class="role-preset-btn" onclick="applyPreset('standard')">⚔️ 標準局 16人</button>
-              <button class="role-preset-btn" onclick="applyPreset('chaos')">🌪️ 混亂局</button>
-              <button class="role-preset-btn" onclick="applyPreset('clear')">🗑️ 清空</button>
+            <!-- 角色預覽（即時顯示） -->
+            <div id="rolePreview" class="role-preview" style="margin-bottom:12px;padding:8px;background:#eee;border-radius:6px;font-size:12px;color:#555;">
+              載入中...
             </div>
 
-            <div class="role-team-header">🐺 狼人陣營</div>
-            <div class="role-row" data-role="wolf">
-              <div class="role-info">
-                <span class="role-icon">🐺</span>
-                <span class="role-name">狼人</span>
-                <span class="role-desc">夜晚襲擊</span>
-              </div>
-              <div class="role-controls">
-                <button class="role-btn" onclick="changeRole('wolf', -1)">−</button>
-                <span class="role-count" id="role_wolf">0</span>
-                <button class="role-btn" onclick="changeRole('wolf', 1)">+</button>
-              </div>
-            </div>
-            <div class="role-row" data-role="wfbig">
-              <div class="role-info">
-                <span class="role-icon">👹</span>
-                <span class="role-name">大狼</span>
-                <span class="role-desc">+1襲擊權</span>
-              </div>
-              <div class="role-controls">
-                <button class="role-btn" onclick="changeRole('wfbig', -1)">−</button>
-                <span class="role-count" id="role_wfbig">0</span>
-                <button class="role-btn" onclick="changeRole('wfbig', 1)">+</button>
-              </div>
-            </div>
-            <div class="role-row" data-role="mad">
-              <div class="role-info">
-                <span class="role-icon">🤪</span>
-                <span class="role-name">狂人</span>
-                <span class="role-desc">狼人陣營人類</span>
-              </div>
-              <div class="role-controls">
-                <button class="role-btn" onclick="changeRole('mad', -1)">−</button>
-                <span class="role-count" id="role_mad">0</span>
-                <button class="role-btn" onclick="changeRole('mad', 1)">+</button>
-              </div>
+            <div style="margin-bottom:10px;">
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:4px 0;">
+                <input type="checkbox" id="optDummyBoy" style="width:auto;margin:0;">
+                <span><strong>替身君</strong> <small style="color:#999;">第一天晚上狼只能咬替身君</small></span>
+              </label>
             </div>
 
-            <div class="role-team-header">👥 村民陣營</div>
-            <div class="role-row" data-role="human">
-              <div class="role-info">
-                <span class="role-icon">👤</span>
-                <span class="role-name">村民</span>
-                <span class="role-desc">一般村民</span>
-              </div>
-              <div class="role-controls">
-                <button class="role-btn" onclick="changeRole('human', -1)">−</button>
-                <span class="role-count" id="role_human">0</span>
-                <button class="role-btn" onclick="changeRole('human', 1)">+</button>
-              </div>
-            </div>
-            <div class="role-row" data-role="mage">
-              <div class="role-info">
-                <span class="role-icon">🔮</span>
-                <span class="role-name">預言家</span>
-                <span class="role-desc">占卜角色</span>
-              </div>
-              <div class="role-controls">
-                <button class="role-btn" onclick="changeRole('mage', -1)">−</button>
-                <span class="role-count" id="role_mage">0</span>
-                <button class="role-btn" onclick="changeRole('mage', 1)">+</button>
-              </div>
-            </div>
-            <div class="role-row" data-role="necromancer">
-              <div class="role-info">
-                <span class="role-icon">💀</span>
-                <span class="role-name">靈媒</span>
-                <span class="role-desc">驗證死亡角色</span>
-              </div>
-              <div class="role-controls">
-                <button class="role-btn" onclick="changeRole('necromancer', -1)">−</button>
-                <span class="role-count" id="role_necromancer">0</span>
-                <button class="role-btn" onclick="changeRole('necromancer', 1)">+</button>
-              </div>
-            </div>
-            <div class="role-row" data-role="guard">
-              <div class="role-info">
-                <span class="role-icon">🏹</span>
-                <span class="role-name">獵人</span>
-                <span class="role-desc">死亡時可帶走一人</span>
-              </div>
-              <div class="role-controls">
-                <button class="role-btn" onclick="changeRole('guard', -1)">−</button>
-                <span class="role-count" id="role_guard">0</span>
-                <button class="role-btn" onclick="changeRole('guard', 1)">+</button>
-              </div>
-            </div>
-            <div class="role-row" data-role="common">
-              <div class="role-info">
-                <span class="role-icon">🤝</span>
-                <span class="role-name">共有者</span>
-                <span class="role-desc">知道彼此身份</span>
-              </div>
-              <div class="role-controls">
-                <button class="role-btn" onclick="changeRole('common', -1)">−</button>
-                <span class="role-count" id="role_common">0</span>
-                <button class="role-btn" onclick="changeRole('common', 1)">+</button>
-              </div>
-            </div>
-            <div class="role-row" data-role="authority">
-              <div class="role-info">
-                <span class="role-icon">👑</span>
-                <span class="role-name">權力者</span>
-                <span class="role-desc">投票權重x2</span>
-              </div>
-              <div class="role-controls">
-                <button class="role-btn" onclick="changeRole('authority', -1)">−</button>
-                <span class="role-count" id="role_authority">0</span>
-                <button class="role-btn" onclick="changeRole('authority', 1)">+</button>
-              </div>
-            </div>
-            <div class="role-row" data-role="lovers">
-              <div class="role-info">
-                <span class="role-icon">💕</span>
-                <span class="role-name">戀人</span>
-                <span class="role-desc">知道彼此身份</span>
-              </div>
-              <div class="role-controls">
-                <button class="role-btn" onclick="changeRole('lovers', -1)">−</button>
-                <span class="role-count" id="role_lovers">0</span>
-                <button class="role-btn" onclick="changeRole('lovers', 1)">+</button>
-              </div>
-            </div>
-            <div class="role-row" data-role="poison">
-              <div class="role-info">
-                <span class="role-icon">☠️</span>
-                <span class="role-name">埋毒者</span>
-                <span class="role-desc">夜晚毒殺</span>
-              </div>
-              <div class="role-controls">
-                <button class="role-btn" onclick="changeRole('poison', -1)">−</button>
-                <span class="role-count" id="role_poison">0</span>
-                <button class="role-btn" onclick="changeRole('poison', 1)">+</button>
-              </div>
-            </div>
-            <div class="role-row" data-role="cat">
-              <div class="role-info">
-                <span class="role-icon">🐱</span>
-                <span class="role-name">貓又</span>
-                <span class="role-desc">死亡反擊</span>
-              </div>
-              <div class="role-controls">
-                <button class="role-btn" onclick="changeRole('cat', -1)">−</button>
-                <span class="role-count" id="role_cat">0</span>
-                <button class="role-btn" onclick="changeRole('cat', 1)">+</button>
-              </div>
+            <div style="margin-bottom:10px;">
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:4px 0;">
+                <input type="checkbox" id="optWishRole" style="width:auto;margin:0;">
+                <span><strong>希望角色</strong> <small style="color:#999;">打勾後玩家可選擇希望角色</small></span>
+              </label>
             </div>
 
-            <div class="role-team-header">🦊 第三陣營</div>
-            <div class="role-row" data-role="fox">
-              <div class="role-info">
-                <span class="role-icon">🦊</span>
-                <span class="role-name">妖狐</span>
-                <span class="role-desc">獨立勝利條件</span>
-              </div>
-              <div class="role-controls">
-                <button class="role-btn" onclick="changeRole('fox', -1)">−</button>
-                <span class="role-count" id="role_fox">0</span>
-                <button class="role-btn" onclick="changeRole('fox', 1)">+</button>
-              </div>
+            <div style="margin-bottom:10px;">
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:4px 0;">
+                <input type="checkbox" id="optOpenVote" style="width:auto;margin:0;">
+                <span><strong>公開投票</strong> <small style="color:#999;">顯示投票結果票數</small></span>
+              </label>
             </div>
-            <div class="role-row" data-role="betr">
-              <div class="role-info">
-                <span class="role-icon">🎭</span>
-                <span class="role-name">背德者</span>
-                <span class="role-desc">可轉陣營</span>
-              </div>
-              <div class="role-controls">
-                <button class="role-btn" onclick="changeRole('betr', -1)">−</button>
-                <span class="role-count" id="role_betr">0</span>
-                <button class="role-btn" onclick="changeRole('betr', 1)">+</button>
-              </div>
+
+            <div style="margin-bottom:10px;">
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:4px 0;">
+                <input type="checkbox" id="optDellook" style="width:auto;margin:0;">
+                <span><strong>幽靈看角色</strong> <small style="color:#999;">允許幽靈觀看存活者角色</small></span>
+              </label>
             </div>
-          </div>
+
+            <div style="margin-bottom:10px;">
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:4px 0;">
+                <input type="checkbox" id="optWill" checked style="width:auto;margin:0;">
+                <span><strong>啟用遺書</strong> <small style="color:#999;">允許玩家保留遺書</small></span>
+              </label>
+            </div>
+
+            <div style="margin-bottom:10px;">
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:4px 0;">
+                <input type="checkbox" id="optVoteMe" style="width:auto;margin:0;">
+                <span><strong>白天自投</strong> <small style="color:#999;">允許白天投票給自己</small></span>
+              </label>
+            </div>
+
+            <div class="role-team-header">⚡ 額外職業（依人數自動啟用/停用）</div>
+
+            <div style="margin-bottom:8px;">
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:4px 0;">
+                <input type="checkbox" id="optLovers" style="width:auto;margin:0;">
+                <span><strong>💕 戀人</strong> <small style="color:#999;">（13人以上可選）打勾後共有者變戀人，可兼任</small></span>
+              </label>
+            </div>
+
+            <div style="margin-bottom:8px;">
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:4px 0;">
+                <input type="checkbox" id="optDecide" style="width:auto;margin:0;">
+                <span><strong>⚖️ 決定者</strong> <small style="color:#999;">（16人以上可選）票數相同時決定者票優先，可兼任</small></span>
+              </label>
+            </div>
+
+            <div style="margin-bottom:8px;">
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:4px 0;">
+                <input type="checkbox" id="optAuthority" style="width:auto;margin:0;">
+                <span><strong>👑 權力者</strong> <small style="color:#999;">（16人以上可選）投票票數為2票，可兼任</small></span>
+              </label>
+            </div>
+
+            <div style="margin-bottom:8px;">
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:4px 0;">
+                <input type="checkbox" id="optWfbig" style="width:auto;margin:0;">
+                <span><strong>👹 大狼</strong> <small style="color:#999;">（20人以上可選）狼群隨機一隻取代為大狼</small></span>
+              </label>
+            </div>
+
+            <div class="role-option-row" style="display:flex;align-items:center;gap:8px;padding:4px 0;">
+              <label style="white-space:nowrap;"><strong>☠️ 埋毒者</strong> <small style="color:#999;">（20人以上）</small></label>
+              <select id="optPoison" style="padding:4px 8px;border:1px solid #ddd;border-radius:4px;font-size:13px;">
+                <option value="">無</option>
+                <option value="poison">埋毒</option>
+                <option value="cat">貓又</option>
+              </select>
+            </div>
+
+            <div class="role-option-row" style="display:flex;align-items:center;gap:8px;padding:4px 0;margin-bottom:8px;">
+              <label style="white-space:nowrap;"><strong>🦊 妖狐</strong> <small style="color:#999;">（20人以上）使用將取消埋毒</small></label>
+              <select id="optFoxs" style="padding:4px 8px;border:1px solid #ddd;border-radius:4px;font-size:13px;">
+                <option value="">無</option>
+                <option value="betr">背德</option>
+                <option value="foxs">雙狐</option>
+                <option value="fosi">子狐</option>
+              </select>
+            </div>
         </div>
       </details>
 
@@ -793,73 +617,144 @@
   <script>
     const API_BASE = window.location.origin;
 
-    // ===== 角色配置系統 =====
-    const ROLES = ['wolf', 'wfbig', 'mad', 'human', 'mage', 'necromancer', 'guard', 'common', 'authority', 'lovers', 'poison', 'cat', 'fox', 'betr'];
-    const roleCounts = {};
-    ROLES.forEach(r => roleCounts[r] = 0);
+    // ===== 角色系統（依原版 DIAM 邏輯） =====
 
-    // 預設模板
-    const PRESETS = {
-      basic: { human: 4, wolf: 2, mage: 1, guard: 1 },  // 8人
-      standard: { human: 8, wolf: 3, mage: 1, necromancer: 1, guard: 1, mad: 1, fox: 1 }, // 16人
-      chaos: { human: 4, wolf: 2, wfbig: 1, mad: 1, mage: 1, necromancer: 1, guard: 1, common: 2, authority: 1, fox: 1, betr: 1, poison: 1, cat: 1, lovers: 2 }, // 19人
-      clear: {}
+    // 原版角色分配表：根據人數自動分配基本角色
+    const ROLE_TABLE = {
+      8:  ['human','human','human','human','human','wolf','wolf','mage'],
+      9:  ['human','human','human','human','human','wolf','wolf','mage','necromancer'],
+      10: ['human','human','human','human','human','wolf','wolf','mage','necromancer','mad'],
+      11: ['human','human','human','human','human','wolf','wolf','mage','necromancer','mad','guard'],
+      12: ['human','human','human','human','human','human','wolf','wolf','mage','necromancer','mad','guard'],
+      13: ['human','human','human','human','human','wolf','wolf','mage','necromancer','mad','guard','common','common'],
+      14: ['human','human','human','human','human','human','wolf','wolf','mage','necromancer','mad','guard','common','common'],
+      15: ['human','human','human','human','human','human','wolf','wolf','mage','necromancer','mad','guard','common','common','fox'],
+      16: ['human','human','human','human','human','human','wolf','wolf','wolf','mage','necromancer','mad','guard','common','common','fox'],
+      17: ['human','human','human','human','human','human','human','wolf','wolf','wolf','mage','necromancer','mad','guard','common','common','fox'],
+      18: ['human','human','human','human','human','human','human','human','wolf','wolf','wolf','mage','necromancer','mad','guard','common','common','fox'],
+      19: ['human','human','human','human','human','human','human','human','human','wolf','wolf','wolf','mage','necromancer','mad','guard','common','common','fox'],
+      20: ['human','human','human','human','human','human','human','human','human','human','fox','wolf','wolf','wolf','mage','necromancer','mad','guard','common','common'],
+      22: ['human','human','human','human','human','human','human','human','human','human','human','human','fox','wolf','wolf','wolf','mage','necromancer','mad','guard','common','common'],
+      30: ['human','human','human','human','human','human','human','human','human','human','human','human','fox','wolf','wolf','wolf','wolf','wolf','wolf','mage','mage','necromancer','necromancer','mad','guard','guard','common','common','common'],
     };
 
-    function changeRole(role, delta) {
-      const newVal = roleCounts[role] + delta;
-      if (newVal < 0 || newVal > 9) return;
-      roleCounts[role] = newVal;
-      document.getElementById('role_' + role).textContent = newVal;
-      updateRoleTotal();
+    // 角色中文名稱對照
+    const ROLE_NAMES = {
+      human: '村民', wolf: '人狼', mage: '占卜師', necromancer: '靈能者',
+      mad: '狂人', guard: '獵人', common: '共有者', fox: '妖狐',
+      betr: '背德', fosi: '子狐', poison: '埋毒者', cat: '貓又',
+      wfbig: '大狼', decide: '決定者', authority: '權力者', lovers: '戀人'
+    };
+
+    function getRoleTable(count) {
+      // 找最接近的人數配置
+      const keys = Object.keys(ROLE_TABLE).map(Number).sort((a,b) => a-b);
+      for (const k of keys) {
+        if (count <= k) return ROLE_TABLE[k];
+      }
+      return ROLE_TABLE[30]; // 最多
     }
 
-    function updateRoleTotal() {
-      const total = Object.values(roleCounts).reduce((a, b) => a + b, 0);
+    function countRoles(roles) {
+      const counts = {};
+      for (const r of roles) {
+        counts[r] = (counts[r] || 0) + 1;
+      }
+      return counts;
+    }
+
+    function updateRolePreview() {
       const maxUser = parseInt(document.getElementById('maxUser').value) || 16;
-      const el = document.getElementById('roleTotal');
-      el.textContent = `合計: ${total} / ${maxUser}人`;
+      const baseRoles = getRoleTable(maxUser);
+      const counts = countRoles(baseRoles);
 
-      // 更新 badge 顏色
-      const badge = el.querySelector('.role-total-badge') || document.createElement('span');
-      badge.className = 'role-total-badge';
-      if (total === 0) {
-        badge.classList.add('warn');
-        badge.textContent = '⚠️ 未設定';
-      } else if (total <= maxUser) {
-        badge.classList.add('ok');
-        badge.textContent = '✓';
+      // 處理妖狐選項（會替換表中的 fox 或取消）
+      const foxsVal = document.getElementById('optFoxs').value;
+      const poisonVal = document.getElementById('optPoison').value;
+
+      // 顯示基本角色
+      let parts = [];
+      parts.push(`村民×${counts['human'] || 0}`);
+      parts.push(`人狼×${counts['wolf'] || 0}`);
+      if (counts['mage']) parts.push(`占卜師×${counts['mage']}`);
+      if (counts['necromancer']) parts.push(`靈能者×${counts['necromancer']}`);
+      if (counts['mad']) parts.push(`狂人×${counts['mad']}`);
+      if (counts['guard']) parts.push(`獵人×${counts['guard']}`);
+      if (counts['common']) parts.push(`共有者×${counts['common']}`);
+      if (counts['fox']) parts.push(`妖狐×${counts['fox']}`);
+
+      document.getElementById('rolePreview').innerHTML =
+        `<strong>${maxUser}人配置：</strong> ${parts.join('　')}`;
+
+      // 啟用/停用 checkbox（依人數）
+      toggleOpt('optLovers', maxUser >= 13, '需13人以上');
+      toggleOpt('optDecide', maxUser >= 16, '需16人以上');
+      toggleOpt('optAuthority', maxUser >= 16, '需16人以上');
+      toggleOpt('optWfbig', maxUser >= 20, '需20人以上');
+      toggleOpt('optPoison', maxUser >= 20, '需20人以上');
+      toggleOpt('optFoxs', maxUser >= 20, '需20人以上');
+
+      // 妖狐與埋毒互斥
+      if (foxsVal) {
+        document.getElementById('optPoison').disabled = true;
+        document.getElementById('optPoison').value = '';
       } else {
-        badge.classList.add('error');
-        badge.textContent = '✗ 超出';
+        document.getElementById('optPoison').disabled = false;
       }
-      if (!el.querySelector('.role-total-badge')) el.appendChild(badge);
     }
 
-    function applyPreset(name) {
-      const preset = PRESETS[name];
-      ROLES.forEach(r => {
-        roleCounts[r] = preset[r] || 0;
-        document.getElementById('role_' + r).textContent = roleCounts[r];
-      });
-      updateRoleTotal();
+    function toggleOpt(id, enabled, reason) {
+      const el = document.getElementById(id);
+      if (enabled) {
+        el.disabled = false;
+        el.closest('label')?.querySelector('small')?.style && (el.closest('label').querySelector('small').style.color = '#999');
+      } else {
+        el.disabled = true;
+        el.checked = false;
+        el.value = (el.tagName === 'SELECT') ? '' : false;
+        const label = el.closest('label') || el.closest('div');
+        if (label) {
+          const small = label.querySelector('small');
+          if (small) small.style.color = '#ccc';
+        }
+      }
     }
 
-    // 監聽 maxUser 變化自動更新
-    document.getElementById('maxUser').addEventListener('change', updateRoleTotal);
-
+    // 取得選項字串（傳給後端）
     function getOptionRole() {
-      // 序列化為 URL-safe 格式: role:count,role:count,...
       const parts = [];
-      for (const [role, count] of Object.entries(roleCounts)) {
-        if (count > 0) parts.push(`${role}:${count}`);
-      }
-      return parts.join(',');
+      if (document.getElementById('optLovers').checked) parts.push('lovers');
+      if (document.getElementById('optDecide').checked) parts.push('decide');
+      if (document.getElementById('optAuthority').checked) parts.push('authority');
+      if (document.getElementById('optWfbig').checked) parts.push('wfbig');
+      const poison = document.getElementById('optPoison').value;
+      if (poison) parts.push(poison);
+      const foxs = document.getElementById('optFoxs').value;
+      if (foxs) parts.push(foxs);
+      return parts.join(' ');
     }
 
-    // 頁面載入時預設套用基本局
+    function getGameOptions() {
+      return {
+        timeLimit: parseInt(document.getElementById('timeLimit').value),
+        silenceMode: document.getElementById('silenceMode').checked,
+        allowSpectators: document.getElementById('allowSpectators').checked,
+        maxSpectators: parseInt(document.getElementById('maxSpectators').value),
+        dummyBoy: document.getElementById('optDummyBoy').checked,
+        wishRole: document.getElementById('optWishRole').checked,
+        openVote: document.getElementById('optOpenVote').checked,
+        dellook: document.getElementById('optDellook').checked,
+        will: document.getElementById('optWill').checked,
+        voteMe: document.getElementById('optVoteMe').checked,
+      };
+    }
+
+    // 監聽人數變化
+    document.getElementById('maxUser').addEventListener('change', updateRolePreview);
+
+    // 頁面載入
     window.addEventListener('load', () => {
-      applyPreset('basic');
+      updateRolePreview();
     });
 
     // ===== 主功能 =====
@@ -882,38 +777,17 @@
       const iconNo = parseInt(document.getElementById('iconNo').value);
       const roomPassword = document.getElementById('roomPassword').value.trim();
       const timeLimit = parseInt(document.getElementById('timeLimit').value);
-      const silenceMode = document.getElementById('silenceMode').checked;
-      const allowSpectators = document.getElementById('allowSpectators').checked;
-      const maxSpectators = parseInt(document.getElementById('maxSpectators').value);
       const optionRole = getOptionRole();
+      const gameOpts = getGameOptions();
 
       if (!roomName) {
         showError('請輸入房間名稱');
         return;
       }
 
-      // 檢查角色配置
-      const totalRoles = Object.values(roleCounts).reduce((a, b) => a + b, 0);
-      if (totalRoles === 0) {
-        showError('請設定至少一個角色，或使用預設模板');
-        return;
-      }
-      if (totalRoles > maxUser) {
-        showError(`角色總數(${totalRoles})超過最大人數(${maxUser})`);
-        return;
-      }
-
       showLoading(true);
 
       try {
-        // 準備遊戲選項 JSON
-        const gameOption = JSON.stringify({
-          timeLimit,
-          silenceMode,
-          allowSpectators,
-          maxSpectators
-        });
-
         const response = await fetch(`${API_BASE}/api/rooms`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -921,7 +795,7 @@
             roomName,
             roomComment,
             maxUser,
-            gameOption,
+            gameOption: JSON.stringify(gameOpts),
             optionRole,
             password: roomPassword || undefined
           })

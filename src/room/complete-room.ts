@@ -539,54 +539,103 @@ export class WerewolfRoom extends DurableObject {
   }
 
   /**
+   * 角色分配表（依原版 DIAM setting.php 的 $role_list）
+   * 根據人數自動分配基本角色
+   */
+  private static readonly ROLE_TABLE: Record<number, Role[]> = {
+    8:  ['human','human','human','human','human','wolf','wolf','mage'],
+    9:  ['human','human','human','human','human','wolf','wolf','mage','necromancer'],
+    10: ['human','human','human','human','human','wolf','wolf','mage','necromancer','mad'],
+    11: ['human','human','human','human','human','wolf','wolf','mage','necromancer','mad','guard'],
+    12: ['human','human','human','human','human','human','wolf','wolf','mage','necromancer','mad','guard'],
+    13: ['human','human','human','human','human','wolf','wolf','mage','necromancer','mad','guard','common','common'],
+    14: ['human','human','human','human','human','human','wolf','wolf','mage','necromancer','mad','guard','common','common'],
+    15: ['human','human','human','human','human','human','wolf','wolf','mage','necromancer','mad','guard','common','common','fox'],
+    16: ['human','human','human','human','human','human','wolf','wolf','wolf','mage','necromancer','mad','guard','common','common','fox'],
+    17: ['human','human','human','human','human','human','human','wolf','wolf','wolf','mage','necromancer','mad','guard','common','common','fox'],
+    18: ['human','human','human','human','human','human','human','human','wolf','wolf','wolf','mage','necromancer','mad','guard','common','common','fox'],
+    19: ['human','human','human','human','human','human','human','human','human','wolf','wolf','wolf','mage','necromancer','mad','guard','common','common','fox'],
+    20: ['human','human','human','human','human','human','human','human','human','human','fox','wolf','wolf','wolf','mage','necromancer','mad','guard','common','common'],
+    22: ['human','human','human','human','human','human','human','human','human','human','human','human','fox','wolf','wolf','wolf','mage','necromancer','mad','guard','common','common'],
+    30: ['human','human','human','human','human','human','human','human','human','human','human','human','fox','wolf','wolf','wolf','wolf','wolf','wolf','mage','mage','necromancer','necromancer','mad','guard','guard','common','common','common'],
+  };
+
+  /**
+   * 取得角色分配表（找最接近的人數）
+   */
+  private getRoleTable(count: number): Role[] {
+    const keys = Object.keys(WerewolfRoom.ROLE_TABLE).map(Number).sort((a, b) => a - b);
+    for (const k of keys) {
+      if (count <= k) return WerewolfRoom.ROLE_TABLE[k];
+    }
+    return WerewolfRoom.ROLE_TABLE[30];
+  }
+
+  /**
    * 解析角色配置
-   * 格式: "role:count,role:count,..." 例如 "wolf:2,human:4,mage:1,guard:1"
+   * 格式: "lovers decide authority wfbig poison foxs" （空格分隔的選項）
+   * 基本角色依人數自動分配，額外選項覆蓋上去
    */
   private parseRoleConfig(config: string): Record<Role, number> {
+    // 從人數取得基本角色表
+    const baseRoles = this.getRoleTable(this.roomData.maxUser || 22);
     const roleConfig: Partial<Record<Role, number>> = {};
 
-    if (!config || !config.trim()) {
-      // 沒有配置時使用預設基本局
-      return { human: 4, wolf: 2, mage: 1, guard: 1 } as Record<Role, number>;
+    // 計算基本角色數量
+    for (const role of baseRoles) {
+      roleConfig[role] = (roleConfig[role] || 0) + 1;
     }
 
-    // 解析 "role:count" 格式
-    const parts = config.split(',');
-    for (const part of parts) {
-      const trimmed = part.trim();
-      if (!trimmed) continue;
+    // 解析額外選項
+    if (config && config.trim()) {
+      const options = config.trim().split(/\s+/);
 
-      const colonIndex = trimmed.indexOf(':');
-      if (colonIndex === -1) continue;
+      // 處理妖狐選項（替換基本表的 fox 或取消）
+      const foxs = options.find(o => o === 'foxs' || o === 'betr' || o === 'fosi');
+      const poison = options.find(o => o === 'poison' || o === 'cat');
 
-      const role = trimmed.substring(0, colonIndex).trim() as Role;
-      const count = parseInt(trimmed.substring(colonIndex + 1).trim());
+      if (foxs) {
+        // 使用妖狐選項時取消基本表的 fox
+        if (roleConfig.fox) {
+          roleConfig.fox = 0;
+        }
+        // 埋毒與妖狐互斥
+        if (poison) {
+          // 移除埋毒選項
+          const pi = options.indexOf(poison);
+          if (pi >= 0) options.splice(pi, 1);
+        }
 
-      if (isNaN(count) || count < 0) continue;
-
-      // 驗證角色名稱（基本驗證）
-      const validRoles: Role[] = [
-        'human', 'wolf', 'wolf_partner', 'mage', 'necromancer', 'mad',
-        'guard', 'common', 'common_partner', 'fox', 'betr', 'betr_partner',
-        'fosi', 'poison', 'wfbig', 'authority', 'lovers', 'lovers_partner', 'cat'
-      ];
-      if (validRoles.includes(role)) {
-        roleConfig[role] = count;
+        if (foxs === 'betr') {
+          roleConfig.betr = 1;
+        } else if (foxs === 'foxs') {
+          roleConfig.fox = 2; // 雙狐
+        } else if (foxs === 'fosi') {
+          roleConfig.fosi = 1;
+        }
+      } else if (poison) {
+        // 妖狐沒有選，但埋毒有選 → 取消基本表的 fox
+        if (roleConfig.fox) {
+          roleConfig.fox = 0;
+        }
+        if (poison === 'poison') {
+          roleConfig.poison = 1;
+        } else if (poison === 'cat') {
+          roleConfig.cat = 1;
+        }
       }
-    }
 
-    // 處理夥伴角色（自動根據主角色數量添加）
-    if (roleConfig.wolf && (roleConfig.wolf || 0) > 1) {
-      roleConfig.wolf_partner = (roleConfig.wolf || 0) - 1;
-    }
-    if (roleConfig.common && (roleConfig.common || 0) > 1) {
-      roleConfig.common_partner = (roleConfig.common || 0) - 1;
-    }
-    if (roleConfig.betr && (roleConfig.betr || 0) > 1) {
-      roleConfig.betr_partner = (roleConfig.betr || 0) - 1;
-    }
-    if (roleConfig.lovers && (roleConfig.lovers || 0) > 1) {
-      roleConfig.lovers_partner = (roleConfig.lovers || 0) - 1;
+      // 戀人：共有者變戀人（可兼任）
+      if (options.includes('lovers') && roleConfig.common) {
+        roleConfig.lovers = roleConfig.common;
+      }
+
+      // 大狼：狼群隨機一隻取代為大狼
+      if (options.includes('wfbig') && (roleConfig.wolf || 0) > 0) {
+        roleConfig.wfbig = 1;
+        // 減少一隻狼
+        roleConfig.wolf = Math.max(1, (roleConfig.wolf || 0) - 1);
+      }
     }
 
     // 確保 human 至少為 0
