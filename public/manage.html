@@ -268,6 +268,10 @@
 
       <div class="login-form">
         <div class="form-group">
+          <label for="adminUsername">管理員帳號</label>
+          <input type="text" id="adminUsername" placeholder="輸入管理員帳號">
+        </div>
+        <div class="form-group">
           <label for="adminPassword">管理員密碼</label>
           <input type="password" id="adminPassword" placeholder="輸入管理員密碼">
         </div>
@@ -279,63 +283,56 @@
     <!-- 主面板 -->
     <div id="mainPanel">
       <div class="tabs">
-        <div class="tab active" onclick="switchTab('blacklist')">黑名單</div>
-        <div class="tab" onclick="switchTab('whitelist')">白名單</div>
+        <div class="tab active" onclick="switchTab('bans')">IP 封鎖</div>
+        <div class="tab" onclick="switchTab('rooms')">房間管理</div>
         <div class="tab" onclick="switchTab('stats')">統計資料</div>
       </div>
 
-      <!-- 黑名單 -->
-      <div id="blacklistCard" class="card active">
-        <h2>🚫 黑名單管理</h2>
-        <div id="blacklistError" class="error"></div>
-        <div id="blacklistSuccess" class="success"></div>
+      <!-- IP 封鎖 -->
+      <div id="bansCard" class="card active">
+        <h2>🚫 IP 封鎖管理</h2>
+        <div id="bansError" class="error"></div>
+        <div id="bansSuccess" class="success"></div>
 
         <div class="form-group">
-          <label for="blacklistTrip">Tripcode</label>
-          <input type="text" id="blacklistTrip" placeholder="輸入要封鎖的 Tripcode">
+          <label for="banIp">IP 位址</label>
+          <input type="text" id="banIp" placeholder="輸入要封鎖的 IP 位址">
         </div>
 
         <div class="form-group">
-          <label for="blacklistReason">原因</label>
-          <textarea id="blacklistReason" placeholder="封鎖原因"></textarea>
+          <label for="banType">封鎖類型</label>
+          <select id="banType">
+            <option value="permanent">永久封鎖</option>
+            <option value="temporary">暫時封鎖</option>
+          </select>
+        </div>
+
+        <div class="form-group" id="banDurationGroup" style="display:none;">
+          <label for="banDuration">封鎖時長（小時）</label>
+          <input type="number" id="banDuration" min="1" value="24">
         </div>
 
         <div class="form-group">
-          <label for="blacklistCreator">建立者</label>
-          <input type="text" id="blacklistCreator" placeholder="管理員名稱">
+          <label for="banReason">原因</label>
+          <textarea id="banReason" placeholder="封鎖原因"></textarea>
         </div>
 
-        <button class="danger" onclick="addToBlacklist()">新增到黑名單</button>
+        <button class="danger" onclick="addBan()">新增封鎖</button>
 
-        <div id="blacklistList" class="list">
+        <div id="bansList" class="list">
           <div class="loading">載入中...</div>
         </div>
       </div>
 
-      <!-- 白名單 -->
-      <div id="whitelistCard" class="card">
-        <h2>✅ 白名單管理</h2>
-        <div id="whitelistError" class="error"></div>
-        <div id="whitelistSuccess" class="success"></div>
+      <!-- 房間管理 -->
+      <div id="roomsCard" class="card">
+        <h2>🏠 房間管理</h2>
+        <div id="roomsError" class="error"></div>
+        <div id="roomsSuccess" class="success"></div>
 
-        <div class="form-group">
-          <label for="whitelistTrip">Tripcode</label>
-          <input type="text" id="whitelistTrip" placeholder="輸入要加入白名單的 Tripcode">
-        </div>
+        <button onclick="loadRooms()">重新整理</button>
 
-        <div class="form-group">
-          <label for="whitelistTrust">信任等級 (0-10)</label>
-          <input type="number" id="whitelistTrust" min="0" max="10" value="5">
-        </div>
-
-        <div class="form-group">
-          <label for="whitelistNotes">備註</label>
-          <textarea id="whitelistNotes" placeholder="玩家特徵、信譽等"></textarea>
-        </div>
-
-        <button class="success" onclick="addToWhitelist()">新增到白名單</button>
-
-        <div id="whitelistList" class="list">
+        <div id="roomsList" class="list">
           <div class="loading">載入中...</div>
         </div>
       </div>
@@ -344,14 +341,30 @@
       <div id="statsCard" class="card">
         <h2>📊 統計資料</h2>
 
-        <div class="stats-grid">
+        <div class="stats-grid" id="statsGrid">
           <div class="stat-box">
-            <div class="stat-value" id="totalBlacklist">0</div>
-            <div class="stat-label">黑名單數量</div>
+            <div class="stat-value" id="statTotalRooms">-</div>
+            <div class="stat-label">總房間數</div>
           </div>
           <div class="stat-box">
-            <div class="stat-value" id="totalWhitelist">0</div>
-            <div class="stat-label">白名單數量</div>
+            <div class="stat-value" id="statActiveRooms">-</div>
+            <div class="stat-label">活躍房間</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value" id="statTotalPlayers">-</div>
+            <div class="stat-label">總玩家數</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value" id="statActivePlayers">-</div>
+            <div class="stat-label">線上玩家</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value" id="statTotalGames">-</div>
+            <div class="stat-label">總遊戲數</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value" id="statTotalBans">-</div>
+            <div class="stat-label">封鎖數量</div>
           </div>
         </div>
 
@@ -361,41 +374,35 @@
   </div>
 
   <script>
-    let isAdmin = false;
+    // ===== Admin Auth =====
+    let adminSessionId = localStorage.getItem('admin_session');
+    let isAdmin = !!adminSessionId;
 
-    // 頁面載入時檢查登入狀態
-    document.addEventListener('DOMContentLoaded', () => {
-      checkAdminStatus();
-    });
-
-    // 檢查管理員狀態
-    function checkAdminStatus() {
-      const adminSession = localStorage.getItem('admin_session');
-      if (adminSession) {
-        isAdmin = true;
-        showMainPanel();
-      }
+    function getAdminHeaders() {
+      return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + adminSessionId };
     }
 
     // 管理員登入
     async function login() {
+      const username = document.getElementById('adminUsername').value.trim();
       const password = document.getElementById('adminPassword').value;
 
-      if (!password) {
-        showLoginError('請輸入密碼');
+      if (!username || !password) {
+        showLoginError('請輸入帳號和密碼');
         return;
       }
 
       try {
-        const response = await fetch('/admin/api/login', {
+        const response = await fetch('/api/admin/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ password })
+          body: JSON.stringify({ username, password })
         });
 
         const data = await response.json();
 
         if (data.success) {
+          adminSessionId = data.sessionId;
           localStorage.setItem('admin_session', data.sessionId);
           isAdmin = true;
           showMainPanel();
@@ -412,24 +419,23 @@
     function showMainPanel() {
       document.getElementById('loginCard').classList.remove('active');
       document.getElementById('mainPanel').style.display = 'block';
-      loadBlacklist();
-      loadWhitelist();
+      loadBans();
       loadStats();
     }
 
     // 切換 Tab
     function switchTab(tab) {
       document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
+      document.querySelectorAll('.card[id$="Card"]').forEach(c => c.classList.remove('active'));
 
-      if (tab === 'blacklist') {
+      if (tab === 'bans') {
         document.querySelector('.tab:nth-child(1)').classList.add('active');
-        document.getElementById('blacklistCard').classList.add('active');
-        loadBlacklist();
-      } else if (tab === 'whitelist') {
+        document.getElementById('bansCard').classList.add('active');
+        loadBans();
+      } else if (tab === 'rooms') {
         document.querySelector('.tab:nth-child(2)').classList.add('active');
-        document.getElementById('whitelistCard').classList.add('active');
-        loadWhitelist();
+        document.getElementById('roomsCard').classList.add('active');
+        loadRooms();
       } else {
         document.querySelector('.tab:nth-child(3)').classList.add('active');
         document.getElementById('statsCard').classList.add('active');
@@ -437,218 +443,186 @@
       }
     }
 
-    // 新增到黑名單
-    async function addToBlacklist() {
-      const trip = document.getElementById('blacklistTrip').value.trim();
-      const reason = document.getElementById('blacklistReason').value.trim();
-      const createdBy = document.getElementById('blacklistCreator').value.trim();
+    // 封鎖類型切換
+    document.getElementById('banType').addEventListener('change', (e) => {
+      document.getElementById('banDurationGroup').style.display = e.target.value === 'temporary' ? '' : 'none';
+    });
 
-      if (!trip) {
-        showBlacklistError('請輸入 Tripcode');
+    // ===== IP 封鎖 =====
+    async function addBan() {
+      const ip = document.getElementById('banIp').value.trim();
+      const type = document.getElementById('banType').value;
+      const reason = document.getElementById('banReason').value.trim();
+      const duration = parseInt(document.getElementById('banDuration').value);
+
+      if (!ip || !reason) {
+        showMsg('bansError', '請輸入 IP 位址和原因');
         return;
       }
 
       try {
-        const response = await fetch('/api/blacklist', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ trip, reason, createdBy })
-        });
+        const body = { ip, type, reason };
+        if (type === 'temporary') body.duration = duration;
 
+        const response = await fetch('/api/admin/bans', {
+          method: 'POST',
+          headers: getAdminHeaders(),
+          body: JSON.stringify(body)
+        });
         const data = await response.json();
 
         if (data.success) {
-          showBlacklistSuccess('已新增到黑名單');
-          document.getElementById('blacklistTrip').value = '';
-          document.getElementById('blacklistReason').value = '';
-          loadBlacklist();
+          showMsg('bansSuccess', '封鎖成功');
+          document.getElementById('banIp').value = '';
+          document.getElementById('banReason').value = '';
+          loadBans();
           loadStats();
         } else {
-          showBlacklistError(data.error || '新增失敗');
+          showMsg('bansError', data.error || '封鎖失敗');
         }
       } catch (error) {
-        console.error('Add to blacklist error:', error);
-        showBlacklistError('網路錯誤，請稍後再試');
+        console.error('Add ban error:', error);
+        showMsg('bansError', '網路錯誤');
       }
     }
 
-    // 載入黑名單
-    async function loadBlacklist() {
+    async function loadBans() {
       try {
-        const response = await fetch('/api/blacklist');
+        const response = await fetch('/api/admin/bans', { headers: getAdminHeaders() });
         const data = await response.json();
+        const container = document.getElementById('bansList');
 
-        const container = document.getElementById('blacklistList');
-
-        if (data.blacklist && data.blacklist.length > 0) {
-          container.innerHTML = data.blacklist.map(item => `
+        if (data.bans && data.bans.length > 0) {
+          container.innerHTML = data.bans.map(item => `
             <div class="list-item">
               <div class="item-info">
-                <div class="item-trip"><code>${escapeHtml(item.trip)}</code></div>
+                <div class="item-trip"><code>${escapeHtml(item.ip)}</code></div>
                 <div class="item-meta">
-                  ${item.reason ? `原因: ${escapeHtml(item.reason)} | ` : ''}
-                  ${item.created_by ? `建立者: ${escapeHtml(item.created_by)} | ` : ''}
-                  ${new Date(item.created_at).toLocaleString('zh-TW')}
+                  類型: ${item.type === 'permanent' ? '永久' : '暫時'}
+                  ${item.reason ? ' | 原因: ' + escapeHtml(item.reason) : ''}
+                  ${item.created_at ? ' | ' + new Date(item.created_at).toLocaleString('zh-TW') : ''}
+                  ${item.expires_at ? ' | 到期: ' + new Date(item.expires_at).toLocaleString('zh-TW') : ''}
                 </div>
               </div>
-              <button class="danger" onclick="removeFromBlacklist(${item.id})">移除</button>
+              <button class="danger" onclick="removeBan('${escapeHtml(item.ip)}')">解除封鎖</button>
             </div>
           `).join('');
         } else {
-          container.innerHTML = '<div class="empty-state">📭 黑名單為空</div>';
+          container.innerHTML = '<div class="empty-state">📭 無封鎖記錄</div>';
         }
       } catch (error) {
-        console.error('Load blacklist error:', error);
-        document.getElementById('blacklistList').innerHTML = '<div class="error">載入失敗</div>';
+        console.error('Load bans error:', error);
+        document.getElementById('bansList').innerHTML = '<div class="error">載入失敗</div>';
       }
     }
 
-    // 從黑名單移除
-    async function removeFromBlacklist(id) {
-      if (!confirm('確定要從黑名單移除嗎？')) {
-        return;
-      }
+    async function removeBan(ip) {
+      if (!confirm('確定要解除 ' + ip + ' 的封鎖嗎？')) return;
 
       try {
-        const response = await fetch(`/api/blacklist/${id}`, {
-          method: 'DELETE'
+        const response = await fetch('/api/admin/bans/' + encodeURIComponent(ip), {
+          method: 'DELETE',
+          headers: getAdminHeaders()
         });
-
         const data = await response.json();
 
         if (data.success) {
-          showBlacklistSuccess('已從黑名單移除');
-          loadBlacklist();
+          showMsg('bansSuccess', '已解除封鎖');
+          loadBans();
           loadStats();
         } else {
-          showBlacklistError(data.error || '移除失敗');
+          showMsg('bansError', data.error || '解除失敗');
         }
       } catch (error) {
-        console.error('Remove from blacklist error:', error);
-        showBlacklistError('網路錯誤，請稍後再試');
+        console.error('Remove ban error:', error);
+        showMsg('bansError', '網路錯誤');
       }
     }
 
-    // 新增到白名單
-    async function addToWhitelist() {
-      const trip = document.getElementById('whitelistTrip').value.trim();
-      const trustLevel = parseInt(document.getElementById('whitelistTrust').value);
-      const notes = document.getElementById('whitelistNotes').value.trim();
-
-      if (!trip) {
-        showWhitelistError('請輸入 Tripcode');
-        return;
-      }
-
+    // ===== 房間管理 =====
+    async function loadRooms() {
       try {
-        const response = await fetch('/api/whitelist', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ trip, trustLevel, notes })
-        });
-
+        const response = await fetch('/api/admin/rooms', { headers: getAdminHeaders() });
         const data = await response.json();
+        const container = document.getElementById('roomsList');
 
-        if (data.success) {
-          showWhitelistSuccess('已新增到白名單');
-          document.getElementById('whitelistTrip').value = '';
-          document.getElementById('whitelistNotes').value = '';
-          loadWhitelist();
-          loadStats();
-        } else {
-          showWhitelistError(data.error || '新增失敗');
-        }
-      } catch (error) {
-        console.error('Add to whitelist error:', error);
-        showWhitelistError('網路錯誤，請稍後再試');
-      }
-    }
-
-    // 載入白名單
-    async function loadWhitelist() {
-      try {
-        const response = await fetch('/api/whitelist');
-        const data = await response.json();
-
-        const container = document.getElementById('whitelistList');
-
-        if (data.whitelist && data.whitelist.length > 0) {
-          container.innerHTML = data.whitelist.map(item => `
+        if (data.rooms && data.rooms.length > 0) {
+          container.innerHTML = data.rooms.map(room => `
             <div class="list-item">
               <div class="item-info">
-                <div class="item-trip"><code>${escapeHtml(item.trip)}</code></div>
+                <div class="item-trip">${escapeHtml(room.roomName || '未命名')} <small>#${room.roomNo}</small></div>
                 <div class="item-meta">
-                  信任等級: ${item.trust_level}/10
-                  ${item.notes ? ` | ${escapeHtml(item.notes)}` : ''}
-                  | ${new Date(item.created_at).toLocaleString('zh-TW')}
+                  狀態: ${room.status || 'unknown'}
+                  | 玩家: ${room.playerCount || 0}/${room.maxUser || '-'}
+                  ${room.comment ? ' | ' + escapeHtml(room.comment) : ''}
                 </div>
               </div>
+              <button class="danger" onclick="deleteRoom(${room.roomNo})">刪除</button>
             </div>
           `).join('');
         } else {
-          container.innerHTML = '<div class="empty-state">📭 白名單為空</div>';
+          container.innerHTML = '<div class="empty-state">📭 無房間</div>';
         }
       } catch (error) {
-        console.error('Load whitelist error:', error);
-        document.getElementById('whitelistList').innerHTML = '<div class="error">載入失敗</div>';
+        console.error('Load rooms error:', error);
+        document.getElementById('roomsList').innerHTML = '<div class="error">載入失敗</div>';
       }
     }
 
-    // 載入統計資料
+    async function deleteRoom(roomNo) {
+      if (!confirm('確定要刪除房間 #' + roomNo + ' 嗎？')) return;
+
+      try {
+        const response = await fetch('/api/admin/rooms/' + roomNo, {
+          method: 'DELETE',
+          headers: getAdminHeaders()
+        });
+        const data = await response.json();
+
+        if (data.success) {
+          showMsg('roomsSuccess', '房間已刪除');
+          loadRooms();
+        } else {
+          showMsg('roomsError', data.error || '刪除失敗');
+        }
+      } catch (error) {
+        console.error('Delete room error:', error);
+        showMsg('roomsError', '網路錯誤');
+      }
+    }
+
+    // ===== 統計資料 =====
     async function loadStats() {
       try {
-        const [blacklistRes, whitelistRes] = await Promise.all([
-          fetch('/api/blacklist'),
-          fetch('/api/whitelist')
-        ]);
+        const response = await fetch('/api/admin/stats', { headers: getAdminHeaders() });
+        const data = await response.json();
 
-        const blacklistData = await blacklistRes.json();
-        const whitelistData = await whitelistRes.json();
-
-        document.getElementById('totalBlacklist').textContent =
-          (blacklistData.blacklist || []).length;
-        document.getElementById('totalWhitelist').textContent =
-          (whitelistData.whitelist || []).length;
+        if (data.stats) {
+          const s = data.stats;
+          document.getElementById('statTotalRooms').textContent = s.totalRooms || 0;
+          document.getElementById('statActiveRooms').textContent = s.activeRooms || 0;
+          document.getElementById('statTotalPlayers').textContent = s.totalPlayers || 0;
+          document.getElementById('statActivePlayers').textContent = s.activePlayers || 0;
+          document.getElementById('statTotalGames').textContent = s.totalGames || 0;
+          document.getElementById('statTotalBans').textContent = s.totalBans || 0;
+        }
       } catch (error) {
         console.error('Load stats error:', error);
       }
     }
 
-    // 顯示錯誤訊息
+    // ===== 訊息顯示 =====
+    function showMsg(elementId, message) {
+      const el = document.getElementById(elementId);
+      if (el) {
+        el.textContent = message;
+        el.classList.add('show');
+        setTimeout(() => el.classList.remove('show'), 5000);
+      }
+    }
+
     function showLoginError(message) {
-      const errorEl = document.getElementById('loginError');
-      errorEl.textContent = message;
-      errorEl.classList.add('show');
-      setTimeout(() => errorEl.classList.remove('show'), 5000);
-    }
-
-    function showBlacklistError(message) {
-      const errorEl = document.getElementById('blacklistError');
-      errorEl.textContent = message;
-      errorEl.classList.add('show');
-      setTimeout(() => errorEl.classList.remove('show'), 5000);
-    }
-
-    function showWhitelistError(message) {
-      const errorEl = document.getElementById('whitelistError');
-      errorEl.textContent = message;
-      errorEl.classList.add('show');
-      setTimeout(() => errorEl.classList.remove('show'), 5000);
-    }
-
-    // 顯示成功訊息
-    function showBlacklistSuccess(message) {
-      const successEl = document.getElementById('blacklistSuccess');
-      successEl.textContent = message;
-      successEl.classList.add('show');
-      setTimeout(() => successEl.classList.remove('show'), 3000);
-    }
-
-    function showWhitelistSuccess(message) {
-      const successEl = document.getElementById('whitelistSuccess');
-      successEl.textContent = message;
-      successEl.classList.add('show');
-      setTimeout(() => successEl.classList.remove('show'), 3000);
+      showMsg('loginError', message);
     }
 
     // HTML 轉義
@@ -660,10 +634,16 @@
 
     // Enter 鍵登入
     document.getElementById('adminPassword').addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') {
-        login();
-      }
+      if (e.key === 'Enter') login();
     });
+    document.getElementById('adminUsername').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') login();
+    });
+
+    // 自動登入（如果已有 session）
+    if (isAdmin) {
+      showMainPanel();
+    }
   </script>
 </body>
 </html>
