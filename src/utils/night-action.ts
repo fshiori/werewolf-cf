@@ -13,6 +13,7 @@ export enum NightActionType {
   FoxDivine = 'fox_divine',
   BetrConvert = 'betr_convert',
   GuardShoot = 'guard_shoot',
+  Skip = 'skip',
 }
 
 /**
@@ -256,15 +257,23 @@ export function isNightActionsComplete(
     p => p.role === 'mage' && p.live === 'live'
   );
 
-  // 檢查狼人是否殺人
-  const wolfKill = state.actions.some(a => a.type === NightActionType.WolfKill);
-  const seerAction = state.actions.some(a => a.type === NightActionType.SeerDivine);
+  // 檢查狼人是否行動（殺人或跳過）
+  const wolfActed = state.actions.some(a =>
+    a.type === NightActionType.WolfKill ||
+    (a.type === NightActionType.Skip && aliveWolves.some(w => w.uname === a.actor))
+  );
 
-  if (aliveWolves.length > 0 && !wolfKill) {
+  // 檢查占卜家是否行動（占卜或跳過）
+  const seerActed = state.actions.some(a =>
+    a.type === NightActionType.SeerDivine ||
+    (a.type === NightActionType.Skip && aliveSeers.some(s => s.uname === a.actor))
+  );
+
+  if (aliveWolves.length > 0 && !wolfActed) {
     return false;
   }
 
-  if (aliveSeers.length > 0 && !seerAction) {
+  if (aliveSeers.length > 0 && !seerActed) {
     return false;
   }
 

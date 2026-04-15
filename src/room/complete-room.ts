@@ -210,6 +210,9 @@ export class WerewolfRoom extends DurableObject {
       case 'night_action':
         await this.handleNightAction(uname, data.action, data.target);
         break;
+      case 'skip_night':
+        await this.handleNightAction(uname, 'skip');
+        break;
       case 'start_game':
         await this.handleStartGame(uname);
         break;
@@ -285,6 +288,19 @@ export class WerewolfRoom extends DurableObject {
     const success = addVote(this.voteData, uname, targetUname);
 
     if (success) {
+      // 記錄投票到 D1
+      try {
+        // @ts-ignore
+        await this.env.DB.prepare(`
+          INSERT INTO vote_history (room_no, date, voter_uname, target_uname, vote_type, time)
+          VALUES (?, ?, ?, ?, ?, ?)
+        `).bind(
+          this.roomData.roomNo, this.roomData.date, uname, targetUname, 'normal', Date.now()
+        ).run();
+      } catch (e) {
+        console.error('Vote history error:', e);
+      }
+
       // 廣播投票更新
       this.broadcast({
         type: 'vote_update',
@@ -338,6 +354,10 @@ export class WerewolfRoom extends DurableObject {
           }
         }
         break;
+      case 'skip':
+        // 記錄跳過行動
+        this.nightState.actions.push({ type: 'skip' as any, actor: uname });
+        break;
     }
 
     // 檢查是否完成所有行動
@@ -389,6 +409,30 @@ export class WerewolfRoom extends DurableObject {
     }
 
     await this.saveState();
+
+    // 更新 KV 統計
+    try {
+      const { StatsManager } = await import('../utils/stats-manager');
+      const statsManager = new StatsManager(this.env.KV);
+      await statsManager.recordGameStart();
+      await statsManager.updateActivePlayerCount(this.roomData.players.size);
+    } catch (e) {
+      console.error('Stats update error:', e);
+    }
+
+    // 記錄遊戲開始事件
+    try {
+      // @ts-ignore
+      await this.env.DB.prepare(`
+        INSERT INTO game_events (room_no, date, event_type, description, time)
+        VALUES (?, ?, ?, ?, ?)
+      `).bind(
+        this.roomData.roomNo, this.roomData.date, 'game_start',
+        `遊戲開始，${this.roomData.players.size} 名玩家`, Date.now()
+      ).run();
+    } catch (e) {
+      console.error('Game event error:', e);
+    }
   }
 
   /**
@@ -482,6 +526,22 @@ export class WerewolfRoom extends DurableObject {
       });
     }
 
+    // 記錄處決事件
+    for (const p of executed) {
+      try {
+        // @ts-ignore
+        await this.env.DB.prepare(`
+          INSERT INTO game_events (room_no, date, event_type, description, related_uname, time)
+          VALUES (?, ?, ?, ?, ?, ?)
+        `).bind(
+          this.roomData.roomNo, this.roomData.date, 'execution',
+          `${p.handleName} 被投票處決`, p.uname, Date.now()
+        ).run();
+      } catch (e) {
+        console.error('Execution event error:', e);
+      }
+    }
+
     // 檢查勝負
     const victory = checkVictory(Array.from(this.roomData.players.values()));
     if (victory) {
@@ -518,6 +578,22 @@ export class WerewolfRoom extends DurableObject {
         type: 'players_died',
         data: dead.map(p => ({ uname: p.uname, handleName: p.handleName }))
       });
+
+      // 記錄死亡事件到 D1
+      for (const p of dead) {
+        try {
+          // @ts-ignore
+          await this.env.DB.prepare(`
+            INSERT INTO game_events (room_no, date, event_type, description, related_uname, time)
+            VALUES (?, ?, ?, ?, ?, ?)
+          `).bind(
+            this.roomData.roomNo, this.roomData.date, 'night_death',
+            `${p.handleName} 在夜晚被殺害`, p.uname, Date.now()
+          ).run();
+        } catch (e) {
+          console.error('Death event error:', e);
+        }
+      }
     }
 
     // 轉換到白天
@@ -537,6 +613,77 @@ export class WerewolfRoom extends DurableObject {
         message: winner === 'human' ? '村民陣營勝利！' : '狼人陣營勝利！'
       }
     });
+
+    // 寫入遊戲記錄到 D1
+    try {
+      const players = Array.from(this.roomData.players.values());
+      const roles = players.map(p => `${p.uname}:${p.role}`).join(',');
+      const deathOrder = players
+        .filter(p => p.live !== 'live')
+        .sort((a: any, b: any) => (a.deathDay || 0) - (b.deathDay || 0))
+        .map(p => p.uname)
+        .join(',');
+
+      // @ts-ignore
+      await this.env.DB.prepare(`
+        INSERT INTO game_logs (room_no, room_name, winner, total_days, player_count, roles, death_order, key_events, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(room_no) DO UPDATE SET
+          winner = ?, total_days = ?, death_order = ?, key_events = ?
+      `).bind(
+        this.roomData.roomNo, this.roomData.roomName, winner,
+        this.roomData.date, players.length, roles, deathOrder || '',
+        `${winner === 'human' ? '村民' : '狼人'}陣營勝利`, Date.now(),
+        winner, this.roomData.date, deathOrder || '',
+        `${winner === 'human' ? '村民' : '狼人'}陣營勝利`
+      ).run();
+
+      // 更新每位玩家的 trip_scores
+      const isWolfWin = winner.includes('wolf') || winner === 'mad';
+      for (const player of players) {
+        const trip = player.trip;
+        if (!trip) continue;
+
+        const playerTeam = getRoleTeam(player.role);
+        const winTeam = getRoleTeam(winner);
+        const playerWon = playerTeam === winTeam;
+        const survived = player.live === 'live';
+
+        // @ts-ignore
+        await this.env.DB.prepare(`
+          INSERT INTO trip_scores (trip, score, games_played, human_wins, wolf_wins, fox_wins, total_games, survivor_count, role_history, last_played)
+          VALUES (?, 0, 0, 0, 0, 0, 0, 0, '{}', ?)
+          ON CONFLICT(trip) DO UPDATE SET
+            games_played = games_played + 1,
+            total_games = total_games + 1,
+            score = score + ?,
+            human_wins = human_wins + ?,
+            wolf_wins = wolf_wins + ?,
+            survivor_count = survivor_count + ?,
+            last_played = ?
+        `).bind(
+          trip, Date.now(),
+          (playerWon ? (isWolfWin ? 15 : 10) : 0) + (survived ? 5 : 0),
+          (!isWolfWin && playerWon) ? 1 : 0,
+          (isWolfWin && playerWon) ? 1 : 0,
+          survived ? 1 : 0,
+          Date.now()
+        ).run();
+      }
+    } catch (e) {
+      console.error('Game log save error:', e);
+    }
+
+    // 更新 KV 統計
+    try {
+      const { StatsManager } = await import('../utils/stats-manager');
+      const statsManager = new StatsManager(this.env.KV);
+      const duration = Date.now() - (this.roomData.uptime || Date.now());
+      await statsManager.recordGameEnd(winner, duration);
+      await statsManager.updateActivePlayerCount(0);
+    } catch (e) {
+      console.error('Stats update error:', e);
+    }
 
     await this.saveState();
   }
@@ -574,6 +721,47 @@ export class WerewolfRoom extends DurableObject {
       ...this.roomData,
       players: Object.fromEntries(this.roomData.players)
     });
+
+    // 同步房間到 D1
+    try {
+      // @ts-ignore
+      await this.env.DB.prepare(`
+        INSERT INTO room (room_no, room_name, room_comment, max_user, game_option, option_role, status, date, day_night, victory_role, uptime, last_updated)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(room_no) DO UPDATE SET
+          room_name = ?, room_comment = ?, status = ?, date = ?, day_night = ?,
+          victory_role = ?, last_updated = ?
+      `).bind(
+        this.roomData.roomNo, this.roomData.roomName, this.roomData.roomComment || '',
+        this.roomData.maxUser, this.roomData.gameOption || '', this.roomData.optionRole || '',
+        this.roomData.status, this.roomData.date, this.roomData.dayNight,
+        this.roomData.victoryRole || null, this.roomData.uptime || Date.now(), Date.now(),
+        this.roomData.roomName, this.roomData.roomComment || '', this.roomData.status,
+        this.roomData.date, this.roomData.dayNight, this.roomData.victoryRole || null, Date.now()
+      ).run();
+
+      // 同步玩家到 D1
+      for (const [uname, player] of this.roomData.players) {
+        // @ts-ignore
+        await this.env.DB.prepare(`
+          INSERT INTO user_entry (room_no, user_no, uname, handle_name, trip, icon_no, sex, role, live, session_id, ip_address, score)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          ON CONFLICT(room_no, user_no) DO UPDATE SET
+            handle_name = ?, trip = ?, icon_no = ?, sex = ?, role = ?, live = ?,
+            session_id = ?, ip_address = ?, score = ?
+        `).bind(
+          this.roomData.roomNo, player.userNo, uname, player.handleName,
+          player.trip || '', player.iconNo || 1, player.sex || 'male',
+          player.role || 'human', player.live || 'live', player.sessionId || '',
+          player.ipAddress || '', player.score || 0,
+          player.handleName, player.trip || '', player.iconNo || 1, player.sex || 'male',
+          player.role || 'human', player.live || 'live', player.sessionId || '',
+          player.ipAddress || '', player.score || 0
+        ).run();
+      }
+    } catch (e) {
+      console.error('D1 sync error:', e);
+    }
   }
 
   /**
