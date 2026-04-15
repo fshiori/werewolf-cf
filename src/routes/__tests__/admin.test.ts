@@ -14,7 +14,7 @@ interface MockEnv {
 }
 
 class MockKV {
-  private data = new Map<string, string>();
+  data = new Map<string, string>();
 
   async get(key: string, format: 'json' | 'text' = 'json'): Promise<any> {
     const value = this.data.get(key);
@@ -65,7 +65,7 @@ describe('Admin API Routes', () => {
     // 建立預設管理員
     const adminData = {
       username: 'admin',
-      passwordHash: '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92', // 'hello'
+      passwordHash: '60e0b24d54463b1abb64272b0a615186c6315f196820d4c637b5581e853d2906', // sha256('hello' + ADMIN_SALT)
       createdAt: Date.now()
     };
     env.KV.data.set('admin:default', JSON.stringify(adminData));
@@ -78,7 +78,7 @@ describe('Admin API Routes', () => {
         body: JSON.stringify({ password: 'test' })
       });
 
-      const res = await app.request(req, { env });
+      const res = await app.request(req, undefined, env);
       
       expect(res.status).toBe(400);
       
@@ -92,7 +92,7 @@ describe('Admin API Routes', () => {
         body: JSON.stringify({ username: 'admin' })
       });
 
-      const res = await app.request(req, { env });
+      const res = await app.request(req, undefined, env);
       
       expect(res.status).toBe(400);
     });
@@ -103,7 +103,7 @@ describe('Admin API Routes', () => {
         body: JSON.stringify({ username: 'admin', password: 'wrong' })
       });
 
-      const res = await app.request(req, { env });
+      const res = await app.request(req, undefined, env);
       
       expect(res.status).toBe(401);
     });
@@ -115,7 +115,7 @@ describe('Admin API Routes', () => {
         body: JSON.stringify({ username: 'admin', password: 'hello' })
       });
 
-      const res = await app.request(req, { env });
+      const res = await app.request(req, undefined, env);
       
       // 這裡可能會失敗因為我們沒有完整的密碼雜湊系統
       // 但至少我們測試了路由結構
@@ -130,7 +130,7 @@ describe('Admin API Routes', () => {
         method: 'POST'
       });
 
-      const res = await app.request(req, { env });
+      const res = await app.request(req, undefined, env);
       
       expect(res.status).toBe(401);
     });
@@ -140,7 +140,7 @@ describe('Admin API Routes', () => {
     it('需要認證', async () => {
       const req = new Request('http://localhost/api/admin/verify');
 
-      const res = await app.request(req, { env });
+      const res = await app.request(req, undefined, env);
       
       expect(res.status).toBe(401);
     });
@@ -150,7 +150,7 @@ describe('Admin API Routes', () => {
     it('需要認證', async () => {
       const req = new Request('http://localhost/api/admin/rooms');
 
-      const res = await app.request(req, { env });
+      const res = await app.request(req, undefined, env);
       
       expect(res.status).toBe(401);
     });
@@ -163,7 +163,7 @@ describe('Admin API Routes', () => {
         body: JSON.stringify({ ip: '192.168.1.1', type: 'temporary', reason: 'test' })
       });
 
-      const res = await app.request(req, { env });
+      const res = await app.request(req, undefined, env);
       
       expect(res.status).toBe(401);
     });
@@ -177,7 +177,7 @@ describe('Admin API Routes', () => {
         body: JSON.stringify({ ip: '192.168.1.1' })
       });
 
-      const res = await app.request(req, { env });
+      const res = await app.request(req, undefined, env);
       
       // Session 會驗證失敗，但至少我們測試了路由
       expect(res.status).toBeGreaterThanOrEqual(400);
@@ -188,7 +188,7 @@ describe('Admin API Routes', () => {
     it('需要認證', async () => {
       const req = new Request('http://localhost/api/admin/stats');
 
-      const res = await app.request(req, { env });
+      const res = await app.request(req, undefined, env);
       
       expect(res.status).toBe(401);
     });
@@ -200,7 +200,7 @@ describe('Admin API Routes', () => {
         method: 'OPTIONS'
       });
 
-      const res = await app.request(req, { env });
+      const res = await app.request(req, undefined, env);
       
       // CORS 應該被允許
       expect(res.status).toBeGreaterThanOrEqual(200);

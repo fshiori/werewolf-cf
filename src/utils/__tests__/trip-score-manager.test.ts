@@ -8,49 +8,85 @@ import { TripScoreManager } from '../trip-score-manager';
 // Mock DB
 class MockDB {
   private data = new Map<string, any>();
-  private insertCount = 0;
 
   prepare(sql: string) {
-    return {
+    const self = this;
+    const stmt: any = {
+      _sql: sql,
+      _params: [] as any[],
       bind: (...params: any[]) => {
-        return {
-          first: async () => {
-            // 模擬查詢
-            if (sql.includes('SELECT COUNT(*)')) {
-              return { count: this.data.size };
-            }
-            if (sql.includes('AVG(score)')) {
-              const scores = Array.from(this.data.values()).map((d: any) => d.score);
-              const avg = scores.length > 0 
-                ? scores.reduce((a, b) => a + b, 0) / scores.length 
-                : 0;
-              return { total: 100, avg };
-            }
-            if (sql.includes('trip = ?')) {
-              for (const [key, value] of this.data) {
-                if (key === params[0]) return value;
-              }
-              return null;
-            }
-            return null;
-          },
-          all: async () => {
-            if (sql.includes('ORDER BY score DESC')) {
-              const limit = params[0] || 100;
-              const sorted = Array.from(this.data.values())
-                .sort((a, b) => b.score - a.score)
-                .slice(0, limit);
-              return { results: sorted };
-            }
-            return { results: [] };
-          },
-          run: async () => {
-            this.insertCount++;
-            return { success: true };
+        stmt._params = params;
+        return stmt;
+      },
+      first: async () => {
+        const p = stmt._params;
+        // SELECT COUNT(*) as count FROM trip_scores WHERE score > ?
+        if (sql.includes('WHERE score > ?')) {
+          const threshold = p[0];
+          const count = Array.from(self.data.values()).filter((d: any) => d.score > threshold).length;
+          return { count };
+        }
+        // SELECT COUNT(*) as count FROM trip_scores
+        if (sql.includes('SELECT COUNT(*)') && sql.includes('FROM trip_scores') && !sql.includes('WHERE')) {
+          return { count: self.data.size };
+        }
+        // SELECT SUM(games_played) as total, AVG(score) as avg FROM trip_scores
+        if (sql.includes('SUM(games_played)') || sql.includes('AVG(score)')) {
+          const values = Array.from(self.data.values());
+          const totalGames = values.reduce((sum: number, d: any) => sum + (d.gamesPlayed || 0), 0);
+          const avg = values.length > 0
+            ? values.reduce((sum: number, d: any) => sum + d.score, 0) / values.length
+            : 0;
+          return { total: totalGames, avg };
+        }
+        // SELECT * FROM trip_scores WHERE trip = ?
+        if (sql.includes('WHERE trip = ?')) {
+          return self.data.get(p[0]) || null;
+        }
+        return null;
+      },
+      all: async () => {
+        const p = stmt._params;
+        // SELECT * FROM trip_scores ORDER BY score DESC LIMIT ?
+        if (sql.includes('ORDER BY score DESC')) {
+          const limit = p[0] || 100;
+          return {
+            results: Array.from(self.data.values())
+              .sort((a: any, b: any) => b.score - a.score)
+              .slice(0, limit)
+          };
+        }
+        return { results: [] };
+      },
+      run: async () => {
+        const p = stmt._params;
+        if (sql.includes('INSERT INTO trip_scores')) {
+          const record = {
+            trip: p[0],
+            score: p[1],
+            gamesPlayed: p[2],
+            humanWins: p[3],
+            wolfWins: p[4],
+            foxWins: p[5],
+            lastPlayed: p[6]
+          };
+          self.data.set(p[0], record);
+        } else if (sql.includes('UPDATE trip_scores')) {
+          const trip = p[5]; // WHERE trip = ?
+          const existing = self.data.get(trip);
+          if (existing) {
+            existing.score = p[0];
+            existing.gamesPlayed = (existing.gamesPlayed || 0) + 1;
+            existing.humanWins = (existing.humanWins || 0) + p[1];
+            existing.wolfWins = (existing.wolfWins || 0) + p[2];
+            existing.foxWins = (existing.foxWins || 0) + p[3];
+            existing.lastPlayed = p[4];
           }
-        };
+        }
+        return { success: true };
       }
     };
+    return stmt;
   }
 }
 
@@ -71,7 +107,7 @@ describe('TripScoreManager', () => {
 
     it('應該返回正確的評分資料', async () => {
       // 模擬已存在的資料
-      mockDB.data.set('testtrip', {
+      mockDB['data'].set('testtrip', {
         trip: 'testtrip',
         score: 100,
         gamesPlayed: 10,

@@ -10,7 +10,7 @@ import {
   timeDiff,
   isTimeout,
   convertToVirtualTime
-} from '../src/utils/time';
+} from '../time';
 
 describe('Time Utils', () => {
   describe('getCurrentTimestamp', () => {

@@ -108,9 +108,12 @@ describe('Session Management', () => {
   });
 
   describe('Session 延長', () => {
-    it('應該延長過期時間', () => {
+    it('應該延長過期時間', async () => {
       const { session } = createSession('testuser', 1, 1, 'Test', 'human');
       const originalExpiry = session.expiresAt;
+      
+      // 等待 1ms 確保時間戳不同
+      await new Promise(resolve => setTimeout(resolve, 2));
       
       extendSession(session, 3600);
       

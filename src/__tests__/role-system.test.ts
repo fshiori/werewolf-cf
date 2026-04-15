@@ -8,7 +8,7 @@ import type { Role, Player, PlayerStatus } from '../types';
 describe('Role System', () => {
   describe('角色陣營判定', () => {
     const determineRoleTeam = (role: Role): 'human' | 'wolf' | 'fox' => {
-      if (role.includes('wolf') || role === 'mad') {
+      if (role.includes('wolf') || role === 'mad' || role === 'wfbig') {
         return 'wolf';
       } else if (role.includes('fox') || role === 'betr' || role === 'fosi') {
         return 'fox';

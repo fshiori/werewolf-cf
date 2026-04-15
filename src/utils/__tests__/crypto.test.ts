@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { generateTripcode, generateSessionToken, hashPassword, verifyAdminPassword } from '../src/utils/crypto';
+import { generateTripcode, generateSessionToken, hashPassword, verifyAdminPassword } from '../crypto';
 
 describe('Crypto Utils', () => {
   describe('generateTripcode', () => {
@@ -19,8 +19,8 @@ describe('Crypto Utils', () => {
     });
 
     it('不同密碼應該生成不同 tripcode', () => {
-      const trip1 = generateTripcode('password1');
-      const trip2 = generateTripcode('password2');
+      const trip1 = generateTripcode('abcdef');
+      const trip2 = generateTripcode('ghijkl');
       expect(trip1).not.toBe(trip2);
     });
 
