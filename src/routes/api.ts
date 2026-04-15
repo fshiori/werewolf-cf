@@ -177,6 +177,62 @@ app.post('/api/rooms', checkBan, rateLimit, async (c) => {
 });
 
 /**
+ * 獲取所有房間列表（從 D1 查詢）
+ * NOTE: This static route must be registered BEFORE /api/rooms/:roomNo
+ */
+app.get('/api/rooms', async (c) => {
+  try {
+    const limit = parseInt(c.req.query('limit') || '50');
+    const offset = parseInt(c.req.query('offset') || '0');
+    const status = c.req.query('status');
+
+    let query = 'SELECT room_no, room_name, room_comment, max_user, status, date, day_night, is_private, time_limit, silence_mode, uptime FROM room';
+    const params: any[] = [];
+
+    if (status) {
+      query += ' WHERE status = ?';
+      params.push(status);
+    }
+
+    // 只顯示最近有活動的房間（排除超過 24 小時沒更新的）
+    query += status ? ' AND (last_updated IS NULL OR last_updated > ?)' : ' WHERE (last_updated IS NULL OR last_updated > ?)';
+    params.push(Date.now() - 24 * 60 * 60 * 1000);
+
+    query += ' ORDER BY last_updated DESC NULLS LAST LIMIT ? OFFSET ?';
+    params.push(limit, offset);
+
+    const stmt = c.env.DB.prepare(query);
+    const result = await stmt.bind(...params).all();
+
+    // 同時查詢各房間的玩家人數
+    const rooms = result.results as any[];
+    const roomNos = rooms.map(r => r.room_no);
+
+    let playerCounts: Record<number, number> = {};
+    if (roomNos.length > 0) {
+      const placeholders = roomNos.map(() => '?').join(',');
+      const countStmt = c.env.DB.prepare(
+        `SELECT room_no, COUNT(*) as player_count FROM user_entry WHERE room_no IN (${placeholders}) GROUP BY room_no`
+      );
+      const countResult = await countStmt.bind(...roomNos).all();
+      for (const row of countResult.results as any[]) {
+        playerCounts[row.room_no] = row.player_count;
+      }
+    }
+
+    const enrichedRooms = rooms.map(r => ({
+      ...r,
+      playerCount: playerCounts[r.room_no] || 0
+    }));
+
+    return c.json({ rooms: enrichedRooms, count: enrichedRooms.length });
+  } catch (error) {
+    console.error('Get rooms list error:', error);
+    return c.json({ error: 'Failed to get rooms list' }, 500);
+  }
+});
+
+/**
  * 獲取房間資訊
  */
 app.get('/api/rooms/:roomNo', async (c) => {
@@ -352,64 +408,6 @@ app.post('/api/trip', rateLimit, async (c) => {
   }
 });
 
-/**
- * 獲取所有房間列表（從 D1 查詢）
- */
-app.get('/api/rooms', async (c) => {
-  try {
-    const limit = parseInt(c.req.query('limit') || '50');
-    const offset = parseInt(c.req.query('offset') || '0');
-    const status = c.req.query('status');
-
-    let query = 'SELECT room_no, room_name, room_comment, max_user, status, date, day_night, is_private, time_limit, silence_mode, uptime FROM room';
-    const params: any[] = [];
-
-    if (status) {
-      query += ' WHERE status = ?';
-      params.push(status);
-    }
-
-    // 只顯示最近有活動的房間（排除超過 24 小時沒更新的）
-    query += ' WHERE (last_updated IS NULL OR last_updated > ?)';
-    if (!status) {
-      params.push(Date.now() - 24 * 60 * 60 * 1000);
-    } else {
-      params.unshift(Date.now() - 24 * 60 * 60 * 1000);
-    }
-
-    query += ' ORDER BY last_updated DESC NULLS LAST LIMIT ? OFFSET ?';
-    params.push(limit, offset);
-
-    const stmt = c.env.DB.prepare(query);
-    const result = await stmt.bind(...params).all();
-
-    // 同時查詢各房間的玩家人數
-    const rooms = result.results as any[];
-    const roomNos = rooms.map(r => r.room_no);
-
-    let playerCounts: Record<number, number> = {};
-    if (roomNos.length > 0) {
-      const placeholders = roomNos.map(() => '?').join(',');
-      const countStmt = c.env.DB.prepare(
-        `SELECT room_no, COUNT(*) as player_count FROM user_entry WHERE room_no IN (${placeholders}) GROUP BY room_no`
-      );
-      const countResult = await countStmt.bind(...roomNos).all();
-      for (const row of countResult.results as any[]) {
-        playerCounts[row.room_no] = row.player_count;
-      }
-    }
-
-    const enrichedRooms = rooms.map(r => ({
-      ...r,
-      playerCount: playerCounts[r.room_no] || 0
-    }));
-
-    return c.json({ rooms: enrichedRooms, count: enrichedRooms.length });
-  } catch (error) {
-    console.error('Get rooms list error:', error);
-    return c.json({ error: 'Failed to get rooms list' }, 500);
-  }
-});
 
 // ==================== 統計 ====================
 
@@ -543,10 +541,14 @@ app.route('/', featuresRoutes);
 // 掛載 BBS 路由
 app.route('/', bbsRoutes);
 
-// ==================== 靜態檔案 ====================
+// ==================== 靜態檔案（catch-all，必須放在最後） ====================
 
 /**
  * 服務靜態檔案
+ * NOTE: This catch-all MUST be the last route registered. It serves as a fallback
+ * for static assets (SPA). API routes (/api/*) and WebSocket (/ws/*) are handled
+ * by specific routes above and will return notFound() if they reach here.
+ * Do NOT move this above app.route() calls or parameterized routes.
  */
 app.get('/*', async (c) => {
   const url = new URL(c.req.url);
@@ -557,20 +559,22 @@ app.get('/*', async (c) => {
     return c.notFound();
   }
 
-  // 預設返回 index.html（SPA）
+  // 預設返回對應的靜態檔案
   try {
-    const asset = await c.env.ASSETS.fetch(new Request(path));
-    if (asset) {
+    const assetUrl = new URL(path, c.req.url);
+    const asset = await c.env.ASSETS.fetch(new Request(assetUrl.toString()));
+    if (asset && asset.status !== 404) {
       return asset;
     }
   } catch (e) {
     // ignore
   }
 
-  // 回退到 index.html
+  // 回退到 index.html（SPA routing）
   try {
-    const index = await c.env.ASSETS.fetch(new Request('/index.html'));
-    if (index) {
+    const indexUrl = new URL('/index.html', c.req.url);
+    const index = await c.env.ASSETS.fetch(new Request(indexUrl.toString()));
+    if (index && index.status !== 404) {
       return index;
     }
   } catch (e) {
