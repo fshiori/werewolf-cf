@@ -92,6 +92,7 @@ export interface RoomData {
   isPrivate?: boolean;     // 是否為私人房間
   passwordHash?: string;   // 密碼雜湊（SHA-256）
   roomOptions?: RoomOptions; // 房間選項（整合 timeLimit, silenceMode 等）
+  host?: string;              // 房長 uname（第一個加入的玩家）
 }
 
 // 訊息類型

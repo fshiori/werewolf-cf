@@ -154,7 +154,8 @@ export function getPublicRoomInfo(room: RoomData) {
     date: room.date,
     dayNight: room.dayNight,
     playerCount: room.players.size,
-    lastUpdated: room.lastUpdated
+    lastUpdated: room.lastUpdated,
+    host: room.host || null
   };
 }
 

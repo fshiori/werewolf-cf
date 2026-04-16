@@ -13,6 +13,15 @@ import { assignRoles, checkVictory, canSpeak, getRoleTeam, getVictoryMessage } f
 import { createVoteData, addVote, getVoteResult, executeVote, isVoteComplete } from '../utils/vote-system';
 import { createNightState, wolfKill, seerDivine, guardTarget, processNightResult, getNightSummary, isNightActionsComplete } from '../utils/night-action';
 import { createSessionManager, type SessionValue } from '../utils/session-manager';
+import {
+  isGM,
+  canUseHeavenChat,
+  isValidGMAction,
+  executeGMAction,
+  createHeavenMessage,
+  createGMWhisper,
+  getHeavenRecipients
+} from '../utils/gm-system';
 
 export class WerewolfRoom extends DurableObject {
   private sessions: Map<string, WebSocket> = new Map();
@@ -284,6 +293,10 @@ export class WerewolfRoom extends DurableObject {
         sessionId: sessionToken,
         ipAddress: req.headers.get('CF-Connecting-IP') || undefined,
       };
+      // 第一個加入的玩家成為房長
+      if (!this.roomData.host) {
+        this.roomData.host = session.uname;
+      }
       addPlayer(this.roomData, newPlayer);
       await this.saveState();
       player = newPlayer;
@@ -330,7 +343,14 @@ export class WerewolfRoom extends DurableObject {
    */
   private async handleClientMessage(uname: string, data: any) {
     const player = this.roomData.players.get(uname);
-    if (!player || player.live !== 'live') {
+    const playerIsGM = isGM(player);
+
+    // GM can act even when dead, and dead players can use heaven_chat
+    if (!player || (!playerIsGM && player.live !== 'live')) {
+      // Allow heaven_chat from dead players
+      if (data?.type === 'heaven_chat' && player) {
+        await this.handleHeavenChat(uname, data.text);
+      }
       return;
     }
 
@@ -349,6 +369,27 @@ export class WerewolfRoom extends DurableObject {
         break;
       case 'start_game':
         await this.handleStartGame(uname);
+        break;
+      case 'kick_player':
+        await this.handleKickPlayer(uname, data.target);
+        break;
+      case 'force_end':
+        await this.handleForceEnd(uname);
+        break;
+      case 'gm_action':
+        if (playerIsGM) {
+          await this.handleGMAction(uname, data.action, data.target, data.message, data.role);
+        }
+        break;
+      case 'gm_whisper':
+        if (playerIsGM) {
+          await this.handleGMWhisper(uname, data.target, data.text);
+        }
+        break;
+      case 'heaven_chat':
+        if (player.live === 'dead' || playerIsGM) {
+          await this.handleHeavenChat(uname, data.text);
+        }
         break;
     }
   }
@@ -575,6 +616,76 @@ export class WerewolfRoom extends DurableObject {
   }
 
   /**
+   * 房長踢出玩家（僅限等待中狀態）
+   */
+  private async handleKickPlayer(uname: string, targetUname: string) {
+    // 權限檢查：只有房長可以踢人
+    if (this.roomData.host !== uname) {
+      return;
+    }
+    // 狀態檢查：只有等待中可以踢人
+    if (this.roomData.status !== 'waiting') {
+      return;
+    }
+    // 不能踢自己
+    if (uname === targetUname) {
+      return;
+    }
+    // 目標玩家必須存在
+    const targetPlayer = this.roomData.players.get(targetUname);
+    if (!targetPlayer) {
+      return;
+    }
+
+    // 移除玩家
+    removePlayer(this.roomData, targetUname);
+
+    // 關閉目標玩家的 WebSocket
+    const targetWs = this.sessions.get(targetUname);
+    if (targetWs) {
+      try { targetWs.close(4000, '被房長踢出'); } catch {}
+      this.sessions.delete(targetUname);
+    }
+
+    // 廣播踢人事件
+    this.broadcast({
+      type: 'player_left',
+      data: {
+        uname: targetUname,
+        handleName: targetPlayer.handleName,
+        kicked: true,
+        players: Array.from(this.roomData.players.values()).map(p => ({
+          userNo: p.userNo,
+          uname: p.uname,
+          handleName: p.handleName,
+          trip: p.trip,
+          iconNo: p.iconNo,
+          live: p.live
+        }))
+      }
+    });
+
+    await this.saveState();
+  }
+
+  /**
+   * 房長強制結束遊戲（僅限遊戲中狀態）
+   */
+  private async handleForceEnd(uname: string) {
+    // 權限檢查：只有房長可以強制結束
+    if (this.roomData.host !== uname) {
+      return;
+    }
+    // 狀態檢查：只有遊戲中可以強制結束
+    if (this.roomData.status !== 'playing') {
+      return;
+    }
+
+    // 以平局結束遊戲
+    await this.endGame('draw');
+  }
+
+  /**
    * 推進遊戲時間
    */
   private async advanceGameTime(units: number) {
@@ -588,6 +699,128 @@ export class WerewolfRoom extends DurableObject {
     }
 
     await this.saveState();
+  }
+
+  /**
+   * 處理 GM 行動
+   */
+  private async handleGMAction(
+    gmUname: string,
+    action: string,
+    target?: string,
+    message?: string,
+    extraRole?: string
+  ) {
+    if (!isValidGMAction(action)) {
+      return;
+    }
+
+    const result = executeGMAction(
+      this.roomData,
+      gmUname,
+      action,
+      target,
+      message,
+      extraRole as any
+    );
+
+    if (result.success && result.broadcastMessage) {
+      // GM 廣播訊息（GM_CHANNEL, GM_KILL, GM_RESU）→ 所有玩家
+      this.broadcast({
+        type: 'message',
+        data: result.broadcastMessage
+      });
+    }
+
+    // 發送操作結果回覆給 GM
+    const gmWs = this.sessions.get(gmUname);
+    if (gmWs) {
+      gmWs.send(JSON.stringify({
+        type: 'gm_result',
+        data: {
+          action,
+          success: result.success,
+          message: result.resultMessage
+        }
+      }));
+    }
+
+    // GM_KILL/GM_RESU 後檢查勝負
+    if (result.success && (action === 'GM_KILL' || action === 'GM_RESU')) {
+      const victory = checkVictory(Array.from(this.roomData.players.values()));
+      if (victory) {
+        await this.endGame(victory);
+        return;
+      }
+    }
+
+    await this.saveState();
+  }
+
+  /**
+   * 處理 GM 私訊（GM → 玩家）
+   */
+  private async handleGMWhisper(gmUname: string, targetUname: string, text: string) {
+    const whisper = createGMWhisper(this.roomData, gmUname, targetUname, text);
+    if (!whisper) {
+      return;
+    }
+
+    // 發送訊息給目標玩家
+    const targetWs = this.sessions.get(targetUname);
+    if (targetWs) {
+      targetWs.send(JSON.stringify({
+        type: 'message',
+        data: whisper.targetMessage
+      }));
+    }
+
+    // 發送回執給 GM
+    const gmWs = this.sessions.get(gmUname);
+    if (gmWs) {
+      gmWs.send(JSON.stringify({
+        type: 'message',
+        data: whisper.gmMessage
+      }));
+    }
+  }
+
+  /**
+   * 處理天國聊天（只有死亡玩家 + GM 可以看到）
+   */
+  private async handleHeavenChat(uname: string, text: string) {
+    const heavenMsg = createHeavenMessage(this.roomData, uname, text);
+    if (!heavenMsg) {
+      return;
+    }
+
+    const recipients = getHeavenRecipients(this.roomData.players);
+
+    this.broadcastTo(
+      {
+        type: 'message',
+        data: heavenMsg
+      },
+      recipients
+    );
+  }
+
+  /**
+   * 廣播訊息給特定玩家
+   */
+  private broadcastTo(message: any, recipients: string[]) {
+    const data = JSON.stringify(message);
+
+    for (const uname of recipients) {
+      const ws = this.sessions.get(uname);
+      if (ws) {
+        try {
+          ws.send(data);
+        } catch (e) {
+          this.sessions.delete(uname);
+        }
+      }
+    }
   }
 
   /**

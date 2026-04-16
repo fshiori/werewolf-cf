@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>遊戲中 - 人狼遊戲</title>
+  <title data-i18n-page-title="game.title">遊戲中 - 人狼遊戲</title>
   <style>
     * {
       margin: 0;
@@ -873,12 +873,12 @@
         <h1>🐺 房間 #<span id="roomNo">--</span></h1>
         <div>
           <span class="connection-dot connected" id="connDot"></span>
-          <span class="connection-text" id="connText">連線中...</span>
+          <span class="connection-text" id="connText" data-i18n="game.conn.connecting">連線中...</span>
         </div>
       </div>
       <div class="game-info">
         <span>第 <strong id="dayCount">0</strong> 天</span>
-        <span class="phase-indicator phase-waiting" id="phaseIndicator">等待中</span>
+        <span class="phase-indicator phase-waiting" id="phaseIndicator" data-i18n="game.phase_waiting">等待中</span>
         <span>👥 <strong id="playerCount">0</strong>/<span id="maxUser">16</span></span>
       </div>
     </div>
