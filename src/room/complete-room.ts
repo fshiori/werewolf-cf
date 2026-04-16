@@ -10,9 +10,10 @@ import type { Env, Player, RoomData, Message, Role } from '../types';
 import { createRoom, addPlayer, removePlayer, startGame, endGame, getPublicRoomInfo } from '../utils/room-manager';
 import { advanceTime, checkSilence, transitionPhase, DEFAULT_TIME_CONFIG, isRealTimeEnabled, isRealTimeExpired, startRealTimePhase, getRealTimeRemainingSec } from '../utils/time-progression';
 import { assignRoles, checkVictory, canSpeak, getRoleTeam, getVictoryMessage, createDummyBoyPlayer } from '../utils/role-system';
-import { createVoteData, addVote, getVoteResult, executeVote, isVoteComplete, calculateWeightedVotes, resolveWeightedVoteResult, filterVoteDisplay } from '../utils/vote-system';
+import { createVoteData, addVote, getVoteResult, executeVote, isVoteComplete, calculateWeightedVotes, resolveWeightedVoteResult, filterVoteDisplay, resolveVoteDisplayMode, canVoteTarget } from '../utils/vote-system';
 import { createNightState, wolfKill, seerDivine, guardTarget, processNightResult, getNightSummary, isNightActionsComplete } from '../utils/night-action';
 import { createSessionManager, type SessionValue } from '../utils/session-manager';
+import { sanitizePlayersForViewer } from '../utils/player-visibility';
 import {
   isGM,
   canUseHeavenChat,
@@ -243,6 +244,7 @@ export class WerewolfRoom extends DurableObject {
           }))
         }
       });
+      this.pushPlayersUpdate();
 
       await this.saveState();
       return Response.json({ success: true, kicked: uname });
@@ -268,6 +270,7 @@ export class WerewolfRoom extends DurableObject {
         isPrivate: !!this.roomData.isPrivate,
         timeLimit: this.roomData.timeLimit ?? 60,
         silenceMode: !!this.roomData.silenceMode,
+        roomOptions: this.roomData.roomOptions || {},
       });
     }
 
@@ -376,9 +379,10 @@ export class WerewolfRoom extends DurableObject {
         userNo: this.roomData.players.size + 1,
         uname: session.uname,
         handleName: session.handleName || session.uname,
-        trip: (session as any).trip || '',
-        iconNo: (session as any).iconNo || 1,
-        sex: (session as any).sex || 'male',
+        trip: session.trip || '',
+        iconNo: session.iconNo || 1,
+        sex: session.sex || 'male',
+        wishRole: (session.wishRole as Role | 'none' | undefined) || 'none',
         role: 'human',
         live: 'live',
         score: 0,
@@ -401,7 +405,11 @@ export class WerewolfRoom extends DurableObject {
     server.send(JSON.stringify({
       type: 'connected',
       data: {
-        room: getPublicRoomInfo(this.roomData),
+        room: {
+          ...getPublicRoomInfo(this.roomData),
+          roomOptions: this.roomData.roomOptions || {},
+          players: this.getVisiblePlayersFor(session.uname),
+        },
         player: this.roomData.players.get(session.uname)
       }
     }));
@@ -652,6 +660,11 @@ export class WerewolfRoom extends DurableObject {
       return;
     }
 
+    const voteMeEnabled = !!this.roomData.roomOptions?.voteMe;
+    if (!canVoteTarget(this.roomData.players, uname, targetUname, voteMeEnabled)) {
+      return;
+    }
+
     // 加入投票
     const success = addVote(this.voteData, uname, targetUname);
 
@@ -669,8 +682,11 @@ export class WerewolfRoom extends DurableObject {
         console.error('Vote history error:', e);
       }
 
-      // 廣播投票更新（依 voteDisplay 模式過濾）
-      const voteDisplayMode = this.roomData.roomOptions?.voteDisplay ?? 0;
+      // 廣播投票更新（依 voteDisplay/openVote 模式過濾）
+      const voteDisplayMode = resolveVoteDisplayMode(
+        this.roomData.roomOptions?.voteDisplay,
+        this.roomData.roomOptions?.openVote
+      );
       const displayInfo = filterVoteDisplay(this.voteData, voteDisplayMode);
 
       this.broadcast({
@@ -754,9 +770,11 @@ export class WerewolfRoom extends DurableObject {
 
     const players = Array.from(this.roomData.players.values());
 
-    // 隨機分配角色
+    // 隨機分配角色（wishRole 啟用時，優先滿足玩家希望角色）
     const roleConfig = this.parseRoleConfig(this.roomData.optionRole);
-    assignRoles(players, roleConfig);
+    assignRoles(players, roleConfig, {
+      wishRoleEnabled: this.roomData.roomOptions?.wishRole === true,
+    });
 
     // GM 啟用：透過 gmTrip 指定 Trip 為 GM，若無指定則房長自動成為 GM
     const gmEnabled = this.roomData.roomOptions?.gmEnabled === true;
@@ -823,13 +841,8 @@ export class WerewolfRoom extends DurableObject {
           type: 'game_start',
           data: {
             role: player.role,
-            players: Array.from(this.roomData.players.values()).map(p => ({
-              userNo: p.userNo,
-              handleName: p.handleName,
-              trip: p.trip,
-              iconNo: p.iconNo,
-              live: p.live
-            }))
+            roomOptions: this.roomData.roomOptions || {},
+            players: this.getVisiblePlayersFor(playerUname),
           }
         }));
       }
@@ -911,6 +924,7 @@ export class WerewolfRoom extends DurableObject {
         }))
       }
     });
+    this.pushPlayersUpdate();
 
     await this.saveState();
   }
@@ -1196,8 +1210,11 @@ export class WerewolfRoom extends DurableObject {
       return;
     }
 
-    // voteDisplay: 根據模式過濾投票結果廣播
-    const voteDisplayMode = this.roomData.roomOptions?.voteDisplay ?? 0;
+    // voteDisplay/openVote: 根據模式過濾投票結果廣播
+    const voteDisplayMode = resolveVoteDisplayMode(
+      this.roomData.roomOptions?.voteDisplay,
+      this.roomData.roomOptions?.openVote
+    );
     const displayInfo = filterVoteDisplay(voteData, voteDisplayMode);
 
     if (result.executed.length > 0) {
@@ -1210,6 +1227,7 @@ export class WerewolfRoom extends DurableObject {
           voterMap: displayInfo.voterMap,
         } : undefined,
       });
+      this.pushPlayersUpdate();
     }
 
     // 記錄處決事件
@@ -1285,6 +1303,7 @@ export class WerewolfRoom extends DurableObject {
         type: 'players_died',
         data: dead.map(p => ({ uname: p.uname, handleName: p.handleName }))
       });
+      this.pushPlayersUpdate();
 
       // 記錄死亡事件到 D1
       for (const p of dead) {
@@ -1432,6 +1451,28 @@ export class WerewolfRoom extends DurableObject {
     });
   }
 
+  private getVisiblePlayersFor(viewerUname: string) {
+    return sanitizePlayersForViewer(this.roomData.players, viewerUname, {
+      roomStatus: this.roomData.status,
+      dellookEnabled: (this.roomData.roomOptions?.dellook ?? 0) === 1,
+    });
+  }
+
+  private pushPlayersUpdate() {
+    for (const [viewerUname, ws] of this.sessions) {
+      try {
+        ws.send(JSON.stringify({
+          type: 'players_update',
+          data: {
+            players: this.getVisiblePlayersFor(viewerUname),
+          },
+        }));
+      } catch {
+        this.sessions.delete(viewerUname);
+      }
+    }
+  }
+
   /**
    * 廣播訊息
    */
@@ -1557,7 +1598,7 @@ export class WerewolfRoom extends DurableObject {
 
       // 處理妖狐選項（替換基本表的 fox 或取消）
       const foxs = options.find(o => o === 'foxs' || o === 'betr' || o === 'fosi');
-      const poison = options.find(o => o === 'poison' || o === 'cat');
+      let poison = options.find(o => o === 'poison' || o === 'cat');
 
       if (foxs) {
         // 使用妖狐選項時取消基本表的 fox

@@ -295,6 +295,50 @@ export function voteToDatabase(voteData: VoteData, voteNumber: number): Vote[] {
   return votes;
 }
 
+/**
+ * 解析實際投票顯示模式（legacy openVote 相容）
+ *
+ * 規則：
+ * - 若 voteDisplay 已明確設定為 1/2，優先使用它
+ * - 若 voteDisplay 為 0 且 openVote=true，對齊 legacy「公開票數」語義 → 匿名模式(2)
+ * - 其他情況維持 0
+ */
+export function resolveVoteDisplayMode(voteDisplay: number | undefined, openVote: boolean | undefined): number {
+  const mode = voteDisplay ?? 0;
+  if (mode === 1 || mode === 2) {
+    return mode;
+  }
+  if (openVote) {
+    return 2;
+  }
+  return 0;
+}
+
+/**
+ * 驗證投票目標是否合法（voteMe 相容）
+ */
+export function canVoteTarget(
+  players: Map<string, Player>,
+  voterUname: string,
+  targetUname: string,
+  voteMeEnabled: boolean
+): boolean {
+  if (!targetUname || !targetUname.trim()) {
+    return false;
+  }
+
+  const target = players.get(targetUname);
+  if (!target || target.live !== 'live') {
+    return false;
+  }
+
+  if (!voteMeEnabled && voterUname === targetUname) {
+    return false;
+  }
+
+  return true;
+}
+
 // ── voteDisplay token: 投票結果展示 ──
 
 /**

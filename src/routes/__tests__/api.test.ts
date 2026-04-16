@@ -533,6 +533,108 @@ describe('API Routes', () => {
       expect(data.success).toBe(true);
     });
 
+    it('wishRole 房規啟用時，join 會保存希望角色到 session', async () => {
+      let savedSession: any = null;
+      const env = createMockEnv();
+      env.DB = {
+        prepare: (_query: string) => ({
+          bind: (..._args: any[]) => ({
+            run: async () => ({ success: true }),
+            first: async () => ({
+              is_private: 0,
+              password_hash: null,
+              game_option: JSON.stringify({ wishRole: true })
+            }),
+            all: async () => ({ results: [] })
+          })
+        })
+      } as any;
+      env.KV = {
+        get: async () => null,
+        put: async (key: string, value: string) => {
+          if (key.startsWith('session:')) {
+            savedSession = JSON.parse(value);
+          }
+        },
+        delete: async () => {},
+        list: async () => ({ keys: [] })
+      } as any;
+
+      const testApp = new Hono();
+      testApp.route('/', api);
+
+      const response = await testApp.request(
+        new Request('http://localhost/api/rooms/12345/join', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            uname: 'testuser',
+            handleName: 'Test',
+            trip: '',
+            iconNo: 1,
+            sex: 'male',
+            wishRole: 'wolf'
+          })
+        }),
+        undefined,
+        env
+      );
+
+      expect(response.status).toBe(200);
+      expect(savedSession?.wishRole).toBe('wolf');
+    });
+
+    it('wishRole 房規未啟用時，即使 join 傳 wishRole 也強制為 none', async () => {
+      let savedSession: any = null;
+      const env = createMockEnv();
+      env.DB = {
+        prepare: (_query: string) => ({
+          bind: (..._args: any[]) => ({
+            run: async () => ({ success: true }),
+            first: async () => ({
+              is_private: 0,
+              password_hash: null,
+              game_option: JSON.stringify({ wishRole: false })
+            }),
+            all: async () => ({ results: [] })
+          })
+        })
+      } as any;
+      env.KV = {
+        get: async () => null,
+        put: async (key: string, value: string) => {
+          if (key.startsWith('session:')) {
+            savedSession = JSON.parse(value);
+          }
+        },
+        delete: async () => {},
+        list: async () => ({ keys: [] })
+      } as any;
+
+      const testApp = new Hono();
+      testApp.route('/', api);
+
+      const response = await testApp.request(
+        new Request('http://localhost/api/rooms/12345/join', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            uname: 'testuser',
+            handleName: 'Test',
+            trip: '',
+            iconNo: 1,
+            sex: 'male',
+            wishRole: 'wolf'
+          })
+        }),
+        undefined,
+        env
+      );
+
+      expect(response.status).toBe(200);
+      expect(savedSession?.wishRole).toBe('none');
+    });
+
     it('私人房間，密碼正確但不帶 password 欄位 → 403', async () => {
       const correctHash = await sha256hex('correct-pw');
       const privateEnv = createMockEnv();

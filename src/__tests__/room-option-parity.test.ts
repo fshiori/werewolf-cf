@@ -69,8 +69,8 @@ describe('parseRoomOptions — gameOption token parity', () => {
     });
   });
 
-  // ── openVote ⚠️（已解析，遊戲邏輯未消耗）──
-  describe('openVote（公開投票）⚠️ 已解析未消耗', () => {
+  // ── openVote ✅（已解析，遊戲邏輯已消耗）──
+  describe('openVote（公開投票）✅ 已解析已消耗', () => {
     it('正確解析 true', () => {
       expect(parseRoomOptions({ openVote: true }).openVote).toBe(true);
     });
@@ -79,11 +79,11 @@ describe('parseRoomOptions — gameOption token parity', () => {
       expect(parseRoomOptions({}).openVote).toBe(false);
     });
 
-    // TODO: 遊戲邏輯中應在投票階段顯示誰投給誰
+    // 已串接到 voteDisplay/openVote 相容模式：openVote=true 時至少顯示匿名票數
   });
 
-  // ── voteMe ⚠️（已解析，遊戲邏輯未消耗）──
-  describe('voteMe（自投功能）⚠️ 已解析未消耗', () => {
+  // ── voteMe ✅（已解析，遊戲邏輯已消耗）──
+  describe('voteMe（自投功能）✅ 已解析已消耗', () => {
     it('正確解析 true', () => {
       expect(parseRoomOptions({ voteMe: true }).voteMe).toBe(true);
     });
@@ -92,7 +92,7 @@ describe('parseRoomOptions — gameOption token parity', () => {
       expect(parseRoomOptions({}).voteMe).toBe(false);
     });
 
-    // TODO: 遊戲邏輯中應允許玩家投票給自己
+    // 已串接：voteMe=false 禁止自投，voteMe=true 允許自投（前後端皆已限制）
   });
 
   // ── dummyBoy ⚠️（已解析，遊戲邏輯未消耗）──
@@ -108,8 +108,8 @@ describe('parseRoomOptions — gameOption token parity', () => {
     // TODO: 遊戲邏輯中應分配啞巴男角色，白天不能發言但可投票
   });
 
-  // ── wishRole ⚠️（已解析，遊戲邏輯未消耗）──
-  describe('wishRole（願望角色）⚠️ 已解析未消耗', () => {
+  // ── wishRole ✅（已解析，遊戲邏輯已消耗）──
+  describe('wishRole（願望角色）✅ 已解析已消耗', () => {
     it('正確解析 true', () => {
       expect(parseRoomOptions({ wishRole: true }).wishRole).toBe(true);
     });
@@ -118,7 +118,7 @@ describe('parseRoomOptions — gameOption token parity', () => {
       expect(parseRoomOptions({}).wishRole).toBe(false);
     });
 
-    // TODO: 遊戲邏輯中應在開局前讓玩家投票選擇想當的角色
+    // 已串接：join 時可提交 wishRole，開局分配先嘗試滿足玩家希望角色
   });
 
   // ── will ⚠️（已解析，遊戲邏輯未消耗）──
@@ -295,10 +295,16 @@ describe('optionRole token 解析邏輯', () => {
       expected: 'gmEnabled=true',
       status: '✅' as const,
     },
+    {
+      token: 'pobe',
+      description: '妖狐+埋毒共存（20+）',
+      expected: 'fox/betr/fosi + poison/cat 並存時追加 wolf+poison(cat)',
+      status: '✅' as const,
+    },
   ];
 
-  it('optionRole token 清單完整性：共 10 個 token', () => {
-    expect(roleTokens).toHaveLength(10);
+  it('optionRole token 清單完整性：共 11 個 token', () => {
+    expect(roleTokens).toHaveLength(11);
   });
 
   describe('各 token 預期行為文件', () => {
@@ -353,12 +359,6 @@ describe('optionRole token 解析邏輯', () => {
 
   const missingRoleTokens = [
     {
-      token: 'pobe',
-      description: '妖狐+埋毒共存（人狼自殺）',
-      phpBehavior: '20人以上時，妖狐/背德者/死神+埋毒同時存在時追加狼+埋毒配對；foxs 時取消 poison 互斥',
-      stubStatus: '✅ 已實作',
-    },
-    {
       token: 'suspect',
       description: '疑心深重者',
       phpBehavior: '夜間可指定一人，若為人狼則白天可額外發言',
@@ -375,7 +375,7 @@ describe('optionRole token 解析邏輯', () => {
   });
 
   it(`未實作 optionRole token 共 ${missingRoleTokens.length} 個`, () => {
-    expect(missingRoleTokens).toHaveLength(3);
+    expect(missingRoleTokens).toHaveLength(2);
   });
 
   describe('未消耗 gameOption token 清單（有 stub 無 game logic）', () => {

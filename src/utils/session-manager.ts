@@ -15,6 +15,10 @@ export interface SessionValue {
   userNo: number;
   handleName: string;
   role: string;
+  trip?: string;
+  iconNo?: number;
+  sex?: string;
+  wishRole?: string;
   createdAt: number;
   expiresAt: number;
 }

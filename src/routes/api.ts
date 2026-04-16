@@ -5,7 +5,7 @@
 
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
-import type { Env } from '../types';
+import type { Env, Role } from '../types';
 import { createSessionManager, createSession } from '../utils/session-manager';
 import { BanManager } from '../utils/ban-manager';
 import { StatsManager } from '../utils/stats-manager';
@@ -496,6 +496,7 @@ app.post('/api/rooms/:roomNo/join', checkBan, rateLimit, async (c) => {
       trip: string;
       iconNo: number;
       sex: string;
+      wishRole?: string;
       password?: string;
     }>();
 
@@ -508,21 +509,25 @@ app.post('/api/rooms/:roomNo/join', checkBan, rateLimit, async (c) => {
       return c.json({ error: 'Invalid display name' }, 400);
     }
 
-    // ---- 私人房間密碼驗證 + tripRequired 檢查 ----
-    // 從 D1 查詢房間是否為私人房間 / 需要 trip
+    // ---- 私人房間密碼驗證 + room option 檢查 ----
+    // 從 D1 查詢房間是否為私人房間 / option policy
+    let wishRoleEnabled = false;
     try {
       const roomRow = await c.env.DB.prepare(
         'SELECT is_private, password_hash, game_option FROM room WHERE room_no = ?'
       ).bind(roomNo).first();
 
       if (roomRow) {
-        // tripRequired 檢查：若房間啟用 tripRequired，玩家必須提供有效的 trip
         if (roomRow.game_option) {
           try {
-            const opts = JSON.parse(roomRow.game_option as string);
-            if (opts.tripRequired === true && !data.trip?.trim()) {
+            const roomOptions = parseRoomOptions(JSON.parse(roomRow.game_option as string));
+
+            // tripRequired 檢查：若房間啟用 tripRequired，玩家必須提供有效的 trip
+            if (roomOptions.tripRequired === true && !data.trip?.trim()) {
               return c.json({ error: 'Trip code required for this room' }, 403);
             }
+
+            wishRoleEnabled = roomOptions.wishRole === true;
           } catch (_e) { /* game_option 解析失敗，忽略 */ }
         }
 
@@ -549,6 +554,22 @@ app.post('/api/rooms/:roomNo/join', checkBan, rateLimit, async (c) => {
       console.error('Room password check error:', dbErr);
     }
 
+    const VALID_WISH_ROLES = new Set<Role | 'none'>([
+      'none',
+      'human',
+      'wolf',
+      'mage',
+      'necromancer',
+      'mad',
+      'guard',
+      'common',
+      'fox',
+    ]);
+    const requestedWishRoleRaw = (data.wishRole || 'none').toString().trim().toLowerCase();
+    const requestedWishRole = (VALID_WISH_ROLES.has(requestedWishRoleRaw as Role | 'none')
+      ? requestedWishRoleRaw
+      : 'none') as Role | 'none';
+
     // 轉義（XSS 防護）
     const safeUname = escapeHtml(data.uname);
     const safeHandleName = escapeHtml(data.handleName);
@@ -563,6 +584,12 @@ app.post('/api/rooms/:roomNo/join', checkBan, rateLimit, async (c) => {
       'human', // role will be assigned
       3600
     );
+
+    // 附加玩家資訊（DO 連線階段會使用）
+    session.trip = data.trip || '';
+    session.iconNo = data.iconNo || 1;
+    session.sex = data.sex || 'male';
+    session.wishRole = wishRoleEnabled ? requestedWishRole : 'none';
 
     // 儲存 session
     await sessionManager.save(session);

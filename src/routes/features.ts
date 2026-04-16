@@ -9,6 +9,7 @@ import type { Env } from '../types';
 import { escapeHtml } from '../utils/security';
 import { apiRateLimiter } from '../utils/rate-limiter';
 import { canWhisper } from '../utils/whisper-manager';
+import { parseRoomOptions } from '../types/room-options';
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -703,6 +704,36 @@ app.get('/api/spectate/:roomNo', async (c) => {
 
 // ==================== 遺書系統 ====================
 
+type RoomWillPolicy = {
+  willEnabled: boolean;
+  status: string | null;
+};
+
+async function getRoomWillPolicy(c: any, roomNo: number | string): Promise<RoomWillPolicy> {
+  const row = await c.env.DB.prepare(
+    'SELECT status, game_option FROM room WHERE room_no = ?'
+  ).bind(roomNo).first() as { status?: string; game_option?: string } | null;
+
+  if (!row) {
+    return { willEnabled: true, status: null };
+  }
+
+  let willEnabled = true;
+  if (row.game_option) {
+    try {
+      const parsed = JSON.parse(row.game_option);
+      willEnabled = parseRoomOptions(parsed).will;
+    } catch {
+      // ignore malformed game_option, keep default=true
+    }
+  }
+
+  return {
+    willEnabled,
+    status: row.status ?? null,
+  };
+}
+
 /**
  * 儲存遺書（玩家死亡前留訊息）
  */
@@ -722,6 +753,11 @@ app.post('/api/wills', async (c) => {
 
     if (data.will.length > 500) {
       return c.json({ error: 'Will too long (max 500 chars)' }, 400);
+    }
+
+    const policy = await getRoomWillPolicy(c, data.roomNo);
+    if (!policy.willEnabled && policy.status === 'playing') {
+      return c.json({ error: 'Will is disabled for this room' }, 403);
     }
 
     const safeWill = escapeHtml(data.will);
@@ -753,6 +789,11 @@ app.post('/api/wills', async (c) => {
 app.get('/api/wills/:roomNo', async (c) => {
   try {
     const roomNo = c.req.param('roomNo');
+    const policy = await getRoomWillPolicy(c, roomNo);
+    if (!policy.willEnabled && policy.status === 'playing') {
+      return c.json({ wills: [] });
+    }
+
     const stmt = c.env.DB.prepare(
       'SELECT * FROM wills WHERE room_no = ? ORDER BY date ASC, time ASC'
     );
@@ -772,6 +813,11 @@ app.get('/api/wills/:roomNo/:date', async (c) => {
   try {
     const roomNo = c.req.param('roomNo');
     const date = c.req.param('date');
+    const policy = await getRoomWillPolicy(c, roomNo);
+    if (!policy.willEnabled && policy.status === 'playing') {
+      return c.json({ wills: [] });
+    }
+
     const stmt = c.env.DB.prepare(
       'SELECT * FROM wills WHERE room_no = ? AND date = ? ORDER BY time ASC'
     );

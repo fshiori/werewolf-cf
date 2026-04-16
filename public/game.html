@@ -1257,6 +1257,13 @@
           }
           break;
 
+        case 'players_update':
+          if (data.data?.players) {
+            players = data.data.players;
+            updatePlayersList(players);
+          }
+          break;
+
         // ---- Game Start ----
         case 'game_start':
           handleGameStart(data.data);
@@ -1465,6 +1472,10 @@
         showRoleBanner(data.role);
       }
 
+      if (roomData && data.roomOptions) {
+        roomData.roomOptions = data.roomOptions;
+      }
+
       if (data.players) {
         players = data.players;
         updatePlayersList(data.players);
@@ -1561,13 +1572,15 @@
         el.className = `player-item ${isDead ? 'dead' : ''} ${isMe ? 'is-me' : ''}`;
 
         const tripStr = p.trip ? `<span class="trip">◆${escapeHtml(p.trip)}</span>` : '';
+        const roleInfo = p.role ? (ROLE_INFO[p.role] || { emoji: '❓', name: p.role }) : null;
+        const roleStr = roleInfo ? `<span class="trip" style="margin-left:6px;">${roleInfo.emoji} ${escapeHtml(roleInfo.name)}</span>` : '';
         const statusText = isDead ? '已死亡' : '存活';
         const statusClass = isDead ? 'dead-text' : 'alive';
 
         el.innerHTML = `
           <div class="player-avatar">${getAvatarEmoji(p.iconNo)}</div>
           <div class="player-details">
-            <div class="player-name">${escapeHtml(p.handleName)}${tripStr}</div>
+            <div class="player-name">${escapeHtml(p.handleName)}${tripStr}${roleStr}</div>
             <div class="player-status-text ${statusClass}">${statusText}</div>
           </div>
           ${isDead ? '<span class="death-badge">💀</span>' : ''}
@@ -1596,8 +1609,9 @@
       // Vote button: alive during day
       document.getElementById('btnVote').disabled = !(isAlive && phase === 'day' && voteActive);
 
-      // Will button: when dead or always available
-      document.getElementById('btnWill').disabled = false;
+      // Will button: disabled during game when room option will=false
+      const willEnabled = roomData?.roomOptions?.will !== false;
+      document.getElementById('btnWill').disabled = isPlaying && !willEnabled;
 
       // Whisper button: alive during night for certain roles
       const canWhisper = isAlive && isNight && myRole && ['wolf', 'wolf_partner', 'common', 'common_partner', 'lovers', 'lovers_partner'].includes(myRole);
@@ -1696,7 +1710,8 @@
       const overlay = document.getElementById('voteOverlay');
       overlay.classList.add('show');
 
-      const alivePlayers = players.filter(p => p.live === 'live' && p.uname !== myPlayer?.uname);
+      const voteMeEnabled = !!roomData?.roomOptions?.voteMe;
+      const alivePlayers = players.filter(p => p.live === 'live' && (voteMeEnabled || p.uname !== myPlayer?.uname));
       const voteCounts = {};
 
       renderVoteOptions(voteCounts);
@@ -1706,7 +1721,8 @@
       const container = document.getElementById('voteOptions');
       container.innerHTML = '';
 
-      const alivePlayers = players.filter(p => p.live === 'live' && p.uname !== myPlayer?.uname);
+      const voteMeEnabled = !!roomData?.roomOptions?.voteMe;
+      const alivePlayers = players.filter(p => p.live === 'live' && (voteMeEnabled || p.uname !== myPlayer?.uname));
 
       alivePlayers.forEach(p => {
         const count = voteCounts[p.uname] || 0;
@@ -1752,6 +1768,12 @@
 
     // ==================== Will System ====================
     function openWillPanel() {
+      const willEnabled = roomData?.roomOptions?.will !== false;
+      if ((phase === 'day' || phase === 'night') && !willEnabled) {
+        addSystemMessage('此房間目前停用遺書功能');
+        return;
+      }
+
       document.getElementById('willOverlay').classList.add('show');
       // Pre-fill if already saved
       loadMyWill();
