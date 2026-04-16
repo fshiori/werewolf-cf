@@ -15,6 +15,7 @@ export interface Env {
   ADMIN_PASSWORD?: string;
   JWT_SECRET?: string;
   ASSETS?: any; // 靜態資源（Cloudflare Assets Fetcher）
+  FEDERATED_SOURCES?: string; // JSON array of { name, url }
 }
 
 // 玩家角色類型

@@ -972,11 +972,18 @@ app.get('/api/game-events/:roomNo', async (c) => {
 
 /**
  * 獲取完整遊戲回放資料
- * GET /api/replay/:roomNo
+ * GET /api/replay/:roomNo?mode=full|reverse|heaven|heaven_only
+ *
+ * mode 說明（對應原版 DIAM old_log 的檢視模式）：
+ *   full        – 所有資料，依時間正序（預設）
+ *   reverse     – 事件與聊天依時間倒序
+ *   heaven      – 僅天國聊天（font_type = 'heaven'）
+ *   heaven_only – 僅死亡玩家的訊息（天國聊天 + 事件中的 related_uname 死亡者）
  */
 app.get('/api/replay/:roomNo', async (c) => {
   try {
     const roomNo = c.req.param('roomNo');
+    const mode = c.req.query('mode') || 'full';
 
     // 1. 取得遊戲摘要
     const gameStmt = c.env.DB.prepare('SELECT * FROM game_logs WHERE room_no = ?');
@@ -1021,12 +1028,52 @@ app.get('/api/replay/:roomNo', async (c) => {
       ).bind(roomNo).all();
     }
 
+    let events = eventsResult.results as any[];
+    let votes = votesResult.results as any[];
+    let wills = willsResult.results as any[];
+    let talks = talksResult.results as any[];
+
+    // ---- Mode filtering ----
+    if (mode === 'reverse') {
+      // 逆時序：將 events, votes, wills, talks 全部反轉
+      events = [...events].reverse();
+      votes = [...votes].reverse();
+      wills = [...wills].reverse();
+      talks = [...talks].reverse();
+    } else if (mode === 'heaven') {
+      // 僅天國聊天：font_type = 'heaven' 的 talk 記錄
+      talks = talks.filter((t: any) => t.font_type === 'heaven' || t.fontType === 'heaven');
+      // 也保留系統公告/事件作為上下文
+    } else if (mode === 'heaven_only') {
+      // 僅死亡玩家的訊息：
+      // 1) 從死亡事件收集所有死亡玩家的 uname
+      const deadUnames = new Set<string>();
+      events.forEach((ev: any) => {
+        if (ev.event_type === 'execution' || ev.event_type === 'night_death') {
+          const uname = ev.related_uname || ev.target || ev.actor;
+          if (uname) deadUnames.add(String(uname));
+        }
+      });
+      // 2) 僅保留天國聊天（來自死亡玩家的 heaven 訊息）
+      talks = talks.filter((t: any) => {
+        const isHeaven = t.font_type === 'heaven' || t.fontType === 'heaven';
+        const isDead = deadUnames.has(String(t.uname));
+        return isHeaven && isDead;
+      });
+      // 3) 僅保留與死亡相關的事件
+      events = events.filter((ev: any) =>
+        ev.event_type === 'execution' || ev.event_type === 'night_death'
+      );
+    }
+    // mode === 'full' → 無過濾
+
     return c.json({
       game: gameResult.results[0],
-      events: eventsResult.results,
-      votes: votesResult.results,
-      wills: willsResult.results,
-      talks: talksResult.results,
+      events,
+      votes,
+      wills,
+      talks,
+      mode,
     });
   } catch (error) {
     console.error('Get replay error:', error);

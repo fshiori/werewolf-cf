@@ -299,6 +299,126 @@
     font-size: 1rem;
   }
 
+  /* Mode Toggles */
+  .mode-bar {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+  .mode-btn {
+    padding: 8px 18px;
+    border: 2px solid rgba(108,52,131,0.3);
+    border-radius: 20px;
+    background: rgba(255,255,255,0.9);
+    color: #6c3483;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+  }
+  .mode-btn:hover {
+    background: #f0e6fa;
+    border-color: #8e44ad;
+  }
+  .mode-btn.active {
+    background: linear-gradient(135deg, #6c3483, #8e44ad);
+    color: #fff;
+    border-color: #6c3483;
+    box-shadow: 0 2px 8px rgba(108,52,131,0.3);
+  }
+
+  /* Talk Log */
+  .talk-log {
+    max-height: 600px;
+    overflow-y: auto;
+    padding: 16px;
+    background: #faf8fc;
+    border-radius: 12px;
+    border: 1px solid #e8d5f5;
+  }
+  .talk-item {
+    padding: 10px 14px;
+    margin-bottom: 6px;
+    border-radius: 8px;
+    background: #fff;
+    border-left: 3px solid #d4b5ff;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    transition: background 0.15s;
+  }
+  .talk-item:hover { background: #f8f4fc; }
+  .talk-item.heaven {
+    border-left-color: #f39c12;
+    background: #fef9e7;
+  }
+  .talk-item.system {
+    border-left-color: #95a5a6;
+    background: #f2f3f4;
+    font-style: italic;
+    color: #666;
+  }
+  .talk-item.night {
+    border-left-color: #2c3e50;
+    background: #ebedef;
+  }
+  .talk-item.gm {
+    border-left-color: #e74c3c;
+    background: #fdedec;
+  }
+  .talk-item.last-words {
+    border-left-color: #2980b9;
+    background: #eaf2f8;
+  }
+  .talk-item .talk-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+  }
+  .talk-item .talk-name {
+    font-weight: 700;
+    color: #4a235a;
+    font-size: 0.85rem;
+  }
+  .talk-item .talk-meta {
+    font-size: 0.75rem;
+    color: #aaa;
+  }
+  .talk-item .talk-location {
+    display: inline-block;
+    padding: 1px 8px;
+    border-radius: 10px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    margin-left: 6px;
+  }
+  .talk-location.day { background: #d5f5e3; color: #1e8449; }
+  .talk-location.night { background: #d4e6f1; color: #1a5276; }
+  .talk-location.beforegame { background: #eaecee; color: #717d7e; }
+  .talk-location.heaven { background: #fdebd0; color: #d35400; }
+  .talk-location.system { background: #f2f3f4; color: #717d7e; }
+  .talk-item .talk-text { color: #444; }
+
+  .talk-section-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #4a235a;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .talk-count {
+    font-size: 0.8rem;
+    color: #999;
+    font-weight: 400;
+  }
+
   /* Scrollbar */
   ::-webkit-scrollbar { width: 6px; }
   ::-webkit-scrollbar-track { background: transparent; }
@@ -314,6 +434,8 @@
     .timeline::before { left: 10px; }
     .event-item::before { left: -38px; }
     .day-header { margin-left: -18px; font-size: 0.85rem; }
+    .mode-bar { gap: 6px; }
+    .mode-btn { padding: 6px 12px; font-size: 0.8rem; }
   }
 </style>
 </head>
@@ -337,6 +459,22 @@
     <!-- Summary -->
     <div class="card" id="summaryCard"></div>
 
+    <!-- Mode Toggles -->
+    <div class="mode-bar" id="modeBar">
+      <button class="mode-btn active" data-mode="full" onclick="switchMode('full')">
+        📋 完整回放
+      </button>
+      <button class="mode-btn" data-mode="reverse" onclick="switchMode('reverse')">
+        ⏪ 逆時序
+      </button>
+      <button class="mode-btn" data-mode="heaven" onclick="switchMode('heaven')">
+        👻 天國聊天
+      </button>
+      <button class="mode-btn" data-mode="heaven_only" onclick="switchMode('heaven_only')">
+        💀 死者遺言
+      </button>
+    </div>
+
     <!-- Controls -->
     <div class="controls" id="controls">
       <button id="btnPrev" title="上一個事件">⏮</button>
@@ -353,6 +491,14 @@
     <div class="card">
       <div class="timeline" id="timeline"></div>
     </div>
+
+    <!-- Talk Log -->
+    <div class="card" id="talkCard" style="display:none;">
+      <div class="talk-section-title">
+        💬 聊天記錄 <span class="talk-count" id="talkCount"></span>
+      </div>
+      <div class="talk-log" id="talkLog"></div>
+    </div>
   </div>
 </div>
 
@@ -366,6 +512,8 @@ const EVENT_ICONS = {
   night_start: '🌙',
   vote: '🗳️',
   death: '💀',
+  execution: '💀',
+  night_death: '💀',
   will: '📝',
   whisper: '🔒',
   system: '⚙️',
@@ -377,9 +525,19 @@ const EVENT_LABELS = {
   night_start: '夜晚來臨',
   vote: '投票',
   death: '死亡',
+  execution: '處決',
+  night_death: '夜間死亡',
   will: '遺書',
   whisper: '密語',
   system: '系統',
+};
+
+// Mode labels
+const MODE_LABELS = {
+  full: '完整回放',
+  reverse: '逆時序',
+  heaven: '天國聊天',
+  heaven_only: '死者遺言',
 };
 
 // State
@@ -392,6 +550,7 @@ let speed = 1;           // 1x, 2x, 4x
 const SPEEDS = [1, 2, 4];
 let speedIdx = 0;
 let currentRoomNo = null;
+let currentMode = 'full';
 
 // ---- Init ----
 async function init() {
@@ -401,6 +560,19 @@ async function init() {
   document.getElementById('btnNext').addEventListener('click', nextStep);
   document.getElementById('btnSpeed').addEventListener('click', cycleSpeed);
   document.getElementById('progressBar').addEventListener('click', onProgressClick);
+
+  // Check URL params for mode and roomNo
+  const params = new URLSearchParams(window.location.search);
+  const urlMode = params.get('mode');
+  const urlRoom = params.get('roomNo');
+  if (urlMode && MODE_LABELS[urlMode]) {
+    currentMode = urlMode;
+    updateModeButtons();
+  }
+  if (urlRoom) {
+    // Will auto-load once room list is available
+    window._pendingRoomNo = parseInt(urlRoom);
+  }
 }
 
 // ---- Room List ----
@@ -441,6 +613,12 @@ async function loadRoomList() {
       `;
       item.addEventListener('click', () => loadReplay(log.room_no, item));
       list.appendChild(item);
+
+      // Auto-load if URL had roomNo
+      if (window._pendingRoomNo && log.room_no === window._pendingRoomNo) {
+        window._pendingRoomNo = null;
+        setTimeout(() => loadReplay(log.room_no, item), 100);
+      }
     });
   } catch (e) {
     loading.textContent = '載入失敗：' + e.message;
@@ -472,7 +650,8 @@ async function loadReplay(roomNo, itemEl) {
   area.style.display = 'block';
 
   try {
-    const res = await fetch(`${API_BASE}/api/replay/${roomNo}`);
+    const modeParam = currentMode !== 'full' ? `?mode=${currentMode}` : '';
+    const res = await fetch(`${API_BASE}/api/replay/${roomNo}${modeParam}`);
     if (!res.ok) {
       const err = await res.json();
       throw new Error(err.error || 'Failed');
@@ -480,6 +659,7 @@ async function loadReplay(roomNo, itemEl) {
     currentData = await res.json();
     buildTimeline();
     renderTimeline();
+    renderTalkLog();
     renderSummary();
     currentStep = -1;
     showStep(0);
@@ -540,6 +720,9 @@ function renderSummary() {
   }
 
   const dateStr = g.created_at ? new Date(g.created_at).toLocaleString('zh-TW') : '';
+  const modeLabel = currentData.mode && currentData.mode !== 'full'
+    ? `<span style="display:inline-block;background:#fdebd0;color:#d35400;padding:3px 14px;border-radius:12px;font-size:0.8rem;font-weight:600;">${MODE_LABELS[currentData.mode] || currentData.mode}</span>`
+    : '';
 
   card.innerHTML = `
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
@@ -547,7 +730,10 @@ function renderSummary() {
         <h2 style="font-size:1.3rem;color:#4a235a;">#${g.room_no} ${escapeHtml(g.room_name)}</h2>
         <div style="font-size:0.8rem;color:#999;margin-top:4px;">${dateStr}</div>
       </div>
-      <span class="winner-badge ${getWinnerClass(g.winner)}" style="font-size:1rem;padding:6px 20px;">${escapeHtml(g.winner)}</span>
+      <div style="display:flex;gap:8px;align-items:center;">
+        ${modeLabel}
+        <span class="winner-badge ${getWinnerClass(g.winner)}" style="font-size:1rem;padding:6px 20px;">${escapeHtml(g.winner)}</span>
+      </div>
     </div>
     <div class="game-summary">
       <div class="summary-item"><div class="label">總天數</div><div class="value">${g.total_days}</div></div>
@@ -722,6 +908,108 @@ function onProgressClick(e) {
   const pct = (e.clientX - rect.left) / rect.width;
   const step = Math.round(pct * allItems.length) - 1;
   showStep(step);
+}
+
+// ---- Mode Switching ----
+function switchMode(mode) {
+  if (mode === currentMode && currentData) return;
+  currentMode = mode;
+  updateModeButtons();
+  // Update URL without reload
+  const url = new URL(window.location);
+  if (mode !== 'full') {
+    url.searchParams.set('mode', mode);
+  } else {
+    url.searchParams.delete('mode');
+  }
+  if (currentRoomNo) url.searchParams.set('roomNo', currentRoomNo);
+  history.replaceState(null, '', url);
+  // Reload data with new mode
+  if (currentRoomNo) {
+    const activeItem = document.querySelector(`.room-item[data-room-no="${currentRoomNo}"]`);
+    loadReplay(currentRoomNo, activeItem);
+  }
+}
+
+function updateModeButtons() {
+  document.querySelectorAll('.mode-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.mode === currentMode);
+  });
+}
+
+// ---- Talk Log Rendering ----
+function renderTalkLog() {
+  const talkCard = document.getElementById('talkCard');
+  const talkLog = document.getElementById('talkLog');
+  const talkCount = document.getElementById('talkCount');
+
+  if (!currentData || !currentData.talks || currentData.talks.length === 0) {
+    talkCard.style.display = 'none';
+    return;
+  }
+
+  talkCard.style.display = 'block';
+  talkCount.textContent = `(${currentData.talks.length} 則)`;
+  talkLog.innerHTML = '';
+
+  // Group talks by date/location for visual separation
+  const talks = currentData.talks;
+  let lastDate = -1;
+  let lastLocation = '';
+
+  talks.forEach(t => {
+    const date = t.date || 0;
+    const location = t.location || 'day';
+    const fontType = t.font_type || t.fontType || 'normal';
+    const uname = t.uname || '';
+    const handleName = t.handle_name || t.handleName || uname;
+    const sentence = t.sentence || '';
+    const time = t.time || 0;
+
+    // Day/location separator
+    if (date !== lastDate || location !== lastLocation) {
+      const sep = document.createElement('div');
+      sep.style.cssText = 'padding:8px 0 4px;font-size:0.8rem;color:#8e44ad;font-weight:600;border-bottom:1px solid #e8d5f5;margin-bottom:8px;';
+      const locLabel = {day:'☀️ 白天', night:'🌙 夜晚', beforegame:'🎮 開始前', heaven:'👻 天國', system:'⚙️ 系統'}[location] || location;
+      const dateLabel = date === 0 ? '' : `第 ${date} 天`;
+      sep.textContent = `${dateLabel} ${locLabel}`;
+      talkLog.appendChild(sep);
+      lastDate = date;
+      lastLocation = location;
+    }
+
+    const item = document.createElement('div');
+    let itemClass = 'talk-item';
+
+    // CSS class based on font_type
+    if (fontType === 'heaven' || fontType === 'gm_to' || fontType === 'to_gm') {
+      itemClass += ' heaven';
+    } else if (fontType === 'gm') {
+      itemClass += ' gm';
+    } else if (fontType === 'last_words') {
+      itemClass += ' last-words';
+    } else if (location === 'night') {
+      itemClass += ' night';
+    } else if (location === 'system' || fontType === 'system') {
+      itemClass += ' system';
+    }
+    item.className = itemClass;
+
+    const locClass = ['day','night','beforegame','heaven','system'].includes(location) ? location : 'day';
+    const timeStr = time ? new Date(time).toLocaleTimeString('zh-TW', {hour:'2-digit', minute:'2-digit', second:'2-digit'}) : '';
+
+    item.innerHTML = `
+      <div class="talk-header">
+        <div>
+          <span class="talk-name">${escapeHtml(handleName)}</span>
+          <span class="talk-location ${locClass}">${escapeHtml(location)}</span>
+        </div>
+        <span class="talk-meta">${timeStr}</span>
+      </div>
+      <div class="talk-text">${escapeHtml(sentence)}</div>
+    `;
+    talkLog.appendChild(item);
+  });
 }
 
 // ---- Utils ----

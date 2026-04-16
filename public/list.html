@@ -3,298 +3,562 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>房間列表 - Werewolf CF</title>
+  <title>聯合遊戲列表 - 人狼遊戲</title>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
-      font-family: 'Microsoft JhengHei', 'PingFang TC', sans-serif;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       min-height: 100vh;
-      padding: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 30px 20px;
     }
 
     .container {
-      max-width: 1200px;
-      margin: 0 auto;
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      padding: 40px;
+      max-width: 700px;
+      width: 100%;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+
+    h1 {
+      color: #333;
+      font-size: 24px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
     .back-link {
-      display: inline-block;
-      padding: 10px 20px;
-      background: white;
-      color: #667eea;
       text-decoration: none;
-      border-radius: 6px;
-      margin-bottom: 20px;
+      color: #667eea;
+      font-size: 14px;
+      font-weight: 600;
+      padding: 8px 16px;
+      border: 2px solid #667eea;
+      border-radius: 8px;
       transition: all 0.3s;
     }
 
     .back-link:hover {
-      background: #f8f9fa;
-      transform: translateX(-5px);
-    }
-
-    .header {
-      background: white;
-      padding: 30px;
-      border-radius: 12px;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.1);
-      margin-bottom: 20px;
-      text-align: center;
-    }
-
-    .header h1 {
-      color: #1e3c72;
-      margin-bottom: 10px;
-    }
-
-    .filters {
-      background: white;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-      margin-bottom: 20px;
-      display: flex;
-      gap: 15px;
-      flex-wrap: wrap;
-      align-items: center;
-    }
-
-    .filter-group {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    select, button {
-      padding: 10px 20px;
-      border: 2px solid #667eea;
-      border-radius: 6px;
-      font-size: 16px;
-      cursor: pointer;
-      background: white;
-      color: #333;
-    }
-
-    select:hover, button:hover {
-      background: #f8f9fa;
-    }
-
-    .btn-primary {
       background: #667eea;
       color: white;
     }
 
-    .btn-primary:hover {
-      background: #5568d3;
+    /* Source tabs */
+    .source-tabs {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
     }
 
-    .rooms-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-      gap: 20px;
-    }
-
-    .room-card {
-      background: white;
-      border-radius: 12px;
-      padding: 20px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-      transition: transform 0.3s, box-shadow 0.3s;
+    .source-tab {
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
       cursor: pointer;
+      border: 2px solid transparent;
+      background: #f0f0f0;
+      color: #666;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
 
-    .room-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+    .source-tab:hover {
+      background: #e0e0e0;
     }
 
-    .room-header {
+    .source-tab.active {
+      background: #667eea;
+      color: white;
+      border-color: #667eea;
+    }
+
+    .source-tab .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .status-dot.ok { background: #4caf50; }
+    .status-dot.error { background: #f44336; }
+    .status-dot.loading { background: #ff9800; animation: pulse 1s infinite; }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    /* Summary bar */
+    .summary {
+      background: #f8f9fa;
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-size: 14px;
+      color: #555;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 15px;
-      padding-bottom: 15px;
-      border-bottom: 2px solid #f0f0f0;
+    }
+
+    .summary .total {
+      font-weight: 700;
+      color: #667eea;
+    }
+
+    .refresh-btn {
+      background: none;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      padding: 6px 12px;
+      font-size: 12px;
+      cursor: pointer;
+      color: #666;
+      transition: all 0.2s;
+    }
+
+    .refresh-btn:hover {
+      background: #f0f0f0;
+      border-color: #667eea;
+      color: #667eea;
+    }
+
+    /* Source panel */
+    .source-panel {
+      display: none;
+    }
+
+    .source-panel.active {
+      display: block;
+    }
+
+    .source-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .source-header h3 {
+      font-size: 16px;
+      color: #333;
+    }
+
+    .source-header a {
+      font-size: 12px;
+      color: #667eea;
+      text-decoration: none;
+    }
+
+    .source-header a:hover {
+      text-decoration: underline;
+    }
+
+    .source-status {
+      font-size: 12px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+
+    .source-status.ok {
+      background: #e8f5e9;
+      color: #2e7d32;
+    }
+
+    .source-status.error {
+      background: #ffebee;
+      color: #c62828;
+    }
+
+    /* Room list */
+    .room-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .room-item {
+      background: #f8f9fa;
+      padding: 12px 16px;
+      border-radius: 10px;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .room-item:hover {
+      background: #f0f0f0;
+      transform: translateX(3px);
+    }
+
+    .room-status-icon {
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .room-info {
+      flex: 1;
+      min-width: 0;
     }
 
     .room-name {
-      font-size: 18px;
-      font-weight: bold;
-      color: #1e3c72;
+      font-weight: 600;
+      color: #333;
+      font-size: 14px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
-    .room-private {
-      font-size: 20px;
+    .room-meta {
+      font-size: 12px;
+      color: #888;
+      margin-top: 2px;
     }
 
-    .room-stats {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 10px;
+    .room-source-badge {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      background: #e8eaf6;
+      color: #3949ab;
+      font-weight: 600;
+      flex-shrink: 0;
     }
 
-    .stat-item {
-      display: flex;
-      justify-content: space-between;
-      padding: 8px;
-      background: #f8f9fa;
-      border-radius: 6px;
+    .room-source-badge.local {
+      background: #e8f5e9;
+      color: #2e7d32;
     }
 
-    .stat-label {
-      color: #666;
+    /* Loading state */
+    .loading-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: #999;
+    }
+
+    .spinner {
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #667eea;
+      border-radius: 50%;
+      width: 32px;
+      height: 32px;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 12px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 30px;
+      color: #aaa;
       font-size: 14px;
     }
 
-    .stat-value {
-      font-weight: bold;
-      color: #1e3c72;
-    }
-
-    .status-waiting {
-      background: #e3f2fd;
-      color: #1976d2;
-      padding: 4px 10px;
-      border-radius: 12px;
-      font-size: 13px;
-      font-weight: bold;
-    }
-
-    .status-playing {
-      background: #fff3e0;
-      color: #e65100;
-      padding: 4px 10px;
-      border-radius: 12px;
-      font-size: 13px;
-      font-weight: bold;
-    }
-
-    .status-ended {
-      background: #e8f5e9;
-      color: #2e7d32;
-      padding: 4px 10px;
-      border-radius: 12px;
-      font-size: 13px;
-      font-weight: bold;
-    }
-
-    .loading {
+    /* Error state */
+    .error-state {
       text-align: center;
-      padding: 40px;
-      color: white;
-      font-size: 18px;
+      padding: 20px;
+      color: #c33;
+      font-size: 13px;
+      background: #fff5f5;
+      border-radius: 8px;
     }
 
-    .no-rooms {
+    /* All-view: flat list grouped by source */
+    .all-rooms .source-group {
+      margin-bottom: 20px;
+    }
+
+    .all-rooms .source-group:last-child {
+      margin-bottom: 0;
+    }
+
+    /* Language Switcher */
+    .lang-switch {
+      margin-top: 24px;
       text-align: center;
-      padding: 60px;
-      background: white;
-      border-radius: 12px;
-      color: #666;
+    }
+
+    .lang-switch select {
+      padding: 6px 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 13px;
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <a href="/" class="back-link">← 返回首頁</a>
-
     <div class="header">
-      <h1>🏠 房間列表</h1>
-      <p>查看所有可用的遊戲房間</p>
+      <h1>🌐 聯合遊戲列表</h1>
+      <a href="/" class="back-link">← 返回大廳</a>
     </div>
 
-    <div class="filters">
-      <div class="filter-group">
-        <label>狀態篩選：</label>
-        <select id="statusFilter" onchange="loadRooms()">
-          <option value="">全部</option>
-          <option value="waiting">等待中</option>
-          <option value="playing">遊戲中</option>
-          <option value="ended">已結束</option>
-        </select>
+    <div class="source-tabs" id="sourceTabs">
+      <!-- Tabs will be generated by JS -->
+    </div>
+
+    <div class="summary" id="summary">
+      <span>總共 <span class="total" id="totalCount">-</span> 個房間</span>
+      <button class="refresh-btn" onclick="loadFederated()">🔄 重新整理</button>
+    </div>
+
+    <div id="content">
+      <div class="loading-state">
+        <div class="spinner"></div>
+        <div>正在從各站點抓取房間列表...</div>
       </div>
-
-      <button class="btn-primary" onclick="loadRooms()">🔄 重新整理</button>
     </div>
 
-    <div id="roomsContainer" class="rooms-grid">
-      <div class="loading">載入中...</div>
+    <div class="lang-switch">
+      <label for="locale-select" style="font-size:13px; color:#666; margin-right:8px;">語言</label>
+      <select id="locale-select" onchange="I18n.setLocale(this.value)">
+        <option value="zh-TW">繁體中文</option>
+        <option value="ja">日本語</option>
+        <option value="en">English</option>
+      </select>
     </div>
   </div>
 
+  <script src="/i18n.js"></script>
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      loadRooms();
+    I18n.init().then(() => {
+      const sel = document.getElementById('locale-select');
+      if (sel) sel.value = I18n.getLocale();
     });
 
-    async function loadRooms() {
-      const statusFilter = document.getElementById('statusFilter').value;
+    const API_BASE = window.location.origin;
+    let federatedData = null;
+    let activeTab = 'all';
+
+    const STATUS_MAP = {
+      waiting: '🟢 募集中',
+      playing: '🔴 遊戲中',
+      ended: '⚫ 已結束'
+    };
+
+    window.addEventListener('load', loadFederated);
+
+    async function loadFederated() {
+      const content = document.getElementById('content');
+      content.innerHTML = '<div class="loading-state"><div class="spinner"></div><div>正在從各站點抓取房間列表...</div></div>';
+      document.getElementById('totalCount').textContent = '-';
+
+      // Mark tabs as loading
+      document.querySelectorAll('.source-tab').forEach(tab => {
+        tab.querySelector('.status-dot')?.classList.add('loading');
+        tab.querySelector('.status-dot')?.classList.remove('ok', 'error');
+      });
 
       try {
-        const response = await fetch('/api/rooms');
-        const data = await response.json();
+        const resp = await fetch(`${API_BASE}/api/rooms/federated`);
+        const data = await resp.json();
+        federatedData = data;
 
-        let rooms = Array.isArray(data) ? data : (data.rooms || []);
+        document.getElementById('totalCount').textContent = data.total;
 
-        if (statusFilter) {
-          rooms = rooms.filter(r => r.status === statusFilter);
-        }
+        // Build tabs
+        buildTabs(data.sources);
 
-        if (rooms.length > 0) {
-          displayRooms(rooms);
-        } else {
-          document.getElementById('roomsContainer').innerHTML =
-            '<div class="no-rooms">📭 目前沒有房間</div>';
-        }
-      } catch (error) {
-        console.error('Failed to load rooms:', error);
-        document.getElementById('roomsContainer').innerHTML =
-          '<div class="no-rooms">❌ 載入失敗</div>';
+        // Render content
+        renderContent(data.sources);
+
+        // Update tab status dots
+        updateTabDots(data.sources);
+      } catch (err) {
+        content.innerHTML = '<div class="error-state">載入失敗，請稍後再試</div>';
       }
     }
 
-    function displayRooms(rooms) {
-      const container = document.getElementById('roomsContainer');
-      container.innerHTML = rooms.map(room => {
-        const statusText = {
-          waiting: '等待中',
-          playing: '遊戲中',
-          ended: '已結束'
-        }[room.status] || room.status;
+    function buildTabs(sources) {
+      const tabsEl = document.getElementById('sourceTabs');
 
-        const statusClass = 'status-' + (room.status || 'waiting');
-        const privateIcon = room.is_private ? '🔒' : '';
-        const playerInfo = `${room.player_count}/${room.max_user} 人`;
+      // "All" tab
+      let html = `<div class="source-tab active" onclick="switchTab('all', this)">📋 全部</div>`;
 
-        return `
-          <div class="room-card" onclick="goToRoom(${room.room_no})">
-            <div class="room-header">
-              <div class="room-name">${escapeHtml(room.room_name || '未命名房間')} ${privateIcon}</div>
-              <div class="${statusClass}">${statusText}</div>
-            </div>
-            <div class="room-stats">
-              <div class="stat-item">
-                <span class="stat-label">房間編號</span>
-                <span class="stat-value">#${room.room_no}</span>
-              </div>
-              <div class="stat-item">
-                <span class="stat-label">玩家數</span>
-                <span class="stat-value">${playerInfo}</span>
-              </div>
-            </div>
-          </div>
-        `;
-      }).join('');
+      for (const src of sources) {
+        const dotClass = src.status === 'ok' ? 'ok' : 'error';
+        const roomCount = src.rooms.length;
+        html += `
+          <div class="source-tab" onclick="switchTab('${encodeURIComponent(src.name)}', this)">
+            <span class="status-dot ${dotClass}"></span>
+            ${src.name}
+            <span style="opacity:0.7">(${roomCount})</span>
+          </div>`;
+      }
+
+      tabsEl.innerHTML = html;
     }
 
-    function goToRoom(roomNo) {
-      window.location.href = '/game.html?roomNo=' + roomNo;
+    function updateTabDots(sources) {
+      const tabs = document.querySelectorAll('.source-tab');
+      // Index 0 = "All", skip it
+      for (let i = 0; i < sources.length; i++) {
+        const tab = tabs[i + 1];
+        if (!tab) continue;
+        const dot = tab.querySelector('.status-dot');
+        if (!dot) continue;
+        dot.classList.remove('loading', 'ok', 'error');
+        dot.classList.add(sources[i].status);
+      }
+    }
+
+    function switchTab(tabName, tabEl) {
+      activeTab = tabName;
+
+      // Update active tab style
+      document.querySelectorAll('.source-tab').forEach(t => t.classList.remove('active'));
+      tabEl.classList.add('active');
+
+      if (federatedData) {
+        renderContent(federatedData.sources);
+      }
+    }
+
+    function renderContent(sources) {
+      const content = document.getElementById('content');
+
+      if (activeTab === 'all') {
+        content.innerHTML = renderAllView(sources);
+      } else {
+        const name = decodeURIComponent(activeTab);
+        const source = sources.find(s => s.name === name);
+        if (source) {
+          content.innerHTML = renderSourceView(source);
+        } else {
+          content.innerHTML = '<div class="empty-state">找不到此站點</div>';
+        }
+      }
+    }
+
+    function renderAllView(sources) {
+      const validSources = sources.filter(s => s.rooms.length > 0 || s.status === 'ok');
+
+      if (validSources.length === 0) {
+        return '<div class="empty-state">目前沒有進行中的遊戲</div>';
+      }
+
+      let html = '<div class="all-rooms">';
+
+      for (const src of validSources) {
+        html += `<div class="source-group">`;
+        html += `<div class="source-header">
+          <h3>${src.name}</h3>`;
+
+        if (src.status === 'error') {
+          html += `<span class="source-status error">⚠ ${src.error || '無法連線'}</span>`;
+        } else {
+          html += `<span class="source-status ok">✓ 連線正常</span>`;
+          if (src.url) {
+            html += `<a href="${src.url}" target="_blank">前往 ↗</a>`;
+          }
+        }
+
+        html += `</div>`;
+
+        if (src.rooms.length === 0) {
+          html += '<div class="empty-state" style="padding:12px">目前沒有進行中的房間</div>';
+        } else {
+          html += '<div class="room-list">';
+          for (const room of src.rooms) {
+            html += renderRoomItem(room, src.name);
+          }
+          html += '</div>';
+        }
+
+        html += '</div>';
+      }
+
+      html += '</div>';
+      return html;
+    }
+
+    function renderSourceView(source) {
+      let html = `<div class="source-header">
+        <h3>${source.name}</h3>`;
+
+      if (source.status === 'error') {
+        html += `<span class="source-status error">⚠ ${source.error || '無法連線'}</span>`;
+      } else {
+        html += `<span class="source-status ok">✓ 連線正常</span>`;
+        if (source.url) {
+          html += `<a href="${source.url}" target="_blank">前往 ↗</a>`;
+        }
+      }
+
+      html += '</div>';
+
+      if (source.rooms.length === 0) {
+        html += '<div class="empty-state">目前沒有進行中的房間</div>';
+        return html;
+      }
+
+      html += '<div class="room-list">';
+      for (const room of source.rooms) {
+        html += renderRoomItem(room, source.name);
+      }
+      html += '</div>';
+
+      return html;
+    }
+
+    function renderRoomItem(room, sourceName) {
+      const statusIcon = room.status === 'playing' ? '🔴' : room.status === 'waiting' ? '🟢' : '⚫';
+      const statusText = STATUS_MAP[room.status] || room.status;
+      const playerCount = room.playerCount || room.player_count || 0;
+      const maxUser = room.max_user || '?';
+      const roomName = room.room_name || '未命名房間';
+      const isLocal = sourceName === '本站';
+
+      const roomUrl = isLocal
+        ? `/?joinRoomNo=${room.room_no}`
+        : (room._sourceUrl || '') + '/?joinRoomNo=' + room.room_no;
+
+      const badgeClass = isLocal ? 'local' : '';
+
+      return `
+        <div class="room-item" onclick="window.open('${roomUrl}', '_blank')" style="cursor:pointer;">
+          <span class="room-status-icon">${statusIcon}</span>
+          <div class="room-info">
+            <div class="room-name">${escapeHtml(roomName)}</div>
+            <div class="room-meta">
+              ${statusText} · ${playerCount}/${maxUser}人
+              ${room.is_private ? ' · 🔒 私人' : ''}
+              ${room.room_comment ? ' · ' + escapeHtml(room.room_comment) : ''}
+            </div>
+          </div>
+          <span class="room-source-badge ${badgeClass}">${escapeHtml(sourceName)}</span>
+        </div>`;
     }
 
     function escapeHtml(text) {

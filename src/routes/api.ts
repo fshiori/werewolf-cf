@@ -255,6 +255,126 @@ app.get('/api/rooms', async (c) => {
 });
 
 /**
+ * 聯合列表（跨站聚合）
+ * 從多個聯合源獲取 /api/rooms，合併結果
+ * NOTE: Must be registered BEFORE /api/rooms/:roomNo
+ */
+app.get('/api/rooms/federated', async (c) => {
+  try {
+    // 解析聯合源配置
+    let sources: Array<{ name: string; url: string }> = [];
+    try {
+      const raw = c.env.FEDERATED_SOURCES || '[]';
+      sources = JSON.parse(raw);
+    } catch {
+      sources = [];
+    }
+
+    if (sources.length === 0) {
+      return c.json({
+        sources: [],
+        total: 0,
+        message: 'No federated sources configured'
+      });
+    }
+
+    const TIMEOUT_MS = 3000; // 每源 3 秒超時
+
+    // 並行抓取所有源
+    const results = await Promise.allSettled(
+      sources.map(async (source) => {
+        const baseUrl = source.url.replace(/\/+$/, '');
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+
+        try {
+          const resp = await fetch(`${baseUrl}/api/rooms`, {
+            signal: controller.signal,
+            headers: { 'Accept': 'application/json' }
+          });
+
+          if (!resp.ok) {
+            return {
+              name: source.name,
+              url: baseUrl,
+              rooms: [],
+              status: 'error' as const,
+              error: `HTTP ${resp.status}`
+            };
+          }
+
+          const data = await resp.json();
+          const rooms = (data.rooms || []).map((r: any) => ({
+            ...r,
+            _source: source.name,
+            _sourceUrl: baseUrl
+          }));
+
+          return {
+            name: source.name,
+            url: baseUrl,
+            rooms,
+            status: 'ok' as const
+          };
+        } catch (err: any) {
+          return {
+            name: source.name,
+            url: baseUrl,
+            rooms: [],
+            status: 'error' as const,
+            error: err.name === 'AbortError' ? 'timeout' : (err.message || 'fetch failed')
+          };
+        } finally {
+          clearTimeout(timer);
+        }
+      })
+    );
+
+    // 也抓取本地房間（自身）
+    let localRooms: any[] = [];
+    try {
+      const localUrl = new URL('/api/rooms', c.req.url);
+      const localResp = await fetch(localUrl.toString());
+      if (localResp.ok) {
+        const localData = await localResp.json();
+        localRooms = (localData.rooms || []).map((r: any) => ({
+          ...r,
+          _source: '本站',
+          _sourceUrl: ''
+        }));
+      }
+    } catch {
+      // 本地查詢失敗不阻塞
+    }
+
+    // 組裝結果
+    const federatedResults = results.map(r => {
+      if (r.status === 'fulfilled') return r.value;
+      return {
+        name: 'unknown',
+        url: '',
+        rooms: [],
+        status: 'error' as const,
+        error: 'unexpected error'
+      };
+    });
+
+    // 本地放在第一位
+    const allSources = [
+      { name: '本站', url: '', rooms: localRooms, status: 'ok' as const },
+      ...federatedResults
+    ];
+
+    const total = allSources.reduce((sum, s) => sum + s.rooms.length, 0);
+
+    return c.json({ sources: allSources, total });
+  } catch (error) {
+    console.error('Federated rooms error:', error);
+    return c.json({ error: 'Failed to fetch federated rooms' }, 500);
+  }
+});
+
+/**
  * 獲取房間資訊
  */
 app.get('/api/rooms/:roomNo', async (c) => {

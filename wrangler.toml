@@ -76,3 +76,9 @@ max_bans = 1000
 [env.production.stats]
 update_interval = 60000 # 1 分鐘
 history_days = 30
+
+# 聯合列表配置（跨站聚合）
+# JSON array of { name, url } — url 指向同類 Werewolf CF 實例
+# 每個源需要有 /api/rooms endpoint
+[vars]
+FEDERATED_SOURCES = '[{"name":"示範站 A","url":"https://werewolf-a.example.com"},{"name":"示範站 B","url":"https://werewolf-b.example.com"}]'
