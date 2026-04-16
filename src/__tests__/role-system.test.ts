@@ -311,6 +311,11 @@ describe('Role System', () => {
       expect(dummy.lastWords).toBe(customWords);
     });
 
+    it('傳入 customName 時應覆蓋預設 handleName', () => {
+      const dummy = createDummyBoyPlayer(1, true, '遺言', '替身阿哲');
+      expect(dummy.handleName).toBe('替身阿哲');
+    });
+
     it('custDummy 啟用但無自訂遺言時應從預設庫選取', () => {
       const dummy = createDummyBoyPlayer(1, true);
 

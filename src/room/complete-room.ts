@@ -809,7 +809,8 @@ export class WerewolfRoom extends DurableObject {
       const dummyPlayer = createDummyBoyPlayer(
         this.roomData.roomNo,
         custDummy,
-        (this.roomData.roomOptions as any)?.dummyCustomLastWords as string | undefined,
+        this.roomData.roomOptions?.dummyCustomLastWords,
+        this.roomData.roomOptions?.dummyCustomName,
       );
       this.roomData.players.set('dummy_boy', dummyPlayer);
     }

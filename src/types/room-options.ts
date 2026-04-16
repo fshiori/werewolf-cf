@@ -43,6 +43,10 @@ export interface RoomOptions {
   voteDisplay: number;
   /** 自訂啞巴男 */
   custDummy: boolean;
+  /** 啞巴男自訂名稱（custDummy 啟用時使用） */
+  dummyCustomName: string;
+  /** 啞巴男自訂遺言（custDummy 啟用時使用） */
+  dummyCustomLastWords: string;
   /** 旅人制度（使用 tripcode 追蹤） */
   istrip: boolean;
 }
@@ -68,6 +72,8 @@ export const DEFAULT_ROOM_OPTIONS: Readonly<RoomOptions> = {
   comoutl: false,
   voteDisplay: 0,
   custDummy: false,
+  dummyCustomName: '',
+  dummyCustomLastWords: '',
   istrip: false,
 };
 
@@ -115,6 +121,14 @@ export function parseRoomOptions(input: unknown): RoomOptions {
     comoutl: parseBoolean(raw.comoutl) ?? DEFAULT_ROOM_OPTIONS.comoutl,
     voteDisplay: parseVoteDisplay(raw.voteDisplay) ?? DEFAULT_ROOM_OPTIONS.voteDisplay,
     custDummy: parseBoolean(raw.custDummy) ?? DEFAULT_ROOM_OPTIONS.custDummy,
+    dummyCustomName:
+      parseTrimmedString(raw.dummyCustomName) ??
+      parseTrimmedString(raw.dummy_custom_name) ??
+      DEFAULT_ROOM_OPTIONS.dummyCustomName,
+    dummyCustomLastWords:
+      parseString(raw.dummyCustomLastWords) ??
+      parseString(raw.dummy_custom_last_words) ??
+      DEFAULT_ROOM_OPTIONS.dummyCustomLastWords,
     istrip: parseBoolean(raw.istrip) ?? DEFAULT_ROOM_OPTIONS.istrip,
   };
 }
@@ -143,6 +157,19 @@ function parseBoolean(value: unknown): boolean | null {
     return value;
   }
   return null;
+}
+
+/** 解析一般字串（可為空字串） */
+function parseString(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  return value;
+}
+
+/** 解析去頭尾空白後的非空字串 */
+function parseTrimmedString(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const text = value.trim();
+  return text.length > 0 ? text : null;
 }
 
 /** 解析 dellook：接受 boolean 或 0/1，統一轉為 0/1 */

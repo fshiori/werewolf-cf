@@ -309,17 +309,19 @@ export function getDummyBoyLastWords(custDummy: boolean, customLastWords?: strin
  * @param roomNo 房間編號
  * @param custDummy 是否自訂啞巴男
  * @param customLastWords 自訂遺言
+ * @param customName 自訂名稱
  * @returns Player 物件
  */
 export function createDummyBoyPlayer(
   roomNo: number,
   custDummy: boolean,
-  customLastWords?: string
+  customLastWords?: string,
+  customName?: string
 ): Player {
   return {
     userNo: 1,  // 啞巴男永遠是 userNo=1（與 PHP parity）
     uname: 'dummy_boy',
-    handleName: '替身君',
+    handleName: customName?.trim() || '替身君',
     trip: '',
     iconNo: 0,
     sex: 'male',

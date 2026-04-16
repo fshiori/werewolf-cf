@@ -27,6 +27,8 @@ describe('DEFAULT_ROOM_OPTIONS', () => {
       comoutl: false,
       voteDisplay: 0,
       custDummy: false,
+      dummyCustomName: '',
+      dummyCustomLastWords: '',
       istrip: false,
     });
   });
@@ -53,6 +55,8 @@ describe('parseRoomOptions', () => {
       comoutl: true,
       voteDisplay: 2,
       custDummy: true,
+      dummyCustomName: '替身仔',
+      dummyCustomLastWords: '掰掰世界',
       istrip: true,
     };
 
@@ -149,6 +153,24 @@ describe('parseRoomOptions', () => {
     expect(result.realTime).toBe(true);
     expect(result.realTimeDayLimitSec).toBe(300);
     expect(result.realTimeNightLimitSec).toBe(120);
+  });
+
+  it('cust_dummy 自訂名稱/遺言可由 camelCase 與 snake_case 解析', () => {
+    const camel = parseRoomOptions({
+      custDummy: true,
+      dummyCustomName: '替身甲',
+      dummyCustomLastWords: '我先走啦',
+    });
+    expect(camel.dummyCustomName).toBe('替身甲');
+    expect(camel.dummyCustomLastWords).toBe('我先走啦');
+
+    const snake = parseRoomOptions({
+      custDummy: true,
+      dummy_custom_name: '替身乙',
+      dummy_custom_last_words: '掰掰',
+    } as any);
+    expect(snake.dummyCustomName).toBe('替身乙');
+    expect(snake.dummyCustomLastWords).toBe('掰掰');
   });
 
   it('null 輸入 → fallback 到預設值', () => {
