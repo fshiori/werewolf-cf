@@ -128,6 +128,7 @@ app.post('/api/rooms', checkBan, rateLimit, async (c) => {
       optionRole?: string;
       password?: string;
       options?: any;
+      gmTrip?: string;
     }>();
 
     // 驗證

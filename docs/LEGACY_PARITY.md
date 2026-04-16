@@ -212,7 +212,7 @@ These control which special roles appear in the role list at game start.
 | `authority` | Add 權力者 role (2× vote weight) | ✅ | ✅ `authority` role exists + vote weight logic | ⚠️ Partial (role type exists; auto-add to role list at 16+ players not implemented) |
 | `poison` | Add 埋毒者 role (wolf-team poisoner) | ✅ | ⚠️ `poison` role type exists | ⚠️ Partial (type exists; auto-add to role list at 20+ players not implemented) |
 | `cat` | Poison variant: cat-style (poison = 貓又) | ❌ | ❌ | ❌ Missing |
-| `pobe` | Poison variant: wolf-team poisoner (pobe+poison→extra wolf+poison) | ❌ | ❌ | ❌ Missing |
+| `pobe` | Poison variant: wolf-team poisoner (pobe+poison→extra wolf+poison at 20+) | ✅ | ✅ `pobe` | ✅ Full (foxs+poison 互斥解除 + 20+ extra wolf+poison) |
 | `betr` | Add 背德者 role (fox-team, wins if fox dead + wolves dead) | ✅ | ✅ `betr` role + victory condition | ⚠️ Partial (role + victory exists; auto-add at 20+ not implemented) |
 | `foxs` | Add 雙狐 role (two foxes) | ✅ | ⚠️ `fox` role type exists | ⚠️ Partial (role exists; dual-fox assignment not implemented) |
 | `fosi` | Add 子狐 role (fox-team sub-role) | ✅ | ✅ `fosi` role exists | ⚠️ Partial (role exists; auto-add at 20+ not implemented) |
