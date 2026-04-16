@@ -189,7 +189,7 @@ CF replaces this with a typed `RoomOptions` interface (see `src/types/room-optio
 | `wish_role` | Allow players to wish for a specific role | ✅ | ✅ `wishRole` | ✅ Full (join captures wishRole; start-game assignment prefers valid wishes) |
 | `dummy_boy` | Include AI dummy player (替身君) | ✅ | ✅ `dummyBoy` | ⚠️ Partial (dummy player + custom last words wired; full legacy AI/speech behavior not complete) |
 | `open_vote` | Reveal vote tallies to all players | ✅ | ✅ `openVote` | ✅ Full (fallbacks to anonymous vote-count mode when voteDisplay unset) |
-| `real_time:D:N` | Use real-time limits (D min day, N min night) | ✅ | ✅ `timeLimit` | ⚠️ Partial (CF uses single `timeLimit`; PHP has separate day/night real-time limits) |
+| `real_time:D:N` | Use real-time limits (D min day, N min night) | ✅ | ✅ `realTime` + `realTimeDayLimitSec/night` | ✅ Full (supports separate day/night limits and legacy `real_time:D:N` parsing) |
 | `comoutl` | 共生者夜晚對話顯示（show lover/common night whisper to others） | ✅ | ✅ `comoutl` | ✅ Full (comoutl=true: others see 「悄悄話...」; comoutl=false: hidden) |
 | `vote_me` | Allow self-vote | ✅ | ✅ `voteMe` | ✅ Full (frontend target filtering + backend vote validation) |
 | `trip` | Require tripcode to join | ✅ | ✅ `tripRequired` | ✅ Full (join-time enforcement in API) |

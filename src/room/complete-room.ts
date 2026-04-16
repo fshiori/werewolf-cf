@@ -960,8 +960,9 @@ export class WerewolfRoom extends DurableObject {
         phaseStartTimeMs: (this.roomData as any)._phaseStartTimeMs || this.roomData.uptime || Date.now(),
       };
       const timeConfig = {
-        realTimeDayLimitSec: this.roomData.roomOptions?.timeLimit || 300,
-        realTimeNightLimitSec: Math.floor((this.roomData.roomOptions?.timeLimit || 300) * 0.5),
+        ...DEFAULT_TIME_CONFIG,
+        realTimeDayLimitSec: this.roomData.roomOptions?.realTimeDayLimitSec || this.roomData.roomOptions?.timeLimit || 300,
+        realTimeNightLimitSec: this.roomData.roomOptions?.realTimeNightLimitSec || Math.floor((this.roomData.roomOptions?.timeLimit || 300) * 0.5),
       };
 
       if (isRealTimeExpired(timeState, timeConfig)) {

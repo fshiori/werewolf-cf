@@ -33,6 +33,10 @@ export interface RoomOptions {
   // ── P0-3: legacy token stubs ──
   /** 即時制（白天/夜晚獨立計時器） */
   realTime: boolean;
+  /** 即時制白天限制（秒） */
+  realTimeDayLimitSec: number;
+  /** 即時制夜晚限制（秒） */
+  realTimeNightLimitSec: number;
   /** 連續出局處刑 */
   comoutl: boolean;
   /** 投票結果展示模式 (0=全隱, 1=全顯, 2=匿名) */
@@ -59,6 +63,8 @@ export const DEFAULT_ROOM_OPTIONS: Readonly<RoomOptions> = {
   gmEnabled: false,
   // legacy token stubs
   realTime: false,
+  realTimeDayLimitSec: 0,
+  realTimeNightLimitSec: 0,
   comoutl: false,
   voteDisplay: 0,
   custDummy: false,
@@ -75,8 +81,22 @@ export function parseRoomOptions(input: unknown): RoomOptions {
 
   const raw = input as Record<string, unknown>;
 
+  const timeLimit = parsePositiveNumber(raw.timeLimit) ?? DEFAULT_ROOM_OPTIONS.timeLimit;
+  const legacyRealTimeSpec = parseLegacyRealTimeSpec(raw.realTime);
+  const realTimeBoolean = parseBoolean(raw.realTime);
+  const realTime = realTimeBoolean ?? (legacyRealTimeSpec ? true : DEFAULT_ROOM_OPTIONS.realTime);
+  const explicitDayLimitSec = parsePositiveNumber(raw.realTimeDayLimitSec);
+  const explicitNightLimitSec = parsePositiveNumber(raw.realTimeNightLimitSec);
+
+  const realTimeDayLimitSec = realTime
+    ? (explicitDayLimitSec ?? legacyRealTimeSpec?.daySec ?? timeLimit)
+    : 0;
+  const realTimeNightLimitSec = realTime
+    ? (explicitNightLimitSec ?? legacyRealTimeSpec?.nightSec ?? Math.floor(timeLimit * 0.5))
+    : 0;
+
   return {
-    timeLimit: parsePositiveNumber(raw.timeLimit) ?? DEFAULT_ROOM_OPTIONS.timeLimit,
+    timeLimit,
     silenceMode: parseBoolean(raw.silenceMode) ?? DEFAULT_ROOM_OPTIONS.silenceMode,
     allowSpectators: parseBoolean(raw.allowSpectators) ?? DEFAULT_ROOM_OPTIONS.allowSpectators,
     maxSpectators: parseNonNegativeNumber(raw.maxSpectators) ?? DEFAULT_ROOM_OPTIONS.maxSpectators,
@@ -89,7 +109,9 @@ export function parseRoomOptions(input: unknown): RoomOptions {
     tripRequired: parseBoolean(raw.tripRequired) ?? DEFAULT_ROOM_OPTIONS.tripRequired,
     gmEnabled: parseGmEnabled(raw.gmEnabled) ?? DEFAULT_ROOM_OPTIONS.gmEnabled,
     // legacy token stubs
-    realTime: parseBoolean(raw.realTime) ?? DEFAULT_ROOM_OPTIONS.realTime,
+    realTime,
+    realTimeDayLimitSec,
+    realTimeNightLimitSec,
     comoutl: parseBoolean(raw.comoutl) ?? DEFAULT_ROOM_OPTIONS.comoutl,
     voteDisplay: parseVoteDisplay(raw.voteDisplay) ?? DEFAULT_ROOM_OPTIONS.voteDisplay,
     custDummy: parseBoolean(raw.custDummy) ?? DEFAULT_ROOM_OPTIONS.custDummy,
@@ -151,4 +173,29 @@ function parseVoteDisplay(value: unknown): number | null {
   if (value === true) return 1;
   if (value === false) return 0;
   return null;
+}
+
+/**
+ * 解析 legacy real_time 規格：
+ * - "real_time:D:N"（分鐘）
+ * - "D:N"（分鐘）
+ */
+function parseLegacyRealTimeSpec(value: unknown): { daySec: number; nightSec: number } | null {
+  if (typeof value !== 'string') return null;
+
+  const text = value.trim();
+  const body = text.startsWith('real_time:') ? text.slice('real_time:'.length) : text;
+  const parts = body.split(':');
+  if (parts.length !== 2) return null;
+
+  const dayMin = Number(parts[0]);
+  const nightMin = Number(parts[1]);
+  if (!Number.isFinite(dayMin) || !Number.isFinite(nightMin) || dayMin <= 0 || nightMin <= 0) {
+    return null;
+  }
+
+  return {
+    daySec: Math.floor(dayMin * 60),
+    nightSec: Math.floor(nightMin * 60),
+  };
 }
