@@ -1564,11 +1564,14 @@ export class WerewolfRoom extends DurableObject {
         if (roleConfig.fox) {
           roleConfig.fox = 0;
         }
-        // 埋毒與妖狐互斥
-        if (poison) {
+
+        const hasPobe = options.includes('pobe');
+        // 埋毒與妖狐互斥（但 pobe 啟用時保留 poison）
+        if (poison && !hasPobe) {
           // 移除埋毒選項
           const pi = options.indexOf(poison);
           if (pi >= 0) options.splice(pi, 1);
+          poison = undefined;
         }
 
         if (foxs === 'betr') {
@@ -1577,6 +1580,16 @@ export class WerewolfRoom extends DurableObject {
           roleConfig.fox = 2; // 雙狐
         } else if (foxs === 'fosi') {
           roleConfig.fosi = 1;
+        }
+
+        // pobe: 20 人以上，妖狐+埋毒同時存在時，額外追加狼+埋毒配對
+        if (hasPobe && poison && this.roomData.maxUser >= 20) {
+          roleConfig.wolf = (roleConfig.wolf || 0) + 1;
+          if (poison === 'poison') {
+            roleConfig.poison = (roleConfig.poison || 0) + 1;
+          } else if (poison === 'cat') {
+            roleConfig.cat = (roleConfig.cat || 0) + 1;
+          }
         }
       } else if (poison) {
         // 妖狐沒有選，但埋毒有選 → 取消基本表的 fox

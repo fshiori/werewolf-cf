@@ -354,8 +354,9 @@ describe('optionRole token 解析邏輯', () => {
   const missingRoleTokens = [
     {
       token: 'pobe',
-      description: '狂人（瘋子）',
-      phpBehavior: '人狼陣營但不知道同伴，勝利條件為人狼勝',
+      description: '妖狐+埋毒共存（人狼自殺）',
+      phpBehavior: '20人以上時，妖狐/背德者/死神+埋毒同時存在時追加狼+埋毒配對；foxs 時取消 poison 互斥',
+      stubStatus: '✅ 已實作',
     },
     {
       token: 'suspect',
