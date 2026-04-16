@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>腳本資訊 - Werewolf CF</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Microsoft JhengHei', 'PingFang TC', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+      color: #333;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+      overflow: hidden;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+      color: white;
+      padding: 40px;
+      text-align: center;
+    }
+
+    .header h1 {
+      font-size: 2.5em;
+      margin-bottom: 10px;
+    }
+
+    .header p {
+      opacity: 0.9;
+      font-size: 1.1em;
+    }
+
+    .content {
+      padding: 40px;
+    }
+
+    .section {
+      margin-bottom: 40px;
+    }
+
+    .section h2 {
+      color: #1e3c72;
+      border-bottom: 3px solid #667eea;
+      padding-bottom: 10px;
+      margin-bottom: 20px;
+      font-size: 1.8em;
+    }
+
+    .info-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+    }
+
+    .info-table th,
+    .info-table td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .info-table th {
+      background: #f8f9fa;
+      font-weight: bold;
+      color: #1e3c72;
+      width: 160px;
+    }
+
+    .info-table tr:hover {
+      background: #f8f9fa;
+    }
+
+    .tech-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 20px 0;
+    }
+
+    .tech-tag {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .alert {
+      background: #fff3cd;
+      border-left: 4px solid #ffc107;
+      padding: 15px 20px;
+      margin: 20px 0;
+      border-radius: 4px;
+    }
+
+    .alert-info {
+      background: #e3f2fd;
+      border-left-color: #1976d2;
+    }
+
+    ul {
+      margin-left: 20px;
+      line-height: 1.8;
+    }
+
+    .github-link {
+      display: inline-block;
+      padding: 12px 24px;
+      background: #24292e;
+      color: white;
+      text-decoration: none;
+      border-radius: 6px;
+      font-weight: bold;
+      transition: all 0.3s;
+    }
+
+    .github-link:hover {
+      background: #333;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+
+    .back-btn {
+      display: inline-block;
+      padding: 12px 24px;
+      background: #667eea;
+      color: white;
+      text-decoration: none;
+      border-radius: 6px;
+      margin: 20px 40px;
+      transition: background 0.3s;
+    }
+
+    .back-btn:hover {
+      background: #5568d3;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>ℹ️ 腳本資訊</h1>
+      <p>Werewolf CF - 版本與技術資訊</p>
+    </div>
+
+    <div class="content">
+      <!-- 版本資訊 -->
+      <div class="section">
+        <h2>📋 版本資訊</h2>
+        <table class="info-table">
+          <tr>
+            <th>腳本名稱</th>
+            <td>Werewolf CF</td>
+          </tr>
+          <tr>
+            <th>版本</th>
+            <td>v1.0</td>
+          </tr>
+          <tr>
+            <th>原作</th>
+            <td>Pixmicat-based Werewolf Game（日文：Werewolf Online Game）</td>
+          </tr>
+          <tr>
+            <th>適應環境</th>
+            <td>Cloudflare Workers / Cloudflare Pages</td>
+          </tr>
+          <tr>
+            <th>授權</th>
+            <td>請參閱 GitHub 仓库</td>
+          </tr>
+        </table>
+      </div>
+
+      <!-- 技術堆疊 -->
+      <div class="section">
+        <h2>🛠️ 技術堆疊</h2>
+        <p>本腳本使用以下 Cloudflare 服務建構：</p>
+        <div class="tech-list">
+          <span class="tech-tag">☁️ Cloudflare Workers</span>
+          <span class="tech-tag">🔗 Durable Objects</span>
+          <span class="tech-tag">🗄️ D1（SQLite）</span>
+          <span class="tech-tag">📦 R2 Storage</span>
+          <span class="tech-tag">⚡ KV Namespace</span>
+        </div>
+        <table class="info-table">
+          <tr>
+            <th>Workers</th>
+            <td>處理 HTTP 路由、API 請求與遊戲邏輯</td>
+          </tr>
+          <tr>
+            <th>Durable Objects</th>
+            <td>管理每個遊戲房間的即時狀態與 WebSocket 連線</td>
+          </tr>
+          <tr>
+            <th>D1</th>
+            <td>SQLite 資料庫，儲存遊戲記錄與歷史資料</td>
+          </tr>
+          <tr>
+            <th>R2</th>
+            <td>物件儲存，存放玩家上傳的頭像圖示</td>
+          </tr>
+          <tr>
+            <th>KV</th>
+            <td>鍵值儲存，用於配置與暫存資料</td>
+          </tr>
+        </table>
+      </div>
+
+      <!-- 原始專案 -->
+      <div class="section">
+        <h2>📜 原始專案</h2>
+        <p>
+          本腳本基於 Pixmicat-based Werewolf Game 進行改寫與移植。<br>
+          原始專案為 PHP + MySQL 架構的 BBS 型人狼遊戲。<br>
+          本版本將後端完全改寫為 Cloudflare Workers，並重新設計前端介面。
+        </p>
+      </div>
+
+      <!-- 已知限制 -->
+      <div class="section">
+        <h2>⚠️ 已知限制</h2>
+        <div class="alert">
+          <strong>使用前請注意以下限制：</strong>
+        </div>
+        <ul>
+          <li>Cloudflare Workers 有 CPU 時間限制（免費版 10ms，付費版 30s/分鐘），大量運算可能觸及限制</li>
+          <li>Durable Objects WebSocket 連線有閒置超時機制</li>
+          <li>D1 資料庫有每日讀寫次數限制（免費版）</li>
+          <li>R2 儲存空間與操作次數在免費方案中有上限</li>
+          <li>部分原版 PHP 專案的高階功能可能尚未完全移植</li>
+          <li>前端為純靜態 HTML + JavaScript，無伺服器端渲染</li>
+        </ul>
+      </div>
+
+      <!-- GitHub 連結 -->
+      <div class="section">
+        <h2>🔗 專案連結</h2>
+        <p style="margin-bottom: 15px;">
+          歡迎前往 GitHub 查看原始碼、提交問題或貢獻程式碼：
+        </p>
+        <a href="#" class="github-link" onclick="return false;">🐙 前往 GitHub（連結待設定）</a>
+      </div>
+    </div>
+  </div>
+
+  <a href="/" class="back-btn">← 返回首頁</a>
+</body>
+</html>
