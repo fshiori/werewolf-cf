@@ -565,6 +565,12 @@ describe('Features Routes', () => {
   // ==================== 觀戰模式 ====================
   describe('POST /api/spectate/:roomNo — 加入觀戰', () => {
     it('應該成功加入觀戰', async () => {
+      // room option: allowSpectators=true, maxSpectators=10
+      (mockEnv.DB as any)._insert('room', {
+        room_no: 1,
+        game_option: JSON.stringify({ allowSpectators: true, maxSpectators: 10 }),
+      });
+
       const res = await request('/api/spectate/1', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -577,6 +583,52 @@ describe('Features Routes', () => {
       expect(res.status).toBe(200);
       const data = await res.json();
       expect(data.success).toBe(true);
+    });
+
+    it('房間停用觀戰時應拒絕加入（403）', async () => {
+      (mockEnv.DB as any)._insert('room', {
+        room_no: 1,
+        game_option: JSON.stringify({ allowSpectators: false, maxSpectators: 10 }),
+      });
+
+      const res = await request('/api/spectate/1', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          trip: 'spectator2',
+          handleName: 'Spectator2',
+        }),
+      });
+
+      expect(res.status).toBe(403);
+      const data = await res.json();
+      expect(data.error).toContain('disabled');
+    });
+
+    it('房間觀戰額滿時應拒絕加入（403）', async () => {
+      (mockEnv.DB as any)._insert('room', {
+        room_no: 1,
+        game_option: JSON.stringify({ allowSpectators: true, maxSpectators: 1 }),
+      });
+      (mockEnv.DB as any)._insert('spectators', {
+        room_no: 1,
+        trip: 'already_in',
+        handle_name: 'AlreadyIn',
+        joined_at: Date.now(),
+      });
+
+      const res = await request('/api/spectate/1', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          trip: 'spectator3',
+          handleName: 'Spectator3',
+        }),
+      });
+
+      expect(res.status).toBe(403);
+      const data = await res.json();
+      expect(data.error).toContain('limit');
     });
   });
 

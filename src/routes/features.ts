@@ -618,6 +618,32 @@ app.delete('/api/ng-users/:id', async (c) => {
 
 // ==================== 觀戰模式 ====================
 
+type RoomSpectatePolicy = {
+  allowSpectators: boolean;
+  maxSpectators: number;
+};
+
+async function getRoomSpectatePolicy(c: any, roomNo: number | string): Promise<RoomSpectatePolicy> {
+  const row = await c.env.DB.prepare(
+    'SELECT game_option FROM room WHERE room_no = ?'
+  ).bind(roomNo).first() as { game_option?: string } | null;
+
+  if (!row?.game_option) {
+    return { allowSpectators: true, maxSpectators: 10 };
+  }
+
+  try {
+    const parsed = JSON.parse(row.game_option);
+    const opts = parseRoomOptions(parsed);
+    return {
+      allowSpectators: opts.allowSpectators,
+      maxSpectators: opts.maxSpectators,
+    };
+  } catch {
+    return { allowSpectators: true, maxSpectators: 10 };
+  }
+}
+
 /**
  * 加入觀戰
  */
@@ -629,17 +655,17 @@ app.post('/api/spectate/:roomNo', async (c) => {
       handleName: string;
     }>();
 
+    const policy = await getRoomSpectatePolicy(c, roomNo);
+    if (!policy.allowSpectators) {
+      return c.json({ error: 'Spectator mode disabled for this room' }, 403);
+    }
+
     // 檢查觀戰人數限制
     const countStmt = c.env.DB.prepare('SELECT COUNT(*) as count FROM spectators WHERE room_no = ?');
     const countResult = await countStmt.bind(roomNo).all();
     const spectatorCount = (countResult.results[0] as { count?: number } | undefined)?.count || 0;
 
-    // 獲取設定
-    const settingStmt = c.env.DB.prepare("SELECT setting_value FROM game_settings WHERE setting_name = 'max_spectators'");
-    const settingResult = await settingStmt.all();
-    const maxSpectators = parseInt((settingResult.results[0] as { setting_value?: string } | undefined)?.setting_value || '10');
-
-    if (spectatorCount >= maxSpectators) {
+    if (spectatorCount >= policy.maxSpectators) {
       return c.json({ error: 'Spectator limit reached' }, 403);
     }
 
