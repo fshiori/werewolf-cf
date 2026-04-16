@@ -321,28 +321,8 @@ describe('optionRole token 解析邏輯', () => {
 // PHP 參考未實作的長尾 token
 // ────────────────────────────────────────────
   describe('PHP 長尾 token（❌ 未實作）', () => {
-  // 以下 token 在 PHP diam1.3.61 中存在，CF 版僅有 parse stub（roomOptions）
-  // 但遊戲邏輯尚未消耗
-
+  // 以下 token 在 PHP diam1.3.61 中存在，CF 版有解析但仍是部分落地
   const missingConsumedGameOptionTokens = [
-    {
-      token: 'realTime',
-      description: '即時制（白天/夜晚獨立計時器）',
-      phpBehavior: '白天和夜晚各有獨立的即時計時器，時間到自動切換',
-      stubStatus: '✅ 已解析',
-    },
-    {
-      token: 'comoutl',
-      description: '共生者夜晚對話顯示',
-      phpBehavior: 'comoutl 開啟時，其他玩家看到「悄悄話...」；關閉時完全隱藏',
-      stubStatus: '✅ 已解析',
-    },
-    {
-      token: 'voteDisplay',
-      description: '投票結果展示模式',
-      phpBehavior: '控制投票結果的顯示方式（0=全隱, 1=全顯, 2=匿名）',
-      stubStatus: '✅ 已解析',
-    },
     {
       token: 'custDummy',
       description: '自訂啞巴男',
@@ -371,7 +351,7 @@ describe('optionRole token 解析邏輯', () => {
   ];
 
   it(`未消耗 gameOption token 共 ${missingConsumedGameOptionTokens.length} 個（皆有 parse stub）`, () => {
-    expect(missingConsumedGameOptionTokens).toHaveLength(5);
+    expect(missingConsumedGameOptionTokens).toHaveLength(2);
   });
 
   it(`未實作 optionRole token 共 ${missingRoleTokens.length} 個`, () => {

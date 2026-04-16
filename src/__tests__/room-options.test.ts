@@ -22,6 +22,8 @@ describe('DEFAULT_ROOM_OPTIONS', () => {
       gmEnabled: false,
       // legacy token stubs
       realTime: false,
+      realTimeDayLimitSec: 0,
+      realTimeNightLimitSec: 0,
       comoutl: false,
       voteDisplay: 0,
       custDummy: false,
@@ -46,6 +48,8 @@ describe('parseRoomOptions', () => {
       tripRequired: true,
       gmEnabled: false,
       realTime: true,
+      realTimeDayLimitSec: 120,
+      realTimeNightLimitSec: 60,
       comoutl: true,
       voteDisplay: 2,
       custDummy: true,
@@ -121,6 +125,30 @@ describe('parseRoomOptions', () => {
       ...DEFAULT_ROOM_OPTIONS,
       timeLimit: 90,
     });
+  });
+
+  it('realTime=true 且未指定 day/night 時，回退到 timeLimit 與 50% night', () => {
+    const result = parseRoomOptions({ realTime: true, timeLimit: 120 });
+    expect(result.realTime).toBe(true);
+    expect(result.realTimeDayLimitSec).toBe(120);
+    expect(result.realTimeNightLimitSec).toBe(60);
+  });
+
+  it('realTime=true 且指定 day/night 時，使用明確值', () => {
+    const result = parseRoomOptions({
+      realTime: true,
+      realTimeDayLimitSec: 300,
+      realTimeNightLimitSec: 180,
+    });
+    expect(result.realTimeDayLimitSec).toBe(300);
+    expect(result.realTimeNightLimitSec).toBe(180);
+  });
+
+  it('legacy real_time:D:N 字串可解析為秒（分鐘→秒）', () => {
+    const result = parseRoomOptions({ realTime: 'real_time:5:2' as any });
+    expect(result.realTime).toBe(true);
+    expect(result.realTimeDayLimitSec).toBe(300);
+    expect(result.realTimeNightLimitSec).toBe(120);
   });
 
   it('null 輸入 → fallback 到預設值', () => {
