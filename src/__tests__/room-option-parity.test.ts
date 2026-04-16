@@ -327,8 +327,8 @@ describe('optionRole token 解析邏輯', () => {
     },
     {
       token: 'comoutl',
-      description: '連續出局處刑',
-      phpBehavior: '連續投票最高票者直接處刑，不進入決選',
+      description: '共生者夜晚對話顯示',
+      phpBehavior: 'comoutl 開啟時，其他玩家看到「悄悄話...」；關閉時完全隱藏',
       stubStatus: '✅ 已解析',
     },
     {

@@ -168,6 +168,9 @@ app.post('/api/rooms', checkBan, rateLimit, async (c) => {
     }
     const roomOptions = parseRoomOptions(rawOpts);
 
+    // 從 gameOption JSON 裡提取 gmTrip（前端透過 getGameOptions() 塞在裡面）
+    const gmTrip = (rawOpts && typeof rawOpts === 'object' && (rawOpts as any).gmTrip) || data.gmTrip || '';
+
     // 生成房間編號
     const roomNo = Date.now();
 
@@ -186,7 +189,7 @@ app.post('/api/rooms', checkBan, rateLimit, async (c) => {
         maxUser,
         gameOption: data.gameOption || '',
         optionRole: data.optionRole || '',
-        gmTrip: data.gmTrip || '',
+        gmTrip: gmTrip,
         isPrivate,
         passwordHash,
         roomOptions
