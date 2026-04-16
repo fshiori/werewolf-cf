@@ -741,6 +741,128 @@
     .messages-container.night-mode .msg.chat.self { background: #4338ca; color: white; }
     .messages-container.night-mode { background: #0f0d2e; }
     .messages-container.night-mode .input-area { background: #1e1b4b; }
+
+    /* ==================== Night Action Panel ==================== */
+    .night-action-panel {
+      display: none;
+      padding: 10px 16px;
+      background: linear-gradient(135deg, #1e1b4b, #312e81);
+      border-top: 1px solid #4338ca;
+      flex-shrink: 0;
+      animation: fadeSlideDown 0.5s ease;
+    }
+
+    .night-action-panel.show { display: block; }
+
+    .night-action-panel .na-header {
+      font-size: 13px;
+      font-weight: 700;
+      color: #e0d5ff;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .night-action-panel .na-header .na-role-badge {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-weight: 600;
+    }
+
+    .night-action-panel .na-role-badge.wolf-badge {
+      background: rgba(239, 68, 68, 0.3);
+      color: #fca5a5;
+      border: 1px solid rgba(239, 68, 68, 0.4);
+    }
+
+    .night-action-panel .na-role-badge.mage-badge {
+      background: rgba(168, 85, 247, 0.3);
+      color: #d8b4fe;
+      border: 1px solid rgba(168, 85, 247, 0.4);
+    }
+
+    .night-action-panel .na-role-badge.guard-badge {
+      background: rgba(59, 130, 246, 0.3);
+      color: #93c5fd;
+      border: 1px solid rgba(59, 130, 246, 0.4);
+    }
+
+    .night-action-panel .na-body {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .night-action-panel .na-select {
+      flex: 1;
+      padding: 8px 12px;
+      border: 2px solid #4338ca;
+      border-radius: 10px;
+      background: #1e1b4b;
+      color: #e0d5ff;
+      font-size: 13px;
+      font-family: inherit;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .night-action-panel .na-select:focus {
+      border-color: #818cf8;
+      box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.2);
+    }
+
+    .night-action-panel .na-select option {
+      background: #1e1b4b;
+      color: #e0d5ff;
+    }
+
+    .night-action-panel .na-btn {
+      padding: 8px 18px;
+      border: none;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      color: white;
+      font-family: inherit;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .night-action-panel .na-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+    .night-action-panel .na-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    .na-btn-kill { background: linear-gradient(135deg, #ef4444, #dc2626); }
+    .na-btn-divine { background: linear-gradient(135deg, #a855f7, #7c3aed); }
+    .na-btn-guard { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+
+    .night-action-panel .na-waiting {
+      font-size: 13px;
+      color: #a5b4fc;
+      text-align: center;
+      padding: 4px 0;
+    }
+
+    .night-action-panel .na-submitted {
+      font-size: 13px;
+      color: #86efac;
+      text-align: center;
+      padding: 4px 0;
+      font-weight: 600;
+    }
+
+    .msg.divine-result {
+      background: #faf5ff;
+      border: 2px solid #d8b4fe;
+      color: #6b21a8;
+      text-align: center;
+      max-width: 90%;
+      align-self: center;
+      font-weight: 700;
+      font-size: 14px;
+    }
   </style>
 </head>
 <body>
@@ -798,6 +920,19 @@
         <span>🔄 重連中 (<span id="reconnectAttempt">0</span>/5)...</span>
       </div>
       <span id="timeInfo"></span>
+    </div>
+
+    <!-- Night Action Panel -->
+    <div class="night-action-panel" id="nightActionPanel">
+      <div class="na-header" id="naHeader"></div>
+      <div class="na-body" id="naBody">
+        <select class="na-select" id="naTarget">
+          <option value="">-- 選擇目標 --</option>
+        </select>
+        <button class="na-btn" id="naBtn" disabled onclick="submitNightAction()">執行</button>
+      </div>
+      <div class="na-waiting" id="naWaiting" style="display:none;">🌙 等待夜晚行動中...</div>
+      <div class="na-submitted" id="naSubmitted" style="display:none;">✅ 已完成夜晚行動，等待天亮...</div>
     </div>
   </div>
 
@@ -896,6 +1031,7 @@
     let isNight = false;
     let canSpeak = false;
     let voteActive = false;
+    let nightActionSubmitted = false;
 
     // ==================== Initialization ====================
     document.addEventListener('DOMContentLoaded', () => {
@@ -1180,7 +1316,7 @@
 
         // ---- Night Actions ----
         case 'divine_result':
-          addMessage('system', `🔮 占卜結果：${data.data.target} 是「${data.data.result === 'wolf' ? '🐺 狼人' : '👤 人類'}」`);
+          addMessage('divine-result', `🔮 預言結果：${data.data.target} 是「${data.data.result === 'wolf' ? '🐺 狼人' : '👤 好人'}」`);
           break;
 
         case 'night_action':
@@ -1222,7 +1358,7 @@
       const el = document.createElement('div');
       el.className = `msg ${type}`;
 
-      if (type === 'system' || type === 'game-event' || type === 'death' || type === 'vote-msg' || type === 'will-msg' || type === 'whisper-msg') {
+      if (type === 'system' || type === 'game-event' || type === 'death' || type === 'vote-msg' || type === 'will-msg' || type === 'whisper-msg' || type === 'divine-result') {
         el.innerHTML = `<div class="msg-content">${escapeHtml(text)}</div>`;
       } else {
         el.innerHTML = `<div class="msg-content">${escapeHtml(text)}</div>`;
@@ -1307,6 +1443,15 @@
       // Called after phase_change messages for additional UI tweaks
       canSpeak = newPhase === 'day' && myPlayer && myPlayer.live === 'live';
       document.getElementById('messageInput').disabled = !canSpeak && phase !== 'beforegame';
+
+      // Night action panel visibility
+      if (newPhase === 'night') {
+        nightActionSubmitted = false;
+        showNightActionPanel();
+      } else {
+        hideNightActionPanel();
+      }
+
       updateActionButtons();
     }
 
@@ -1794,6 +1939,143 @@
       } catch (e) {
         console.error('Load whispers error:', e);
       }
+    }
+
+    // ==================== Night Action System ====================
+    let currentNightAction = null; // 'wolf_kill' | 'seer_divine' | 'guard'
+
+    function showNightActionPanel() {
+      const panel = document.getElementById('nightActionPanel');
+      const header = document.getElementById('naHeader');
+      const body = document.getElementById('naBody');
+      const waiting = document.getElementById('naWaiting');
+      const submitted = document.getElementById('naSubmitted');
+      const targetSelect = document.getElementById('naTarget');
+      const actionBtn = document.getElementById('naBtn');
+
+      // Reset state
+      header.innerHTML = '';
+      body.style.display = 'none';
+      waiting.style.display = 'none';
+      submitted.style.display = 'none';
+      targetSelect.innerHTML = '<option value="">-- 選擇目標 --</option>';
+      actionBtn.disabled = true;
+      currentNightAction = null;
+
+      // Must be alive and have a role
+      const isAlive = myPlayer && myPlayer.live === 'live';
+      if (!isAlive || !myRole) {
+        panel.classList.remove('show');
+        return;
+      }
+
+      panel.classList.add('show');
+
+      // Determine night action based on role
+      if (myRole === 'wolf' || myRole === 'wolf_partner' || myRole === 'wfbig') {
+        // Wolf kill: target alive non-wolf players
+        currentNightAction = 'wolf_kill';
+        const wolfRoles = ['wolf', 'wolf_partner', 'wfbig'];
+        const targets = players.filter(p => p.live === 'live' && !wolfRoles.includes(p.role) && p.uname !== myPlayer?.uname);
+
+        header.innerHTML = `<span>🐺 狼人行動</span><span class="na-role-badge wolf-badge">狼人</span>`;
+        actionBtn.textContent = '🐺 擊殺';
+        actionBtn.className = 'na-btn na-btn-kill';
+
+        populateTargetSelect(targetSelect, targets, actionBtn);
+
+      } else if (myRole === 'mage') {
+        // Seer divine: target any alive player except self
+        currentNightAction = 'seer_divine';
+        const targets = players.filter(p => p.live === 'live' && p.uname !== myPlayer?.uname);
+
+        header.innerHTML = `<span>🔮 預言家驗證</span><span class="na-role-badge mage-badge">預言家</span>`;
+        actionBtn.textContent = '🔮 驗證';
+        actionBtn.className = 'na-btn na-btn-divine';
+
+        populateTargetSelect(targetSelect, targets, actionBtn);
+
+      } else if (myRole === 'guard') {
+        // Guard: target any alive player except self
+        currentNightAction = 'guard';
+        const targets = players.filter(p => p.live === 'live' && p.uname !== myPlayer?.uname);
+
+        header.innerHTML = `<span>🏹 守護</span><span class="na-role-badge guard-badge">獵人</span>`;
+        actionBtn.textContent = '🏹 守護';
+        actionBtn.className = 'na-btn na-btn-guard';
+
+        populateTargetSelect(targetSelect, targets, actionBtn);
+
+      } else {
+        // Human / other roles: just show waiting message
+        waiting.style.display = 'block';
+      }
+    }
+
+    function populateTargetSelect(selectEl, targetPlayers, actionBtn) {
+      const body = document.getElementById('naBody');
+      const waiting = document.getElementById('naWaiting');
+
+      selectEl.innerHTML = '<option value="">-- 選擇目標 --</option>';
+
+      if (targetPlayers.length === 0) {
+        waiting.textContent = '没有可選擇的目標';
+        waiting.style.display = 'block';
+        body.style.display = 'none';
+        return;
+      }
+
+      targetPlayers.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.uname;
+        opt.textContent = `${p.handleName || p.uname}`;
+        selectEl.appendChild(opt);
+      });
+
+      body.style.display = 'flex';
+
+      selectEl.onchange = () => {
+        actionBtn.disabled = !selectEl.value;
+      };
+    }
+
+    function hideNightActionPanel() {
+      const panel = document.getElementById('nightActionPanel');
+      panel.classList.remove('show');
+      currentNightAction = null;
+    }
+
+    function submitNightAction() {
+      if (nightActionSubmitted || !currentNightAction) return;
+
+      const targetSelect = document.getElementById('naTarget');
+      const target = targetSelect.value;
+
+      if (!target) return;
+      if (!ws || ws.readyState !== WebSocket.OPEN) {
+        addSystemMessage('⚠️ 尚未連線，無法執行夜晚行動');
+        return;
+      }
+
+      ws.send(JSON.stringify({
+        type: 'night_action',
+        action: currentNightAction,
+        target: target
+      }));
+
+      nightActionSubmitted = true;
+
+      // Show submitted state
+      document.getElementById('naBody').style.display = 'none';
+      document.getElementById('naWaiting').style.display = 'none';
+      document.getElementById('naSubmitted').style.display = 'block';
+
+      const actionNames = {
+        wolf_kill: '擊殺',
+        seer_divine: '驗證',
+        guard: '守護'
+      };
+      addSystemMessage(`✅ 夜晚行動已提交：${actionNames[currentNightAction] || currentNightAction} ${target}`);
     }
   </script>
 </body>

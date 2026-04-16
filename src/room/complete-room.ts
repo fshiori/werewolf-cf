@@ -915,18 +915,23 @@ export class WerewolfRoom extends DurableObject {
     try {
       // @ts-ignore
       await this.env.DB.prepare(`
-        INSERT INTO room (room_no, room_name, room_comment, max_user, game_option, option_role, status, date, day_night, victory_role, uptime, last_updated)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO room (room_no, room_name, room_comment, max_user, game_option, option_role, status, date, day_night, victory_role, uptime, last_updated, is_private, password_hash, time_limit, silence_mode)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(room_no) DO UPDATE SET
           room_name = ?, room_comment = ?, status = ?, date = ?, day_night = ?,
-          victory_role = ?, last_updated = ?
+          victory_role = ?, last_updated = ?,
+          is_private = ?, password_hash = ?, time_limit = ?, silence_mode = ?
       `).bind(
         this.roomData.roomNo, this.roomData.roomName, this.roomData.roomComment || '',
         this.roomData.maxUser, this.roomData.gameOption || '', this.roomData.optionRole || '',
         this.roomData.status, this.roomData.date, this.roomData.dayNight,
         this.roomData.victoryRole || null, this.roomData.uptime || Date.now(), Date.now(),
+        this.roomData.isPrivate ? 1 : 0, this.roomData.passwordHash || null,
+        this.roomData.roomOptions?.timeLimit || 300, this.roomData.roomOptions?.silenceMode ? 1 : 0,
         this.roomData.roomName, this.roomData.roomComment || '', this.roomData.status,
-        this.roomData.date, this.roomData.dayNight, this.roomData.victoryRole || null, Date.now()
+        this.roomData.date, this.roomData.dayNight, this.roomData.victoryRole || null, Date.now(),
+        this.roomData.isPrivate ? 1 : 0, this.roomData.passwordHash || null,
+        this.roomData.roomOptions?.timeLimit || 300, this.roomData.roomOptions?.silenceMode ? 1 : 0
       ).run();
 
       // 同步玩家到 D1

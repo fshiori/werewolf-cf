@@ -3,6 +3,7 @@
  */
 
 import type { D1Database, KVNamespace, DurableObjectNamespace, R2Bucket, DurableObject } from '@cloudflare/workers-types';
+import type { RoomOptions } from './room-options';
 
 // 環境變數
 export interface Env {
@@ -90,8 +91,7 @@ export interface RoomData {
   silenceTime?: number;    // 沈默時間
   isPrivate?: boolean;     // 是否為私人房間
   passwordHash?: string;   // 密碼雜湊（SHA-256）
-  timeLimit?: number;      // 發言時間限制（秒）
-  silenceMode?: boolean;   // 沈默加速模式
+  roomOptions?: RoomOptions; // 房間選項（整合 timeLimit, silenceMode 等）
 }
 
 // 訊息類型
