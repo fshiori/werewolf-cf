@@ -59,6 +59,7 @@ export interface Player {
   trip: string;            // Tripcode
   iconNo: number;          // 頭像編號
   sex: string;             // 性別
+  wishRole?: Role | 'none'; // 希望角色（wish_role 啟用時使用）
   role: Role;              // 角色
   roleDesc?: string;       // 角色描述
   gColor?: string;         // 角色顏色

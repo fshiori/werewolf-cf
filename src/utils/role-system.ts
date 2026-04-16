@@ -128,12 +128,17 @@ export function getVictoryMessage(winner: string): string {
   }
 }
 
+export interface AssignRolesOptions {
+  wishRoleEnabled?: boolean;
+}
+
 /**
  * 隨機分配角色
  */
 export function assignRoles(
   players: Player[],
-  roleConfig: Record<Role, number>
+  roleConfig: Record<Role, number>,
+  options: AssignRolesOptions = {}
 ): void {
   // 建立角色池
   const rolePool: Role[] = [];
@@ -143,13 +148,44 @@ export function assignRoles(
     }
   }
 
+  const shuffle = <T>(arr: T[]) => {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+  };
+
   // Fisher-Yates 洗牌
-  for (let i = rolePool.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [rolePool[i], rolePool[j]] = [rolePool[j], rolePool[i]];
+  shuffle(rolePool);
+
+  // legacy wish_role：若啟用，先嘗試滿足玩家希望角色，再分配剩餘角色
+  if (options.wishRoleEnabled) {
+    const randomizedPlayers = [...players];
+    shuffle(randomizedPlayers);
+
+    const remainingRoles = [...rolePool];
+    const unassignedPlayers: Player[] = [];
+
+    for (const player of randomizedPlayers) {
+      const wishRole = ((player.wishRole || 'none') as Role | 'none');
+      if (wishRole !== 'none') {
+        const roleIndex = remainingRoles.indexOf(wishRole as Role);
+        if (roleIndex >= 0) {
+          player.role = wishRole as Role;
+          remainingRoles.splice(roleIndex, 1);
+          continue;
+        }
+      }
+      unassignedPlayers.push(player);
+    }
+
+    unassignedPlayers.forEach((player, index) => {
+      player.role = remainingRoles[index] || 'human';
+    });
+    return;
   }
 
-  // 分配角色
+  // 一般模式：直接依洗牌後角色池分配
   players.forEach((player, index) => {
     if (index < rolePool.length) {
       player.role = rolePool[index];

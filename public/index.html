@@ -552,13 +552,20 @@
             </div>
 
             <div class="role-option-row" style="display:flex;align-items:center;gap:8px;padding:4px 0;margin-bottom:8px;">
-              <label style="white-space:nowrap;"><strong>🦊 妖狐</strong> <small style="color:#999;">（20人以上）使用將取消埋毒</small></label>
+              <label style="white-space:nowrap;"><strong>🦊 妖狐</strong> <small style="color:#999;">（20人以上）使用將取消埋毒（勾選 pobe 例外）</small></label>
               <select id="optFoxs" style="padding:4px 8px;border:1px solid #ddd;border-radius:4px;font-size:13px;">
                 <option value="">無</option>
                 <option value="betr">背德</option>
                 <option value="foxs">雙狐</option>
                 <option value="fosi">子狐</option>
               </select>
+            </div>
+
+            <div style="margin-bottom:8px;">
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:4px 0;">
+                <input type="checkbox" id="optPobe" style="width:auto;margin:0;">
+                <span><strong>☣️ pobe</strong> <small style="color:#999;">（20人以上）強制加入埋毒（與妖狐並存時追加狼+埋毒）</small></span>
+              </label>
             </div>
         </div>
       </details>
@@ -594,6 +601,21 @@
       <div class="form-group">
         <label for="tripcodePassword" data-i18n="index.label.tripcode">Tripcode 密碼（選填）</label>
         <input type="password" id="tripcodePassword" data-i18n-placeholder="index.placeholder.tripcode" placeholder="用於驗證身份">
+      </div>
+
+      <div class="form-group">
+        <label for="wishRole">希望角色（僅 wishRole 房規啟用時生效）</label>
+        <select id="wishRole">
+          <option value="none">不指定</option>
+          <option value="human">村民</option>
+          <option value="wolf">人狼</option>
+          <option value="mage">占卜師</option>
+          <option value="necromancer">靈能者</option>
+          <option value="mad">狂人</option>
+          <option value="guard">獵人</option>
+          <option value="common">共有者</option>
+          <option value="fox">妖狐</option>
+        </select>
       </div>
 
       <button onclick="joinRoom()" data-i18n="index.join_room">加入房間</button>
@@ -798,13 +820,15 @@
       toggleOpt('optWfbig', maxUser >= 20, '需20人以上');
       toggleOpt('optPoison', maxUser >= 20, '需20人以上');
       toggleOpt('optFoxs', maxUser >= 20, '需20人以上');
+      toggleOpt('optPobe', maxUser >= 20, '需20人以上');
 
-      // 妖狐與埋毒互斥
-      if (foxsVal) {
+      // 妖狐與埋毒互斥（pobe 勾選時可共存）
+      const pobeChecked = document.getElementById('optPobe').checked;
+      if (foxsVal && !pobeChecked) {
         document.getElementById('optPoison').disabled = true;
         document.getElementById('optPoison').value = '';
       } else {
-        document.getElementById('optPoison').disabled = false;
+        document.getElementById('optPoison').disabled = maxUser < 20;
       }
     }
 
@@ -836,6 +860,7 @@
       if (poison) parts.push(poison);
       const foxs = document.getElementById('optFoxs').value;
       if (foxs) parts.push(foxs);
+      if (document.getElementById('optPobe').checked) parts.push('pobe');
       return parts.join(' ');
     }
 
@@ -862,8 +887,11 @@
       };
     }
 
-    // 監聽人數變化
+    // 監聽人數/角色選項變化
     document.getElementById('maxUser').addEventListener('change', updateRolePreview);
+    document.getElementById('optFoxs').addEventListener('change', updateRolePreview);
+    document.getElementById('optPoison').addEventListener('change', updateRolePreview);
+    document.getElementById('optPobe').addEventListener('change', updateRolePreview);
 
     // GM Trip 可見性切換
     document.getElementById('optGmEnabled').addEventListener('change', function() {
@@ -988,6 +1016,7 @@
       const username = document.getElementById('username').value.trim();
       const displayName = document.getElementById('displayName').value.trim();
       const tripcodePassword = document.getElementById('tripcodePassword').value;
+      const wishRole = document.getElementById('wishRole').value;
 
       if (!roomNo || !username || !displayName) {
         showError('請填寫所有必填欄位');
@@ -1036,6 +1065,7 @@
             trip,
             iconNo: 1,
             sex: 'male',
+            wishRole,
             password: joinPassword
           })
         });

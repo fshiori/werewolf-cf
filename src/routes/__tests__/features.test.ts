@@ -36,6 +36,7 @@ function resetTables() {
     whispers: [],
     game_events: [],
     achievements: [],
+    room: [],
   };
 }
 
@@ -58,6 +59,7 @@ function createMockEnv(): Env {
     if (query.includes('spectators')) return 'spectators';
     if (query.includes('user_entry')) return 'user_entry';
     if (query.includes('game_settings')) return 'game_settings';
+    if (query.includes('room')) return 'room';
     return 'unknown';
   }
   // 通用查詢邏輯（支援 bind 和直接 all）
@@ -405,6 +407,12 @@ describe('Features Routes', () => {
   // ==================== 遺書系統 ====================
   describe('POST /api/wills — 儲存遺書', () => {
     it('應該成功儲存遺書', async () => {
+      (mockEnv.DB as any)._insert('room', {
+        room_no: 1,
+        status: 'playing',
+        game_option: JSON.stringify({ will: true }),
+      });
+
       const res = await request('/api/wills', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -445,6 +453,28 @@ describe('Features Routes', () => {
 
       expect(res.status).toBe(400);
     });
+
+    it('will 關閉且遊戲進行中時應返回 403', async () => {
+      (mockEnv.DB as any)._insert('room', {
+        room_no: 1,
+        status: 'playing',
+        game_option: JSON.stringify({ will: false }),
+      });
+
+      const res = await request('/api/wills', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          roomNo: 1,
+          date: 1,
+          uname: 'player1',
+          handleName: 'Player 1',
+          will: 'this should be blocked',
+        }),
+      });
+
+      expect(res.status).toBe(403);
+    });
   });
 
   describe('GET /api/wills/:roomNo — 取得遺書', () => {
@@ -454,6 +484,27 @@ describe('Features Routes', () => {
 
       const data = await res.json();
       expect(data.wills).toBeDefined();
+    });
+
+    it('will 關閉且遊戲進行中時應隱藏遺書內容', async () => {
+      (mockEnv.DB as any)._insert('room', {
+        room_no: 1,
+        status: 'playing',
+        game_option: JSON.stringify({ will: false }),
+      });
+      (mockEnv.DB as any)._insert('wills', {
+        room_no: 1,
+        date: 1,
+        uname: 'player1',
+        handle_name: 'P1',
+        will: 'secret',
+      });
+
+      const res = await request('/api/wills/1');
+      expect(res.status).toBe(200);
+
+      const data = await res.json();
+      expect(data.wills).toEqual([]);
     });
   });
 

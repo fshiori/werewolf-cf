@@ -16,6 +16,8 @@ import {
   getVoteStats,
   resolveWeightedVoteResult,
   filterVoteDisplay,
+  resolveVoteDisplayMode,
+  canVoteTarget,
 } from '../vote-system';
 import type { Player } from '../types';
 
@@ -522,6 +524,50 @@ describe('Vote System', () => {
       expect(display.showResults).toBe(true);
       expect(display.voteCounts.length).toBe(2);
       expect(display.voterMap).toBeNull();
+    });
+  });
+
+  describe('openVote / voteMe parity helpers', () => {
+    const makeTarget = (uname: string, live: 'live' | 'dead' = 'live'): Player => ({
+      userNo: 1,
+      uname,
+      handleName: uname,
+      trip: '',
+      iconNo: 1,
+      sex: '',
+      role: 'human',
+      live,
+      score: 0,
+    });
+
+    it('resolveVoteDisplayMode: voteDisplay=0 + openVote=true 應回傳匿名模式(2)', () => {
+      expect(resolveVoteDisplayMode(0, true)).toBe(2);
+    });
+
+    it('resolveVoteDisplayMode: 明確 voteDisplay 應優先於 openVote', () => {
+      expect(resolveVoteDisplayMode(1, true)).toBe(1);
+      expect(resolveVoteDisplayMode(2, false)).toBe(2);
+    });
+
+    it('canVoteTarget: voteMe 關閉時不允許自投', () => {
+      const players = new Map<string, Player>([
+        ['alice', makeTarget('alice')],
+        ['bob', makeTarget('bob')],
+      ]);
+
+      expect(canVoteTarget(players, 'alice', 'alice', false)).toBe(false);
+      expect(canVoteTarget(players, 'alice', 'bob', false)).toBe(true);
+    });
+
+    it('canVoteTarget: voteMe 開啟時允許自投，但目標必須存活', () => {
+      const players = new Map<string, Player>([
+        ['alice', makeTarget('alice')],
+        ['bob', makeTarget('bob', 'dead')],
+      ]);
+
+      expect(canVoteTarget(players, 'alice', 'alice', true)).toBe(true);
+      expect(canVoteTarget(players, 'alice', 'bob', true)).toBe(false);
+      expect(canVoteTarget(players, 'alice', 'ghost', true)).toBe(false);
     });
   });
 });
