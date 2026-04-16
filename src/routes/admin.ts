@@ -236,9 +236,39 @@ app.delete('/api/admin/rooms/:roomNo', requireAdminAuth, rateLimit, async (c) =>
   try {
     const roomNo = parseInt(c.req.param('roomNo'));
     
-    // TODO: 通知 Durable Object 刪除房間
-    // 目前只能刪除統計資料
-    
+    // 通知 Durable Object 清理
+    try {
+      const id = c.env.WEREWOLF_ROOM.idFromName(roomNo.toString());
+      const stub = c.env.WEREWOLF_ROOM.get(id);
+      const response = await stub.fetch(new Request('https://internal/cleanup', { method: 'POST' }));
+      if (!response.ok) {
+        // DO 清理失敗，直接清理 D1
+        await c.env.DB.batch([
+          c.env.DB.prepare('DELETE FROM talk WHERE room_no = ?').bind(roomNo),
+          c.env.DB.prepare('DELETE FROM vote_history WHERE room_no = ?').bind(roomNo),
+          c.env.DB.prepare('DELETE FROM game_events WHERE room_no = ?').bind(roomNo),
+          c.env.DB.prepare('DELETE FROM user_entry WHERE room_no = ?').bind(roomNo),
+          c.env.DB.prepare('DELETE FROM wills WHERE room_no = ?').bind(roomNo),
+          c.env.DB.prepare('DELETE FROM whispers WHERE room_no = ?').bind(roomNo),
+          c.env.DB.prepare('DELETE FROM spectators WHERE room_no = ?').bind(roomNo),
+          c.env.DB.prepare('DELETE FROM room WHERE room_no = ?').bind(roomNo),
+        ]);
+      }
+    } catch (e) {
+      // DO 不存在或喚醒失敗，直接清理 D1
+      await c.env.DB.batch([
+        c.env.DB.prepare('DELETE FROM talk WHERE room_no = ?').bind(roomNo),
+        c.env.DB.prepare('DELETE FROM vote_history WHERE room_no = ?').bind(roomNo),
+        c.env.DB.prepare('DELETE FROM game_events WHERE room_no = ?').bind(roomNo),
+        c.env.DB.prepare('DELETE FROM user_entry WHERE room_no = ?').bind(roomNo),
+        c.env.DB.prepare('DELETE FROM wills WHERE room_no = ?').bind(roomNo),
+        c.env.DB.prepare('DELETE FROM whispers WHERE room_no = ?').bind(roomNo),
+        c.env.DB.prepare('DELETE FROM spectators WHERE room_no = ?').bind(roomNo),
+        c.env.DB.prepare('DELETE FROM room WHERE room_no = ?').bind(roomNo),
+      ]);
+    }
+
+    // 清理 KV 統計
     const statsManager = new StatsManager(c.env.KV);
     await statsManager.deleteRoomStats(roomNo);
 

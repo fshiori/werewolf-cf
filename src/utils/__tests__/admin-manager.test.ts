@@ -100,8 +100,7 @@ describe('Admin System', () => {
       const ttl = 5000;
       const session = createAdminSession('admin', ttl);
       
-      const expectedExpiry = Date.now() + ttl;
-      expect(session.expiresAt).toBeCloseTo(expectedExpiry, 0);
+      expect(session.expiresAt - session.createdAt).toBe(ttl);
     });
   });
 

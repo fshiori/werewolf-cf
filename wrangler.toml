@@ -37,6 +37,10 @@ binding = "ASSETS"
 name = "WEREWOLF_ROOM"
 class_name = "WerewolfRoom"
 
+# Cron Trigger — 每 15 分鐘掃描殘留房間
+[triggers]
+crons = ["*/15 * * * *"]
+
 # Migrations - 初始化 SQLite storage
 [[migrations]]
 tag = "v1"

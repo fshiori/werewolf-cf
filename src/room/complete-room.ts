@@ -20,8 +20,14 @@ export class WerewolfRoom extends DurableObject {
   private roomData: RoomData;
   private voteData?: any;
   private nightState?: any;
+  private _pendingNightSummary?: string;
   // @ts-ignore - ctx is a DurableObject property
   private storage = this.ctx.storage;
+
+  // 清理機制時間常數
+  private static readonly CLEANUP_CHECK_INTERVAL_MS = 5 * 60 * 1000;  // 每 5 分鐘檢查
+  private static readonly ENDED_ROOM_TTL_MS = 30 * 60 * 1000;           // 結束後 30 分鐘清理
+  private static readonly INACTIVE_ROOM_TTL_MS = 2 * 60 * 60 * 1000;    // 無活動 2 小時清理
 
   // @ts-ignore - env is a DurableObject property
   constructor(state: DurableObjectState, env: Env) {
@@ -53,6 +59,111 @@ export class WerewolfRoom extends DurableObject {
     }
   }
 
+  /**
+   * Durable Object alarm handler — 定期檢查是否需要清理房間
+   * 由 Cloudflare Workers 自動呼叫，無需外部觸發
+   */
+  async alarm() {
+    const now = Date.now();
+    const lastActive = this.roomData.lastUpdated || this.roomData.uptime || now;
+    const inactiveMs = now - lastActive;
+
+    let shouldCleanup = false;
+
+    if (this.roomData.status === 'ended' && inactiveMs > WerewolfRoom.ENDED_ROOM_TTL_MS) {
+      // 遊戲結束超過 30 分鐘 → 清理
+      shouldCleanup = true;
+    } else if (
+      (this.roomData.status === 'waiting' || this.roomData.status === 'playing') &&
+      this.sessions.size === 0 &&
+      inactiveMs > WerewolfRoom.INACTIVE_ROOM_TTL_MS
+    ) {
+      // 等待中或遊戲中，但 0 人連線超過 2 小時 → 清理（殘留房間）
+      shouldCleanup = true;
+    }
+
+    if (shouldCleanup) {
+      console.log(`[Room ${this.roomData.roomNo}] Cleanup triggered: status=${this.roomData.status}, inactive=${Math.round(inactiveMs / 60000)}min`);
+      await this.cleanupRoom();
+      return;
+    }
+
+    // 否則重新設定 alarm 繼續監控
+    await this.storage.setAlarm(now + WerewolfRoom.CLEANUP_CHECK_INTERVAL_MS);
+  }
+
+  /**
+   * 排程下一次清理檢查
+   */
+  private async scheduleCleanupCheck() {
+    try {
+      await this.storage.setAlarm(Date.now() + WerewolfRoom.CLEANUP_CHECK_INTERVAL_MS);
+    } catch (e) {
+      console.error('Failed to schedule cleanup check:', e);
+    }
+  }
+
+  /**
+   * 清理房間（由 alarm 或外部 /cleanup 觸發）
+   */
+  private async cleanupRoom() {
+    const roomNo = this.roomData.roomNo;
+
+    // 1. 清理 D1 資料（game_logs 保留作歷史記錄）
+    try {
+      // @ts-ignore
+      await this.env.DB.batch([
+        this.env.DB.prepare('DELETE FROM talk WHERE room_no = ?').bind(roomNo),
+        this.env.DB.prepare('DELETE FROM vote_history WHERE room_no = ?').bind(roomNo),
+        this.env.DB.prepare('DELETE FROM game_events WHERE room_no = ?').bind(roomNo),
+        this.env.DB.prepare('DELETE FROM user_entry WHERE room_no = ?').bind(roomNo),
+        this.env.DB.prepare('DELETE FROM wills WHERE room_no = ?').bind(roomNo),
+        this.env.DB.prepare('DELETE FROM whispers WHERE room_no = ?').bind(roomNo),
+        this.env.DB.prepare('DELETE FROM spectators WHERE room_no = ?').bind(roomNo),
+        this.env.DB.prepare('DELETE FROM room WHERE room_no = ?').bind(roomNo),
+      ]);
+      console.log(`[Room ${roomNo}] D1 cleanup completed`);
+    } catch (e) {
+      console.error(`[Room ${roomNo}] D1 cleanup error:`, e);
+    }
+
+    // 2. 清理 KV 統計
+    try {
+      const { StatsManager } = await import('../utils/stats-manager');
+      // @ts-ignore
+      const statsManager = new StatsManager(this.env.KV);
+      await statsManager.deleteRoomStats(roomNo);
+    } catch (e) {
+      console.error(`[Room ${roomNo}] KV stats cleanup error:`, e);
+    }
+
+    // 3. 關閉所有 WebSocket
+    for (const [, ws] of this.sessions) {
+      try { ws.close(1001, 'Room cleaned up'); } catch {}
+    }
+    this.sessions.clear();
+
+    // 4. 清理 DO storage
+    await this.storage.deleteAll();
+    // 5. 刪除 alarm
+    await this.storage.deleteAlarm();
+
+    console.log(`[Room ${roomNo}] Cleanup completed`);
+  }
+
+  /**
+   * 外部清理請求處理（管理員或 Cron Trigger 使用）
+   */
+  private async handleCleanup(): Promise<Response> {
+    try {
+      await this.cleanupRoom();
+      return Response.json({ success: true, roomNo: this.roomData.roomNo });
+    } catch (e) {
+      console.error('Cleanup handler error:', e);
+      return Response.json({ error: 'Cleanup failed' }, 500);
+    }
+  }
+
   async fetch(req: Request): Promise<Response> {
     const url = new URL(req.url);
     const path = url.pathname;
@@ -67,6 +178,10 @@ export class WerewolfRoom extends DurableObject {
 
     if (path === '/init' && req.method === 'POST') {
       return this.initialize(req);
+    }
+
+    if (path === '/cleanup' && req.method === 'POST') {
+      return this.handleCleanup();
     }
 
     return Response.json({ error: 'Not found' }, { status: 404 });
@@ -95,6 +210,9 @@ export class WerewolfRoom extends DurableObject {
     });
 
     await this.saveState();
+
+    // 新房間也排程清理檢查（防止無人加入時殘留）
+    await this.scheduleCleanupCheck();
 
     return Response.json({ success: true });
   }
@@ -439,13 +557,12 @@ export class WerewolfRoom extends DurableObject {
    * 推進遊戲時間
    */
   private async advanceGameTime(units: number) {
-    const shouldTransition = advanceTime(
-      { ...this.roomData } as any,
-      units,
-      DEFAULT_TIME_CONFIG
-    );
+    this.roomData.timeSpent = (this.roomData.timeSpent || 0) + units;
+    const limit = this.roomData.dayNight === 'day'
+      ? DEFAULT_TIME_CONFIG.dayLimit
+      : DEFAULT_TIME_CONFIG.nightLimit;
 
-    if (shouldTransition) {
+    if (this.roomData.timeSpent >= limit) {
       await this.transitionPhase();
     }
 
@@ -459,6 +576,7 @@ export class WerewolfRoom extends DurableObject {
     if (this.roomData.dayNight === 'day') {
       // 白天 → 夜晚
       this.roomData.dayNight = 'night';
+      this.roomData.timeSpent = 0;
       this.nightState = createNightState(this.roomData.roomNo, this.roomData.date);
 
       this.broadcast({
@@ -470,10 +588,20 @@ export class WerewolfRoom extends DurableObject {
       });
     } else {
       // 夜晚 → 白天
+      // 如果 nightState 已被 processNightResult() 清除，跳過（已被處理）
+      if (!this.nightState && !this._pendingNightSummary) {
+        return;
+      }
+
+      // 保存 nightState 引用並立即清除，防止 async 交錯
+      const nightState = this.nightState;
+      this.nightState = null;
+
       this.roomData.dayNight = 'day';
+      this.roomData.timeSpent = 0;
       this.roomData.date++;
 
-      const summary = this.nightState ? getNightSummary(this.nightState) : '昨晚是平安夜';
+      const summary = nightState ? getNightSummary(nightState) : '昨晚是平安夜';
 
       this.broadcast({
         type: 'phase_change',
@@ -485,8 +613,8 @@ export class WerewolfRoom extends DurableObject {
       });
 
       // 處理夜晚結果
-      if (this.nightState) {
-        const dead = processNightResult(this.nightState, this.roomData.players);
+      if (nightState) {
+        const dead = processNightResult(nightState, this.roomData.players);
         if (dead.length > 0) {
           this.broadcast({
             type: 'players_died',
@@ -517,7 +645,11 @@ export class WerewolfRoom extends DurableObject {
       return;
     }
 
-    const executed = executeVote(this.voteData, this.roomData.players);
+    // 立即清除 voteData 防止 async 交錯導致重複處理
+    const voteData = this.voteData;
+    this.voteData = null;
+
+    const executed = executeVote(voteData, this.roomData.players);
 
     if (executed.length > 0) {
       this.broadcast({
@@ -551,6 +683,7 @@ export class WerewolfRoom extends DurableObject {
 
     // 投票結束 → 進入夜晚
     this.roomData.dayNight = 'night';
+    this.roomData.timeSpent = 0;
     this.nightState = createNightState(this.roomData.roomNo, this.roomData.date);
     this.broadcast({
       type: 'phase_change',
@@ -571,7 +704,15 @@ export class WerewolfRoom extends DurableObject {
       return;
     }
 
-    const dead = processNightResult(this.nightState, this.roomData.players);
+    // 立即清除 nightState 防止 async 交錯導致重複處理
+    const nightState = this.nightState;
+    this.nightState = null;
+
+    // 先計算夜晚摘要（transitionPhase 需要）
+    this._pendingNightSummary = getNightSummary(nightState);
+
+    // 處理死亡
+    const dead = processNightResult(nightState, this.roomData.players);
 
     if (dead.length > 0) {
       this.broadcast({
@@ -596,8 +737,32 @@ export class WerewolfRoom extends DurableObject {
       }
     }
 
-    // 轉換到白天
-    await this.transitionPhase();
+    // 轉換到白天（不再在 transitionPhase 中處理夜晚結果，避免重複）
+    this.roomData.dayNight = 'day';
+    this.roomData.timeSpent = 0;
+    this.roomData.date++;
+
+    this.broadcast({
+      type: 'phase_change',
+      data: {
+        phase: 'day',
+        date: this.roomData.date,
+        message: `天亮了...${this._pendingNightSummary || '昨晚是平安夜'}`
+      }
+    });
+
+    // 檢查勝負
+    const victory = checkVictory(Array.from(this.roomData.players.values()));
+    if (victory) {
+      await this.endGame(victory);
+      return;
+    }
+
+    // 建立投票資料
+    this.voteData = createVoteData(this.roomData.roomNo, this.roomData.date);
+    this._pendingNightSummary = null;
+
+    await this.saveState();
   }
 
   /**
@@ -686,6 +851,9 @@ export class WerewolfRoom extends DurableObject {
     }
 
     await this.saveState();
+
+    // 遊戲結束後排程清理（30 分鐘後）
+    await this.scheduleCleanupCheck();
   }
 
   /**
