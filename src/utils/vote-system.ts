@@ -294,3 +294,96 @@ export function voteToDatabase(voteData: VoteData, voteNumber: number): Vote[] {
 
   return votes;
 }
+
+// ── comoutl token: 連續出局處刑 ──
+
+/**
+ * comoutl 邏輯：
+ * 當投票平手且 comoutl 啟用時，不重新投票，而是依以下優先級選出淘汰者：
+ * 1. 平手者中，在上一輪（previousRoundTop）得票最高的人被淘汰
+ * 2. 若無上一輪資料或無法決定，則隨機淘汰
+ *
+ * @param voteData  當前投票資料
+ * @param players   玩家 Map
+ * @param previousRoundTop 上一輪得票最高的玩家 uname（comoutl 上下文傳入）
+ * @returns 被淘汰的玩家，若無法決定回傳 null
+ */
+export function resolveComoutlTie(
+  voteData: VoteData,
+  players: Map<string, Player>,
+  previousRoundTop?: string[]
+): Player | null {
+  const result = getVoteResult(voteData);
+  if (result.length <= 1) {
+    // 非平手，不應使用此函數
+    return null;
+  }
+
+  // 嘗試用上一輪最高票來打破平手
+  if (previousRoundTop && previousRoundTop.length > 0) {
+    // 上一輪最高票者中，誰在當前平手者中？
+    const comoutlTarget = previousRoundTop.find(t => result.includes(t));
+    if (comoutlTarget) {
+      const player = players.get(comoutlTarget);
+      if (player && player.live === 'live') {
+        player.live = 'dead';
+        return player;
+      }
+    }
+  }
+
+  // 無法決定 → 隨機
+  const randomTarget = randomTieBreak(voteData);
+  if (randomTarget) {
+    const player = players.get(randomTarget);
+    if (player && player.live === 'live') {
+      player.live = 'dead';
+      return player;
+    }
+  }
+
+  return null;
+}
+
+/**
+ * 取得投票中得票最高的玩家名稱列表（用於 comoutl 下一輪判定）
+ */
+export function getTopVotedPlayers(voteData: VoteData): string[] {
+  return getVoteResult(voteData);
+}
+
+// ── voteDisplay token: 投票結果展示 ──
+
+/**
+ * 根據 voteDisplay 模式過濾投票統計
+ *
+ * 0 = 不顯示任何投票資訊（回傳空陣列）
+ * 1 = 顯示完整投票資訊（誰投給誰）
+ * 2 = 匿名模式（只顯示票數，不顯示誰投給誰）
+ *
+ * @param voteData   投票資料
+ * @param mode       voteDisplay 模式 (0/1/2)
+ */
+export function filterVoteDisplay(
+  voteData: VoteData,
+  mode: number
+): { showResults: boolean; voteCounts: Array<{ uname: string; count: number }>; voterMap: Array<{ voter: string; target: string }> | null } {
+  if (mode === 0) {
+    // 完全隱藏
+    return { showResults: false, voteCounts: [], voterMap: null };
+  }
+
+  const voteCounts = getVoteStats(voteData);
+
+  if (mode === 2) {
+    // 匿名：只顯示票數統計，不顯示誰投給誰
+    return { showResults: true, voteCounts, voterMap: null };
+  }
+
+  // mode === 1: 完全顯示
+  const voterMap = Array.from(voteData.votes.entries()).map(([voter, target]) => ({
+    voter, target
+  }));
+
+  return { showResults: true, voteCounts, voterMap };
+}

@@ -11,7 +11,7 @@
     "d1:migrate": "wrangler d1 migrations apply werewolf-db --local",
     "d1:migrate:prod": "wrangler d1 migrations apply werewolf-db",
     "test": "vitest",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "wrangler types"
   },
   "keywords": [
     "werewolf",

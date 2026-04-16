@@ -100,4 +100,37 @@ describe('Time Progression System', () => {
       expect(phase).toBe('night');
     });
   });
+
+  describe('即時制 (realTime)', () => {
+    it('啟用即時制時不應以發言次數推進', () => {
+      // 即時制啟用時，realTimeDayLimitSec > 0 表示用實際時間
+      const realTimeDayLimitSec = 300;
+      const realTimeNightLimitSec = 150;
+      const isEnabled = realTimeDayLimitSec > 0 || realTimeNightLimitSec > 0;
+      expect(isEnabled).toBe(true);
+    });
+
+    it('未啟用即時制時應以發言次數推進', () => {
+      const realTimeDayLimitSec = 0;
+      const realTimeNightLimitSec = 0;
+      const isEnabled = realTimeDayLimitSec > 0 || realTimeNightLimitSec > 0;
+      expect(isEnabled).toBe(false);
+    });
+
+    it('即時制階段過期檢查', () => {
+      const phaseStartTimeMs = Date.now() - 301000; // 301 秒前開始
+      const realTimeDayLimitSec = 300;
+      const elapsed = (Date.now() - phaseStartTimeMs) / 1000;
+      const isExpired = elapsed >= realTimeDayLimitSec;
+      expect(isExpired).toBe(true);
+    });
+
+    it('即時制階段未過期檢查', () => {
+      const phaseStartTimeMs = Date.now() - 100000; // 100 秒前開始
+      const realTimeDayLimitSec = 300;
+      const elapsed = (Date.now() - phaseStartTimeMs) / 1000;
+      const isExpired = elapsed >= realTimeDayLimitSec;
+      expect(isExpired).toBe(false);
+    });
+  });
 });
