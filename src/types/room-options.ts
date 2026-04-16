@@ -41,6 +41,8 @@ export interface RoomOptions {
   comoutl: boolean;
   /** 投票結果展示模式 (0=全隱, 1=全顯, 2=匿名) */
   voteDisplay: number;
+  /** 是否顯示「誰已完成投票」進度（legacy votedisplay） */
+  votedisplay: boolean;
   /** 自訂啞巴男 */
   custDummy: boolean;
   /** 啞巴男自訂名稱（custDummy 啟用時使用） */
@@ -71,6 +73,7 @@ export const DEFAULT_ROOM_OPTIONS: Readonly<RoomOptions> = {
   realTimeNightLimitSec: 0,
   comoutl: false,
   voteDisplay: 0,
+  votedisplay: false,
   custDummy: false,
   dummyCustomName: '',
   dummyCustomLastWords: '',
@@ -120,6 +123,10 @@ export function parseRoomOptions(input: unknown): RoomOptions {
     realTimeNightLimitSec,
     comoutl: parseBoolean(raw.comoutl) ?? DEFAULT_ROOM_OPTIONS.comoutl,
     voteDisplay: parseVoteDisplay(raw.voteDisplay) ?? DEFAULT_ROOM_OPTIONS.voteDisplay,
+    votedisplay:
+      parseBoolean(raw.votedisplay) ??
+      parseBoolean(raw.voteDisplayProgress) ??
+      DEFAULT_ROOM_OPTIONS.votedisplay,
     custDummy: parseBoolean(raw.custDummy) ?? DEFAULT_ROOM_OPTIONS.custDummy,
     dummyCustomName:
       parseTrimmedString(raw.dummyCustomName) ??

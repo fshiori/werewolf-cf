@@ -1035,6 +1035,7 @@
     let isNight = false;
     let canSpeak = false;
     let voteActive = false;
+    let votedUsers = new Set();
     let nightActionSubmitted = false;
 
     // ==================== Initialization ====================
@@ -1284,12 +1285,14 @@
           break;
 
         case 'day_start':
+          votedUsers = new Set();
           updatePhase('day', data.data.date);
           addSystemMessage(data.data.message || `☀️ 第 ${data.data.date} 天開始`);
           updatePhaseUI('day');
           break;
 
         case 'night_start':
+          votedUsers = new Set();
           updatePhase('night', data.data.date);
           addSystemMessage(data.data.message || '🌙 夜幕降臨');
           updatePhaseUI('night');
@@ -1574,7 +1577,8 @@
         const tripStr = p.trip ? `<span class="trip">◆${escapeHtml(p.trip)}</span>` : '';
         const roleInfo = p.role ? (ROLE_INFO[p.role] || { emoji: '❓', name: p.role }) : null;
         const roleStr = roleInfo ? `<span class="trip" style="margin-left:6px;">${roleInfo.emoji} ${escapeHtml(roleInfo.name)}</span>` : '';
-        const statusText = isDead ? '已死亡' : '存活';
+        const isVoted = !isDead && votedUsers.has(p.uname) && roomData?.roomOptions?.votedisplay === true;
+        const statusText = isDead ? '已死亡' : (isVoted ? '已投票' : '存活');
         const statusClass = isDead ? 'dead-text' : 'alive';
 
         el.innerHTML = `
@@ -1672,6 +1676,10 @@
       const voteCounts = data.voteCounts || {};
       const currentVoter = data.uname;
       const currentTarget = data.target;
+      if (Array.isArray(data.votedUsers)) {
+        votedUsers = new Set(data.votedUsers);
+        updatePlayersList(players);
+      }
 
       // Update vote panel if open
       if (document.getElementById('voteOverlay').classList.contains('show')) {
@@ -1689,6 +1697,7 @@
 
     function handleVoteResult(data) {
       voteActive = false;
+      votedUsers = new Set();
       if (voteTimerInterval) {
         clearInterval(voteTimerInterval);
         voteTimerInterval = null;

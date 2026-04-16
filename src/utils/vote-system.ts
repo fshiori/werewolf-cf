@@ -195,6 +195,13 @@ export function hasVoted(voteData: VoteData, uname: string): boolean {
 }
 
 /**
+ * 取得目前已完成投票的玩家列表（依投票先後順序）
+ */
+export function getVotedUsers(voteData: VoteData): string[] {
+  return Array.from(voteData.votes.keys());
+}
+
+/**
  * 獲取玩家的投票目標
  */
 export function getPlayerVote(voteData: VoteData, uname: string): string | undefined {
