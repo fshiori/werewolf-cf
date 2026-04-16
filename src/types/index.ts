@@ -35,6 +35,7 @@ export type Role =
   | 'poison'       // 埋毒者
   | 'wfbig'        // 大狼
   | 'authority'    // 權力者
+  | 'decide'       // 決定者
   | 'lovers'       // 戀人
   | 'lovers_partner' // 戀人夥伴
   | 'cat'          // 貓又

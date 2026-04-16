@@ -10,7 +10,7 @@ import type { Env, Player, RoomData, Message, Role } from '../types';
 import { createRoom, addPlayer, removePlayer, startGame, endGame, getPublicRoomInfo } from '../utils/room-manager';
 import { advanceTime, checkSilence, transitionPhase, DEFAULT_TIME_CONFIG } from '../utils/time-progression';
 import { assignRoles, checkVictory, canSpeak, getRoleTeam, getVictoryMessage } from '../utils/role-system';
-import { createVoteData, addVote, getVoteResult, executeVote, isVoteComplete } from '../utils/vote-system';
+import { createVoteData, addVote, getVoteResult, executeVote, isVoteComplete, calculateWeightedVotes, resolveWeightedVoteResult } from '../utils/vote-system';
 import { createNightState, wolfKill, seerDivine, guardTarget, processNightResult, getNightSummary, isNightActionsComplete } from '../utils/night-action';
 import { createSessionManager, type SessionValue } from '../utils/session-manager';
 import {
@@ -118,6 +118,31 @@ export class WerewolfRoom extends DurableObject {
   private async cleanupRoom() {
     const roomNo = this.roomData.roomNo;
 
+    // 0. 歸檔回放資料（talk/game_events/vote_history）到 archive 表
+    try {
+      // @ts-ignore
+      await this.env.DB.batch([
+        this.env.DB.prepare(
+          `INSERT INTO talk_archive (id, room_no, date, location, uname, handle_name, sentence, font_type, time, spend_time, archived_at)
+           SELECT id, room_no, date, location, uname, handle_name, sentence, font_type, time, spend_time, strftime('%s','now')
+           FROM talk WHERE room_no = ?`
+        ).bind(roomNo),
+        this.env.DB.prepare(
+          `INSERT INTO game_events_archive (id, room_no, date, event_type, description, actor, target, time, archived_at)
+           SELECT id, room_no, date, event_type, description, actor, target, time, strftime('%s','now')
+           FROM game_events WHERE room_no = ?`
+        ).bind(roomNo),
+        this.env.DB.prepare(
+          `INSERT INTO vote_history_archive (id, room_no, date, round, voter, candidate, time, archived_at)
+           SELECT id, room_no, date, round, voter, candidate, time, strftime('%s','now')
+           FROM vote_history WHERE room_no = ?`
+        ).bind(roomNo),
+      ]);
+      console.log(`[Room ${roomNo}] Replay data archived`);
+    } catch (e) {
+      console.warn(`[Room ${roomNo}] Archive failed (non-critical):`, e);
+    }
+
     // 1. 清理 D1 資料（game_logs 保留作歷史記錄）
     try {
       // @ts-ignore
@@ -173,6 +198,60 @@ export class WerewolfRoom extends DurableObject {
     }
   }
 
+  /**
+   * 管理員踢出玩家（由 admin.ts 呼叫，無房長/狀態限制）
+   */
+  private async handleAdminKick(req: Request): Promise<Response> {
+    try {
+      const { uname, reason } = await req.json() as { uname: string; reason?: string };
+
+      if (!uname) {
+        return Response.json({ error: 'Username required' }, { status: 400 });
+      }
+
+      if (!this.roomData) {
+        return Response.json({ error: 'Room not initialized' }, { status: 404 });
+      }
+
+      const targetPlayer = this.roomData.players.get(uname);
+      if (!targetPlayer) {
+        return Response.json({ error: 'Player not found' }, { status: 404 });
+      }
+
+      // 移除玩家
+      removePlayer(this.roomData, uname);
+
+      // 關閉目標玩家的 WebSocket
+      const targetWs = this.sessions.get(uname);
+      if (targetWs) {
+        try { targetWs.close(4001, reason || 'Kicked by admin'); } catch {}
+        this.sessions.delete(uname);
+      }
+
+      // 廣播系統訊息
+      this.broadcast({
+        type: 'system',
+        data: {
+          message: `玩家 ${targetPlayer.handleName} 已被管理員移出${reason ? `（${reason}）` : ''}`,
+          players: Array.from(this.roomData.players.values()).map(p => ({
+            userNo: p.userNo,
+            uname: p.uname,
+            handleName: p.handleName,
+            trip: p.trip,
+            iconNo: p.iconNo,
+            live: p.live
+          }))
+        }
+      });
+
+      await this.saveState();
+      return Response.json({ success: true, kicked: uname });
+    } catch (e) {
+      console.error('Admin kick handler error:', e);
+      return Response.json({ error: 'Kick failed' }, 500);
+    }
+  }
+
   async fetch(req: Request): Promise<Response> {
     const url = new URL(req.url);
     const path = url.pathname;
@@ -198,6 +277,10 @@ export class WerewolfRoom extends DurableObject {
 
     if (path === '/cleanup' && req.method === 'POST') {
       return this.handleCleanup();
+    }
+
+    if (path === '/kick' && req.method === 'POST') {
+      return this.handleAdminKick(req);
     }
 
     return Response.json({ error: 'Not found' }, { status: 404 });
@@ -233,6 +316,9 @@ export class WerewolfRoom extends DurableObject {
     this.roomData.passwordHash = data.passwordHash || '';
     this.roomData.timeLimit = data.roomOptions?.timeLimit;
     this.roomData.silenceMode = data.roomOptions?.silenceMode;
+
+    // 儲存完整的 roomOptions（含 gmEnabled 等所有選項）
+    this.roomData.roomOptions = data.roomOptions;
 
     await this.saveState();
 
@@ -554,10 +640,21 @@ export class WerewolfRoom extends DurableObject {
       return;
     }
 
-    // 隨機分配角色
     const players = Array.from(this.roomData.players.values());
+
+    // 隨機分配角色
     const roleConfig = this.parseRoleConfig(this.roomData.optionRole);
     assignRoles(players, roleConfig);
+
+    // GM 啟用：將房長的角色覆蓋為 GM
+    const gmEnabled = this.roomData.roomOptions?.gmEnabled === true;
+    if (gmEnabled) {
+      const hostUname = this.roomData.host || players[0]?.uname;
+      const hostPlayer = hostUname ? this.roomData.players.get(hostUname) : undefined;
+      if (hostPlayer) {
+        hostPlayer.role = 'GM';
+      }
+    }
 
     // 開始遊戲
     const success = startGame(this.roomData);
@@ -893,6 +990,7 @@ export class WerewolfRoom extends DurableObject {
 
   /**
    * 處理投票結果
+   * 使用加權投票（authority x2），並處理平手/decide 邏輯
    */
   private async processVoteResult() {
     if (!this.voteData) {
@@ -903,17 +1001,33 @@ export class WerewolfRoom extends DurableObject {
     const voteData = this.voteData;
     this.voteData = null;
 
-    const executed = executeVote(voteData, this.roomData.players);
+    // 使用加權投票解析結果（含 authority x2 + decide 平手處理）
+    const result = resolveWeightedVoteResult(voteData, this.roomData.players);
 
-    if (executed.length > 0) {
+    if (result.revote) {
+      // 平手且無 decide 玩家 → 重新投票
+      this.broadcast({
+        type: 'vote_tie',
+        data: {
+          message: '投票平手！需要重新投票...'
+        }
+      });
+
+      // 建立新的投票資料讓玩家重新投票
+      this.voteData = createVoteData(this.roomData.roomNo, this.roomData.date);
+      await this.saveState();
+      return;
+    }
+
+    if (result.executed.length > 0) {
       this.broadcast({
         type: 'players_executed',
-        data: executed.map(p => ({ uname: p.uname, handleName: p.handleName }))
+        data: result.executed.map(p => ({ uname: p.uname, handleName: p.handleName }))
       });
     }
 
     // 記錄處決事件
-    for (const p of executed) {
+    for (const p of result.executed) {
       try {
         // @ts-ignore
         await this.env.DB.prepare(`
@@ -1289,6 +1403,33 @@ export class WerewolfRoom extends DurableObject {
         // 減少一隻狼
         roleConfig.wolf = Math.max(1, (roleConfig.wolf || 0) - 1);
       }
+
+      // 決定者：16 人以上可用，平手時若在平手者中則直接被處決
+      if (options.includes('decide') && this.roomData.maxUser >= 16) {
+        if (!roleConfig.decide) {
+          // 決定者佔用一個人類名額
+          if ((roleConfig.human || 0) > 0) {
+            roleConfig.human = (roleConfig.human || 0) - 1;
+          }
+          roleConfig.decide = 1;
+        }
+      }
+
+      // GM 令牌：透過 optionRole 的 'gm' 令牌也能啟用 GM（等同 gmEnabled）
+      if (options.includes('gm')) {
+        this.roomData.roomOptions = this.roomData.roomOptions || {};
+        (this.roomData.roomOptions as any).gmEnabled = true;
+      }
+    }
+
+    // 權力者：16 人以上自動啟用（PHP parity），投票權重 x2
+    // 即使 config 為空也要檢查（authority 在 base role table 中不會出現，需額外加入）
+    if (this.roomData.maxUser >= 16 && !roleConfig.authority) {
+      // 權力者佔用一個人類名額
+      if ((roleConfig.human || 0) > 0) {
+        roleConfig.human = (roleConfig.human || 0) - 1;
+      }
+      roleConfig.authority = 1;
     }
 
     // 確保 human 至少為 0

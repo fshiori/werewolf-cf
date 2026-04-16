@@ -293,8 +293,23 @@ app.post('/api/admin/rooms/:roomNo/kick', requireAdminAuth, rateLimit, async (c)
       return c.json({ error: 'Username required' }, 400);
     }
 
-    // TODO: 通知 Durable Object 踢出玩家
-    // 目前只能記錄
+    // 通知 Durable Object 踢出玩家
+    try {
+      const id = c.env.WEREWOLF_ROOM.idFromName(roomNo.toString());
+      const stub = c.env.WEREWOLF_ROOM.get(id);
+      const response = await stub.fetch(new Request('https://internal/kick', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ uname, reason: reason || 'Kicked by admin' })
+      }));
+      if (!response.ok) {
+        const result = await response.json() as { error?: string };
+        return c.json({ error: result.error || 'Failed to kick player' }, response.status);
+      }
+    } catch (doError) {
+      console.error('DO kick error:', doError);
+      return c.json({ error: 'Failed to contact room' }, 500);
+    }
     
     return c.json({
       success: true,

@@ -202,6 +202,65 @@ export function getPlayerVote(voteData: VoteData, uname: string): string | undef
 }
 
 /**
+ * 使用權重投票解析結果
+ * 回傳 { executed: Player[], isTie: boolean, revote: boolean }
+ *
+ * - 計算加權票數（authority 算 2 票）
+ * - 平手且無 decide 角色在平手者中 → revote=true, executed=[]
+ * - 平手且有 decide 角色在平手者中 → 直接處決該 decide 玩家
+ * - 非平手 → 處決最高票者
+ */
+export function resolveWeightedVoteResult(
+  voteData: VoteData,
+  players: Map<string, Player>
+): { executed: Player[]; isTie: boolean; revote: boolean } {
+  const weighted = calculateWeightedVotes(voteData, players);
+
+  if (weighted.size === 0) {
+    return { executed: [], isTie: false, revote: false };
+  }
+
+  const maxVotes = Math.max(...weighted.values(), 0);
+  if (maxVotes === 0) {
+    return { executed: [], isTie: false, revote: false };
+  }
+
+  // 找出所有最高加權票數的玩家
+  const topTargets: string[] = [];
+  for (const [target, count] of weighted) {
+    if (count === maxVotes) {
+      topTargets.push(target);
+    }
+  }
+
+  if (topTargets.length === 1) {
+    // 單一最高票 → 處決
+    const player = players.get(topTargets[0]);
+    if (player && player.live === 'live') {
+      player.live = 'dead';
+      return { executed: [player], isTie: false, revote: false };
+    }
+    return { executed: [], isTie: false, revote: false };
+  }
+
+  // 平手：檢查 decide 角色是否在平手玩家中
+  const decideTarget = topTargets.find(t => {
+    const p = players.get(t);
+    return p && p.live === 'live' && p.role === 'decide';
+  });
+
+  if (decideTarget) {
+    // 有 decide 玩家在平手中 → 直接處決
+    const player = players.get(decideTarget)!;
+    player.live = 'dead';
+    return { executed: [player], isTie: true, revote: false };
+  }
+
+  // 平手且無 decide → 需要重新投票
+  return { executed: [], isTie: true, revote: true };
+}
+
+/**
  * 隨機決定平手（突然死模式）
  */
 export function randomTieBreak(voteData: VoteData): string {

@@ -28,6 +28,8 @@ export interface RoomOptions {
   voteMe: boolean;
   /** 需要 tripcode */
   tripRequired: boolean;
+  /** 啟用 GM（遊戲管理員） */
+  gmEnabled: boolean;
 }
 
 // 預設房間選項
@@ -43,6 +45,7 @@ export const DEFAULT_ROOM_OPTIONS: Readonly<RoomOptions> = {
   will: true,
   voteMe: false,
   tripRequired: false,
+  gmEnabled: false,
 };
 
 /**
@@ -67,6 +70,7 @@ export function parseRoomOptions(input: unknown): RoomOptions {
     will: parseBoolean(raw.will) ?? DEFAULT_ROOM_OPTIONS.will,
     voteMe: parseBoolean(raw.voteMe) ?? DEFAULT_ROOM_OPTIONS.voteMe,
     tripRequired: parseBoolean(raw.tripRequired) ?? DEFAULT_ROOM_OPTIONS.tripRequired,
+    gmEnabled: parseGmEnabled(raw.gmEnabled) ?? DEFAULT_ROOM_OPTIONS.gmEnabled,
   };
 }
 
@@ -96,10 +100,22 @@ function parseBoolean(value: unknown): boolean | null {
   return null;
 }
 
-/** 解析 dellook：只接受 0 或 1 */
+/** 解析 dellook：接受 boolean 或 0/1，統一轉為 0/1 */
 function parseDellook(value: unknown): number | null {
   if (value === 0 || value === 1) {
     return value;
   }
+  if (value === true) return 1;
+  if (value === false) return 0;
+  return null;
+}
+
+/** 解析 gmEnabled：接受 boolean 或 0/1，統一轉為 boolean */
+function parseGmEnabled(value: unknown): boolean | null {
+  if (typeof value === 'boolean') {
+    return value;
+  }
+  if (value === 1) return true;
+  if (value === 0) return false;
   return null;
 }
