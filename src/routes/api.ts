@@ -282,7 +282,7 @@ app.get('/api/rooms/:roomNo', async (c) => {
 app.delete('/api/rooms/:roomNo', async (c) => {
   try {
     const roomNo = parseInt(c.req.param('roomNo'));
-    const { password } = await c.req.json<{ password?: string }>();
+    const { password } = await c.req.json<{ password?: string }>().catch(() => ({}));
 
     // 從 D1 查詢房間
     const roomRow = await c.env.DB.prepare(
