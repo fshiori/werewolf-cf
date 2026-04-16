@@ -19,6 +19,7 @@ describe('DEFAULT_ROOM_OPTIONS', () => {
       will: true,
       voteMe: false,
       tripRequired: false,
+      gmEnabled: false,
     });
   });
 });
@@ -37,6 +38,7 @@ describe('parseRoomOptions', () => {
       will: false,
       voteMe: true,
       tripRequired: true,
+      gmEnabled: false,
     };
 
     const result = parseRoomOptions(input);

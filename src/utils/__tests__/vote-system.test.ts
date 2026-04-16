@@ -13,7 +13,8 @@ import {
   isVoteComplete,
   executeVote,
   clearVotes,
-  getVoteStats
+  getVoteStats,
+  resolveWeightedVoteResult
 } from '../vote-system';
 import type { Player } from '../types';
 
@@ -251,6 +252,205 @@ describe('Vote System', () => {
       const executed = executeVote(voteData, players);
       
       expect(executed.length).toBe(2);
+    });
+  });
+
+  describe('權重投票解析 (resolveWeightedVoteResult)', () => {
+    const makePlayer = (uname: string, role: string): Player => ({
+      userNo: 1,
+      uname,
+      handleName: uname,
+      trip: '',
+      iconNo: 1,
+      sex: '',
+      role: role as any,
+      live: 'live',
+      score: 0
+    });
+
+    it('單一最高票應該處決該玩家', () => {
+      const voteData = createVoteData(1, 1);
+      const players = new Map<string, Player>();
+      players.set('voter1', makePlayer('voter1', 'human'));
+      players.set('voter2', makePlayer('voter2', 'human'));
+      players.set('voter3', makePlayer('voter3', 'human'));
+      players.set('targetA', makePlayer('targetA', 'human'));
+      players.set('targetB', makePlayer('targetB', 'human'));
+
+      addVote(voteData, 'voter1', 'targetA');
+      addVote(voteData, 'voter2', 'targetA');
+      addVote(voteData, 'voter3', 'targetB');
+
+      const result = resolveWeightedVoteResult(voteData, players);
+
+      expect(result.isTie).toBe(false);
+      expect(result.revote).toBe(false);
+      expect(result.executed.length).toBe(1);
+      expect(result.executed[0].uname).toBe('targetA');
+      expect(result.executed[0].live).toBe('dead');
+    });
+
+    it('authority 投票權重應算 2 票，可改變結果', () => {
+      const voteData = createVoteData(1, 1);
+      const players = new Map<string, Player>();
+      players.set('authority', makePlayer('authority', 'authority'));
+      players.set('voter2', makePlayer('voter2', 'human'));
+      players.set('voter3', makePlayer('voter3', 'human'));
+      players.set('targetA', makePlayer('targetA', 'human'));
+      players.set('targetB', makePlayer('targetB', 'human'));
+
+      // authority 投 targetA (2票), voter2 投 targetB (1票), voter3 投 targetB (1票)
+      // targetA = 2, targetB = 2 → 平手（但因為無 decide → revote）
+      addVote(voteData, 'authority', 'targetA');
+      addVote(voteData, 'voter2', 'targetB');
+      addVote(voteData, 'voter3', 'targetB');
+
+      const result = resolveWeightedVoteResult(voteData, players);
+
+      expect(result.isTie).toBe(true);
+      expect(result.revote).toBe(true);
+      expect(result.executed.length).toBe(0);
+    });
+
+    it('authority 加權投票可打破平手', () => {
+      const voteData = createVoteData(1, 1);
+      const players = new Map<string, Player>();
+      players.set('authority', makePlayer('authority', 'authority'));
+      players.set('voter2', makePlayer('voter2', 'human'));
+      players.set('targetA', makePlayer('targetA', 'human'));
+      players.set('targetB', makePlayer('targetB', 'human'));
+
+      // authority 投 targetA (2票), voter2 投 targetB (1票)
+      // targetA = 2, targetB = 1 → targetA wins
+      addVote(voteData, 'authority', 'targetA');
+      addVote(voteData, 'voter2', 'targetB');
+
+      const result = resolveWeightedVoteResult(voteData, players);
+
+      expect(result.isTie).toBe(false);
+      expect(result.revote).toBe(false);
+      expect(result.executed.length).toBe(1);
+      expect(result.executed[0].uname).toBe('targetA');
+    });
+
+    it('平手且無 decide 玩家 → revote=true', () => {
+      const voteData = createVoteData(1, 1);
+      const players = new Map<string, Player>();
+      players.set('voter1', makePlayer('voter1', 'human'));
+      players.set('voter2', makePlayer('voter2', 'human'));
+      players.set('targetA', makePlayer('targetA', 'human'));
+      players.set('targetB', makePlayer('targetB', 'human'));
+
+      addVote(voteData, 'voter1', 'targetA');
+      addVote(voteData, 'voter2', 'targetB');
+
+      const result = resolveWeightedVoteResult(voteData, players);
+
+      expect(result.isTie).toBe(true);
+      expect(result.revote).toBe(true);
+      expect(result.executed.length).toBe(0);
+    });
+
+    it('平手且有 decide 玩家在平手者中 → 直接處決 decide 玩家', () => {
+      const voteData = createVoteData(1, 1);
+      const players = new Map<string, Player>();
+      players.set('voter1', makePlayer('voter1', 'human'));
+      players.set('voter2', makePlayer('voter2', 'human'));
+      players.set('targetA', makePlayer('targetA', 'human'));
+      players.set('targetB', makePlayer('targetB', 'decide'));
+
+      addVote(voteData, 'voter1', 'targetA');
+      addVote(voteData, 'voter2', 'targetB');
+
+      const result = resolveWeightedVoteResult(voteData, players);
+
+      expect(result.isTie).toBe(true);
+      expect(result.revote).toBe(false);
+      expect(result.executed.length).toBe(1);
+      expect(result.executed[0].uname).toBe('targetB');
+      expect(result.executed[0].live).toBe('dead');
+    });
+
+    it('平手但 decide 不在平手者中 → revote', () => {
+      const voteData = createVoteData(1, 1);
+      const players = new Map<string, Player>();
+      players.set('voter1', makePlayer('voter1', 'human'));
+      players.set('voter2', makePlayer('voter2', 'human'));
+      players.set('voter3', makePlayer('voter3', 'decide'));
+      players.set('targetA', makePlayer('targetA', 'human'));
+      players.set('targetB', makePlayer('targetB', 'human'));
+
+      // voter3 is decide but votes for targetA (not in the tied targets)
+      addVote(voteData, 'voter1', 'targetA');
+      addVote(voteData, 'voter2', 'targetB');
+      addVote(voteData, 'voter3', 'targetA');
+
+      const result = resolveWeightedVoteResult(voteData, players);
+
+      expect(result.isTie).toBe(false);
+      expect(result.revote).toBe(false);
+      expect(result.executed.length).toBe(1);
+      expect(result.executed[0].uname).toBe('targetA');
+    });
+
+    it('空投票 → 無處決', () => {
+      const voteData = createVoteData(1, 1);
+      const players = new Map<string, Player>();
+      players.set('targetA', makePlayer('targetA', 'human'));
+
+      const result = resolveWeightedVoteResult(voteData, players);
+
+      expect(result.executed.length).toBe(0);
+      expect(result.isTie).toBe(false);
+      expect(result.revote).toBe(false);
+    });
+
+    it('多人平手中有 decide → 只處決 decide 玩家', () => {
+      const voteData = createVoteData(1, 1);
+      const players = new Map<string, Player>();
+      players.set('voter1', makePlayer('voter1', 'human'));
+      players.set('voter2', makePlayer('voter2', 'human'));
+      players.set('voter3', makePlayer('voter3', 'human'));
+      players.set('targetA', makePlayer('targetA', 'human'));
+      players.set('targetB', makePlayer('targetB', 'decide'));
+      players.set('targetC', makePlayer('targetC', 'human'));
+
+      addVote(voteData, 'voter1', 'targetA');
+      addVote(voteData, 'voter2', 'targetB');
+      addVote(voteData, 'voter3', 'targetC');
+
+      const result = resolveWeightedVoteResult(voteData, players);
+
+      expect(result.isTie).toBe(true);
+      expect(result.revote).toBe(false);
+      expect(result.executed.length).toBe(1);
+      expect(result.executed[0].uname).toBe('targetB');
+      // targetA and targetC should still be alive
+      expect(players.get('targetA')!.live).toBe('live');
+      expect(players.get('targetC')!.live).toBe('live');
+    });
+
+    it('已死亡的玩家不計入加權投票', () => {
+      const voteData = createVoteData(1, 1);
+      const players = new Map<string, Player>();
+      const deadVoter = makePlayer('deadVoter', 'authority');
+      deadVoter.live = 'dead';
+      players.set('deadVoter', deadVoter);
+      players.set('voter2', makePlayer('voter2', 'human'));
+      players.set('voter3', makePlayer('voter3', 'human'));
+      players.set('targetA', makePlayer('targetA', 'human'));
+      players.set('targetB', makePlayer('targetB', 'human'));
+
+      // deadVoter is authority but dead — should not count
+      // voter2 → targetA (1), voter3 → targetB (1) → tie, no decide → revote
+      addVote(voteData, 'deadVoter', 'targetA');
+      addVote(voteData, 'voter2', 'targetA');
+      addVote(voteData, 'voter3', 'targetB');
+
+      const result = resolveWeightedVoteResult(voteData, players);
+
+      expect(result.isTie).toBe(true);
+      expect(result.revote).toBe(true);
     });
   });
 

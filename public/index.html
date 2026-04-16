@@ -447,6 +447,15 @@
               </label>
             </div>
 
+            <div class="role-team-header">🎮 遊戲管理</div>
+
+            <div style="margin-bottom:10px;">
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:4px 0;">
+                <input type="checkbox" id="optGmEnabled" style="width:auto;margin:0;">
+                <span><strong>GM（遊戲管理員）</strong> <small style="color:#999;">啟用後房長成為 GM，可殺害/復活/轉職/標記玩家、廣播訊息</small></span>
+              </label>
+            </div>
+
             <div class="role-team-header">⚡ 額外職業（依人數自動啟用/停用）</div>
 
             <div style="margin-bottom:8px;">
@@ -770,6 +779,7 @@
         dellook: document.getElementById('optDellook').checked,
         will: document.getElementById('optWill').checked,
         voteMe: document.getElementById('optVoteMe').checked,
+        gmEnabled: document.getElementById('optGmEnabled').checked,
       };
     }
 

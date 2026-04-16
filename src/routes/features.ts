@@ -986,29 +986,47 @@ app.get('/api/replay/:roomNo', async (c) => {
       return c.json({ error: 'Game not found' }, 404);
     }
 
-    // 2. 取得事件時間軸
-    const eventsStmt = c.env.DB.prepare(
+    // 2. 取得事件時間軸（fallback 到 archive）
+    let eventsResult = await c.env.DB.prepare(
       'SELECT * FROM game_events WHERE room_no = ? ORDER BY date ASC, time ASC'
-    );
-    const eventsResult = await eventsStmt.bind(roomNo).all();
+    ).bind(roomNo).all();
+    if (eventsResult.results.length === 0) {
+      eventsResult = await c.env.DB.prepare(
+        'SELECT id, room_no, date, event_type, description, actor, target, time FROM game_events_archive WHERE room_no = ? ORDER BY date ASC, time ASC'
+      ).bind(roomNo).all();
+    }
 
-    // 3. 取得投票記錄
-    const votesStmt = c.env.DB.prepare(
+    // 3. 取得投票記錄（fallback 到 archive）
+    let votesResult = await c.env.DB.prepare(
       'SELECT * FROM vote_history WHERE room_no = ? ORDER BY date ASC, time ASC'
-    );
-    const votesResult = await votesStmt.bind(roomNo).all();
+    ).bind(roomNo).all();
+    if (votesResult.results.length === 0) {
+      votesResult = await c.env.DB.prepare(
+        'SELECT id, room_no, date, round, voter, candidate, time FROM vote_history_archive WHERE room_no = ? ORDER BY date ASC, time ASC'
+      ).bind(roomNo).all();
+    }
 
     // 4. 取得遺書
-    const willsStmt = c.env.DB.prepare(
+    const willsResult = await c.env.DB.prepare(
       'SELECT * FROM wills WHERE room_no = ? ORDER BY date ASC, time ASC'
-    );
-    const willsResult = await willsStmt.bind(roomNo).all();
+    ).bind(roomNo).all();
+
+    // 5. 取得聊天記錄（fallback 到 archive）
+    let talksResult = await c.env.DB.prepare(
+      'SELECT * FROM talk WHERE room_no = ? ORDER BY date ASC, time ASC'
+    ).bind(roomNo).all();
+    if (talksResult.results.length === 0) {
+      talksResult = await c.env.DB.prepare(
+        'SELECT id, room_no, date, location, uname, handle_name, sentence, font_type, time, spend_time FROM talk_archive WHERE room_no = ? ORDER BY date ASC, time ASC'
+      ).bind(roomNo).all();
+    }
 
     return c.json({
       game: gameResult.results[0],
       events: eventsResult.results,
       votes: votesResult.results,
       wills: willsResult.results,
+      talks: talksResult.results,
     });
   } catch (error) {
     console.error('Get replay error:', error);
