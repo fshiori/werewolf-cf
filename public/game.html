@@ -2011,7 +2011,13 @@
         // Wolf kill: target alive non-wolf players
         currentNightAction = 'wolf_kill';
         const wolfRoles = ['wolf', 'wolf_partner', 'wfbig'];
-        const targets = players.filter(p => p.live === 'live' && !wolfRoles.includes(p.role) && p.uname !== myPlayer?.uname);
+        let targets = players.filter(p => p.live === 'live' && !wolfRoles.includes(p.role) && p.uname !== myPlayer?.uname);
+
+        // legacy parity: dummy_boy 啟用且第 1 天夜晚，狼人只能選 dummy_boy
+        const dayNo = parseInt(document.getElementById('dayCount')?.textContent || '0', 10);
+        if (roomData?.roomOptions?.dummyBoy === true && dayNo === 1) {
+          targets = targets.filter(p => p.uname === 'dummy_boy');
+        }
 
         header.innerHTML = `<span>🐺 狼人行動</span><span class="na-role-badge wolf-badge">狼人</span>`;
         actionBtn.textContent = '🐺 擊殺';

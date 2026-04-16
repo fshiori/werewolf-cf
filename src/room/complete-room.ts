@@ -11,7 +11,7 @@ import { createRoom, addPlayer, removePlayer, startGame, endGame, getPublicRoomI
 import { advanceTime, checkSilence, transitionPhase, DEFAULT_TIME_CONFIG, isRealTimeEnabled, isRealTimeExpired, startRealTimePhase, getRealTimeRemainingSec } from '../utils/time-progression';
 import { assignRoles, checkVictory, canSpeak, getRoleTeam, getVictoryMessage, createDummyBoyPlayer } from '../utils/role-system';
 import { createVoteData, addVote, getVoteResult, executeVote, isVoteComplete, calculateWeightedVotes, resolveWeightedVoteResult, filterVoteDisplay, resolveVoteDisplayMode, canVoteTarget, getVotedUsers } from '../utils/vote-system';
-import { createNightState, wolfKill, seerDivine, guardTarget, processNightResult, getNightSummary, isNightActionsComplete } from '../utils/night-action';
+import { createNightState, wolfKill, seerDivine, guardTarget, processNightResult, getNightSummary, isNightActionsComplete, canWolfKillTarget } from '../utils/night-action';
 import { createSessionManager, type SessionValue } from '../utils/session-manager';
 import { sanitizePlayersForViewer } from '../utils/player-visibility';
 import {
@@ -727,6 +727,16 @@ export class WerewolfRoom extends DurableObject {
     switch (action) {
       case 'wolf_kill':
         if (target) {
+          const validWolfTarget = canWolfKillTarget(
+            this.roomData.players,
+            uname,
+            target,
+            this.roomData.date,
+            this.roomData.roomOptions?.dummyBoy === true,
+          );
+          if (!validWolfTarget) {
+            return;
+          }
           wolfKill(this.nightState, this.roomData.players, [target]);
         }
         break;

@@ -118,7 +118,7 @@ describe('parseRoomOptions — gameOption token parity', () => {
       expect(parseRoomOptions({}).dummyBoy).toBe(false);
     });
 
-    // 已串接：開局可建立 dummy_boy 並支援 custDummy 自訂遺言（完整 AI 行為仍待補）
+    // 已串接：開局可建立 dummy_boy、支援 custDummy 自訂名稱/遺言，且第 1 天夜晚狼人僅可投 dummy_boy（完整 AI 行為仍待補）
   });
 
   // ── wishRole ✅（已解析，遊戲邏輯已消耗）──
