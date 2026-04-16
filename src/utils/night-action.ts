@@ -13,6 +13,7 @@ export enum NightActionType {
   FoxDivine = 'fox_divine',
   BetrConvert = 'betr_convert',
   GuardShoot = 'guard_shoot',
+  GuardProtect = 'guard_protect',
   Skip = 'skip',
 }
 
@@ -36,6 +37,7 @@ export interface NightState {
   victims: string[]; // 被殺的玩家
   divineResults: Map<string, string>; // 占卜結果
   converted: string[]; // 被轉化的玩家
+  guardedTarget?: string; // 守護者保護的目標 uname
 }
 
 /**
@@ -79,8 +81,10 @@ export function wolfKill(
       continue;
     }
 
-    // 檢查是否被守護（如果有守護角色）
-    // TODO: 實作守護邏輯
+    // 檢查是否被守護者保護
+    if (state.guardedTarget && state.guardedTarget === target) {
+      continue; // 守護成功，不加入受害者
+    }
 
     state.victims.push(target);
     addNightAction(state, NightActionType.WolfKill, 'wolf', target);
@@ -210,6 +214,55 @@ export function guardShoot(
 }
 
 /**
+ * 守護者保護目標
+ * @returns true 表示守護成功
+ */
+export function guardTarget(
+  state: NightState,
+  players: Map<string, Player>,
+  guard: string,
+  target: string
+): boolean {
+  const guardPlayer = players.get(guard);
+  const targetPlayer = players.get(target);
+
+  if (!guardPlayer || !targetPlayer) {
+    return false;
+  }
+
+  // 檢查是否為守護者
+  if (guardPlayer.role !== 'guard') {
+    return false;
+  }
+
+  // 守護者必須存活
+  if (guardPlayer.live !== 'live') {
+    return false;
+  }
+
+  // 不能守護自己
+  if (guard === target) {
+    return false;
+  }
+
+  // 目標必須存活
+  if (targetPlayer.live !== 'live') {
+    return false;
+  }
+
+  // 同一晚不能重複設定同一目標
+  if (state.guardedTarget === target) {
+    return false;
+  }
+
+  // 設定守護目標
+  state.guardedTarget = target;
+  addNightAction(state, NightActionType.GuardProtect, guard, target);
+
+  return true;
+}
+
+/**
  * 處理夜晚結果
  * 返回死亡玩家列表
  */
@@ -239,6 +292,7 @@ export function clearNightState(state: NightState): void {
   state.victims = [];
   state.divineResults.clear();
   state.converted = [];
+  state.guardedTarget = undefined;
 }
 
 /**
@@ -257,6 +311,10 @@ export function isNightActionsComplete(
     p => p.role === 'mage' && p.live === 'live'
   );
 
+  const aliveGuards = Array.from(players.values()).filter(
+    p => p.role === 'guard' && p.live === 'live'
+  );
+
   // 檢查狼人是否行動（殺人或跳過）
   const wolfActed = state.actions.some(a =>
     a.type === NightActionType.WolfKill ||
@@ -269,11 +327,21 @@ export function isNightActionsComplete(
     (a.type === NightActionType.Skip && aliveSeers.some(s => s.uname === a.actor))
   );
 
+  // 檢查守護者是否行動（保護或跳過）
+  const guardActed = state.actions.some(a =>
+    a.type === NightActionType.GuardProtect ||
+    (a.type === NightActionType.Skip && aliveGuards.some(g => g.uname === a.actor))
+  );
+
   if (aliveWolves.length > 0 && !wolfActed) {
     return false;
   }
 
   if (aliveSeers.length > 0 && !seerActed) {
+    return false;
+  }
+
+  if (aliveGuards.length > 0 && !guardActed) {
     return false;
   }
 
@@ -292,6 +360,11 @@ export function getNightSummary(state: NightState): string {
 
   if (state.converted.length > 0) {
     parts.push(`${state.converted.length} 人被轉化`);
+  }
+
+  // 守護成功保護了某人
+  if (state.guardedTarget) {
+    parts.push('守護成功保護了一人');
   }
 
   if (parts.length === 0) {

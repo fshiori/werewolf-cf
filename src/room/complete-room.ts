@@ -11,7 +11,7 @@ import { createRoom, addPlayer, removePlayer, startGame, endGame, getPublicRoomI
 import { advanceTime, checkSilence, transitionPhase, DEFAULT_TIME_CONFIG } from '../utils/time-progression';
 import { assignRoles, checkVictory, canSpeak, getRoleTeam } from '../utils/role-system';
 import { createVoteData, addVote, getVoteResult, executeVote, isVoteComplete } from '../utils/vote-system';
-import { createNightState, wolfKill, seerDivine, processNightResult, getNightSummary, isNightActionsComplete } from '../utils/night-action';
+import { createNightState, wolfKill, seerDivine, guardTarget, processNightResult, getNightSummary, isNightActionsComplete } from '../utils/night-action';
 import { createSessionManager, type SessionValue } from '../utils/session-manager';
 
 export class WerewolfRoom extends DurableObject {
@@ -486,6 +486,11 @@ export class WerewolfRoom extends DurableObject {
               }));
             }
           }
+        }
+        break;
+      case 'guard_protect':
+        if (target) {
+          guardTarget(this.nightState, this.roomData.players, uname, target);
         }
         break;
       case 'skip':
