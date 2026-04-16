@@ -441,8 +441,10 @@
 
         document.getElementById('modalTitle').textContent = log.room_name;
 
-        const deathOrder = log.death_order ? JSON.parse(log.death_order) : [];
-        const keyEvents = log.key_events ? JSON.parse(log.key_events) : [];
+        // death_order 是逗號分隔字串（如 "T2,T3,T6"），非 JSON
+        const deathOrder = log.death_order ? log.death_order.split(',').filter(Boolean) : [];
+        // key_events 是純字串（如 "村民陣營勝利"），非 JSON
+        const keyEvents = log.key_events ? [log.key_events] : [];
 
         document.getElementById('modalBody').innerHTML = `
           <div class="detail-section">
@@ -464,7 +466,7 @@
               <h3>死亡順序</h3>
               <ol>
                 ${deathOrder.map(item => `
-                  <li>${escapeHtml(item.day)} 日：${escapeHtml(item.uname)} (${getRoleName(item.role)})</li>
+                  <li>${escapeHtml(item)}</li>
                 `).join('')}
               </ol>
             </div>
