@@ -157,7 +157,16 @@ app.post('/api/rooms', checkBan, rateLimit, async (c) => {
     }
 
     // 解析 typed room options
-    const roomOptions = parseRoomOptions(data.options);
+    // 前端送 gameOption: JSON.stringify(gameOpts)，需先 JSON.parse
+    let rawOpts: unknown;
+    if (data.options) {
+      rawOpts = data.options;
+    } else if (typeof data.gameOption === 'string') {
+      try { rawOpts = JSON.parse(data.gameOption); } catch { rawOpts = undefined; }
+    } else if (data.gameOption) {
+      rawOpts = data.gameOption;
+    }
+    const roomOptions = parseRoomOptions(rawOpts);
 
     // 生成房間編號
     const roomNo = Date.now();
@@ -177,6 +186,7 @@ app.post('/api/rooms', checkBan, rateLimit, async (c) => {
         maxUser,
         gameOption: data.gameOption || '',
         optionRole: data.optionRole || '',
+        gmTrip: data.gmTrip || '',
         isPrivate,
         passwordHash,
         roomOptions
@@ -494,28 +504,40 @@ app.post('/api/rooms/:roomNo/join', checkBan, rateLimit, async (c) => {
       return c.json({ error: 'Invalid display name' }, 400);
     }
 
-    // ---- 私人房間密碼驗證 ----
-    // 從 D1 查詢房間是否為私人房間
+    // ---- 私人房間密碼驗證 + tripRequired 檢查 ----
+    // 從 D1 查詢房間是否為私人房間 / 需要 trip
     try {
       const roomRow = await c.env.DB.prepare(
-        'SELECT is_private, password_hash FROM room WHERE room_no = ?'
+        'SELECT is_private, password_hash, game_option FROM room WHERE room_no = ?'
       ).bind(roomNo).first();
 
-      if (roomRow && roomRow.is_private === 1) {
-        // 私人房間，必須提供密碼
-        if (!data.password) {
-          return c.json({ error: 'Password required for private room' }, 403);
+      if (roomRow) {
+        // tripRequired 檢查：若房間啟用 tripRequired，玩家必須提供有效的 trip
+        if (roomRow.game_option) {
+          try {
+            const opts = JSON.parse(roomRow.game_option as string);
+            if (opts.tripRequired === true && !data.trip?.trim()) {
+              return c.json({ error: 'Trip code required for this room' }, 403);
+            }
+          } catch (_e) { /* game_option 解析失敗，忽略 */ }
         }
 
-        // 雜湊使用者提供的密碼並比對
-        const encoder = new TextEncoder();
-        const encoded = encoder.encode(data.password + 'room-pw-salt');
-        const hashBuffer = await crypto.subtle.digest('SHA-256', encoded);
-        const hashArray = Array.from(new Uint8Array(hashBuffer));
-        const inputHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        if (roomRow.is_private === 1) {
+          // 私人房間，必須提供密碼
+          if (!data.password) {
+            return c.json({ error: 'Password required for private room' }, 403);
+          }
 
-        if (inputHash !== roomRow.password_hash) {
-          return c.json({ error: 'Wrong password' }, 403);
+          // 雜湊使用者提供的密碼並比對
+          const encoder = new TextEncoder();
+          const encoded = encoder.encode(data.password + 'room-pw-salt');
+          const hashBuffer = await crypto.subtle.digest('SHA-256', encoded);
+          const hashArray = Array.from(new Uint8Array(hashBuffer));
+          const inputHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+          if (inputHash !== roomRow.password_hash) {
+            return c.json({ error: 'Wrong password' }, 403);
+          }
         }
       }
     } catch (dbErr) {

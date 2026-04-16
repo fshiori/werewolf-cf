@@ -20,6 +20,12 @@ describe('DEFAULT_ROOM_OPTIONS', () => {
       voteMe: false,
       tripRequired: false,
       gmEnabled: false,
+      // legacy token stubs
+      realTime: false,
+      comoutl: false,
+      voteDisplay: 0,
+      custDummy: false,
+      istrip: false,
     });
   });
 });
@@ -39,6 +45,11 @@ describe('parseRoomOptions', () => {
       voteMe: true,
       tripRequired: true,
       gmEnabled: false,
+      realTime: true,
+      comoutl: true,
+      voteDisplay: 2,
+      custDummy: true,
+      istrip: true,
     };
 
     const result = parseRoomOptions(input);

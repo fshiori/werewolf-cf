@@ -30,6 +30,17 @@ export interface RoomOptions {
   tripRequired: boolean;
   /** 啟用 GM（遊戲管理員） */
   gmEnabled: boolean;
+  // ── P0-3: legacy token stubs ──
+  /** 即時制（白天/夜晚獨立計時器） */
+  realTime: boolean;
+  /** 連續出局處刑 */
+  comoutl: boolean;
+  /** 投票結果展示模式 (0=全隱, 1=全顯, 2=匿名) */
+  voteDisplay: number;
+  /** 自訂啞巴男 */
+  custDummy: boolean;
+  /** 旅人制度（使用 tripcode 追蹤） */
+  istrip: boolean;
 }
 
 // 預設房間選項
@@ -46,6 +57,12 @@ export const DEFAULT_ROOM_OPTIONS: Readonly<RoomOptions> = {
   voteMe: false,
   tripRequired: false,
   gmEnabled: false,
+  // legacy token stubs
+  realTime: false,
+  comoutl: false,
+  voteDisplay: 0,
+  custDummy: false,
+  istrip: false,
 };
 
 /**
@@ -71,6 +88,12 @@ export function parseRoomOptions(input: unknown): RoomOptions {
     voteMe: parseBoolean(raw.voteMe) ?? DEFAULT_ROOM_OPTIONS.voteMe,
     tripRequired: parseBoolean(raw.tripRequired) ?? DEFAULT_ROOM_OPTIONS.tripRequired,
     gmEnabled: parseGmEnabled(raw.gmEnabled) ?? DEFAULT_ROOM_OPTIONS.gmEnabled,
+    // legacy token stubs
+    realTime: parseBoolean(raw.realTime) ?? DEFAULT_ROOM_OPTIONS.realTime,
+    comoutl: parseBoolean(raw.comoutl) ?? DEFAULT_ROOM_OPTIONS.comoutl,
+    voteDisplay: parseVoteDisplay(raw.voteDisplay) ?? DEFAULT_ROOM_OPTIONS.voteDisplay,
+    custDummy: parseBoolean(raw.custDummy) ?? DEFAULT_ROOM_OPTIONS.custDummy,
+    istrip: parseBoolean(raw.istrip) ?? DEFAULT_ROOM_OPTIONS.istrip,
   };
 }
 
@@ -117,5 +140,15 @@ function parseGmEnabled(value: unknown): boolean | null {
   }
   if (value === 1) return true;
   if (value === 0) return false;
+  return null;
+}
+
+/** 解析 voteDisplay：接受 0/1/2 或 boolean */
+function parseVoteDisplay(value: unknown): number | null {
+  if (value === 0 || value === 1 || value === 2) {
+    return value;
+  }
+  if (value === true) return 1;
+  if (value === false) return 0;
   return null;
 }

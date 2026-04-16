@@ -300,6 +300,7 @@ export class WerewolfRoom extends DurableObject {
       isPrivate?: boolean;
       passwordHash?: string;
       roomOptions?: any;
+      gmTrip?: string;
     };
 
     this.roomData = createRoom({
@@ -319,6 +320,11 @@ export class WerewolfRoom extends DurableObject {
 
     // 儲存完整的 roomOptions（含 gmEnabled 等所有選項）
     this.roomData.roomOptions = data.roomOptions;
+
+    // gmTrip：指定某個 Trip 為 GM（legacy manager_trip 對齊）
+    if (data.gmTrip) {
+      (this.roomData as any).gmTrip = data.gmTrip;
+    }
 
     await this.saveState();
 
@@ -646,13 +652,24 @@ export class WerewolfRoom extends DurableObject {
     const roleConfig = this.parseRoleConfig(this.roomData.optionRole);
     assignRoles(players, roleConfig);
 
-    // GM 啟用：將房長的角色覆蓋為 GM
+    // GM 啟用：透過 gmTrip 指定 Trip 為 GM，若無指定則房長自動成為 GM
     const gmEnabled = this.roomData.roomOptions?.gmEnabled === true;
     if (gmEnabled) {
-      const hostUname = this.roomData.host || players[0]?.uname;
-      const hostPlayer = hostUname ? this.roomData.players.get(hostUname) : undefined;
-      if (hostPlayer) {
-        hostPlayer.role = 'GM';
+      let gmTarget = this.roomData.host || players[0]?.uname;
+      // gmTrip：建房地可指定某個 Trip 為 GM（legacy manager_trip/as_gm 對齊）
+      const gmTrip = (this.roomData as any).gmTrip as string | undefined;
+      if (gmTrip && gmTrip.trim()) {
+        // 在已加入的玩家中找到匹配 trip 的玩家
+        for (const p of players) {
+          if (p.trip === gmTrip.trim()) {
+            gmTarget = p.uname;
+            break;
+          }
+        }
+      }
+      const gmPlayer = gmTarget ? this.roomData.players.get(gmTarget) : undefined;
+      if (gmPlayer) {
+        gmPlayer.role = 'GM';
       }
     }
 
@@ -1422,9 +1439,9 @@ export class WerewolfRoom extends DurableObject {
       }
     }
 
-    // 權力者：16 人以上自動啟用（PHP parity），投票權重 x2
-    // 即使 config 為空也要檢查（authority 在 base role table 中不會出現，需額外加入）
-    if (this.roomData.maxUser >= 16 && !roleConfig.authority) {
+    // 權力者：必須 optionRole 明確包含 'authority' 才啟用（PHP parity）
+    // 即使 16+ 也不自動加，與 legacy 行為一致
+    if (config && config.trim() && config.trim().split(/\s+/).includes('authority') && !roleConfig.authority) {
       // 權力者佔用一個人類名額
       if ((roleConfig.human || 0) > 0) {
         roleConfig.human = (roleConfig.human || 0) - 1;
