@@ -8,6 +8,7 @@ import { cors } from 'hono/cors';
 import type { Env } from '../types';
 import { escapeHtml } from '../utils/security';
 import { apiRateLimiter } from '../utils/rate-limiter';
+import { canWhisper } from '../utils/whisper-manager';
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -796,6 +797,7 @@ app.post('/api/whispers', async (c) => {
       from: string;
       to: string;
       message: string;
+      phase?: string;
     }>();
 
     if (!data.roomNo || !data.from || !data.to || !data.message) {
@@ -804,6 +806,20 @@ app.post('/api/whispers', async (c) => {
 
     if (data.message.length > 300) {
       return c.json({ error: 'Message too long (max 300 chars)' }, 400);
+    }
+
+    // 取得房間玩家列表，用於權限檢查
+    const playersResult = await c.env.DB.prepare(
+      'SELECT * FROM players WHERE room_no = ?'
+    ).bind(data.roomNo).all();
+
+    const players = playersResult.results as any[];
+
+    // 檢查密語權限（純函數，依據角色 + 階段 + 存活狀態）
+    const phase = data.phase || (players.length > 0 ? (players[0] as any).day_night : 'day');
+    const can = canWhisper(data.from, data.to, phase, players);
+    if (!can) {
+      return c.json({ error: 'Permission denied: cannot whisper at this time' }, 403);
     }
 
     const id = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;

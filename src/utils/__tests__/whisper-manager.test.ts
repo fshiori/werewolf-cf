@@ -3,7 +3,8 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { WhisperManager, WhisperMessage } from '../whisper-manager';
+import { WhisperManager, WhisperMessage, canWhisper } from '../whisper-manager';
+import type { Player } from '../../types';
 
 // Mock DB
 class MockDB {
@@ -89,6 +90,38 @@ class MockDB {
     return stmt;
   }
 }
+
+/**
+ * 建立測試用玩家
+ */
+function makePlayer(uname: string, role: Player['role'], live: Player['live'] = 'live'): Player {
+  return {
+    userNo: 0,
+    uname,
+    handleName: uname,
+    trip: '',
+    iconNo: 0,
+    sex: 'unknown',
+    role,
+    live,
+    score: 0,
+  };
+}
+
+// 預設測試用玩家列表（含各種角色）
+const defaultPlayers: Player[] = [
+  makePlayer('alice', 'mage'),          // 預言家
+  makePlayer('bob', 'wolf'),            // 狼人
+  makePlayer('charlie', 'human'),       // 村民
+  makePlayer('diana', 'necromancer'),   // 靈媒
+  makePlayer('eve', 'fox'),             // 妖狐
+  makePlayer('frank', 'guard'),         // 獵人
+  makePlayer('grace', 'authority'),     // 權力者
+  makePlayer('henry', 'wfbig'),         // 大狼
+  makePlayer('ivy', 'betr'),            // 背德者
+  makePlayer('jack', 'wolf_partner'),   // 狼人夥伴
+  makePlayer('deadguy', 'mage', 'dead'), // 死亡的預言家
+];
 
 describe('WhisperManager', () => {
   let manager: WhisperManager;
@@ -185,14 +218,14 @@ describe('WhisperManager', () => {
     });
   });
 
-  describe('密語權限檢查', () => {
+  describe('密語權限檢查（舊 API 向後相容）', () => {
     it('白天應該不允許密語', async () => {
       const can = await manager.canWhisper(1, 'alice', 'bob', 'day');
       
       expect(can).toBe(false);
     });
 
-    it('夜晚應該允許密語', async () => {
+    it('夜晚應該允許密語（舊 API 無角色檢查）', async () => {
       const can = await manager.canWhisper(1, 'alice', 'bob', 'night');
       
       expect(can).toBe(true);
@@ -244,5 +277,86 @@ describe('WhisperManager', () => {
       
       expect(ids.size).toBe(100);
     });
+  });
+});
+
+// ==================== 基於角色的密語權限測試 ====================
+
+describe('canWhisper（純函數）', () => {
+  it('預言家可以在夜晚密語', () => {
+    expect(canWhisper('alice', 'bob', 'night', defaultPlayers)).toBe(true);
+  });
+
+  it('狼人可以在夜晚密語', () => {
+    expect(canWhisper('bob', 'alice', 'night', defaultPlayers)).toBe(true);
+  });
+
+  it('大狼可以在夜晚密語', () => {
+    expect(canWhisper('henry', 'alice', 'night', defaultPlayers)).toBe(true);
+  });
+
+  it('狼人夥伴可以在夜晚密語', () => {
+    expect(canWhisper('jack', 'alice', 'night', defaultPlayers)).toBe(true);
+  });
+
+  it('妖狐可以在夜晚密語', () => {
+    expect(canWhisper('eve', 'alice', 'night', defaultPlayers)).toBe(true);
+  });
+
+  it('背德者可以在夜晚密語', () => {
+    expect(canWhisper('ivy', 'alice', 'night', defaultPlayers)).toBe(true);
+  });
+
+  it('靈媒可以在夜晚密語', () => {
+    expect(canWhisper('diana', 'alice', 'night', defaultPlayers)).toBe(true);
+  });
+
+  it('村民不能在夜晚密語', () => {
+    expect(canWhisper('charlie', 'alice', 'night', defaultPlayers)).toBe(false);
+  });
+
+  it('獵人不能在夜晚密語', () => {
+    expect(canWhisper('frank', 'alice', 'night', defaultPlayers)).toBe(false);
+  });
+
+  it('權力者不能在夜晚密語', () => {
+    expect(canWhisper('grace', 'alice', 'night', defaultPlayers)).toBe(false);
+  });
+
+  it('白天任何人不能密語', () => {
+    expect(canWhisper('alice', 'bob', 'day', defaultPlayers)).toBe(false);
+    expect(canWhisper('bob', 'alice', 'day', defaultPlayers)).toBe(false);
+  });
+
+  it('等待階段任何人不能密語', () => {
+    const players = [makePlayer('a', 'mage')];
+    expect(canWhisper('a', 'a', 'beforegame', players)).toBe(false);
+  });
+
+  it('死亡玩家不能密語', () => {
+    // deadguy 是死亡的預言家
+    expect(canWhisper('deadguy', 'alice', 'night', defaultPlayers)).toBe(false);
+  });
+
+  it('不能密語給死亡玩家', () => {
+    // alice（預言家，存活）嘗試密語給 deadguy（死亡）
+    expect(canWhisper('alice', 'deadguy', 'night', defaultPlayers)).toBe(false);
+  });
+
+  it('不能密語自己', () => {
+    expect(canWhisper('alice', 'alice', 'night', defaultPlayers)).toBe(false);
+    expect(canWhisper('bob', 'bob', 'night', defaultPlayers)).toBe(false);
+  });
+
+  it('找不到發送者時拒絕', () => {
+    expect(canWhisper('unknown', 'alice', 'night', defaultPlayers)).toBe(false);
+  });
+
+  it('找不到接收者時拒絕', () => {
+    expect(canWhisper('alice', 'unknown', 'night', defaultPlayers)).toBe(false);
+  });
+
+  it('玩家列表為空時拒絕', () => {
+    expect(canWhisper('alice', 'bob', 'night', [])).toBe(false);
   });
 });
