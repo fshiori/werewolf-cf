@@ -121,8 +121,8 @@ describe('parseRoomOptions — gameOption token parity', () => {
     // 已串接：join 時可提交 wishRole，開局分配先嘗試滿足玩家希望角色
   });
 
-  // ── will ⚠️（已解析，遊戲邏輯未消耗）──
-  describe('will（遺言功能）⚠️ 已解析未消耗', () => {
+  // ── will ✅（已解析，遊戲邏輯已消耗）──
+  describe('will（遺言功能）✅ 已解析已消耗', () => {
     it('正確解析 true', () => {
       expect(parseRoomOptions({ will: true }).will).toBe(true);
     });
@@ -131,11 +131,11 @@ describe('parseRoomOptions — gameOption token parity', () => {
       expect(DEFAULT_ROOM_OPTIONS.will).toBe(true);
     });
 
-    // TODO: 遊戲邏輯中應在死亡後顯示遺言輸入介面，遺言在白天公布
+    // 已串接：playing 且 will=false 時 API 拒絕寫入遺言，讀取也會回空
   });
 
-  // ── tripRequired ⚠️（已解析，遊戲邏輯未消耗）──
-  describe('tripRequired（需要 tripcode）⚠️ 已解析未消耗', () => {
+  // ── tripRequired ✅（已解析，遊戲邏輯已消耗）──
+  describe('tripRequired（需要 tripcode）✅ 已解析已消耗', () => {
     it('正確解析 true', () => {
       expect(parseRoomOptions({ tripRequired: true }).tripRequired).toBe(true);
     });
@@ -144,7 +144,7 @@ describe('parseRoomOptions — gameOption token parity', () => {
       expect(parseRoomOptions({}).tripRequired).toBe(false);
     });
 
-    // TODO: 遊戲邏輯中應要求玩家使用 tripcode 才能加入遊戲
+    // 已串接：join API 在 tripRequired=true 時會拒絕未提供 trip 的玩家
   });
 
   // ── allowSpectators ⚠️（已解析，遊戲邏輯部分消耗）──
