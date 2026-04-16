@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>遊戲中 - 人狼遊戲</title>
+  <title data-i18n-page-title="game.title">遊戲中 - 人狼遊戲</title>
   <style>
     * {
       margin: 0;
@@ -873,12 +873,12 @@
         <h1>🐺 房間 #<span id="roomNo">--</span></h1>
         <div>
           <span class="connection-dot connected" id="connDot"></span>
-          <span class="connection-text" id="connText">連線中...</span>
+          <span class="connection-text" id="connText" data-i18n="game.conn.connecting">連線中...</span>
         </div>
       </div>
       <div class="game-info">
         <span>第 <strong id="dayCount">0</strong> 天</span>
-        <span class="phase-indicator phase-waiting" id="phaseIndicator">等待中</span>
+        <span class="phase-indicator phase-waiting" id="phaseIndicator" data-i18n="game.phase_waiting">等待中</span>
         <span>👥 <strong id="playerCount">0</strong>/<span id="maxUser">16</span></span>
       </div>
     </div>
@@ -892,7 +892,7 @@
       <div class="sidebar">
         <div class="sidebar-title">
           <span>👥 玩家列表</span>
-          <span id="aliveCount" style="font-size:11px; color:#9ca3af;">0 存活</span>
+          <span id="aliveCount" style="font-size:11px; color:#9ca3af;" data-i18n="game.alive_count">0 存活</span>
         </div>
         <div class="players-list" id="playersList"></div>
       </div>
@@ -901,21 +901,21 @@
       <div class="chat-area">
         <div class="messages-container" id="messages"></div>
         <div class="input-area">
-          <textarea class="chat-input" id="messageInput" placeholder="輸入訊息..." maxlength="500" rows="1"></textarea>
+          <textarea class="chat-input" id="messageInput" data-i18n-placeholder="game.placeholder.message" placeholder="輸入訊息..." maxlength="500" rows="1"></textarea>
           <div class="input-actions">
-            <button class="action-btn" id="btnVote" data-tooltip="投票" onclick="openVotePanel()" disabled title="投票">🗳️</button>
-            <button class="action-btn" id="btnWill" data-tooltip="遺書" onclick="openWillPanel()" disabled title="遺書">📝</button>
-            <button class="action-btn" id="btnWhisper" data-tooltip="密語" onclick="openWhisperPanel()" disabled title="密語">🤫</button>
-            <button class="action-btn" id="btnStart" data-tooltip="開始遊戲" onclick="requestStartGame()" disabled title="開始遊戲">▶️</button>
+            <button class="action-btn" id="btnVote" data-tooltip="投票" data-i18n-title="game.btn.vote" onclick="openVotePanel()" disabled title="投票">🗳️</button>
+            <button class="action-btn" id="btnWill" data-tooltip="遺書" data-i18n-title="game.btn.will" onclick="openWillPanel()" disabled title="遺書">📝</button>
+            <button class="action-btn" id="btnWhisper" data-tooltip="密語" data-i18n-title="game.btn.whisper" onclick="openWhisperPanel()" disabled title="密語">🤫</button>
+            <button class="action-btn" id="btnStart" data-tooltip="開始遊戲" data-i18n-title="game.btn.start" onclick="requestStartGame()" disabled title="開始遊戲">▶️</button>
           </div>
-          <button class="btn btn-primary" id="sendBtn" onclick="sendMessage()">發送</button>
+          <button class="btn btn-primary" id="sendBtn" onclick="sendMessage()" data-i18n="common.send">發送</button>
         </div>
       </div>
     </div>
 
     <!-- Status Bar -->
     <div class="status-bar">
-      <span id="statusText">正在連線...</span>
+      <span id="statusText" data-i18n="game.status.connecting">正在連線...</span>
       <div class="reconnect-info" id="reconnectInfo">
         <span>🔄 重連中 (<span id="reconnectAttempt">0</span>/5)...</span>
       </div>
@@ -927,12 +927,12 @@
       <div class="na-header" id="naHeader"></div>
       <div class="na-body" id="naBody">
         <select class="na-select" id="naTarget">
-          <option value="">-- 選擇目標 --</option>
+          <option value="" data-i18n="game.night.select_target">-- 選擇目標 --</option>
         </select>
-        <button class="na-btn" id="naBtn" disabled onclick="submitNightAction()">執行</button>
+        <button class="na-btn" id="naBtn" disabled onclick="submitNightAction()" data-i18n="game.btn.execute">執行</button>
       </div>
-      <div class="na-waiting" id="naWaiting" style="display:none;">🌙 等待夜晚行動中...</div>
-      <div class="na-submitted" id="naSubmitted" style="display:none;">✅ 已完成夜晚行動，等待天亮...</div>
+      <div class="na-waiting" id="naWaiting" style="display:none;" data-i18n="game.night.waiting">🌙 等待夜晚行動中...</div>
+      <div class="na-submitted" id="naSubmitted" style="display:none;" data-i18n="game.night.submitted">✅ 已完成夜晚行動，等待天亮...</div>
     </div>
   </div>
 
@@ -940,13 +940,13 @@
   <div class="modal-overlay" id="voteOverlay">
     <div class="modal">
       <div class="modal-header">
-        <h2>🗳️ 投票</h2>
+        <h2 data-i18n="game.modal.vote_title">🗳️ 投票</h2>
         <button class="modal-close" onclick="closeVotePanel()">&times;</button>
       </div>
       <div class="vote-timer" id="voteTimer"></div>
       <div id="voteOptions"></div>
       <div style="margin-top: 16px; text-align: center;">
-        <button class="btn btn-danger" id="submitVoteBtn" onclick="submitVote()" disabled>確認投票</button>
+        <button class="btn btn-danger" id="submitVoteBtn" onclick="submitVote()" disabled data-i18n="game.btn.submit_vote">確認投票</button>
       </div>
     </div>
   </div>
@@ -955,14 +955,14 @@
   <div class="modal-overlay" id="willOverlay">
     <div class="modal">
       <div class="modal-header">
-        <h2>📝 遺書</h2>
+        <h2 data-i18n="game.modal.will_title">📝 遺書</h2>
         <button class="modal-close" onclick="closeWillPanel()">&times;</button>
       </div>
-      <p style="font-size:13px; color:#6b7280; margin-bottom:12px;">死亡後留下最後的訊息吧...</p>
-      <textarea class="will-textarea" id="willInput" placeholder="寫下你的遺書..." maxlength="500"></textarea>
+      <p style="font-size:13px; color:#6b7280; margin-bottom:12px;" data-i18n="game.modal.will_desc">死亡後留下最後的訊息吧...</p>
+      <textarea class="will-textarea" id="willInput" data-i18n-placeholder="game.modal.will_placeholder" placeholder="寫下你的遺書..." maxlength="500"></textarea>
       <div class="will-info"><span id="willCharCount">0</span>/500</div>
       <div style="margin-top: 16px; text-align: center;">
-        <button class="btn btn-primary" onclick="submitWill()">保存遺書</button>
+        <button class="btn btn-primary" onclick="submitWill()" data-i18n="game.btn.save_will">保存遺書</button>
       </div>
     </div>
   </div>
@@ -971,20 +971,24 @@
   <div class="modal-overlay" id="whisperOverlay">
     <div class="modal">
       <div class="modal-header">
-        <h2>🤫 密語</h2>
+        <h2 data-i18n="game.modal.whisper_title">🤫 密語</h2>
         <button class="modal-close" onclick="closeWhisperPanel()">&times;</button>
       </div>
-      <p style="font-size:13px; color:#6b7280; margin-bottom:12px;">選擇密語對象：</p>
+      <p style="font-size:13px; color:#6b7280; margin-bottom:12px;" data-i18n="game.modal.whisper_desc">選擇密語對象：</p>
       <div id="whisperTargets"></div>
       <div id="whisperInputArea" style="display:none; margin-top:12px;">
-        <input class="whisper-input" id="whisperInput" placeholder="輸入密語..." maxlength="300">
-        <button class="btn btn-primary" style="margin-top:8px; width:100%;" onclick="sendWhisper()">傳送密語</button>
+        <input class="whisper-input" id="whisperInput" data-i18n-placeholder="game.modal.whisper_placeholder" placeholder="輸入密語..." maxlength="300">
+        <button class="btn btn-primary" style="margin-top:8px; width:100%;" onclick="sendWhisper()" data-i18n="game.btn.send_whisper">傳送密語</button>
       </div>
       <div class="whisper-history" id="whisperHistory"></div>
     </div>
   </div>
 
+  <script src="/i18n.js"></script>
   <script>
+    // Initialize i18n
+    I18n.init();
+
     // ==================== Constants & State ====================
     const API_BASE = window.location.origin;
     const params = new URLSearchParams(window.location.search);
@@ -2019,7 +2023,7 @@
       selectEl.innerHTML = '<option value="">-- 選擇目標 --</option>';
 
       if (targetPlayers.length === 0) {
-        waiting.textContent = '没有可選擇的目標';
+        waiting.textContent = '沒有可選擇的目標';
         waiting.style.display = 'block';
         body.style.display = 'none';
         return;

@@ -82,15 +82,21 @@ export function checkVictory(players: Player[]): string | null {
 
   const aliveWolves = alivePlayers.filter(p => isWolfTeam(p.role)).length;
   const aliveVillagers = alivePlayers.filter(p => isHumanTeam(p.role)).length;
-  const aliveFoxes = alivePlayers.filter(p => isFoxTeam(p.role)).length;
+  const aliveFoxes = alivePlayers.filter(p => p.role === 'fox' || p.role === 'fosi').length;
+  const aliveBetr = alivePlayers.filter(p => p.role === 'betr').length;
 
-  // 檢查妖狐勝利條件（妖狐存活且狼人全滅）
+  // 檢查妖狐勝利條件（妖狐存活且狼人全滅且妖狐數量 >= 村民數量）
   if (aliveFoxes > 0 && aliveWolves === 0 && aliveFoxes >= aliveVillagers) {
     return 'fox';
   }
 
-  // 檢查村民勝利條件
-  if (aliveWolves === 0 && aliveFoxes === 0) {
+  // 檢查背德者勝利條件（妖狐死亡但背德者存活，且狼人全滅）
+  if (aliveBetr > 0 && aliveFoxes === 0 && aliveWolves === 0) {
+    return 'betr';
+  }
+
+  // 檢查村民勝利條件（所有非村民陣營死亡）
+  if (aliveWolves === 0 && aliveFoxes === 0 && aliveBetr === 0) {
     return 'human';
   }
 
@@ -101,6 +107,25 @@ export function checkVictory(players: Player[]): string | null {
 
   // 遊戲繼續
   return null;
+}
+
+/**
+ * 取得勝利訊息
+ * 根據勝利陣營返回對應的詳細說明訊息
+ */
+export function getVictoryMessage(winner: string): string {
+  switch (winner) {
+    case 'human':
+      return '所有狼人已被消滅，村民陣營獲勝！';
+    case 'wolf':
+      return '狼人數量壓倒村民，狼人陣營獲勝！';
+    case 'fox':
+      return '妖狐存活且狼人全滅，妖狐陣營獲勝！';
+    case 'betr':
+      return '妖狐死亡但背德者存活，背德者單獨獲勝！';
+    default:
+      return `未知勝利陣營：${winner}`;
+  }
 }
 
 /**

@@ -3,7 +3,21 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { checkVictory, getVictoryMessage } from '../utils/role-system';
 import type { Role, Player, PlayerStatus } from '../types';
+
+/** 建立測試用玩家的輔助函式 */
+function makePlayer(overrides: Partial<Player> & { uname: string; role: Role; live: Player['live'] }): Player {
+  return {
+    userNo: 0,
+    handleName: overrides.uname,
+    trip: '',
+    iconNo: 0,
+    sex: '',
+    score: 0,
+    ...overrides,
+  };
+}
 
 describe('Role System', () => {
   describe('角色陣營判定', () => {
@@ -156,6 +170,122 @@ describe('Role System', () => {
       
       expect(lover1Alive).toBe(false);
       expect(lover2Alive).toBe(false);
+    });
+  });
+
+  // ========================================
+  // 擴展勝負判定測試（使用真實 checkVictory）
+  // ========================================
+  describe('checkVictory — 實際函式測試', () => {
+    it('所有狼人死亡且無妖狐 → 村民勝利', () => {
+      const players: Player[] = [
+        makePlayer({ uname: 'p1', role: 'human', live: 'live' }),
+        makePlayer({ uname: 'p2', role: 'wolf', live: 'dead' }),
+        makePlayer({ uname: 'p3', role: 'mage', live: 'live' }),
+      ];
+      expect(checkVictory(players)).toBe('human');
+    });
+
+    it('狼人數量 >= 村民 → 狼人勝利', () => {
+      const players: Player[] = [
+        makePlayer({ uname: 'p1', role: 'human', live: 'live' }),
+        makePlayer({ uname: 'p2', role: 'wolf', live: 'live' }),
+        makePlayer({ uname: 'p3', role: 'wolf', live: 'live' }),
+      ];
+      expect(checkVictory(players)).toBe('wolf');
+    });
+
+    it('勢力均等 → 遊戲繼續', () => {
+      const players: Player[] = [
+        makePlayer({ uname: 'p1', role: 'human', live: 'live' }),
+        makePlayer({ uname: 'p2', role: 'human', live: 'live' }),
+        makePlayer({ uname: 'p3', role: 'wolf', live: 'live' }),
+      ];
+      expect(checkVictory(players)).toBeNull();
+    });
+
+    it('妖狐存活且狼人全滅且妖狐 >= 村民 → 妖狐勝利', () => {
+      const players: Player[] = [
+        makePlayer({ uname: 'p1', role: 'fox', live: 'live' }),
+        makePlayer({ uname: 'p2', role: 'wolf', live: 'dead' }),
+        makePlayer({ uname: 'p3', role: 'human', live: 'live' }),
+      ];
+      expect(checkVictory(players)).toBe('fox');
+    });
+
+    it('妖狐存活但村民較多 → 遊戲繼續', () => {
+      const players: Player[] = [
+        makePlayer({ uname: 'p1', role: 'fox', live: 'live' }),
+        makePlayer({ uname: 'p2', role: 'wolf', live: 'dead' }),
+        makePlayer({ uname: 'p3', role: 'human', live: 'live' }),
+        makePlayer({ uname: 'p4', role: 'mage', live: 'live' }),
+      ];
+      // aliveWolves=0, aliveFoxes=1, aliveVillagers=2 → fox(1) < villagers(2) → 繼續
+      expect(checkVictory(players)).toBeNull();
+    });
+
+    it('狼人和妖狐皆死亡 → 村民勝利', () => {
+      const players: Player[] = [
+        makePlayer({ uname: 'p1', role: 'human', live: 'live' }),
+        makePlayer({ uname: 'p2', role: 'wolf', live: 'dead' }),
+        makePlayer({ uname: 'p3', role: 'fox', live: 'dead' }),
+        makePlayer({ uname: 'p4', role: 'mage', live: 'live' }),
+      ];
+      expect(checkVictory(players)).toBe('human');
+    });
+
+    it('背德者勝利：妖狐死亡且背德者存活', () => {
+      const players: Player[] = [
+        makePlayer({ uname: 'p1', role: 'betr', live: 'live' }),
+        makePlayer({ uname: 'p2', role: 'fox', live: 'dead' }),
+        makePlayer({ uname: 'p3', role: 'wolf', live: 'dead' }),
+        makePlayer({ uname: 'p4', role: 'human', live: 'live' }),
+        makePlayer({ uname: 'p5', role: 'mage', live: 'live' }),
+      ];
+      expect(checkVictory(players)).toBe('betr');
+    });
+
+    it('妖狐存活時背德者不單獨勝利', () => {
+      const players: Player[] = [
+        makePlayer({ uname: 'p1', role: 'betr', live: 'live' }),
+        makePlayer({ uname: 'p2', role: 'fox', live: 'live' }),
+        makePlayer({ uname: 'p3', role: 'wolf', live: 'dead' }),
+        makePlayer({ uname: 'p4', role: 'human', live: 'live' }),
+      ];
+      // 妖狐存活且狼人全滅 → 檢查妖狐勝利條件
+      // aliveFoxes=2, aliveWolves=0, aliveVillagers=1 → fox(2) >= villagers(1) → fox wins
+      expect(checkVictory(players)).toBe('fox');
+    });
+
+    it('背德者死亡且妖狐死亡 → 非背德者勝利', () => {
+      const players: Player[] = [
+        makePlayer({ uname: 'p1', role: 'betr', live: 'dead' }),
+        makePlayer({ uname: 'p2', role: 'fox', live: 'dead' }),
+        makePlayer({ uname: 'p3', role: 'wolf', live: 'dead' }),
+        makePlayer({ uname: 'p4', role: 'human', live: 'live' }),
+      ];
+      expect(checkVictory(players)).toBe('human');
+    });
+  });
+
+  // ========================================
+  // 勝利訊息測試
+  // ========================================
+  describe('getVictoryMessage', () => {
+    it('村民勝利訊息', () => {
+      expect(getVictoryMessage('human')).toBe('所有狼人已被消滅，村民陣營獲勝！');
+    });
+
+    it('狼人勝利訊息', () => {
+      expect(getVictoryMessage('wolf')).toBe('狼人數量壓倒村民，狼人陣營獲勝！');
+    });
+
+    it('妖狐勝利訊息', () => {
+      expect(getVictoryMessage('fox')).toBe('妖狐存活且狼人全滅，妖狐陣營獲勝！');
+    });
+
+    it('背德者勝利訊息', () => {
+      expect(getVictoryMessage('betr')).toBe('妖狐死亡但背德者存活，背德者單獨獲勝！');
     });
   });
 });

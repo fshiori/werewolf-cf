@@ -2,6 +2,8 @@
  * 密語系統
  */
 
+import type { Player, Role } from '../types';
+
 /**
  * 密語訊息
  */
@@ -110,7 +112,8 @@ export class WhisperManager {
   }
 
   /**
-   * 檢查玩家是否可以密語
+   * 檢查玩家是否可以密語（委託給純函數 canWhisper）
+   * @deprecated 請直接使用匯出的 canWhisper 純函數
    */
   async canWhisper(
     roomNo: number,
@@ -118,15 +121,9 @@ export class WhisperManager {
     to: string,
     phase: string
   ): Promise<boolean> {
-    // 只有夜晚可以密語
-    if (phase !== 'night') {
-      return false;
-    }
-
-    // TODO: 檢查角色是否有密語權限
-    // 預言家、靈媒等特殊角色可以密語
-    
-    return true;
+    // 向後相容：舊的 API 簽名不包含 players，一律回傳 true（夜間）
+    // 新的 API 請直接用匯出的 canWhisper(from, to, phase, players)
+    return phase === 'night';
   }
 
   /**
@@ -173,4 +170,71 @@ export class WhisperManager {
       activeConversations: (convResult as any).count
     };
   }
+}
+
+/**
+ * 可密語的角色列表（夜晚才能密語）
+ * 預言家、靈媒、狼人系列、妖狐系列、背德者、大狼
+ */
+const WHISPER_ROLES: Role[] = [
+  'mage',         // 預言家
+  'necromancer',  // 靈媒
+  'wolf',         // 狼人
+  'wolf_partner', // 狼人夥伴
+  'wfbig',        // 大狼
+  'fox',          // 妖狐
+  'betr',         // 背德者
+];
+
+/**
+ * 檢查玩家是否可以密語（純函數，不依賴資料庫）
+ *
+ * 規則：
+ * - 只有夜晚可以密語
+ * - 只有特定角色可以密語（預言家、靈媒、狼人系列、妖狐、背德者）
+ * - 死亡玩家不能密語也不能接收密語
+ * - 不能密語自己
+ *
+ * @param from   發送者 uname
+ * @param to     接收者 uname
+ * @param phase  遊戲階段（day / night / beforegame 等）
+ * @param players 所有玩家列表（用於查找角色與存活狀態）
+ */
+export function canWhisper(
+  from: string,
+  to: string,
+  phase: string,
+  players: Player[]
+): boolean {
+  // 不能密語自己
+  if (from === to) {
+    return false;
+  }
+
+  // 只有夜晚可以密語
+  if (phase !== 'night') {
+    return false;
+  }
+
+  // 查找發送者與接收者
+  const sender = players.find((p) => p.uname === from);
+  const receiver = players.find((p) => p.uname === to);
+
+  // 找不到玩家則拒絕
+  if (!sender || !receiver) {
+    return false;
+  }
+
+  // 死亡玩家不能密語
+  if (sender.live !== 'live') {
+    return false;
+  }
+
+  // 接收者已死亡則不能密語
+  if (receiver.live !== 'live') {
+    return false;
+  }
+
+  // 檢查發送者角色是否在允許密語列表中
+  return WHISPER_ROLES.includes(sender.role);
 }

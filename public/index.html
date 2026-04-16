@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>人狼遊戲 - Werewolf CF</title>
+  <title data-i18n-page-title="index.title">人狼遊戲 - Werewolf CF</title>
   <style>
     * {
       margin: 0;
@@ -331,36 +331,36 @@
 </head>
 <body>
   <div class="container">
-    <h1>🐺 人狼遊戲</h1>
-    <p class="subtitle">Werewolf CF - Cloudflare Workers</p>
+    <h1 data-i18n="index.heading">🐺 人狼遊戲</h1>
+    <p class="subtitle" data-i18n="common.subtitle">Werewolf CF - Cloudflare Workers</p>
 
     <div id="error" class="error"></div>
 
     <div id="createRoomForm">
       <div class="form-group">
-        <label for="roomName">房間名稱</label>
-        <input type="text" id="roomName" placeholder="例如：今晚來玩人狼" maxlength="32">
+        <label for="roomName" data-i18n="index.label.room_name">房間名稱</label>
+        <input type="text" id="roomName" data-i18n-placeholder="index.placeholder.room_name" placeholder="例如：今晚來玩人狼" maxlength="32">
       </div>
 
       <div class="form-group">
-        <label for="roomComment">房間說明（選填）</label>
-        <input type="text" id="roomComment" placeholder="例如：新手歡迎" maxlength="100">
+        <label for="roomComment" data-i18n="index.label.room_comment">房間說明（選填）</label>
+        <input type="text" id="roomComment" data-i18n-placeholder="index.placeholder.room_comment" placeholder="例如：新手歡迎" maxlength="100">
       </div>
 
       <div class="room-inputs">
         <div class="form-group">
-          <label for="maxUser">最大人數</label>
+          <label for="maxUser" data-i18n="index.label.max_users">最大人數</label>
           <input type="number" id="maxUser" value="16" min="2" max="32">
         </div>
         <div class="form-group">
-          <label for="iconNo">頭像編號</label>
+          <label for="iconNo" data-i18n="index.label.icon_no">頭像編號</label>
           <input type="number" id="iconNo" value="1" min="0" max="10">
         </div>
       </div>
 
       <div class="form-group">
-        <label for="roomPassword">房間密碼（選填）</label>
-        <input type="password" id="roomPassword" placeholder="留空為公開房間">
+        <label for="roomPassword" data-i18n="index.label.room_password">房間密碼（選填）</label>
+        <input type="password" id="roomPassword" data-i18n-placeholder="index.placeholder.room_password" placeholder="留空為公開房間">
       </div>
 
       <details style="margin-bottom: 20px;">
@@ -498,45 +498,45 @@
         </div>
       </details>
 
-      <button onclick="createRoom()">建立房間</button>
+      <button onclick="createRoom()" data-i18n="index.create_room">建立房間</button>
     </div>
 
     <div class="divider">
-      <span>或</span>
+      <span data-i18n="index.or">或</span>
     </div>
 
     <div id="joinRoomForm">
       <div class="form-group">
-        <label for="joinRoomNo">房間編號</label>
-        <input type="text" id="joinRoomNo" placeholder="輸入房間編號">
+        <label for="joinRoomNo" data-i18n="index.label.join_room_no">房間編號</label>
+        <input type="text" id="joinRoomNo" data-i18n-placeholder="index.placeholder.join_room_no" placeholder="輸入房間編號">
       </div>
 
       <div class="form-group">
-        <label for="joinPassword">房間密碼（如需）</label>
-        <input type="password" id="joinPassword" placeholder="私人房間需要密碼">
+        <label for="joinPassword" data-i18n="index.label.join_password">房間密碼（如需）</label>
+        <input type="password" id="joinPassword" data-i18n-placeholder="index.placeholder.join_password" placeholder="私人房間需要密碼">
       </div>
 
       <div class="form-group">
-        <label for="username">使用者名稱</label>
-        <input type="text" id="username" placeholder="例如：Eric" maxlength="20">
+        <label for="username" data-i18n="index.label.username">使用者名稱</label>
+        <input type="text" id="username" data-i18n-placeholder="index.placeholder.username" placeholder="例如：Eric" maxlength="20">
       </div>
 
       <div class="form-group">
-        <label for="displayName">顯示名稱</label>
-        <input type="text" id="displayName" placeholder="例如：玩家1" maxlength="32">
+        <label for="displayName" data-i18n="index.label.display_name">顯示名稱</label>
+        <input type="text" id="displayName" data-i18n-placeholder="index.placeholder.display_name" placeholder="例如：玩家1" maxlength="32">
       </div>
 
       <div class="form-group">
-        <label for="tripcodePassword">Tripcode 密碼（選填）</label>
-        <input type="password" id="tripcodePassword" placeholder="用於驗證身份">
+        <label for="tripcodePassword" data-i18n="index.label.tripcode">Tripcode 密碼（選填）</label>
+        <input type="password" id="tripcodePassword" data-i18n-placeholder="index.placeholder.tripcode" placeholder="用於驗證身份">
       </div>
 
-      <button onclick="joinRoom()">加入房間</button>
+      <button onclick="joinRoom()" data-i18n="index.join_room">加入房間</button>
     </div>
 
     <div id="loading" class="loading">
       <div class="spinner"></div>
-      <p style="margin-top: 10px; color: #999;">載入中...</p>
+      <p style="margin-top: 10px; color: #999;" data-i18n="common.loading">載入中...</p>
     </div>
 
     <div class="nav-links">
@@ -615,12 +615,30 @@
 
     <!-- 房間列表 -->
     <div id="roomList" style="margin-top:20px;">
-      <h3 style="color:#555;font-size:14px;margin-bottom:10px;">📋 現有房間</h3>
+      <h3 style="color:#555;font-size:14px;margin-bottom:10px;" data-i18n="index.existing_rooms">📋 現有房間</h3>
       <div id="roomListContent" style="text-align:center;color:#999;font-size:13px;">載入中...</div>
+    </div>
+
+    <!-- Language Switcher -->
+    <div style="margin-top:20px; text-align:center;">
+      <label for="locale-select" style="font-size:13px; color:#666; margin-right:8px;" data-i18n="locale.select">語言</label>
+      <select id="locale-select" onchange="I18n.setLocale(this.value)" style="padding:6px 12px; border:1px solid #ddd; border-radius:6px; font-size:13px; cursor:pointer;">
+        <option value="zh-TW">繁體中文</option>
+        <option value="ja">日本語</option>
+        <option value="en">English</option>
+      </select>
     </div>
   </div>
 
+  <script src="/i18n.js"></script>
   <script>
+    // Initialize i18n, then run app logic
+    I18n.init().then(() => {
+      // Sync locale-select dropdown with current locale
+      const sel = document.getElementById('locale-select');
+      if (sel) sel.value = I18n.getLocale();
+    });
+
     const API_BASE = window.location.origin;
 
     // ===== 角色系統（依原版 DIAM 邏輯） =====
