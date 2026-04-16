@@ -649,6 +649,47 @@ app.get('/icons/:filename', async (c) => {
   }
 });
 
+// ==================== Task 6: Version & Rule Summary APIs ====================
+
+// GET /api/version
+app.get('/api/version', async (c) => {
+  return c.json({
+    version: '1.0.0',
+    buildDate: '2026-04-16',
+    tech: 'Cloudflare Workers + Durable Objects + D1 + R2 + KV',
+  });
+});
+
+// GET /api/rule-summary
+app.get('/api/rule-summary', async (c) => {
+  const roles = [
+    { name: 'human', team: 'human', description: '一般村民，白天可發言和投票' },
+    { name: 'mage', team: 'human', description: '預言家，夜晚可驗證一名玩家身分' },
+    { name: 'guard', team: 'human', description: '守衛，夜晚可保護一名玩家免受攻擊' },
+    { name: 'necromancer', team: 'human', description: '靈媒，白天可驗證死亡玩家的身分' },
+    { name: 'authority', team: 'human', description: '權力者，投票權重為兩倍' },
+    { name: 'common', team: 'human', description: '共有者，與另一名共有者共享資訊' },
+    { name: 'lovers', team: 'human', description: '戀人，與另一名戀人同生共死' },
+    { name: 'wolf', team: 'wolf', description: '狼人，夜晚可選擇一名玩家殺害' },
+    { name: 'wolf_partner', team: 'wolf', description: '狼人同夥，與狼人共享殺人決定' },
+    { name: 'wfbig', team: 'wolf', description: '大狼，擁有特殊能力的狼人' },
+    { name: 'mad', team: 'wolf', description: '瘋子，歸類為狼人陣營' },
+    { name: 'fox', team: 'fox', description: '妖狐，擁有特殊勝利條件' },
+    { name: 'betr', team: 'fox', description: '背德者，歸類為妖狐陣營' },
+    { name: 'fosi', team: 'fox', description: '妖狐相關角色' },
+  ];
+
+  return c.json({
+    roles,
+    phases: ['waiting', 'day', 'night'],
+    winConditions: {
+      human: '消滅所有狼人和妖狐',
+      wolf: '狼人數量 ≥ 村民數量',
+      fox: '妖狐存活且狼人全滅，妖狐數量 ≥ 村民數量',
+    },
+  });
+});
+
 // 掛載管理員路由
 app.route('/', adminRoutes);
 
@@ -663,8 +704,7 @@ app.route('/', tripRoutes);
 
 // ==================== 靜態檔案（catch-all，必須放在最後） ====================
 
-/**
- * 服務靜態檔案
+/*
  * NOTE: This catch-all MUST be the last route registered. It serves as a fallback
  * for static assets (SPA). API routes (/api/*) and WebSocket (/ws/*) are handled
  * by specific routes above and will return notFound() if they reach here.

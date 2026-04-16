@@ -914,4 +914,57 @@ describe('API Routes', () => {
       expect(batchCalled).toBe(true);
     });
   });
+
+  // ==================== Task 6: Version & Rule Summary APIs ====================
+  describe('Task 6: /api/version', () => {
+    it('GET /api/version 應該返回正確結構', async () => {
+      const response = await request('/api/version');
+
+      expect(response.status).toBe(200);
+
+      const data = await response.json();
+      expect(data.version).toBeDefined();
+      expect(typeof data.version).toBe('string');
+      expect(data.buildDate).toBeDefined();
+      expect(typeof data.buildDate).toBe('string');
+      expect(data.tech).toBeDefined();
+      expect(typeof data.tech).toBe('string');
+      expect(data.tech).toContain('Cloudflare Workers');
+    });
+  });
+
+  describe('Task 6: /api/rule-summary', () => {
+    it('GET /api/rule-summary 應該返回角色陣列與必要欄位', async () => {
+      const response = await request('/api/rule-summary');
+
+      expect(response.status).toBe(200);
+
+      const data = await response.json();
+      expect(Array.isArray(data.roles)).toBe(true);
+      expect(data.roles.length).toBeGreaterThan(0);
+
+      // 每個角色必須有 name, team, description
+      for (const role of data.roles) {
+        expect(role.name).toBeDefined();
+        expect(typeof role.name).toBe('string');
+        expect(role.team).toBeDefined();
+        expect(['human', 'wolf', 'fox']).toContain(role.team);
+        expect(role.description).toBeDefined();
+        expect(typeof role.description).toBe('string');
+      }
+
+      // phases
+      expect(Array.isArray(data.phases)).toBe(true);
+      expect(data.phases).toContain('waiting');
+      expect(data.phases).toContain('day');
+      expect(data.phases).toContain('night');
+
+      // winConditions
+      expect(data.winConditions).toBeDefined();
+      expect(data.winConditions.human).toBeDefined();
+      expect(data.winConditions.wolf).toBeDefined();
+      expect(typeof data.winConditions.human).toBe('string');
+      expect(typeof data.winConditions.wolf).toBe('string');
+    });
+  });
 });
