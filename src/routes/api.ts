@@ -15,6 +15,7 @@ import { parseRoomOptions } from '../types/room-options';
 import adminRoutes from './admin';
 import featuresRoutes from './features';
 import bbsRoutes from './bbs';
+import tripRoutes from './trip';
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -275,11 +276,76 @@ app.get('/api/rooms/:roomNo', async (c) => {
 });
 
 /**
- * 刪除房間
+ * 刪除房間（使用者端）
+ * 條件：房間存在、非 playing 狀態、私人房需驗證密碼
  */
 app.delete('/api/rooms/:roomNo', async (c) => {
-  // TODO: 實作刪除邏輯
-  return c.json({ success: true, message: 'Room deleted' });
+  try {
+    const roomNo = parseInt(c.req.param('roomNo'));
+    const { password } = await c.req.json<{ password?: string }>();
+
+    // 從 D1 查詢房間
+    const roomRow = await c.env.DB.prepare(
+      'SELECT room_no, status, is_private, password_hash FROM room WHERE room_no = ?'
+    ).bind(roomNo).first() as { room_no: number; status: string; is_private: number; password_hash: string } | null;
+
+    if (!roomRow) {
+      return c.json({ error: 'Room not found' }, 404);
+    }
+
+    // 只有 waiting 或 ended 狀態的房間可以刪除
+    if (roomRow.status === 'playing') {
+      return c.json({ error: 'Cannot delete room while game is in progress' }, 400);
+    }
+
+    // 私人房間需要驗證密碼
+    if (roomRow.is_private === 1) {
+      if (!password) {
+        return c.json({ error: 'Password required for private room' }, 403);
+      }
+
+      // 雜湊使用者提供的密碼並比對
+      const encoder = new TextEncoder();
+      const encoded = encoder.encode(password + 'room-pw-salt');
+      const hashBuffer = await crypto.subtle.digest('SHA-256', encoded);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      const inputHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+      if (inputHash !== roomRow.password_hash) {
+        return c.json({ error: 'Wrong password' }, 403);
+      }
+    }
+
+    // 清理：通知 Durable Object
+    try {
+      const id = c.env.WEREWOLF_ROOM.idFromName(roomNo.toString());
+      const stub = c.env.WEREWOLF_ROOM.get(id);
+      await stub.fetch(new Request('https://internal/cleanup', { method: 'POST' }));
+    } catch (e) {
+      // DO 不存在或喚醒失敗，直接清理 D1
+    }
+
+    // 清理 D1 表格
+    await c.env.DB.batch([
+      c.env.DB.prepare('DELETE FROM talk WHERE room_no = ?').bind(roomNo),
+      c.env.DB.prepare('DELETE FROM vote_history WHERE room_no = ?').bind(roomNo),
+      c.env.DB.prepare('DELETE FROM game_events WHERE room_no = ?').bind(roomNo),
+      c.env.DB.prepare('DELETE FROM user_entry WHERE room_no = ?').bind(roomNo),
+      c.env.DB.prepare('DELETE FROM wills WHERE room_no = ?').bind(roomNo),
+      c.env.DB.prepare('DELETE FROM whispers WHERE room_no = ?').bind(roomNo),
+      c.env.DB.prepare('DELETE FROM spectators WHERE room_no = ?').bind(roomNo),
+      c.env.DB.prepare('DELETE FROM room WHERE room_no = ?').bind(roomNo),
+    ]);
+
+    // 清理 KV 統計
+    const statsManager = new StatsManager(c.env.KV);
+    await statsManager.deleteRoomStats(roomNo);
+
+    return c.json({ success: true });
+  } catch (error) {
+    console.error('Delete room error:', error);
+    return c.json({ error: 'Failed to delete room' }, 500);
+  }
 });
 
 // ==================== 玩家管理 ====================
@@ -591,6 +657,9 @@ app.route('/', featuresRoutes);
 
 // 掛載 BBS 路由
 app.route('/', bbsRoutes);
+
+// 掛載 Trip 註冊/驗證路由
+app.route('/', tripRoutes);
 
 // ==================== 靜態檔案（catch-all，必須放在最後） ====================
 

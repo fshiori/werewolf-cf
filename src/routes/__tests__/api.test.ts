@@ -696,4 +696,222 @@ describe('API Routes', () => {
       expect(data.roles).toBeUndefined();
     });
   });
+
+  // ==================== Task 5: 使用者端刪除房間 ====================
+  describe('Task 5: DELETE /api/rooms/:roomNo 使用者端刪房', () => {
+    // 輔助：建立帶有自訂 DB mock 的 env
+    function createDbEnv(dbMock: any): Env {
+      const env = createMockEnv();
+      env.DB = dbMock;
+      return env;
+    }
+
+    it('房間不存在 → 404', async () => {
+      // DB.first 回傳 null（房間不存在）
+      const env = createDbEnv({
+        prepare: (_q: string) => ({
+          bind: (..._args: any[]) => ({
+            run: async () => ({ success: true }),
+            first: async () => null,
+            all: async () => ({ results: [] })
+          })
+        })
+      });
+
+      const deleteApp = new Hono();
+      deleteApp.route('/', api);
+
+      const response = await deleteApp.request(
+        new Request('http://localhost/api/rooms/99999', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({})
+        }),
+        undefined,
+        env
+      );
+
+      expect(response.status).toBe(404);
+      const data = await response.json();
+      expect(data.error).toContain('not found');
+    });
+
+    it('playing 狀態的房間不可刪除 → 400', async () => {
+      const env = createDbEnv({
+        prepare: (_q: string) => ({
+          bind: (..._args: any[]) => ({
+            run: async () => ({ success: true }),
+            first: async () => ({
+              room_no: 1000,
+              status: 'playing',
+              is_private: 0,
+              password_hash: ''
+            }),
+            all: async () => ({ results: [] })
+          })
+        })
+      });
+
+      const deleteApp = new Hono();
+      deleteApp.route('/', api);
+
+      const response = await deleteApp.request(
+        new Request('http://localhost/api/rooms/1000', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({})
+        }),
+        undefined,
+        env
+      );
+
+      expect(response.status).toBe(400);
+      const data = await response.json();
+      expect(data.error).toContain('in progress');
+    });
+
+    it('waiting 公開房間刪除成功 → 200', async () => {
+      let batchCalled = false;
+      const env = createDbEnv({
+        prepare: (_q: string) => ({
+          bind: (..._args: any[]) => ({
+            run: async () => ({ success: true }),
+            first: async () => ({
+              room_no: 2000,
+              status: 'waiting',
+              is_private: 0,
+              password_hash: ''
+            }),
+            all: async () => ({ results: [] })
+          })
+        }),
+        batch: async (_stmts: any[]) => {
+          batchCalled = true;
+        }
+      });
+
+      const deleteApp = new Hono();
+      deleteApp.route('/', api);
+
+      const response = await deleteApp.request(
+        new Request('http://localhost/api/rooms/2000', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({})
+        }),
+        undefined,
+        env
+      );
+
+      expect(response.status).toBe(200);
+      const data = await response.json();
+      expect(data.success).toBe(true);
+      expect(batchCalled).toBe(true);
+    });
+
+    it('私人房間不帶密碼 → 403', async () => {
+      const env = createDbEnv({
+        prepare: (_q: string) => ({
+          bind: (..._args: any[]) => ({
+            run: async () => ({ success: true }),
+            first: async () => ({
+              room_no: 3000,
+              status: 'waiting',
+              is_private: 1,
+              password_hash: await sha256hex('room-pw')
+            }),
+            all: async () => ({ results: [] })
+          })
+        })
+      });
+
+      const deleteApp = new Hono();
+      deleteApp.route('/', api);
+
+      const response = await deleteApp.request(
+        new Request('http://localhost/api/rooms/3000', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({})
+        }),
+        undefined,
+        env
+      );
+
+      expect(response.status).toBe(403);
+    });
+
+    it('私人房間密碼錯誤 → 403', async () => {
+      const correctHash = await sha256hex('correct-pw');
+      const env = createDbEnv({
+        prepare: (_q: string) => ({
+          bind: (..._args: any[]) => ({
+            run: async () => ({ success: true }),
+            first: async () => ({
+              room_no: 3001,
+              status: 'waiting',
+              is_private: 1,
+              password_hash: correctHash
+            }),
+            all: async () => ({ results: [] })
+          })
+        })
+      });
+
+      const deleteApp = new Hono();
+      deleteApp.route('/', api);
+
+      const response = await deleteApp.request(
+        new Request('http://localhost/api/rooms/3001', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: 'wrong-pw' })
+        }),
+        undefined,
+        env
+      );
+
+      expect(response.status).toBe(403);
+    });
+
+    it('私人房間密碼正確 → 刪除成功', async () => {
+      let batchCalled = false;
+      const correctHash = await sha256hex('correct-pw');
+      const env = createDbEnv({
+        prepare: (_q: string) => ({
+          bind: (..._args: any[]) => ({
+            run: async () => ({ success: true }),
+            first: async () => ({
+              room_no: 3002,
+              status: 'ended',
+              is_private: 1,
+              password_hash: correctHash
+            }),
+            all: async () => ({ results: [] })
+          })
+        }),
+        batch: async (_stmts: any[]) => {
+          batchCalled = true;
+        }
+      });
+
+      const deleteApp = new Hono();
+      deleteApp.route('/', api);
+
+      const response = await deleteApp.request(
+        new Request('http://localhost/api/rooms/3002', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: 'correct-pw' })
+        }),
+        undefined,
+        env
+      );
+
+      expect(response.status).toBe(200);
+      const data = await response.json();
+      expect(data.success).toBe(true);
+      expect(batchCalled).toBe(true);
+    });
+  });
 });
