@@ -122,9 +122,7 @@ describe('E2E Game Loop', () => {
       const target = wolves[0].uname;
 
       for (const voter of alivePlayers) {
-        if (voter.uname !== target) {
-          addVote(voteData, voter.uname, target);
-        }
+        addVote(voteData, voter.uname, target);
       }
 
       // 確認投票完成
@@ -161,12 +159,12 @@ describe('E2E Game Loop', () => {
       const liveGuard = allPlayers.find(p => p.live === 'live' && p.role === 'guard');
       const liveVillager = allPlayers.find(p => p.live === 'live' && p.role === 'human');
 
-      // 狼人殺人
-      if (liveWolves.length > 0 && liveVillager) {
-        wolfKill(nightState, players, [liveVillager.uname]);
+      // 守護者保護（必須在 wolfKill 之前，因為 wolfKill 會檢查 guardedTarget）
+      if (liveGuard && liveVillager) {
+        guardTarget(nightState, players, liveGuard.uname, liveVillager.uname);
         nightState.actions.push({
-          type: 'wolf_kill' as any,
-          actor: liveWolves[0].uname,
+          type: 'guard_protect' as any,
+          actor: liveGuard.uname,
           target: liveVillager.uname,
         });
       }
@@ -181,12 +179,12 @@ describe('E2E Game Loop', () => {
         });
       }
 
-      // 守護者保護
-      if (liveGuard && liveVillager) {
-        guardTarget(nightState, players, liveGuard.uname, liveVillager.uname);
+      // 狼人殺人
+      if (liveWolves.length > 0 && liveVillager) {
+        wolfKill(nightState, players, [liveVillager.uname]);
         nightState.actions.push({
-          type: 'guard_protect' as any,
-          actor: liveGuard.uname,
+          type: 'wolf_kill' as any,
+          actor: liveWolves[0].uname,
           target: liveVillager.uname,
         });
       }
@@ -345,17 +343,17 @@ describe('E2E Game Loop', () => {
 
       const nightState = createNightState(1, 1);
 
-      // 狼人殺 victim
+      // 守護者保護 victim（必須在狼人殺人之前設定，wolfKill 檢查 guardedTarget）
+      guardTarget(nightState, players, 'guard', 'victim');
+      nightState.actions.push({ type: 'guard_protect' as any, actor: 'guard', target: 'victim' });
+
+      // 狼人殺 victim（因為守護者已保護，wolfKill 會跳過）
       wolfKill(nightState, players, ['victim']);
       nightState.actions.push({ type: 'wolf_kill' as any, actor: 'wolf', target: 'victim' });
 
       // 預言家占卜 wolf
       seerDivine(nightState, players, 'seer', 'wolf');
       nightState.actions.push({ type: 'seer_divine' as any, actor: 'seer', target: 'wolf' });
-
-      // 守護者保護 victim
-      guardTarget(nightState, players, 'guard', 'victim');
-      nightState.actions.push({ type: 'guard_protect' as any, actor: 'guard', target: 'victim' });
 
       // 所有行動完成
       expect(isNightActionsComplete(nightState, players)).toBe(true);

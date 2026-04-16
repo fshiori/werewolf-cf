@@ -837,7 +837,7 @@ export class WerewolfRoom extends DurableObject {
         type: 'phase_change',
         data: {
           phase: 'night',
-          message: '夜幕降临，请关闭灯光...'
+          message: '夜幕降臨，請關閉燈光...'
         }
       });
     } else {
@@ -943,7 +943,7 @@ export class WerewolfRoom extends DurableObject {
       type: 'phase_change',
       data: {
         phase: 'night',
-        message: '夜幕降临，请关闭灯光...'
+        message: '夜幕降臨，請關閉燈光...'
       }
     });
 
