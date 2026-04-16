@@ -140,6 +140,8 @@ export interface TripScore {
   score: number;
 }
 
+export { RoomOptions, DEFAULT_ROOM_OPTIONS, parseRoomOptions } from './room-options';
+
 // 頭像資料
 export interface UserIcon {
   iconNo: number;
