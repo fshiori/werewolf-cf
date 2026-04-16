@@ -173,7 +173,14 @@ export class WerewolfRoom extends DurableObject {
     }
 
     if (path === '/info') {
-      return Response.json(getPublicRoomInfo(this.roomData));
+      const info = getPublicRoomInfo(this.roomData);
+      // 加入 typed options 與私人房間標記（不洩漏 passwordHash）
+      return Response.json({
+        ...info,
+        isPrivate: !!this.roomData.isPrivate,
+        timeLimit: this.roomData.timeLimit ?? 60,
+        silenceMode: !!this.roomData.silenceMode,
+      });
     }
 
     if (path === '/init' && req.method === 'POST') {
@@ -198,6 +205,9 @@ export class WerewolfRoom extends DurableObject {
       maxUser?: number;
       gameOption?: string;
       optionRole?: string;
+      isPrivate?: boolean;
+      passwordHash?: string;
+      roomOptions?: any;
     };
 
     this.roomData = createRoom({
@@ -208,6 +218,12 @@ export class WerewolfRoom extends DurableObject {
       gameOption: data.gameOption || '',
       optionRole: data.optionRole || ''
     });
+
+    // 儲存私人房間與 typed options 到 roomData
+    this.roomData.isPrivate = !!data.isPrivate;
+    this.roomData.passwordHash = data.passwordHash || '';
+    this.roomData.timeLimit = data.roomOptions?.timeLimit;
+    this.roomData.silenceMode = data.roomOptions?.silenceMode;
 
     await this.saveState();
 

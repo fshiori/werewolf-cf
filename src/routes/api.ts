@@ -11,6 +11,7 @@ import { BanManager } from '../utils/ban-manager';
 import { StatsManager } from '../utils/stats-manager';
 import { escapeHtml, sanitizeHtml } from '../utils/security';
 import { defaultRateLimiter, apiRateLimiter } from '../utils/rate-limiter';
+import { parseRoomOptions } from '../types/room-options';
 import adminRoutes from './admin';
 import featuresRoutes from './features';
 import bbsRoutes from './bbs';
@@ -124,6 +125,8 @@ app.post('/api/rooms', checkBan, rateLimit, async (c) => {
       maxUser?: number;
       gameOption?: string;
       optionRole?: string;
+      password?: string;
+      options?: any;
     }>();
 
     // 驗證
@@ -139,6 +142,21 @@ app.post('/api/rooms', checkBan, rateLimit, async (c) => {
     // 轉義房間名稱（防止 XSS）
     const safeRoomName = escapeHtml(data.roomName);
     const safeComment = data.roomComment ? escapeHtml(data.roomComment) : '';
+
+    // 處理私人房間密碼
+    let isPrivate = false;
+    let passwordHash = '';
+    if (data.password && data.password.length > 0) {
+      isPrivate = true;
+      const encoder = new TextEncoder();
+      const encoded = encoder.encode(data.password + 'room-pw-salt');
+      const hashBuffer = await crypto.subtle.digest('SHA-256', encoded);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      passwordHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    // 解析 typed room options
+    const roomOptions = parseRoomOptions(data.options);
 
     // 生成房間編號
     const roomNo = Date.now();
@@ -157,7 +175,10 @@ app.post('/api/rooms', checkBan, rateLimit, async (c) => {
         roomComment: safeComment,
         maxUser,
         gameOption: data.gameOption || '',
-        optionRole: data.optionRole || ''
+        optionRole: data.optionRole || '',
+        isPrivate,
+        passwordHash,
+        roomOptions
       })
     }));
 
@@ -275,6 +296,7 @@ app.post('/api/rooms/:roomNo/join', checkBan, rateLimit, async (c) => {
       trip: string;
       iconNo: number;
       sex: string;
+      password?: string;
     }>();
 
     // 驗證
@@ -284,6 +306,35 @@ app.post('/api/rooms/:roomNo/join', checkBan, rateLimit, async (c) => {
 
     if (!data.handleName || data.handleName.length > 32) {
       return c.json({ error: 'Invalid display name' }, 400);
+    }
+
+    // ---- 私人房間密碼驗證 ----
+    // 從 D1 查詢房間是否為私人房間
+    try {
+      const roomRow = await c.env.DB.prepare(
+        'SELECT is_private, password_hash FROM room WHERE room_no = ?'
+      ).bind(roomNo).first();
+
+      if (roomRow && roomRow.is_private === 1) {
+        // 私人房間，必須提供密碼
+        if (!data.password) {
+          return c.json({ error: 'Password required for private room' }, 403);
+        }
+
+        // 雜湊使用者提供的密碼並比對
+        const encoder = new TextEncoder();
+        const encoded = encoder.encode(data.password + 'room-pw-salt');
+        const hashBuffer = await crypto.subtle.digest('SHA-256', encoded);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        const inputHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+        if (inputHash !== roomRow.password_hash) {
+          return c.json({ error: 'Wrong password' }, 403);
+        }
+      }
+    } catch (dbErr) {
+      // D1 查詢失敗（可能房間不存在），不阻擋加入流程
+      console.error('Room password check error:', dbErr);
     }
 
     // 轉義（XSS 防護）

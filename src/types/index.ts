@@ -88,6 +88,10 @@ export interface RoomData {
   messages: Message[];     // 訊息記錄
   timeSpent: number;       // 已消耗時間單位
   silenceTime?: number;    // 沈默時間
+  isPrivate?: boolean;     // 是否為私人房間
+  passwordHash?: string;   // 密碼雜湊（SHA-256）
+  timeLimit?: number;      // 發言時間限制（秒）
+  silenceMode?: boolean;   // 沈默加速模式
 }
 
 // 訊息類型
