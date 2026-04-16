@@ -10,7 +10,7 @@ import type { Env, Player, RoomData, Message, Role } from '../types';
 import { createRoom, addPlayer, removePlayer, startGame, endGame, getPublicRoomInfo } from '../utils/room-manager';
 import { advanceTime, checkSilence, transitionPhase, DEFAULT_TIME_CONFIG, isRealTimeEnabled, isRealTimeExpired, startRealTimePhase, getRealTimeRemainingSec } from '../utils/time-progression';
 import { assignRoles, checkVictory, canSpeak, getRoleTeam, getVictoryMessage, createDummyBoyPlayer } from '../utils/role-system';
-import { createVoteData, addVote, getVoteResult, executeVote, isVoteComplete, calculateWeightedVotes, resolveWeightedVoteResult, resolveComoutlTie, getTopVotedPlayers, filterVoteDisplay } from '../utils/vote-system';
+import { createVoteData, addVote, getVoteResult, executeVote, isVoteComplete, calculateWeightedVotes, resolveWeightedVoteResult, filterVoteDisplay } from '../utils/vote-system';
 import { createNightState, wolfKill, seerDivine, guardTarget, processNightResult, getNightSummary, isNightActionsComplete } from '../utils/night-action';
 import { createSessionManager, type SessionValue } from '../utils/session-manager';
 import {
@@ -30,8 +30,6 @@ export class WerewolfRoom extends DurableObject {
   private voteData?: any;
   private nightState?: any;
   private _pendingNightSummary?: string;
-  /** comoutl: 追蹤上一輪投票最高票者 */
-  private _comoutlPreviousTop?: string[];
   // @ts-ignore - ctx is a DurableObject property
   private storage = this.ctx.storage;
 
@@ -495,6 +493,107 @@ export class WerewolfRoom extends DurableObject {
     const player = this.roomData.players.get(uname);
     // @ts-ignore - dayNight may be 'beforegame' which is handled at runtime
     if (!player || !canSpeak(player, this.roomData.dayNight)) {
+      return;
+    }
+
+    const comoutlEnabled = !!this.roomData.roomOptions?.comoutl;
+    const isCommon = player.role === 'common';
+    const isLover = player.role === 'lovers';
+
+    // 共生者/戀人夜晚對話：comoutl 控制其他玩家是否能看到「悄悄話」提示
+    if ((isCommon || isLover) && this.roomData.dayNight === 'night' && !comoutlEnabled) {
+      // comoutl 關閉：共生者夜晚對話僅限共生者/戀人/GM 可見
+      const recipients: string[] = [];
+      for (const [name, p] of this.roomData.players) {
+        if (p.role === 'common' || p.role === 'lovers' || p.role === 'GM') {
+          recipients.push(name);
+        }
+      }
+      if (recipients.length === 0) return;
+
+      const message: Message = {
+        id: `${Date.now()}-${Math.random()}`,
+        roomNo: this.roomData.roomNo,
+        date: this.roomData.date,
+        location: 'night common',
+        uname,
+        handleName: player.handleName,
+        sentence: text,
+        fontType: fontType as any,
+        time: Date.now()
+      };
+
+      try {
+        // @ts-ignore
+        await this.env.DB.prepare(
+          'INSERT INTO talk (room_no, date, location, uname, handle_name, sentence, font_type, time) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+        ).bind(
+          this.roomData.roomNo, this.roomData.date, 'night common',
+          uname, player.handleName, text, fontType, Math.floor(Date.now() / 1000)
+        ).run();
+      } catch (e) {
+        console.error('DB error:', e);
+      }
+
+      const data = JSON.stringify({ type: 'message', data: message });
+      for (const r of recipients) {
+        const ws = this.sessions.get(r);
+        if (ws) {
+          try { ws.send(data); } catch (_e) { this.sessions.delete(r); }
+        }
+      }
+      await this.advanceGameTime(1);
+      return;
+    }
+
+    if ((isCommon || isLover) && this.roomData.dayNight === 'night' && comoutlEnabled) {
+      // comoutl 開啟：共生者/戀人看到完整內容，其他玩家看到「悄悄話...」
+      const message: Message = {
+        id: `${Date.now()}-${Math.random()}`,
+        roomNo: this.roomData.roomNo,
+        date: this.roomData.date,
+        location: 'night common',
+        uname,
+        handleName: player.handleName,
+        sentence: text,
+        fontType: fontType as any,
+        time: Date.now()
+      };
+
+      try {
+        // @ts-ignore
+        await this.env.DB.prepare(
+          'INSERT INTO talk (room_no, date, location, uname, handle_name, sentence, font_type, time) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+        ).bind(
+          this.roomData.roomNo, this.roomData.date, 'night common',
+          uname, player.handleName, text, fontType, Math.floor(Date.now() / 1000)
+        ).run();
+      } catch (e) {
+        console.error('DB error:', e);
+      }
+
+      // 發送完整訊息給共生者/戀人/GM
+      const fullData = JSON.stringify({ type: 'message', data: message });
+      // 發送「悄悄話...」提示給其他存活玩家
+      const whisperData = JSON.stringify({
+        type: 'night_whisper',
+        data: { role: isCommon ? 'common' : 'lovers' }
+      });
+
+      for (const [name, p] of this.roomData.players) {
+        const ws = this.sessions.get(name);
+        if (!ws) continue;
+        try {
+          if (p.role === 'common' || p.role === 'lovers' || p.role === 'GM') {
+            ws.send(fullData);
+          } else if (p.live === 'live') {
+            ws.send(whisperData);
+          }
+        } catch (_e) {
+          this.sessions.delete(name);
+        }
+      }
+      await this.advanceGameTime(1);
       return;
     }
 
@@ -1068,7 +1167,6 @@ export class WerewolfRoom extends DurableObject {
   /**
    * 處理投票結果
    * 使用加權投票（authority x2），並處理平手/decide 邏輯
-   * comoutl 啟用時，平手不重新投票而是直接淘汰
    * voteDisplay 控制投票資訊的廣播內容
    */
   private async processVoteResult() {
@@ -1084,61 +1182,7 @@ export class WerewolfRoom extends DurableObject {
     const result = resolveWeightedVoteResult(voteData, this.roomData.players);
 
     if (result.revote) {
-      // 平手處理
-      const comoutlEnabled = !!this.roomData.roomOptions?.comoutl;
-
-      if (comoutlEnabled) {
-        // comoutl：不重新投票，直接用上一輪最高票或隨機決定淘汰者
-        const comoutlTarget = resolveComoutlTie(voteData, this.roomData.players, this._comoutlPreviousTop);
-
-        if (comoutlTarget) {
-          // comoutl: 記錄這一輪的最高票者供下一輪使用
-          this._comoutlPreviousTop = getTopVotedPlayers(voteData);
-
-          this.broadcast({
-            type: 'vote_tie',
-            data: {
-              message: '投票平手！依連續出局規則，淘汰者已決定...',
-            }
-          });
-
-          this.broadcast({
-            type: 'players_executed',
-            data: [{ uname: comoutlTarget.uname, handleName: comoutlTarget.handleName }]
-          });
-
-          // 記錄處決事件
-          try {
-            // @ts-ignore
-            await this.env.DB.prepare(`
-              INSERT INTO game_events (room_no, date, event_type, description, related_uname, time)
-              VALUES (?, ?, ?, ?, ?, ?)
-            `).bind(
-              this.roomData.roomNo, this.roomData.date, 'execution',
-              `${comoutlTarget.handleName} 被連續出局處決`, comoutlTarget.uname, Date.now()
-            ).run();
-          } catch (e) {
-            console.error('Execution event error:', e);
-          }
-
-          // 檢查勝負後進入夜晚
-          const victory = checkVictory(Array.from(this.roomData.players.values()));
-          if (victory) {
-            await this.endGame(victory);
-            return;
-          }
-
-          await this.enterNightPhase();
-          return;
-        }
-      }
-
-      // 非 comoutl 或 comoutl 無法決定 → 重新投票（正常流程）
-      // 記錄這一輪的最高票者供 comoutl 下一輪使用
-      if (comoutlEnabled) {
-        this._comoutlPreviousTop = getTopVotedPlayers(voteData);
-      }
-
+      // 平手處理 → 重新投票
       this.broadcast({
         type: 'vote_tie',
         data: {
@@ -1150,11 +1194,6 @@ export class WerewolfRoom extends DurableObject {
       this.voteData = createVoteData(this.roomData.roomNo, this.roomData.date);
       await this.saveState();
       return;
-    }
-
-    // 非平手：記錄最高票者供 comoutl 下一輪使用
-    if (this.roomData.roomOptions?.comoutl) {
-      this._comoutlPreviousTop = getTopVotedPlayers(voteData);
     }
 
     // voteDisplay: 根據模式過濾投票結果廣播

@@ -295,63 +295,6 @@ export function voteToDatabase(voteData: VoteData, voteNumber: number): Vote[] {
   return votes;
 }
 
-// ── comoutl token: 連續出局處刑 ──
-
-/**
- * comoutl 邏輯：
- * 當投票平手且 comoutl 啟用時，不重新投票，而是依以下優先級選出淘汰者：
- * 1. 平手者中，在上一輪（previousRoundTop）得票最高的人被淘汰
- * 2. 若無上一輪資料或無法決定，則隨機淘汰
- *
- * @param voteData  當前投票資料
- * @param players   玩家 Map
- * @param previousRoundTop 上一輪得票最高的玩家 uname（comoutl 上下文傳入）
- * @returns 被淘汰的玩家，若無法決定回傳 null
- */
-export function resolveComoutlTie(
-  voteData: VoteData,
-  players: Map<string, Player>,
-  previousRoundTop?: string[]
-): Player | null {
-  const result = getVoteResult(voteData);
-  if (result.length <= 1) {
-    // 非平手，不應使用此函數
-    return null;
-  }
-
-  // 嘗試用上一輪最高票來打破平手
-  if (previousRoundTop && previousRoundTop.length > 0) {
-    // 上一輪最高票者中，誰在當前平手者中？
-    const comoutlTarget = previousRoundTop.find(t => result.includes(t));
-    if (comoutlTarget) {
-      const player = players.get(comoutlTarget);
-      if (player && player.live === 'live') {
-        player.live = 'dead';
-        return player;
-      }
-    }
-  }
-
-  // 無法決定 → 隨機
-  const randomTarget = randomTieBreak(voteData);
-  if (randomTarget) {
-    const player = players.get(randomTarget);
-    if (player && player.live === 'live') {
-      player.live = 'dead';
-      return player;
-    }
-  }
-
-  return null;
-}
-
-/**
- * 取得投票中得票最高的玩家名稱列表（用於 comoutl 下一輪判定）
- */
-export function getTopVotedPlayers(voteData: VoteData): string[] {
-  return getVoteResult(voteData);
-}
-
 // ── voteDisplay token: 投票結果展示 ──
 
 /**

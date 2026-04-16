@@ -15,8 +15,6 @@ import {
   clearVotes,
   getVoteStats,
   resolveWeightedVoteResult,
-  resolveComoutlTie,
-  getTopVotedPlayers,
   filterVoteDisplay,
 } from '../vote-system';
 import type { Player } from '../types';
@@ -483,78 +481,6 @@ describe('Vote System', () => {
       expect(stats[0].count).toBe(2);
       expect(stats[1].uname).toBe('targetB');
       expect(stats[1].count).toBe(1);
-    });
-  });
-
-  describe('comoutl (連續出局)', () => {
-    const makePlayer = (uname: string, role: string): Player => ({
-      userNo: 1, uname, handleName: uname, trip: '', iconNo: 1, sex: '', role: role as any, live: 'live', score: 0,
-    });
-
-    it('平手且有上一輪資料時應淘汰上一輪最高票者', () => {
-      const voteData = createVoteData(1, 1);
-      const players = new Map<string, Player>();
-      players.set('voter1', makePlayer('voter1', 'human'));
-      players.set('voter2', makePlayer('voter2', 'human'));
-      players.set('targetA', makePlayer('targetA', 'human'));
-      players.set('targetB', makePlayer('targetB', 'human'));
-
-      addVote(voteData, 'voter1', 'targetA');
-      addVote(voteData, 'voter2', 'targetB');
-
-      // 上一輪 targetA 是最高票
-      const previousTop = ['targetA'];
-      const executed = resolveComoutlTie(voteData, players, previousTop);
-
-      expect(executed).not.toBeNull();
-      expect(executed!.uname).toBe('targetA');
-      expect(executed!.live).toBe('dead');
-      expect(players.get('targetB')!.live).toBe('live');
-    });
-
-    it('無上一輪資料時應隨機淘汰', () => {
-      const voteData = createVoteData(1, 1);
-      const players = new Map<string, Player>();
-      players.set('voter1', makePlayer('voter1', 'human'));
-      players.set('voter2', makePlayer('voter2', 'human'));
-      players.set('targetA', makePlayer('targetA', 'human'));
-      players.set('targetB', makePlayer('targetB', 'human'));
-
-      addVote(voteData, 'voter1', 'targetA');
-      addVote(voteData, 'voter2', 'targetB');
-
-      const executed = resolveComoutlTie(voteData, players, undefined);
-
-      expect(executed).not.toBeNull();
-      expect(['targetA', 'targetB']).toContain(executed!.uname);
-    });
-
-    it('非平手時應回傳 null', () => {
-      const voteData = createVoteData(1, 1);
-      const players = new Map<string, Player>();
-      players.set('voter1', makePlayer('voter1', 'human'));
-      players.set('voter2', makePlayer('voter2', 'human'));
-      players.set('voter3', makePlayer('voter3', 'human'));
-      players.set('targetA', makePlayer('targetA', 'human'));
-      players.set('targetB', makePlayer('targetB', 'human'));
-
-      addVote(voteData, 'voter1', 'targetA');
-      addVote(voteData, 'voter2', 'targetA');
-      addVote(voteData, 'voter3', 'targetA');
-
-      const executed = resolveComoutlTie(voteData, players);
-
-      expect(executed).toBeNull();
-    });
-
-    it('getTopVotedPlayers 應回傳最高票玩家列表', () => {
-      const voteData = createVoteData(1, 1);
-      addVote(voteData, 'p1', 'A');
-      addVote(voteData, 'p2', 'A');
-      addVote(voteData, 'p3', 'B');
-
-      const top = getTopVotedPlayers(voteData);
-      expect(top).toEqual(['A']);
     });
   });
 

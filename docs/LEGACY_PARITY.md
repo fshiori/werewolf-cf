@@ -190,7 +190,7 @@ CF replaces this with a typed `RoomOptions` interface (see `src/types/room-optio
 | `dummy_boy` | Include AI dummy player (替身君) | ✅ | ⚠️ | ⚠️ Partial (parsed; night-1 wolf-eat protection exists, but full dummy speech AI missing) |
 | `open_vote` | Reveal vote tallies to all players | ✅ | ✅ `openVote` | ⚠️ Partial (parsed; display integration pending) |
 | `real_time:D:N` | Use real-time limits (D min day, N min night) | ✅ | ✅ `timeLimit` | ⚠️ Partial (CF uses single `timeLimit`; PHP has separate day/night real-time limits) |
-| `comoutl` | Hide common-partner talk from log display | ❌ | ❌ | ❌ Missing |
+| `comoutl` | 共生者夜晚對話顯示（show lover/common night whisper to others） | ✅ | ✅ `comoutl` | ✅ Full (comoutl=true: others see 「悄悄話...」; comoutl=false: hidden) |
 | `vote_me` | Allow self-vote | ✅ | ✅ `voteMe` | ⚠️ Partial (parsed; enforcement not verified) |
 | `trip` | Require tripcode to join | ✅ | ✅ `tripRequired` | ⚠️ Partial (parsed; enforcement at join-time not verified) |
 | `will` | Enable last-words (遺言) | ✅ | ✅ `will` | ✅ Full |
