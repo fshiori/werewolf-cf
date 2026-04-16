@@ -11,7 +11,7 @@ import { createRoom, addPlayer, removePlayer, startGame, endGame, getPublicRoomI
 import { advanceTime, checkSilence, transitionPhase, DEFAULT_TIME_CONFIG } from '../utils/time-progression';
 import { assignRoles, checkVictory, canSpeak, getRoleTeam } from '../utils/role-system';
 import { createVoteData, addVote, getVoteResult, executeVote, isVoteComplete } from '../utils/vote-system';
-import { createNightState, wolfKill, seerDivine, processNightResult, getNightSummary, isNightActionsComplete } from '../utils/night-action';
+import { createNightState, wolfKill, seerDivine, guardTarget, processNightResult, getNightSummary, isNightActionsComplete } from '../utils/night-action';
 import { createSessionManager, type SessionValue } from '../utils/session-manager';
 
 export class WerewolfRoom extends DurableObject {
@@ -173,7 +173,14 @@ export class WerewolfRoom extends DurableObject {
     }
 
     if (path === '/info') {
-      return Response.json(getPublicRoomInfo(this.roomData));
+      const info = getPublicRoomInfo(this.roomData);
+      // 加入 typed options 與私人房間標記（不洩漏 passwordHash）
+      return Response.json({
+        ...info,
+        isPrivate: !!this.roomData.isPrivate,
+        timeLimit: this.roomData.timeLimit ?? 60,
+        silenceMode: !!this.roomData.silenceMode,
+      });
     }
 
     if (path === '/init' && req.method === 'POST') {
@@ -198,6 +205,9 @@ export class WerewolfRoom extends DurableObject {
       maxUser?: number;
       gameOption?: string;
       optionRole?: string;
+      isPrivate?: boolean;
+      passwordHash?: string;
+      roomOptions?: any;
     };
 
     this.roomData = createRoom({
@@ -208,6 +218,12 @@ export class WerewolfRoom extends DurableObject {
       gameOption: data.gameOption || '',
       optionRole: data.optionRole || ''
     });
+
+    // 儲存私人房間與 typed options 到 roomData
+    this.roomData.isPrivate = !!data.isPrivate;
+    this.roomData.passwordHash = data.passwordHash || '';
+    this.roomData.timeLimit = data.roomOptions?.timeLimit;
+    this.roomData.silenceMode = data.roomOptions?.silenceMode;
 
     await this.saveState();
 
@@ -470,6 +486,11 @@ export class WerewolfRoom extends DurableObject {
               }));
             }
           }
+        }
+        break;
+      case 'guard_protect':
+        if (target) {
+          guardTarget(this.nightState, this.roomData.players, uname, target);
         }
         break;
       case 'skip':
@@ -894,18 +915,23 @@ export class WerewolfRoom extends DurableObject {
     try {
       // @ts-ignore
       await this.env.DB.prepare(`
-        INSERT INTO room (room_no, room_name, room_comment, max_user, game_option, option_role, status, date, day_night, victory_role, uptime, last_updated)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO room (room_no, room_name, room_comment, max_user, game_option, option_role, status, date, day_night, victory_role, uptime, last_updated, is_private, password_hash, time_limit, silence_mode)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(room_no) DO UPDATE SET
           room_name = ?, room_comment = ?, status = ?, date = ?, day_night = ?,
-          victory_role = ?, last_updated = ?
+          victory_role = ?, last_updated = ?,
+          is_private = ?, password_hash = ?, time_limit = ?, silence_mode = ?
       `).bind(
         this.roomData.roomNo, this.roomData.roomName, this.roomData.roomComment || '',
         this.roomData.maxUser, this.roomData.gameOption || '', this.roomData.optionRole || '',
         this.roomData.status, this.roomData.date, this.roomData.dayNight,
         this.roomData.victoryRole || null, this.roomData.uptime || Date.now(), Date.now(),
+        this.roomData.isPrivate ? 1 : 0, this.roomData.passwordHash || null,
+        this.roomData.roomOptions?.timeLimit || 300, this.roomData.roomOptions?.silenceMode ? 1 : 0,
         this.roomData.roomName, this.roomData.roomComment || '', this.roomData.status,
-        this.roomData.date, this.roomData.dayNight, this.roomData.victoryRole || null, Date.now()
+        this.roomData.date, this.roomData.dayNight, this.roomData.victoryRole || null, Date.now(),
+        this.roomData.isPrivate ? 1 : 0, this.roomData.passwordHash || null,
+        this.roomData.roomOptions?.timeLimit || 300, this.roomData.roomOptions?.silenceMode ? 1 : 0
       ).run();
 
       // 同步玩家到 D1

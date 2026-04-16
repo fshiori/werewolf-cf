@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>房間列表 - Werewolf CF</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Microsoft JhengHei', 'PingFang TC', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .back-link {
+      display: inline-block;
+      padding: 10px 20px;
+      background: white;
+      color: #667eea;
+      text-decoration: none;
+      border-radius: 6px;
+      margin-bottom: 20px;
+      transition: all 0.3s;
+    }
+
+    .back-link:hover {
+      background: #f8f9fa;
+      transform: translateX(-5px);
+    }
+
+    .header {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .header h1 {
+      color: #1e3c72;
+      margin-bottom: 10px;
+    }
+
+    .filters {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .filter-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    select, button {
+      padding: 10px 20px;
+      border: 2px solid #667eea;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+      background: white;
+      color: #333;
+    }
+
+    select:hover, button:hover {
+      background: #f8f9fa;
+    }
+
+    .btn-primary {
+      background: #667eea;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #5568d3;
+    }
+
+    .rooms-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 20px;
+    }
+
+    .room-card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      transition: transform 0.3s, box-shadow 0.3s;
+      cursor: pointer;
+    }
+
+    .room-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+    }
+
+    .room-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      padding-bottom: 15px;
+      border-bottom: 2px solid #f0f0f0;
+    }
+
+    .room-name {
+      font-size: 18px;
+      font-weight: bold;
+      color: #1e3c72;
+    }
+
+    .room-private {
+      font-size: 20px;
+    }
+
+    .room-stats {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .stat-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px;
+      background: #f8f9fa;
+      border-radius: 6px;
+    }
+
+    .stat-label {
+      color: #666;
+      font-size: 14px;
+    }
+
+    .stat-value {
+      font-weight: bold;
+      color: #1e3c72;
+    }
+
+    .status-waiting {
+      background: #e3f2fd;
+      color: #1976d2;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: bold;
+    }
+
+    .status-playing {
+      background: #fff3e0;
+      color: #e65100;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: bold;
+    }
+
+    .status-ended {
+      background: #e8f5e9;
+      color: #2e7d32;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: bold;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: white;
+      font-size: 18px;
+    }
+
+    .no-rooms {
+      text-align: center;
+      padding: 60px;
+      background: white;
+      border-radius: 12px;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <a href="/" class="back-link">← 返回首頁</a>
+
+    <div class="header">
+      <h1>🏠 房間列表</h1>
+      <p>查看所有可用的遊戲房間</p>
+    </div>
+
+    <div class="filters">
+      <div class="filter-group">
+        <label>狀態篩選：</label>
+        <select id="statusFilter" onchange="loadRooms()">
+          <option value="">全部</option>
+          <option value="waiting">等待中</option>
+          <option value="playing">遊戲中</option>
+          <option value="ended">已結束</option>
+        </select>
+      </div>
+
+      <button class="btn-primary" onclick="loadRooms()">🔄 重新整理</button>
+    </div>
+
+    <div id="roomsContainer" class="rooms-grid">
+      <div class="loading">載入中...</div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      loadRooms();
+    });
+
+    async function loadRooms() {
+      const statusFilter = document.getElementById('statusFilter').value;
+
+      try {
+        const response = await fetch('/api/rooms');
+        const data = await response.json();
+
+        let rooms = Array.isArray(data) ? data : (data.rooms || []);
+
+        if (statusFilter) {
+          rooms = rooms.filter(r => r.status === statusFilter);
+        }
+
+        if (rooms.length > 0) {
+          displayRooms(rooms);
+        } else {
+          document.getElementById('roomsContainer').innerHTML =
+            '<div class="no-rooms">📭 目前沒有房間</div>';
+        }
+      } catch (error) {
+        console.error('Failed to load rooms:', error);
+        document.getElementById('roomsContainer').innerHTML =
+          '<div class="no-rooms">❌ 載入失敗</div>';
+      }
+    }
+
+    function displayRooms(rooms) {
+      const container = document.getElementById('roomsContainer');
+      container.innerHTML = rooms.map(room => {
+        const statusText = {
+          waiting: '等待中',
+          playing: '遊戲中',
+          ended: '已結束'
+        }[room.status] || room.status;
+
+        const statusClass = 'status-' + (room.status || 'waiting');
+        const privateIcon = room.is_private ? '🔒' : '';
+        const playerInfo = `${room.player_count}/${room.max_user} 人`;
+
+        return `
+          <div class="room-card" onclick="goToRoom(${room.room_no})">
+            <div class="room-header">
+              <div class="room-name">${escapeHtml(room.room_name || '未命名房間')} ${privateIcon}</div>
+              <div class="${statusClass}">${statusText}</div>
+            </div>
+            <div class="room-stats">
+              <div class="stat-item">
+                <span class="stat-label">房間編號</span>
+                <span class="stat-value">#${room.room_no}</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">玩家數</span>
+                <span class="stat-value">${playerInfo}</span>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function goToRoom(roomNo) {
+      window.location.href = '/game.html?roomNo=' + roomNo;
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+  </script>
+</body>
+</html>

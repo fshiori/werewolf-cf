@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>上傳頭像 - Werewolf CF</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Microsoft JhengHei', 'PingFang TC', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+
+    .container {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+      padding: 40px;
+      max-width: 600px;
+      width: 100%;
+      margin-top: 40px;
+    }
+
+    .back-link {
+      display: inline-block;
+      padding: 10px 20px;
+      background: #f8f9fa;
+      color: #667eea;
+      text-decoration: none;
+      border-radius: 6px;
+      margin-bottom: 20px;
+      transition: all 0.3s;
+    }
+
+    .back-link:hover {
+      background: #f0f0f0;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .header h1 {
+      color: #1e3c72;
+      margin-bottom: 10px;
+    }
+
+    .header p {
+      color: #666;
+      font-size: 14px;
+    }
+
+    .upload-area {
+      border: 2px dashed #667eea;
+      border-radius: 12px;
+      padding: 40px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      margin-bottom: 20px;
+    }
+
+    .upload-area:hover {
+      background: #f8f9ff;
+      border-color: #5568d3;
+    }
+
+    .upload-area.dragover {
+      background: #f0f0ff;
+      border-color: #5568d3;
+    }
+
+    .upload-area .icon {
+      font-size: 48px;
+      margin-bottom: 10px;
+    }
+
+    .upload-area .text {
+      color: #666;
+      font-size: 16px;
+    }
+
+    .upload-area .hint {
+      color: #999;
+      font-size: 13px;
+      margin-top: 8px;
+    }
+
+    #fileInput {
+      display: none;
+    }
+
+    .preview-area {
+      display: none;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .preview-area.show {
+      display: block;
+    }
+
+    .preview-area img {
+      width: 120px;
+      height: 120px;
+      object-fit: contain;
+      border-radius: 8px;
+      background: #f8f9fa;
+      margin-bottom: 10px;
+    }
+
+    .preview-info {
+      font-size: 13px;
+      color: #666;
+    }
+
+    .btn-primary {
+      display: block;
+      width: 100%;
+      padding: 14px;
+      background: #667eea;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .btn-primary:hover {
+      background: #5568d3;
+    }
+
+    .btn-primary:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+
+    .message {
+      padding: 12px;
+      border-radius: 8px;
+      margin-top: 20px;
+      font-size: 14px;
+      display: none;
+    }
+
+    .message.show {
+      display: block;
+    }
+
+    .message.error {
+      background: #fee;
+      color: #c33;
+    }
+
+    .message.success {
+      background: #e8f5e9;
+      color: #2e7d32;
+    }
+
+    .uploaded-icon {
+      text-align: center;
+      margin-top: 20px;
+      display: none;
+    }
+
+    .uploaded-icon.show {
+      display: block;
+    }
+
+    .uploaded-icon img {
+      width: 100px;
+      height: 100px;
+      object-fit: contain;
+      border-radius: 8px;
+      background: #f8f9fa;
+      margin-bottom: 10px;
+    }
+
+    .uploaded-icon .filename {
+      font-size: 14px;
+      color: #1e3c72;
+      font-weight: bold;
+    }
+
+    .rules {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-size: 13px;
+      color: #666;
+    }
+
+    .rules h3 {
+      color: #1e3c72;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+
+    .rules ul {
+      margin-left: 20px;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <a href="/icon-view.html" class="back-link">← 返回圖示列表</a>
+
+    <div class="header">
+      <h1>📤 上傳頭像圖示</h1>
+      <p>上傳 PNG 或 JPG 格式的頭像圖示</p>
+    </div>
+
+    <div class="rules">
+      <h3>📋 上傳規則</h3>
+      <ul>
+        <li>檔案格式：PNG / JPG</li>
+        <li>檔案大小：最大 100 KB</li>
+        <li>建議尺寸：正方形圖片效果最佳</li>
+      </ul>
+    </div>
+
+    <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
+      <div class="icon">📁</div>
+      <div class="text">點擊或拖曳圖片到這裡上傳</div>
+      <div class="hint">支援 PNG、JPG 格式，最大 100 KB</div>
+    </div>
+
+    <input type="file" id="fileInput" accept="image/png,image/jpeg">
+
+    <div class="preview-area" id="previewArea">
+      <img id="previewImage" src="" alt="預覽">
+      <div class="preview-info" id="previewInfo"></div>
+    </div>
+
+    <button class="btn-primary" id="uploadBtn" onclick="uploadIcon()" disabled>
+      上傳頭像
+    </button>
+
+    <div class="message" id="message"></div>
+
+    <div class="uploaded-icon" id="uploadedIcon">
+      <h3 style="color: #1e3c72; margin-bottom: 10px;">✅ 上傳成功</h3>
+      <img id="uploadedImage" src="" alt="上傳的圖示">
+      <div class="filename" id="uploadedFilename"></div>
+    </div>
+  </div>
+
+  <script>
+    const fileInput = document.getElementById('fileInput');
+    const uploadArea = document.getElementById('uploadArea');
+    const previewArea = document.getElementById('previewArea');
+    const previewImage = document.getElementById('previewImage');
+    const previewInfo = document.getElementById('previewInfo');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const messageEl = document.getElementById('message');
+
+    let selectedFile = null;
+
+    // 檔案選擇
+    fileInput.addEventListener('change', (e) => {
+      handleFile(e.target.files[0]);
+    });
+
+    // 拖曳支援
+    uploadArea.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      uploadArea.classList.add('dragover');
+    });
+
+    uploadArea.addEventListener('dragleave', () => {
+      uploadArea.classList.remove('dragover');
+    });
+
+    uploadArea.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadArea.classList.remove('dragover');
+      if (e.dataTransfer.files.length > 0) {
+        handleFile(e.dataTransfer.files[0]);
+      }
+    });
+
+    function handleFile(file) {
+      hideMessage();
+      document.getElementById('uploadedIcon').classList.remove('show');
+
+      if (!file) {
+        selectedFile = null;
+        previewArea.classList.remove('show');
+        uploadBtn.disabled = true;
+        return;
+      }
+
+      // 驗證檔案類型
+      const validTypes = ['image/png', 'image/jpeg', 'image/jpg'];
+      if (!validTypes.includes(file.type)) {
+        showMessage('❌ 不支援的檔案格式，請使用 PNG 或 JPG', 'error');
+        selectedFile = null;
+        previewArea.classList.remove('show');
+        uploadBtn.disabled = true;
+        return;
+      }
+
+      // 驗證檔案大小（100KB）
+      const maxSize = 100 * 1024;
+      if (file.size > maxSize) {
+        const sizeKB = (file.size / 1024).toFixed(1);
+        showMessage(`❌ 檔案過大（${sizeKB} KB），最大限制 100 KB`, 'error');
+        selectedFile = null;
+        previewArea.classList.remove('show');
+        uploadBtn.disabled = true;
+        return;
+      }
+
+      selectedFile = file;
+      uploadBtn.disabled = false;
+
+      // 顯示預覽
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        previewImage.src = e.target.result;
+        const sizeKB = (file.size / 1024).toFixed(1);
+        previewInfo.textContent = `${file.name}（${sizeKB} KB）`;
+        previewArea.classList.add('show');
+      };
+      reader.readAsDataURL(file);
+    }
+
+    async function uploadIcon() {
+      if (!selectedFile) return;
+
+      uploadBtn.disabled = true;
+      uploadBtn.textContent = '上傳中...';
+      hideMessage();
+
+      try {
+        const formData = new FormData();
+        formData.append('icon', selectedFile);
+
+        const response = await fetch('/api/icons', {
+          method: 'POST',
+          body: formData
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          showMessage('✅ 上傳成功！', 'success');
+
+          // 顯示上傳的圖示
+          const iconUrl = `/api/icons/${encodeURIComponent(data.iconFilename)}`;
+          document.getElementById('uploadedImage').src = iconUrl;
+          document.getElementById('uploadedFilename').textContent = data.iconFilename;
+          document.getElementById('uploadedIcon').classList.add('show');
+
+          // 重置表單
+          selectedFile = null;
+          previewArea.classList.remove('show');
+          fileInput.value = '';
+        } else {
+          showMessage(`❌ 上傳失敗：${data.error || '未知錯誤'}`, 'error');
+        }
+      } catch (error) {
+        console.error('Upload failed:', error);
+        showMessage('❌ 上傳失敗，請稍後再試', 'error');
+      } finally {
+        uploadBtn.disabled = false;
+        uploadBtn.textContent = '上傳頭像';
+      }
+    }
+
+    function showMessage(text, type) {
+      messageEl.textContent = text;
+      messageEl.className = 'message show ' + type;
+    }
+
+    function hideMessage() {
+      messageEl.className = 'message';
+    }
+  </script>
+</body>
+</html>

@@ -11,9 +11,11 @@ import { BanManager } from '../utils/ban-manager';
 import { StatsManager } from '../utils/stats-manager';
 import { escapeHtml, sanitizeHtml } from '../utils/security';
 import { defaultRateLimiter, apiRateLimiter } from '../utils/rate-limiter';
+import { parseRoomOptions } from '../types/room-options';
 import adminRoutes from './admin';
 import featuresRoutes from './features';
 import bbsRoutes from './bbs';
+import tripRoutes from './trip';
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -124,6 +126,8 @@ app.post('/api/rooms', checkBan, rateLimit, async (c) => {
       maxUser?: number;
       gameOption?: string;
       optionRole?: string;
+      password?: string;
+      options?: any;
     }>();
 
     // 驗證
@@ -139,6 +143,21 @@ app.post('/api/rooms', checkBan, rateLimit, async (c) => {
     // 轉義房間名稱（防止 XSS）
     const safeRoomName = escapeHtml(data.roomName);
     const safeComment = data.roomComment ? escapeHtml(data.roomComment) : '';
+
+    // 處理私人房間密碼
+    let isPrivate = false;
+    let passwordHash = '';
+    if (data.password && data.password.length > 0) {
+      isPrivate = true;
+      const encoder = new TextEncoder();
+      const encoded = encoder.encode(data.password + 'room-pw-salt');
+      const hashBuffer = await crypto.subtle.digest('SHA-256', encoded);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      passwordHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    // 解析 typed room options
+    const roomOptions = parseRoomOptions(data.options);
 
     // 生成房間編號
     const roomNo = Date.now();
@@ -157,7 +176,10 @@ app.post('/api/rooms', checkBan, rateLimit, async (c) => {
         roomComment: safeComment,
         maxUser,
         gameOption: data.gameOption || '',
-        optionRole: data.optionRole || ''
+        optionRole: data.optionRole || '',
+        isPrivate,
+        passwordHash,
+        roomOptions
       })
     }));
 
@@ -254,11 +276,76 @@ app.get('/api/rooms/:roomNo', async (c) => {
 });
 
 /**
- * 刪除房間
+ * 刪除房間（使用者端）
+ * 條件：房間存在、非 playing 狀態、私人房需驗證密碼
  */
 app.delete('/api/rooms/:roomNo', async (c) => {
-  // TODO: 實作刪除邏輯
-  return c.json({ success: true, message: 'Room deleted' });
+  try {
+    const roomNo = parseInt(c.req.param('roomNo'));
+    const { password } = await c.req.json<{ password?: string }>().catch(() => ({}));
+
+    // 從 D1 查詢房間
+    const roomRow = await c.env.DB.prepare(
+      'SELECT room_no, status, is_private, password_hash FROM room WHERE room_no = ?'
+    ).bind(roomNo).first() as { room_no: number; status: string; is_private: number; password_hash: string } | null;
+
+    if (!roomRow) {
+      return c.json({ error: 'Room not found' }, 404);
+    }
+
+    // 只有 waiting 或 ended 狀態的房間可以刪除
+    if (roomRow.status === 'playing') {
+      return c.json({ error: 'Cannot delete room while game is in progress' }, 400);
+    }
+
+    // 私人房間需要驗證密碼
+    if (roomRow.is_private === 1) {
+      if (!password) {
+        return c.json({ error: 'Password required for private room' }, 403);
+      }
+
+      // 雜湊使用者提供的密碼並比對
+      const encoder = new TextEncoder();
+      const encoded = encoder.encode(password + 'room-pw-salt');
+      const hashBuffer = await crypto.subtle.digest('SHA-256', encoded);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      const inputHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+      if (inputHash !== roomRow.password_hash) {
+        return c.json({ error: 'Wrong password' }, 403);
+      }
+    }
+
+    // 清理：通知 Durable Object
+    try {
+      const id = c.env.WEREWOLF_ROOM.idFromName(roomNo.toString());
+      const stub = c.env.WEREWOLF_ROOM.get(id);
+      await stub.fetch(new Request('https://internal/cleanup', { method: 'POST' }));
+    } catch (e) {
+      // DO 不存在或喚醒失敗，直接清理 D1
+    }
+
+    // 清理 D1 表格
+    await c.env.DB.batch([
+      c.env.DB.prepare('DELETE FROM talk WHERE room_no = ?').bind(roomNo),
+      c.env.DB.prepare('DELETE FROM vote_history WHERE room_no = ?').bind(roomNo),
+      c.env.DB.prepare('DELETE FROM game_events WHERE room_no = ?').bind(roomNo),
+      c.env.DB.prepare('DELETE FROM user_entry WHERE room_no = ?').bind(roomNo),
+      c.env.DB.prepare('DELETE FROM wills WHERE room_no = ?').bind(roomNo),
+      c.env.DB.prepare('DELETE FROM whispers WHERE room_no = ?').bind(roomNo),
+      c.env.DB.prepare('DELETE FROM spectators WHERE room_no = ?').bind(roomNo),
+      c.env.DB.prepare('DELETE FROM room WHERE room_no = ?').bind(roomNo),
+    ]);
+
+    // 清理 KV 統計
+    const statsManager = new StatsManager(c.env.KV);
+    await statsManager.deleteRoomStats(roomNo);
+
+    return c.json({ success: true });
+  } catch (error) {
+    console.error('Delete room error:', error);
+    return c.json({ error: 'Failed to delete room' }, 500);
+  }
 });
 
 // ==================== 玩家管理 ====================
@@ -275,6 +362,7 @@ app.post('/api/rooms/:roomNo/join', checkBan, rateLimit, async (c) => {
       trip: string;
       iconNo: number;
       sex: string;
+      password?: string;
     }>();
 
     // 驗證
@@ -284,6 +372,35 @@ app.post('/api/rooms/:roomNo/join', checkBan, rateLimit, async (c) => {
 
     if (!data.handleName || data.handleName.length > 32) {
       return c.json({ error: 'Invalid display name' }, 400);
+    }
+
+    // ---- 私人房間密碼驗證 ----
+    // 從 D1 查詢房間是否為私人房間
+    try {
+      const roomRow = await c.env.DB.prepare(
+        'SELECT is_private, password_hash FROM room WHERE room_no = ?'
+      ).bind(roomNo).first();
+
+      if (roomRow && roomRow.is_private === 1) {
+        // 私人房間，必須提供密碼
+        if (!data.password) {
+          return c.json({ error: 'Password required for private room' }, 403);
+        }
+
+        // 雜湊使用者提供的密碼並比對
+        const encoder = new TextEncoder();
+        const encoded = encoder.encode(data.password + 'room-pw-salt');
+        const hashBuffer = await crypto.subtle.digest('SHA-256', encoded);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        const inputHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+        if (inputHash !== roomRow.password_hash) {
+          return c.json({ error: 'Wrong password' }, 403);
+        }
+      }
+    } catch (dbErr) {
+      // D1 查詢失敗（可能房間不存在），不阻擋加入流程
+      console.error('Room password check error:', dbErr);
     }
 
     // 轉義（XSS 防護）
@@ -532,6 +649,47 @@ app.get('/icons/:filename', async (c) => {
   }
 });
 
+// ==================== Task 6: Version & Rule Summary APIs ====================
+
+// GET /api/version
+app.get('/api/version', async (c) => {
+  return c.json({
+    version: '1.0.0',
+    buildDate: '2026-04-16',
+    tech: 'Cloudflare Workers + Durable Objects + D1 + R2 + KV',
+  });
+});
+
+// GET /api/rule-summary
+app.get('/api/rule-summary', async (c) => {
+  const roles = [
+    { name: 'human', team: 'human', description: '一般村民，白天可發言和投票' },
+    { name: 'mage', team: 'human', description: '預言家，夜晚可驗證一名玩家身分' },
+    { name: 'guard', team: 'human', description: '守衛，夜晚可保護一名玩家免受攻擊' },
+    { name: 'necromancer', team: 'human', description: '靈媒，白天可驗證死亡玩家的身分' },
+    { name: 'authority', team: 'human', description: '權力者，投票權重為兩倍' },
+    { name: 'common', team: 'human', description: '共有者，與另一名共有者共享資訊' },
+    { name: 'lovers', team: 'human', description: '戀人，與另一名戀人同生共死' },
+    { name: 'wolf', team: 'wolf', description: '狼人，夜晚可選擇一名玩家殺害' },
+    { name: 'wolf_partner', team: 'wolf', description: '狼人同夥，與狼人共享殺人決定' },
+    { name: 'wfbig', team: 'wolf', description: '大狼，擁有特殊能力的狼人' },
+    { name: 'mad', team: 'wolf', description: '瘋子，歸類為狼人陣營' },
+    { name: 'fox', team: 'fox', description: '妖狐，擁有特殊勝利條件' },
+    { name: 'betr', team: 'fox', description: '背德者，歸類為妖狐陣營' },
+    { name: 'fosi', team: 'fox', description: '妖狐相關角色' },
+  ];
+
+  return c.json({
+    roles,
+    phases: ['waiting', 'day', 'night'],
+    winConditions: {
+      human: '消滅所有狼人和妖狐',
+      wolf: '狼人數量 ≥ 村民數量',
+      fox: '妖狐存活且狼人全滅，妖狐數量 ≥ 村民數量',
+    },
+  });
+});
+
 // 掛載管理員路由
 app.route('/', adminRoutes);
 
@@ -541,10 +699,12 @@ app.route('/', featuresRoutes);
 // 掛載 BBS 路由
 app.route('/', bbsRoutes);
 
+// 掛載 Trip 註冊/驗證路由
+app.route('/', tripRoutes);
+
 // ==================== 靜態檔案（catch-all，必須放在最後） ====================
 
-/**
- * 服務靜態檔案
+/*
  * NOTE: This catch-all MUST be the last route registered. It serves as a fallback
  * for static assets (SPA). API routes (/api/*) and WebSocket (/ws/*) are handled
  * by specific routes above and will return notFound() if they reach here.

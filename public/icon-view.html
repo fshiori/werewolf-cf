@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>頭像圖示 - Werewolf CF</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Microsoft JhengHei', 'PingFang TC', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .back-link {
+      display: inline-block;
+      padding: 10px 20px;
+      background: white;
+      color: #667eea;
+      text-decoration: none;
+      border-radius: 6px;
+      margin-bottom: 20px;
+      transition: all 0.3s;
+    }
+
+    .back-link:hover {
+      background: #f8f9fa;
+      transform: translateX(-5px);
+    }
+
+    .header {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .header h1 {
+      color: #1e3c72;
+      margin-bottom: 10px;
+    }
+
+    .header-actions {
+      margin-top: 15px;
+    }
+
+    .btn-primary {
+      display: inline-block;
+      padding: 10px 20px;
+      background: #667eea;
+      color: white;
+      text-decoration: none;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .btn-primary:hover {
+      background: #5568d3;
+    }
+
+    .icons-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 20px;
+    }
+
+    .icon-card {
+      background: white;
+      border-radius: 12px;
+      padding: 15px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      text-align: center;
+      cursor: pointer;
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+
+    .icon-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+    }
+
+    .icon-card img {
+      width: 80px;
+      height: 80px;
+      object-fit: contain;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      background: #f8f9fa;
+    }
+
+    .icon-filename {
+      font-size: 12px;
+      color: #666;
+      word-break: break-all;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: white;
+      font-size: 18px;
+    }
+
+    .no-icons {
+      text-align: center;
+      padding: 60px;
+      background: white;
+      border-radius: 12px;
+      color: #666;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: #333;
+      color: white;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 14px;
+      transition: transform 0.3s;
+      z-index: 1000;
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <a href="/" class="back-link">← 返回首頁</a>
+
+    <div class="header">
+      <h1>🖼️ 頭像圖示</h1>
+      <p>瀏覽所有可用的頭像圖示（點擊可複製圖示網址）</p>
+      <div class="header-actions">
+        <a href="/icon-upload.html" class="btn-primary">📤 上傳圖示</a>
+      </div>
+    </div>
+
+    <div id="iconsContainer" class="icons-grid">
+      <div class="loading">載入中...</div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      loadIcons();
+    });
+
+    async function loadIcons() {
+      try {
+        const response = await fetch('/api/icons');
+        const data = await response.json();
+
+        const icons = data.icons || [];
+
+        if (icons.length > 0) {
+          displayIcons(icons);
+        } else {
+          document.getElementById('iconsContainer').innerHTML =
+            '<div class="no-icons">📭 目前沒有頭像圖示</div>';
+        }
+      } catch (error) {
+        console.error('Failed to load icons:', error);
+        document.getElementById('iconsContainer').innerHTML =
+          '<div class="no-icons">❌ 載入失敗</div>';
+      }
+    }
+
+    function displayIcons(icons) {
+      const container = document.getElementById('iconsContainer');
+      container.innerHTML = icons.map(icon => `
+        <div class="icon-card" onclick="copyIconUrl('${escapeAttr(icon.url)}')" title="點擊複製網址">
+          <img src="${escapeAttr(icon.url)}" alt="${escapeAttr(icon.filename)}" loading="lazy" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2280%22 height=%2280%22><rect width=%2280%22 height=%2280%22 fill=%22%23f0f0f0%22/><text x=%2240%22 y=%2245%22 text-anchor=%22middle%22 fill=%22%23999%22 font-size=%2212%22>無圖</text></svg>'">
+          <div class="icon-filename">${escapeHtml(icon.filename)}</div>
+        </div>
+      `).join('');
+    }
+
+    function copyIconUrl(url) {
+      navigator.clipboard.writeText(url).then(() => {
+        showToast('✅ 已複製圖示網址');
+      }).catch(() => {
+        // Fallback for older browsers
+        const textarea = document.createElement('textarea');
+        textarea.value = url;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        showToast('✅ 已複製圖示網址');
+      });
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 2000);
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function escapeAttr(text) {
+      return text.replace(/&/g, '&amp;').replace(/'/g, '&#39;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+  </script>
+</body>
+</html>

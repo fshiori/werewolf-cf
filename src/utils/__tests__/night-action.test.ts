@@ -10,6 +10,7 @@ import {
   foxDivine,
   betrayerConvert,
   guardShoot,
+  guardTarget,
   processNightResult,
   isNightActionsComplete,
   getNightSummary,
@@ -447,6 +448,192 @@ describe('Night Action System', () => {
       const summary = getNightSummary(nightState);
       
       expect(summary).toContain('2 人死亡');
+    });
+  });
+
+  describe('守護者保護', () => {
+    const makePlayer = (uname: string, role: string, live: 'live' | 'dead' = 'live'): Player => ({
+      userNo: 0, uname, handleName: uname, trip: '', iconNo: 1, sex: '', role: role as Player['role'], live, score: 0
+    });
+
+    it('guardTarget 應該設定 guardedTarget', () => {
+      const nightState = createNightState(1, 1);
+      const players = new Map<string, Player>();
+      players.set('guard', makePlayer('guard', 'guard'));
+      players.set('target1', makePlayer('target1', 'human'));
+
+      const result = guardTarget(nightState, players, 'guard', 'target1');
+
+      expect(result).toBe(true);
+      expect(nightState.guardedTarget).toBe('target1');
+    });
+
+    it('guardTarget 不能守護自己', () => {
+      const nightState = createNightState(1, 1);
+      const players = new Map<string, Player>();
+      players.set('guard', makePlayer('guard', 'guard'));
+
+      const result = guardTarget(nightState, players, 'guard', 'guard');
+
+      expect(result).toBe(false);
+      expect(nightState.guardedTarget).toBeUndefined();
+    });
+
+    it('guardTarget 目標必須存活', () => {
+      const nightState = createNightState(1, 1);
+      const players = new Map<string, Player>();
+      players.set('guard', makePlayer('guard', 'guard'));
+      players.set('deadTarget', makePlayer('deadTarget', 'human', 'dead'));
+
+      const result = guardTarget(nightState, players, 'guard', 'deadTarget');
+
+      expect(result).toBe(false);
+      expect(nightState.guardedTarget).toBeUndefined();
+    });
+
+    it('guardTarget 不能連續兩晚守護同一人', () => {
+      const nightState = createNightState(1, 1);
+      const players = new Map<string, Player>();
+      players.set('guard', makePlayer('guard', 'guard'));
+      players.set('target1', makePlayer('target1', 'human'));
+
+      // 第一晚守護成功
+      guardTarget(nightState, players, 'guard', 'target1');
+
+      // 第二晚同一個 NightState 不應允許重複設定同一人
+      const result = guardTarget(nightState, players, 'guard', 'target1');
+
+      expect(result).toBe(false);
+    });
+
+    it('非守護者角色不能使用 guardTarget', () => {
+      const nightState = createNightState(1, 1);
+      const players = new Map<string, Player>();
+      players.set('villager', makePlayer('villager', 'human'));
+      players.set('target1', makePlayer('target1', 'human'));
+
+      const result = guardTarget(nightState, players, 'villager', 'target1');
+
+      expect(result).toBe(false);
+    });
+
+    it('wolfKill 被守護的目標不應加入受害者', () => {
+      const nightState = createNightState(1, 1);
+      const players = new Map<string, Player>();
+      players.set('guard', makePlayer('guard', 'guard'));
+      players.set('target1', makePlayer('target1', 'human'));
+
+      // 先守護
+      guardTarget(nightState, players, 'guard', 'target1');
+
+      // 狼人攻擊被守護的目標
+      wolfKill(nightState, players, ['target1']);
+
+      expect(nightState.victims).not.toContain('target1');
+    });
+
+    it('wolfKill 未被守護的目標應正常加入受害者', () => {
+      const nightState = createNightState(1, 1);
+      const players = new Map<string, Player>();
+      players.set('guard', makePlayer('guard', 'guard'));
+      players.set('target1', makePlayer('target1', 'human'));
+      players.set('target2', makePlayer('target2', 'human'));
+
+      // 守護 target1
+      guardTarget(nightState, players, 'guard', 'target1');
+
+      // 狼人攻擊 target2
+      wolfKill(nightState, players, ['target2']);
+
+      expect(nightState.victims).toContain('target2');
+      expect(nightState.victims).not.toContain('target1');
+    });
+  });
+
+  describe('守護者行動完成檢查', () => {
+    const makePlayer = (uname: string, role: string, live: 'live' | 'dead' = 'live'): Player => ({
+      userNo: 0, uname, handleName: uname, trip: '', iconNo: 1, sex: '', role: role as Player['role'], live, score: 0
+    });
+
+    it('有存活守護者但未行動應返回 false', () => {
+      const nightState = createNightState(1, 1);
+      const players = new Map<string, Player>();
+      players.set('wolf', makePlayer('wolf', 'wolf'));
+      players.set('guard', makePlayer('guard', 'guard'));
+
+      // 狼人已行動
+      nightState.actions.push({ type: 'wolf_kill' as any, actor: 'wolf', target: 'victim' });
+
+      // 守護者未行動
+      expect(isNightActionsComplete(nightState, players)).toBe(false);
+    });
+
+    it('有存活守護者已行動應返回 true', () => {
+      const nightState = createNightState(1, 1);
+      const players = new Map<string, Player>();
+      players.set('wolf', makePlayer('wolf', 'wolf'));
+      players.set('guard', makePlayer('guard', 'guard'));
+
+      // 狼人已行動
+      nightState.actions.push({ type: 'wolf_kill' as any, actor: 'wolf', target: 'victim' });
+      // 守護者已行動
+      nightState.actions.push({ type: 'guard_protect' as any, actor: 'guard', target: 'target1' });
+
+      expect(isNightActionsComplete(nightState, players)).toBe(true);
+    });
+
+    it('沒有存活守護者不要求守護行動', () => {
+      const nightState = createNightState(1, 1);
+      const players = new Map<string, Player>();
+      players.set('wolf', makePlayer('wolf', 'wolf'));
+      players.set('guard', makePlayer('guard', 'guard', 'dead'));
+
+      // 狼人已行動
+      nightState.actions.push({ type: 'wolf_kill' as any, actor: 'wolf', target: 'victim' });
+
+      expect(isNightActionsComplete(nightState, players)).toBe(true);
+    });
+
+    it('守護者跳過行動也算完成', () => {
+      const nightState = createNightState(1, 1);
+      const players = new Map<string, Player>();
+      players.set('wolf', makePlayer('wolf', 'wolf'));
+      players.set('guard', makePlayer('guard', 'guard'));
+
+      // 狼人已行動
+      nightState.actions.push({ type: 'wolf_kill' as any, actor: 'wolf', target: 'victim' });
+      // 守護者跳過
+      nightState.actions.push({ type: 'skip' as any, actor: 'guard' });
+
+      expect(isNightActionsComplete(nightState, players)).toBe(true);
+    });
+  });
+
+  describe('守護者夜晚摘要', () => {
+    it('守護成功保護一人應在摘要中提及', () => {
+      const nightState = createNightState(1, 1);
+      nightState.guardedTarget = 'target1';
+      // 模擬守護成功（有守護目標但無受害者 = 平安夜）
+      const summary = getNightSummary(nightState);
+
+      expect(summary).toContain('守護成功');
+    });
+
+    it('守護但仍有人死亡應顯示死亡和守護', () => {
+      const nightState = createNightState(1, 1);
+      nightState.guardedTarget = 'target1';
+      nightState.victims.push('target2');
+      const summary = getNightSummary(nightState);
+
+      expect(summary).toContain('1 人死亡');
+      expect(summary).toContain('守護成功');
+    });
+
+    it('無守護目標且平安夜不顯示守護資訊', () => {
+      const nightState = createNightState(1, 1);
+      const summary = getNightSummary(nightState);
+
+      expect(summary).toBe('昨晚是平安夜');
     });
   });
 });

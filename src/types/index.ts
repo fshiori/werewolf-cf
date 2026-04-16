@@ -3,6 +3,7 @@
  */
 
 import type { D1Database, KVNamespace, DurableObjectNamespace, R2Bucket, DurableObject } from '@cloudflare/workers-types';
+import type { RoomOptions } from './room-options';
 
 // 環境變數
 export interface Env {
@@ -88,6 +89,9 @@ export interface RoomData {
   messages: Message[];     // 訊息記錄
   timeSpent: number;       // 已消耗時間單位
   silenceTime?: number;    // 沈默時間
+  isPrivate?: boolean;     // 是否為私人房間
+  passwordHash?: string;   // 密碼雜湊（SHA-256）
+  roomOptions?: RoomOptions; // 房間選項（整合 timeLimit, silenceMode 等）
 }
 
 // 訊息類型
@@ -139,6 +143,8 @@ export interface TripScore {
   mess: string;
   score: number;
 }
+
+export { RoomOptions, DEFAULT_ROOM_OPTIONS, parseRoomOptions } from './room-options';
 
 // 頭像資料
 export interface UserIcon {
