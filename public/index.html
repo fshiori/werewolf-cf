@@ -496,6 +496,10 @@
                 </select>
                 <small style="color:#999;">投票結果的顯示方式</small>
               </label>
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:4px 0 0 0;">
+                <input type="checkbox" id="optVotedisplay" style="width:auto;margin:0;">
+                <span><strong>顯示投票進度</strong> <small style="color:#999;">公開誰已完成投票（不公開投給誰）</small></span>
+              </label>
             </div>
 
             <div style="margin-bottom:10px;">
@@ -882,6 +886,7 @@
         realTime: document.getElementById('optRealTime').checked,
         comoutl: document.getElementById('optComoutl').checked,
         voteDisplay: parseInt(document.getElementById('optVoteDisplay').value),
+        votedisplay: document.getElementById('optVotedisplay').checked,
         custDummy: document.getElementById('optCustDummy').checked,
         istrip: document.getElementById('optIstrip').checked,
       };

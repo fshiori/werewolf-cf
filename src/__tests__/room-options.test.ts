@@ -26,6 +26,7 @@ describe('DEFAULT_ROOM_OPTIONS', () => {
       realTimeNightLimitSec: 0,
       comoutl: false,
       voteDisplay: 0,
+      votedisplay: false,
       custDummy: false,
       dummyCustomName: '',
       dummyCustomLastWords: '',
@@ -54,6 +55,7 @@ describe('parseRoomOptions', () => {
       realTimeNightLimitSec: 60,
       comoutl: true,
       voteDisplay: 2,
+      votedisplay: true,
       custDummy: true,
       dummyCustomName: '替身仔',
       dummyCustomLastWords: '掰掰世界',
@@ -171,6 +173,12 @@ describe('parseRoomOptions', () => {
     } as any);
     expect(snake.dummyCustomName).toBe('替身乙');
     expect(snake.dummyCustomLastWords).toBe('掰掰');
+  });
+
+  it('legacy votedisplay 可由 votedisplay / voteDisplayProgress 解析', () => {
+    expect(parseRoomOptions({ votedisplay: true } as any).votedisplay).toBe(true);
+    expect(parseRoomOptions({ voteDisplayProgress: true } as any).votedisplay).toBe(true);
+    expect(parseRoomOptions({}).votedisplay).toBe(false);
   });
 
   it('null 輸入 → fallback 到預設值', () => {

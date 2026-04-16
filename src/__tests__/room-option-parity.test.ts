@@ -95,6 +95,19 @@ describe('parseRoomOptions — gameOption token parity', () => {
     // 已串接：voteMe=false 禁止自投，voteMe=true 允許自投（前後端皆已限制）
   });
 
+  // ── votedisplay ✅（已解析，遊戲邏輯已消耗）──
+  describe('votedisplay（顯示已投票名單）✅ 已解析已消耗', () => {
+    it('正確解析 true', () => {
+      expect(parseRoomOptions({ votedisplay: true } as any).votedisplay).toBe(true);
+    });
+
+    it('預設 false', () => {
+      expect(parseRoomOptions({}).votedisplay).toBe(false);
+    });
+
+    // 已串接：votedisplay=true 時 vote_update 會下發 votedUsers，前端玩家清單顯示「已投票」
+  });
+
   // ── dummyBoy ⚠️（已解析，遊戲邏輯部分消耗）──
   describe('dummyBoy（啞巴男角色）⚠️ 已解析部分消耗', () => {
     it('正確解析 true', () => {

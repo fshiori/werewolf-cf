@@ -196,7 +196,7 @@ CF replaces this with a typed `RoomOptions` interface (see `src/types/room-optio
 | `will` | Enable last-words (遺言) | ✅ | ✅ `will` | ✅ Full |
 | `gm:XXXXX` | Designate a specific trip as GM | ❌ | ⚠️ | ⚠️ Partial (CF uses `gmEnabled` boolean for host-as-GM; PHP allows arbitrary trip) |
 | `as_gm` | Activate GM role | ⚠️ | ⚠️ | ⚠️ Partial (GM system exists but simpler than PHP) |
-| `votedisplay` | Show who has already voted (start-game & day) | ❌ | ❌ | ❌ Missing |
+| `votedisplay` | Show who has already voted (start-game & day) | ⚠️ | ⚠️ `votedisplay` | ⚠️ Partial (day-phase vote progress wired via `vote_update.votedUsers`; start-game vote flow not ported) |
 | `cust_dummy` | Custom dummy-boy name/last-words | ⚠️ | ⚠️ `custDummy` + `dummyCustomName` + `dummyCustomLastWords` | ⚠️ Partial (parser/runtime 已支援；create-room UI 尚未提供完整設定控件) |
 
 ---

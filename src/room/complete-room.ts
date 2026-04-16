@@ -10,7 +10,7 @@ import type { Env, Player, RoomData, Message, Role } from '../types';
 import { createRoom, addPlayer, removePlayer, startGame, endGame, getPublicRoomInfo } from '../utils/room-manager';
 import { advanceTime, checkSilence, transitionPhase, DEFAULT_TIME_CONFIG, isRealTimeEnabled, isRealTimeExpired, startRealTimePhase, getRealTimeRemainingSec } from '../utils/time-progression';
 import { assignRoles, checkVictory, canSpeak, getRoleTeam, getVictoryMessage, createDummyBoyPlayer } from '../utils/role-system';
-import { createVoteData, addVote, getVoteResult, executeVote, isVoteComplete, calculateWeightedVotes, resolveWeightedVoteResult, filterVoteDisplay, resolveVoteDisplayMode, canVoteTarget } from '../utils/vote-system';
+import { createVoteData, addVote, getVoteResult, executeVote, isVoteComplete, calculateWeightedVotes, resolveWeightedVoteResult, filterVoteDisplay, resolveVoteDisplayMode, canVoteTarget, getVotedUsers } from '../utils/vote-system';
 import { createNightState, wolfKill, seerDivine, guardTarget, processNightResult, getNightSummary, isNightActionsComplete } from '../utils/night-action';
 import { createSessionManager, type SessionValue } from '../utils/session-manager';
 import { sanitizePlayersForViewer } from '../utils/player-visibility';
@@ -689,6 +689,7 @@ export class WerewolfRoom extends DurableObject {
       );
       const displayInfo = filterVoteDisplay(this.voteData, voteDisplayMode);
 
+      const showVoteProgress = this.roomData.roomOptions?.votedisplay === true;
       this.broadcast({
         type: 'vote_update',
         data: {
@@ -697,6 +698,7 @@ export class WerewolfRoom extends DurableObject {
           voteCounts: displayInfo.showResults ? displayInfo.voteCounts : [],
           voterMap: displayInfo.voterMap ?? undefined,
           showResults: displayInfo.showResults,
+          votedUsers: showVoteProgress ? getVotedUsers(this.voteData) : undefined,
         }
       });
 

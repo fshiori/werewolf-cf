@@ -14,6 +14,7 @@ import {
   executeVote,
   clearVotes,
   getVoteStats,
+  getVotedUsers,
   resolveWeightedVoteResult,
   filterVoteDisplay,
   resolveVoteDisplayMode,
@@ -483,6 +484,15 @@ describe('Vote System', () => {
       expect(stats[0].count).toBe(2);
       expect(stats[1].uname).toBe('targetB');
       expect(stats[1].count).toBe(1);
+    });
+
+    it('getVotedUsers 應回傳已投票玩家（依投票順序）', () => {
+      const voteData = createVoteData(1, 1);
+      addVote(voteData, 'alice', 'targetA');
+      addVote(voteData, 'bob', 'targetB');
+      addVote(voteData, 'carol', 'targetA');
+
+      expect(getVotedUsers(voteData)).toEqual(['alice', 'bob', 'carol']);
     });
   });
 
