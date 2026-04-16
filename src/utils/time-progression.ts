@@ -9,13 +9,19 @@ export interface TimeConfig {
   nightLimit: number;    // 夜晚限制（預設 24）
   silenceThreshold: number; // 沈默模式閾值（秒）
   silenceMultiplier: number; // 沈默倍數（預設 4）
+  /** 即時制：白天實際時間限制（秒），0 = 不啟用 */
+  realTimeDayLimitSec: number;
+  /** 即時制：夜晚實際時間限制（秒），0 = 不啟用 */
+  realTimeNightLimitSec: number;
 }
 
 export const DEFAULT_TIME_CONFIG: TimeConfig = {
   dayLimit: 48,
   nightLimit: 24,
   silenceThreshold: 60,
-  silenceMultiplier: 4
+  silenceMultiplier: 4,
+  realTimeDayLimitSec: 0,
+  realTimeNightLimitSec: 0,
 };
 
 export interface TimeState {
@@ -24,6 +30,8 @@ export interface TimeState {
   timeSpent: number;
   lastMessageTime: number;
   isSilence: boolean;
+  /** 即時制：當前階段開始的 epoch ms */
+  phaseStartTimeMs: number;
 }
 
 /**
@@ -134,4 +142,50 @@ export function getRemainingVirtualTime(
  */
 export function formatVirtualTime(time: { hours: number; minutes: number }): string {
   return `${time.hours}小時${time.minutes}分`;
+}
+
+// ── 即時制 (realTime token) ──
+
+/**
+ * 檢查即時制是否啟用（至少一個階段有實際時間限制）
+ */
+export function isRealTimeEnabled(config: TimeConfig): boolean {
+  return config.realTimeDayLimitSec > 0 || config.realTimeNightLimitSec > 0;
+}
+
+/**
+ * 取得當前階段的即時制限制（秒）
+ */
+export function getRealTimeLimitSec(state: TimeState, config: TimeConfig): number {
+  return state.dayNight === 'day'
+    ? config.realTimeDayLimitSec
+    : config.realTimeNightLimitSec;
+}
+
+/**
+ * 檢查即時制是否已到期
+ * @returns true 表示該轉換階段了
+ */
+export function isRealTimeExpired(state: TimeState, config: TimeConfig): boolean {
+  const limitSec = getRealTimeLimitSec(state, config);
+  if (limitSec <= 0) return false;
+  const elapsed = (Date.now() - state.phaseStartTimeMs) / 1000;
+  return elapsed >= limitSec;
+}
+
+/**
+ * 取得即時制剩餘時間（秒），負數表示已超時
+ */
+export function getRealTimeRemainingSec(state: TimeState, config: TimeConfig): number {
+  const limitSec = getRealTimeLimitSec(state, config);
+  if (limitSec <= 0) return Infinity;
+  const elapsed = (Date.now() - state.phaseStartTimeMs) / 1000;
+  return limitSec - elapsed;
+}
+
+/**
+ * 開始新的即時制階段（設定 phaseStartTimeMs）
+ */
+export function startRealTimePhase(state: TimeState): void {
+  state.phaseStartTimeMs = Date.now();
 }

@@ -227,3 +227,69 @@ export function isLover(role: Role): boolean {
 export function isFoxRelated(role: Role): boolean {
   return role === 'fox' || role === 'fosi' || role === 'betr' || role === 'betr_partner';
 }
+
+// ── custDummy token: 自訂啞巴男 ──
+
+/**
+ * 啞巴男預設遺言庫（對應 PHP dummy.php 的 $lastws）
+ * 當 custDummy 啟用時使用自訂遺言，否則從此庫隨機選取
+ */
+export const DEFAULT_DUMMY_LAST_WORDS: string[] = [
+  '您所扮演的角色是村民\n小卒一個XD',
+  '(沾滿血的信紙寫著)\n當海貓鳴泣之時，工於心計的人類將會死在自己同伴的手上,吾等睿智的狼將會稱王',
+  '(日記的一頁)\n戰人這傢伙晚上突然說有事找我，回來再把日記補齊',
+  '我好像是占耶XD',
+  '我隨風而來，隨風而去…\n所以又死了',
+  '智慧與勇氣嗎...',
+  '(日記的一頁)\n其實我暗戀朱志香很久了，我決定今晚去找她說明我的心意\n希望會成功～♥',
+  '您所扮演的角色是獵人 (默',
+  '等等，還沒活夠阿！別咬！ (倒下',
+  '我身上真的有炸彈式地雷\n---------------------------\n─⊙-⊙- 　用瓦斯大砲炸你全家！\n　 皿　\n　 ︶ ',
+  '夏妃太太  我喜歡你阿  (脫',
+  '孝經˙聖治章：「不愛其親，而愛他人者，謂之悖德。」 ',
+  '|＿ﾊ;　我躲好了！狼這樣就咬不到村民的我了~\n|･д･)　／\n|⊂ 入\n| し-Ｊ\n ',
+  '替身君今天是來作總攻的！來吧，不管你是子狐或大狼，從總攻到總受！我替身君在幽靈間等你們！！',
+  '沒有這麼多死亡筆記本 不要隨便就心臟病發身亡',
+  '片翼之騖有確實的刻在你的心理嗎?',
+  '天天都在坐船我頭好暈ˊ~ˋ',
+];
+
+/**
+ * 取得啞巴男遺言
+ * @param custDummy  是否啟用自訂啞巴男（啟用時使用自訂遺言，由呼叫者提供）
+ * @param customLastWords 自訂遺言字串（custDummy 啟用時使用）
+ * @returns 遺言字串
+ */
+export function getDummyBoyLastWords(custDummy: boolean, customLastWords?: string): string {
+  if (custDummy && customLastWords) {
+    return customLastWords;
+  }
+  // 從預設遺言庫隨機選取
+  return DEFAULT_DUMMY_LAST_WORDS[Math.floor(Math.random() * DEFAULT_DUMMY_LAST_WORDS.length)];
+}
+
+/**
+ * 建立啞巴男玩家
+ * @param roomNo 房間編號
+ * @param custDummy 是否自訂啞巴男
+ * @param customLastWords 自訂遺言
+ * @returns Player 物件
+ */
+export function createDummyBoyPlayer(
+  roomNo: number,
+  custDummy: boolean,
+  customLastWords?: string
+): Player {
+  return {
+    userNo: 1,  // 啞巴男永遠是 userNo=1（與 PHP parity）
+    uname: 'dummy_boy',
+    handleName: '替身君',
+    trip: '',
+    iconNo: 0,
+    sex: 'male',
+    role: 'human',
+    live: 'live',
+    score: 0,
+    lastWords: getDummyBoyLastWords(custDummy, customLastWords),
+  };
+}

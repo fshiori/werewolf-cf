@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { checkVictory, getVictoryMessage } from '../utils/role-system';
+import { checkVictory, getVictoryMessage, createDummyBoyPlayer, getDummyBoyLastWords, DEFAULT_DUMMY_LAST_WORDS } from '../utils/role-system';
 import type { Role, Player, PlayerStatus } from '../types';
 
 /** 建立測試用玩家的輔助函式 */
@@ -286,6 +286,55 @@ describe('Role System', () => {
 
     it('背德者勝利訊息', () => {
       expect(getVictoryMessage('betr')).toBe('妖狐死亡但背德者存活，背德者單獨獲勝！');
+    });
+  });
+
+  // ========================================
+  // custDummy / 啞巴男測試
+  // ========================================
+  describe('custDummy / 啞巴男', () => {
+    it('createDummyBoyPlayer 應建立正確的啞巴男玩家', () => {
+      const dummy = createDummyBoyPlayer(1, false);
+
+      expect(dummy.uname).toBe('dummy_boy');
+      expect(dummy.handleName).toBe('替身君');
+      expect(dummy.userNo).toBe(1);
+      expect(dummy.role).toBe('human');
+      expect(dummy.live).toBe('live');
+      expect(dummy.lastWords).toBeTruthy();
+    });
+
+    it('custDummy 啟用時應使用自訂遺言', () => {
+      const customWords = '這是我的自訂遺言';
+      const dummy = createDummyBoyPlayer(1, true, customWords);
+
+      expect(dummy.lastWords).toBe(customWords);
+    });
+
+    it('custDummy 啟用但無自訂遺言時應從預設庫選取', () => {
+      const dummy = createDummyBoyPlayer(1, true);
+
+      // custDummy=true 但沒傳 customLastWords → getDummyBoyLastWords 回傳空字串
+      // 因為條件是 custDummy && customLastWords，所以不滿足，回傳隨機預設
+      expect(DEFAULT_DUMMY_LAST_WORDS).toContain(dummy.lastWords!);
+    });
+
+    it('custDummy 未啟用時應從預設遺言庫隨機選取', () => {
+      const dummy = createDummyBoyPlayer(1, false);
+      expect(DEFAULT_DUMMY_LAST_WORDS).toContain(dummy.lastWords!);
+    });
+
+    it('getDummyBoyLastWords 應正確處理各種情況', () => {
+      // custDummy=false, no custom → random from defaults
+      const words1 = getDummyBoyLastWords(false);
+      expect(DEFAULT_DUMMY_LAST_WORDS).toContain(words1);
+
+      // custDummy=true, custom provided → custom
+      expect(getDummyBoyLastWords(true, 'custom')).toBe('custom');
+
+      // custDummy=true, no custom → random from defaults
+      const words2 = getDummyBoyLastWords(true);
+      expect(DEFAULT_DUMMY_LAST_WORDS).toContain(words2);
     });
   });
 });

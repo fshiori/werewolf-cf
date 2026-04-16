@@ -456,6 +456,62 @@
               </label>
             </div>
 
+            <div id="gmTripRow" style="margin-bottom:10px;display:none;">
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:4px 0;">
+                <input type="text" id="optGmTrip" placeholder="指定 Trip 帳號擔任 GM" style="width:100%;margin:0;">
+                <span><strong>GM Trip</strong> <small style="color:#999;">指定哪個 Trip 擔任 GM</small></span>
+              </label>
+            </div>
+
+            <div class="role-team-header">🔧 進階選項</div>
+
+            <div style="margin-bottom:10px;">
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:4px 0;">
+                <input type="checkbox" id="optTripRequired" style="width:auto;margin:0;">
+                <span><strong>Trip 驗證</strong> <small style="color:#999;">玩家需擁有 Trip 才能加入房間</small></span>
+              </label>
+            </div>
+
+            <div style="margin-bottom:10px;">
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:4px 0;">
+                <input type="checkbox" id="optRealTime" style="width:auto;margin:0;">
+                <span><strong>即時制</strong> <small style="color:#999;">白天/夜晚使用獨立計時器（不依賴投票結束）</small></span>
+              </label>
+            </div>
+
+            <div style="margin-bottom:10px;">
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:4px 0;">
+                <input type="checkbox" id="optComoutl" style="width:auto;margin:0;">
+                <span><strong>連續淘汰</strong> <small style="color:#999;">被淘汰玩家的連續同陣營者也一併淘汰</small></span>
+              </label>
+            </div>
+
+            <div style="margin-bottom:10px;">
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:4px 0;">
+                <span><strong>投票顯示</strong></span>
+                <select id="optVoteDisplay" style="width:auto;margin:0;padding:2px 6px;">
+                  <option value="0">隱藏全部</option>
+                  <option value="1">顯示全部</option>
+                  <option value="2">匿名顯示</option>
+                </select>
+                <small style="color:#999;">投票結果的顯示方式</small>
+              </label>
+            </div>
+
+            <div style="margin-bottom:10px;">
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:4px 0;">
+                <input type="checkbox" id="optCustDummy" style="width:auto;margin:0;">
+                <span><strong>自訂替身</strong> <small style="color:#999;">啟用自訂替身君設定</small></span>
+              </label>
+            </div>
+
+            <div style="margin-bottom:10px;">
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:4px 0;">
+                <input type="checkbox" id="optIstrip" style="width:auto;margin:0;">
+                <span><strong>旅行模式</strong> <small style="color:#999;">啟用 Trip 旅行者系統</small></span>
+              </label>
+            </div>
+
             <div class="role-team-header">⚡ 額外職業（依人數自動啟用/停用）</div>
 
             <div style="margin-bottom:8px;">
@@ -796,11 +852,23 @@
         will: document.getElementById('optWill').checked,
         voteMe: document.getElementById('optVoteMe').checked,
         gmEnabled: document.getElementById('optGmEnabled').checked,
+        tripRequired: document.getElementById('optTripRequired').checked,
+        gmTrip: document.getElementById('optGmTrip').value,
+        realTime: document.getElementById('optRealTime').checked,
+        comoutl: document.getElementById('optComoutl').checked,
+        voteDisplay: parseInt(document.getElementById('optVoteDisplay').value),
+        custDummy: document.getElementById('optCustDummy').checked,
+        istrip: document.getElementById('optIstrip').checked,
       };
     }
 
     // 監聽人數變化
     document.getElementById('maxUser').addEventListener('change', updateRolePreview);
+
+    // GM Trip 可見性切換
+    document.getElementById('optGmEnabled').addEventListener('change', function() {
+      document.getElementById('gmTripRow').style.display = this.checked ? 'block' : 'none';
+    });
 
     // 頁面載入
     window.addEventListener('load', () => {

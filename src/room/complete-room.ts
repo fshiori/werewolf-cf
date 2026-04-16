@@ -8,9 +8,9 @@ import { DurableObject } from 'cloudflare:workers';
 import type { DurableObjectState } from '@cloudflare/workers-types';
 import type { Env, Player, RoomData, Message, Role } from '../types';
 import { createRoom, addPlayer, removePlayer, startGame, endGame, getPublicRoomInfo } from '../utils/room-manager';
-import { advanceTime, checkSilence, transitionPhase, DEFAULT_TIME_CONFIG } from '../utils/time-progression';
-import { assignRoles, checkVictory, canSpeak, getRoleTeam, getVictoryMessage } from '../utils/role-system';
-import { createVoteData, addVote, getVoteResult, executeVote, isVoteComplete, calculateWeightedVotes, resolveWeightedVoteResult } from '../utils/vote-system';
+import { advanceTime, checkSilence, transitionPhase, DEFAULT_TIME_CONFIG, isRealTimeEnabled, isRealTimeExpired, startRealTimePhase, getRealTimeRemainingSec } from '../utils/time-progression';
+import { assignRoles, checkVictory, canSpeak, getRoleTeam, getVictoryMessage, createDummyBoyPlayer } from '../utils/role-system';
+import { createVoteData, addVote, getVoteResult, executeVote, isVoteComplete, calculateWeightedVotes, resolveWeightedVoteResult, resolveComoutlTie, getTopVotedPlayers, filterVoteDisplay } from '../utils/vote-system';
 import { createNightState, wolfKill, seerDivine, guardTarget, processNightResult, getNightSummary, isNightActionsComplete } from '../utils/night-action';
 import { createSessionManager, type SessionValue } from '../utils/session-manager';
 import {
@@ -30,6 +30,8 @@ export class WerewolfRoom extends DurableObject {
   private voteData?: any;
   private nightState?: any;
   private _pendingNightSummary?: string;
+  /** comoutl: 追蹤上一輪投票最高票者 */
+  private _comoutlPreviousTop?: string[];
   // @ts-ignore - ctx is a DurableObject property
   private storage = this.ctx.storage;
 
@@ -568,13 +570,18 @@ export class WerewolfRoom extends DurableObject {
         console.error('Vote history error:', e);
       }
 
-      // 廣播投票更新
+      // 廣播投票更新（依 voteDisplay 模式過濾）
+      const voteDisplayMode = this.roomData.roomOptions?.voteDisplay ?? 0;
+      const displayInfo = filterVoteDisplay(this.voteData, voteDisplayMode);
+
       this.broadcast({
         type: 'vote_update',
         data: {
           uname,
           target: targetUname,
-          voteCounts: Array.from(this.voteData.voteCounts.entries())
+          voteCounts: displayInfo.showResults ? displayInfo.voteCounts : [],
+          voterMap: displayInfo.voterMap ?? undefined,
+          showResults: displayInfo.showResults,
         }
       });
 
@@ -677,6 +684,33 @@ export class WerewolfRoom extends DurableObject {
     const success = startGame(this.roomData);
     if (!success) {
       return;
+    }
+
+    // custDummy / dummyBoy: 啟用啞巴男時建立啞巴男玩家
+    if (this.roomData.roomOptions?.dummyBoy) {
+      const custDummy = !!this.roomData.roomOptions?.custDummy;
+      const dummyPlayer = createDummyBoyPlayer(
+        this.roomData.roomNo,
+        custDummy,
+        (this.roomData.roomOptions as any)?.dummyCustomLastWords as string | undefined,
+      );
+      this.roomData.players.set('dummy_boy', dummyPlayer);
+    }
+
+    // istrip: 如果啟用，驗證所有玩家都有 trip（在 startGame 時檢查）
+    // 如果有玩家沒有 trip 且 istrip 啟用，記錄警告但不阻止遊戲開始
+    // （PHP 中是在 user_manager.php 加入時檢查，這裡做為兜底）
+    if (this.roomData.roomOptions?.istrip) {
+      const noTripPlayers = Array.from(this.roomData.players.values())
+        .filter(p => p.uname !== 'dummy_boy' && !p.trip);
+      if (noTripPlayers.length > 0) {
+        console.warn(`[Room ${this.roomData.roomNo}] istrip enabled but ${noTripPlayers.length} players have no trip`);
+      }
+    }
+
+    // 即時制：記錄遊戲開始時間作為第一個階段的開始時間
+    if (this.roomData.roomOptions?.realTime) {
+      (this.roomData as any)._phaseStartTimeMs = Date.now();
     }
 
     // 初始化投票資料（遊戲從白天開始，需要投票資料）
@@ -801,15 +835,36 @@ export class WerewolfRoom extends DurableObject {
 
   /**
    * 推進遊戲時間
+   * 即時制 (realTime) 啟用時，以實際時間為主，但仍追蹤發言次數作為備用
    */
   private async advanceGameTime(units: number) {
-    this.roomData.timeSpent = (this.roomData.timeSpent || 0) + units;
-    const limit = this.roomData.dayNight === 'day'
-      ? DEFAULT_TIME_CONFIG.dayLimit
-      : DEFAULT_TIME_CONFIG.nightLimit;
+    const realTimeEnabled = !!this.roomData.roomOptions?.realTime;
 
-    if (this.roomData.timeSpent >= limit) {
-      await this.transitionPhase();
+    if (realTimeEnabled) {
+      // 即時制：檢查實際時間是否到期
+      const timeState = {
+        dayNight: this.roomData.dayNight,
+        phaseStartTimeMs: (this.roomData as any)._phaseStartTimeMs || this.roomData.uptime || Date.now(),
+      };
+      const timeConfig = {
+        realTimeDayLimitSec: this.roomData.roomOptions?.timeLimit || 300,
+        realTimeNightLimitSec: Math.floor((this.roomData.roomOptions?.timeLimit || 300) * 0.5),
+      };
+
+      if (isRealTimeExpired(timeState, timeConfig)) {
+        await this.transitionPhase();
+      }
+      // 即時制下，發言不直接推進階段（依靠 alarm 或下次發言時檢查）
+    } else {
+      // 正常模式：以發言次數推進
+      this.roomData.timeSpent = (this.roomData.timeSpent || 0) + units;
+      const limit = this.roomData.dayNight === 'day'
+        ? DEFAULT_TIME_CONFIG.dayLimit
+        : DEFAULT_TIME_CONFIG.nightLimit;
+
+      if (this.roomData.timeSpent >= limit) {
+        await this.transitionPhase();
+      }
     }
 
     await this.saveState();
@@ -941,6 +996,11 @@ export class WerewolfRoom extends DurableObject {
    * 階段轉換
    */
   private async transitionPhase() {
+    // 即時制：記錄新階段的開始時間
+    if (this.roomData.roomOptions?.realTime) {
+      (this.roomData as any)._phaseStartTimeMs = Date.now();
+    }
+
     if (this.roomData.dayNight === 'day') {
       // 白天 → 夜晚
       this.roomData.dayNight = 'night';
@@ -1008,6 +1068,8 @@ export class WerewolfRoom extends DurableObject {
   /**
    * 處理投票結果
    * 使用加權投票（authority x2），並處理平手/decide 邏輯
+   * comoutl 啟用時，平手不重新投票而是直接淘汰
+   * voteDisplay 控制投票資訊的廣播內容
    */
   private async processVoteResult() {
     if (!this.voteData) {
@@ -1022,7 +1084,61 @@ export class WerewolfRoom extends DurableObject {
     const result = resolveWeightedVoteResult(voteData, this.roomData.players);
 
     if (result.revote) {
-      // 平手且無 decide 玩家 → 重新投票
+      // 平手處理
+      const comoutlEnabled = !!this.roomData.roomOptions?.comoutl;
+
+      if (comoutlEnabled) {
+        // comoutl：不重新投票，直接用上一輪最高票或隨機決定淘汰者
+        const comoutlTarget = resolveComoutlTie(voteData, this.roomData.players, this._comoutlPreviousTop);
+
+        if (comoutlTarget) {
+          // comoutl: 記錄這一輪的最高票者供下一輪使用
+          this._comoutlPreviousTop = getTopVotedPlayers(voteData);
+
+          this.broadcast({
+            type: 'vote_tie',
+            data: {
+              message: '投票平手！依連續出局規則，淘汰者已決定...',
+            }
+          });
+
+          this.broadcast({
+            type: 'players_executed',
+            data: [{ uname: comoutlTarget.uname, handleName: comoutlTarget.handleName }]
+          });
+
+          // 記錄處決事件
+          try {
+            // @ts-ignore
+            await this.env.DB.prepare(`
+              INSERT INTO game_events (room_no, date, event_type, description, related_uname, time)
+              VALUES (?, ?, ?, ?, ?, ?)
+            `).bind(
+              this.roomData.roomNo, this.roomData.date, 'execution',
+              `${comoutlTarget.handleName} 被連續出局處決`, comoutlTarget.uname, Date.now()
+            ).run();
+          } catch (e) {
+            console.error('Execution event error:', e);
+          }
+
+          // 檢查勝負後進入夜晚
+          const victory = checkVictory(Array.from(this.roomData.players.values()));
+          if (victory) {
+            await this.endGame(victory);
+            return;
+          }
+
+          await this.enterNightPhase();
+          return;
+        }
+      }
+
+      // 非 comoutl 或 comoutl 無法決定 → 重新投票（正常流程）
+      // 記錄這一輪的最高票者供 comoutl 下一輪使用
+      if (comoutlEnabled) {
+        this._comoutlPreviousTop = getTopVotedPlayers(voteData);
+      }
+
       this.broadcast({
         type: 'vote_tie',
         data: {
@@ -1036,10 +1152,24 @@ export class WerewolfRoom extends DurableObject {
       return;
     }
 
+    // 非平手：記錄最高票者供 comoutl 下一輪使用
+    if (this.roomData.roomOptions?.comoutl) {
+      this._comoutlPreviousTop = getTopVotedPlayers(voteData);
+    }
+
+    // voteDisplay: 根據模式過濾投票結果廣播
+    const voteDisplayMode = this.roomData.roomOptions?.voteDisplay ?? 0;
+    const displayInfo = filterVoteDisplay(voteData, voteDisplayMode);
+
     if (result.executed.length > 0) {
       this.broadcast({
         type: 'players_executed',
-        data: result.executed.map(p => ({ uname: p.uname, handleName: p.handleName }))
+        data: result.executed.map(p => ({ uname: p.uname, handleName: p.handleName })),
+        // 附加 voteDisplay 資訊
+        voteDisplay: displayInfo.showResults ? {
+          voteCounts: displayInfo.voteCounts,
+          voterMap: displayInfo.voterMap,
+        } : undefined,
       });
     }
 
@@ -1067,6 +1197,18 @@ export class WerewolfRoom extends DurableObject {
     }
 
     // 投票結束 → 進入夜晚
+    await this.enterNightPhase();
+  }
+
+  /**
+   * 進入夜晚階段（共用邏輯）
+   */
+  private async enterNightPhase() {
+    // 即時制：記錄夜晚開始時間
+    if (this.roomData.roomOptions?.realTime) {
+      (this.roomData as any)._phaseStartTimeMs = Date.now();
+    }
+
     this.roomData.dayNight = 'night';
     this.roomData.timeSpent = 0;
     this.nightState = createNightState(this.roomData.roomNo, this.roomData.date);
