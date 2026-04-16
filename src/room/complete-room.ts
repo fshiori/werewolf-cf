@@ -14,6 +14,7 @@ import { createVoteData, addVote, getVoteResult, executeVote, isVoteComplete, ca
 import { createNightState, wolfKill, seerDivine, guardTarget, processNightResult, getNightSummary, isNightActionsComplete, canWolfKillTarget } from '../utils/night-action';
 import { createSessionManager, type SessionValue } from '../utils/session-manager';
 import { sanitizePlayersForViewer } from '../utils/player-visibility';
+import { buildRoleConfig } from '../utils/role-config';
 import {
   isGM,
   canUseHeavenChat,
@@ -1597,112 +1598,12 @@ export class WerewolfRoom extends DurableObject {
    * 基本角色依人數自動分配，額外選項覆蓋上去
    */
   private parseRoleConfig(config: string): Record<Role, number> {
-    // 從人數取得基本角色表
     const baseRoles = this.getRoleTable(this.roomData.maxUser || 22);
-    const roleConfig: Partial<Record<Role, number>> = {};
-
-    // 計算基本角色數量
-    for (const role of baseRoles) {
-      roleConfig[role] = (roleConfig[role] || 0) + 1;
-    }
-
-    // 解析額外選項
-    if (config && config.trim()) {
-      const options = config.trim().split(/\s+/);
-
-      // 處理妖狐選項（替換基本表的 fox 或取消）
-      const foxs = options.find(o => o === 'foxs' || o === 'betr' || o === 'fosi');
-      let poison = options.find(o => o === 'poison' || o === 'cat');
-
-      if (foxs) {
-        // 使用妖狐選項時取消基本表的 fox
-        if (roleConfig.fox) {
-          roleConfig.fox = 0;
-        }
-
-        const hasPobe = options.includes('pobe');
-        // 埋毒與妖狐互斥（但 pobe 啟用時保留 poison）
-        if (poison && !hasPobe) {
-          // 移除埋毒選項
-          const pi = options.indexOf(poison);
-          if (pi >= 0) options.splice(pi, 1);
-          poison = undefined;
-        }
-
-        if (foxs === 'betr') {
-          roleConfig.betr = 1;
-        } else if (foxs === 'foxs') {
-          roleConfig.fox = 2; // 雙狐
-        } else if (foxs === 'fosi') {
-          roleConfig.fosi = 1;
-        }
-
-        // pobe: 20 人以上，妖狐+埋毒同時存在時，額外追加狼+埋毒配對
-        if (hasPobe && poison && this.roomData.maxUser >= 20) {
-          roleConfig.wolf = (roleConfig.wolf || 0) + 1;
-          if (poison === 'poison') {
-            roleConfig.poison = (roleConfig.poison || 0) + 1;
-          } else if (poison === 'cat') {
-            roleConfig.cat = (roleConfig.cat || 0) + 1;
-          }
-        }
-      } else if (poison) {
-        // 妖狐沒有選，但埋毒有選 → 取消基本表的 fox
-        if (roleConfig.fox) {
-          roleConfig.fox = 0;
-        }
-        if (poison === 'poison') {
-          roleConfig.poison = 1;
-        } else if (poison === 'cat') {
-          roleConfig.cat = 1;
-        }
-      }
-
-      // 戀人：共有者變戀人（可兼任）
-      if (options.includes('lovers') && roleConfig.common) {
-        roleConfig.lovers = roleConfig.common;
-      }
-
-      // 大狼：狼群隨機一隻取代為大狼
-      if (options.includes('wfbig') && (roleConfig.wolf || 0) > 0) {
-        roleConfig.wfbig = 1;
-        // 減少一隻狼
-        roleConfig.wolf = Math.max(1, (roleConfig.wolf || 0) - 1);
-      }
-
-      // 決定者：16 人以上可用，平手時若在平手者中則直接被處決
-      if (options.includes('decide') && this.roomData.maxUser >= 16) {
-        if (!roleConfig.decide) {
-          // 決定者佔用一個人類名額
-          if ((roleConfig.human || 0) > 0) {
-            roleConfig.human = (roleConfig.human || 0) - 1;
-          }
-          roleConfig.decide = 1;
-        }
-      }
-
-      // GM 令牌：透過 optionRole 的 'gm' 令牌也能啟用 GM（等同 gmEnabled）
-      if (options.includes('gm')) {
-        this.roomData.roomOptions = this.roomData.roomOptions || {};
-        (this.roomData.roomOptions as any).gmEnabled = true;
-      }
-    }
-
-    // 權力者：必須 optionRole 明確包含 'authority' 才啟用（PHP parity）
-    // 即使 16+ 也不自動加，與 legacy 行為一致
-    if (config && config.trim() && config.trim().split(/\s+/).includes('authority') && !roleConfig.authority) {
-      // 權力者佔用一個人類名額
-      if ((roleConfig.human || 0) > 0) {
-        roleConfig.human = (roleConfig.human || 0) - 1;
-      }
-      roleConfig.authority = 1;
-    }
-
-    // 確保 human 至少為 0
-    if (roleConfig.human === undefined) {
-      roleConfig.human = 0;
-    }
-
-    return roleConfig as Record<Role, number>;
+    return buildRoleConfig(
+      baseRoles,
+      config,
+      this.roomData.maxUser || 22,
+      this.roomData.roomOptions
+    );
   }
 }

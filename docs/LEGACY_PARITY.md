@@ -208,16 +208,16 @@ These control which special roles appear in the role list at game start.
 
 | PHP Token | Description | Parsed in CF? | Consumed in Role Assignment? | Status |
 |-----------|-------------|:------------:|:----------------------------:|--------|
-| `decide` | Add 決定者 role (tie-breaker: dies on tie) | ✅ | ✅ `decide` role exists + vote tie logic | ⚠️ Partial (role type exists; auto-add to role list at 16+ players not implemented) |
-| `authority` | Add 權力者 role (2× vote weight) | ✅ | ✅ `authority` role exists + vote weight logic | ⚠️ Partial (role type exists; auto-add to role list at 16+ players not implemented) |
-| `poison` | Add 埋毒者 role (wolf-team poisoner) | ✅ | ⚠️ `poison` role type exists | ⚠️ Partial (type exists; auto-add to role list at 20+ players not implemented) |
-| `cat` | Poison variant: cat-style (poison = 貓又) | ❌ | ❌ | ❌ Missing |
-| `pobe` | Poison variant: wolf-team poisoner (pobe+poison→extra wolf+poison at 20+) | ✅ | ✅ `pobe` | ✅ Full (foxs+poison 互斥解除 + 20+ extra wolf+poison) |
-| `betr` | Add 背德者 role (fox-team, wins if fox dead + wolves dead) | ✅ | ✅ `betr` role + victory condition | ⚠️ Partial (role + victory exists; auto-add at 20+ not implemented) |
-| `foxs` | Add 雙狐 role (two foxes) | ✅ | ⚠️ `fox` role type exists | ⚠️ Partial (role exists; dual-fox assignment not implemented) |
-| `fosi` | Add 子狐 role (fox-team sub-role) | ✅ | ✅ `fosi` role exists | ⚠️ Partial (role exists; auto-add at 20+ not implemented) |
-| `wfbig` | Add 大狼 role (strong wolf) | ✅ | ⚠️ `wfbig` role type exists | ⚠️ Partial (type exists; auto-add at 20+ not implemented) |
-| `lovers` | Add 戀人 role (paired lovers, die together) | ✅ | ✅ `lovers`/`lovers_partner` roles | ⚠️ Partial (roles exist; auto-replace `common` in role list not implemented) |
+| `decide` | Add 決定者 role (tie-breaker: dies on tie) | ✅ | ✅ `decide` role exists + vote tie logic | ✅ Full (16+ 會注入，並以 vote-system 平手規則生效) |
+| `authority` | Add 權力者 role (2× vote weight) | ✅ | ✅ `authority` role exists + vote weight logic | ✅ Full (16+ 會注入，並以加權投票生效) |
+| `poison` | Add 埋毒者 role (wolf-team poisoner) | ✅ | ✅ `poison` count injection | ⚠️ Partial (20+ 注入已實作；夜晚行為/完整 legacy 細節仍未齊) |
+| `cat` | Poison variant: cat-style (poison = 貓又) | ✅ | ⚠️ `cat` count injection | ⚠️ Partial (20+ 注入已實作；貓又專屬行為仍未齊) |
+| `pobe` | Poison variant: wolf-team poisoner (pobe+poison→extra wolf+poison at 20+) | ✅ | ✅ `pobe` | ✅ Full (20+ `foxVariant + poison/cat + pobe` 追加 wolf+毒系配對) |
+| `betr` | Add 背德者 role (fox-team, wins if fox dead + wolves dead) | ✅ | ✅ `betr` role + victory condition | ⚠️ Partial (20+ 注入已實作；與 legacy 子規則仍有差異) |
+| `foxs` | Add 雙狐 role (two foxes) | ✅ | ✅ dual-fox count injection | ⚠️ Partial (20+ 雙狐注入已實作；完整 legacy 互斥/細節仍在收斂) |
+| `fosi` | Add 子狐 role (fox-team sub-role) | ✅ | ✅ `fosi` role exists | ⚠️ Partial (20+ 注入已實作；完整夜晚子狐行為仍在收斂) |
+| `wfbig` | Add 大狼 role (strong wolf) | ✅ | ✅ `wfbig` count injection | ⚠️ Partial (20+ 注入已實作；大狼專屬行為仍未齊) |
+| `lovers` | Add 戀人 role (paired lovers, die together) | ✅ | ✅ lovers replacement injection | ⚠️ Partial (13+ 以 common/human 置換 2 名 lovers；與 legacy 子職附掛模型仍有差異) |
 
 ### PHP Role Assignment Logic (not yet ported)
 
