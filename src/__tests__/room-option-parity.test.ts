@@ -95,8 +95,8 @@ describe('parseRoomOptions — gameOption token parity', () => {
     // 已串接：voteMe=false 禁止自投，voteMe=true 允許自投（前後端皆已限制）
   });
 
-  // ── dummyBoy ⚠️（已解析，遊戲邏輯未消耗）──
-  describe('dummyBoy（啞巴男角色）⚠️ 已解析未消耗', () => {
+  // ── dummyBoy ⚠️（已解析，遊戲邏輯部分消耗）──
+  describe('dummyBoy（啞巴男角色）⚠️ 已解析部分消耗', () => {
     it('正確解析 true', () => {
       expect(parseRoomOptions({ dummyBoy: true }).dummyBoy).toBe(true);
     });
@@ -105,7 +105,7 @@ describe('parseRoomOptions — gameOption token parity', () => {
       expect(parseRoomOptions({}).dummyBoy).toBe(false);
     });
 
-    // TODO: 遊戲邏輯中應分配啞巴男角色，白天不能發言但可投票
+    // 已串接：開局可建立 dummy_boy 並支援 custDummy 自訂遺言（完整 AI 行為仍待補）
   });
 
   // ── wishRole ✅（已解析，遊戲邏輯已消耗）──
@@ -147,8 +147,8 @@ describe('parseRoomOptions — gameOption token parity', () => {
     // 已串接：join API 在 tripRequired=true 時會拒絕未提供 trip 的玩家
   });
 
-  // ── allowSpectators ⚠️（已解析，遊戲邏輯部分消耗）──
-  describe('allowSpectators（允許觀戰）⚠️ 已解析部分消耗', () => {
+  // ── allowSpectators ✅（已解析，遊戲邏輯已消耗）──
+  describe('allowSpectators（允許觀戰）✅ 已解析已消耗', () => {
     it('正確解析 true', () => {
       expect(parseRoomOptions({ allowSpectators: true }).allowSpectators).toBe(true);
     });
@@ -158,8 +158,8 @@ describe('parseRoomOptions — gameOption token parity', () => {
     });
   });
 
-  // ── maxSpectators ⚠️（已解析，遊戲邏輯部分消耗）──
-  describe('maxSpectators（最大觀戰人數）⚠️ 已解析部分消耗', () => {
+  // ── maxSpectators ✅（已解析，遊戲邏輯已消耗）──
+  describe('maxSpectators（最大觀戰人數）✅ 已解析已消耗', () => {
     it('正確解析數字', () => {
       expect(parseRoomOptions({ maxSpectators: 20 }).maxSpectators).toBe(20);
     });
