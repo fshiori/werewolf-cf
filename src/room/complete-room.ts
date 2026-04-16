@@ -9,7 +9,7 @@ import type { DurableObjectState } from '@cloudflare/workers-types';
 import type { Env, Player, RoomData, Message, Role } from '../types';
 import { createRoom, addPlayer, removePlayer, startGame, endGame, getPublicRoomInfo } from '../utils/room-manager';
 import { advanceTime, checkSilence, transitionPhase, DEFAULT_TIME_CONFIG } from '../utils/time-progression';
-import { assignRoles, checkVictory, canSpeak, getRoleTeam } from '../utils/role-system';
+import { assignRoles, checkVictory, canSpeak, getRoleTeam, getVictoryMessage } from '../utils/role-system';
 import { createVoteData, addVote, getVoteResult, executeVote, isVoteComplete } from '../utils/vote-system';
 import { createNightState, wolfKill, seerDivine, guardTarget, processNightResult, getNightSummary, isNightActionsComplete } from '../utils/night-action';
 import { createSessionManager, type SessionValue } from '../utils/session-manager';
@@ -796,7 +796,7 @@ export class WerewolfRoom extends DurableObject {
       type: 'game_over',
       data: {
         winner,
-        message: winner === 'human' ? '村民陣營勝利！' : '狼人陣營勝利！'
+        message: getVictoryMessage(winner)
       }
     });
 
