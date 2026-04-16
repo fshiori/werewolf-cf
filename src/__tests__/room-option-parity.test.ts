@@ -314,39 +314,40 @@ describe('optionRole token 解析邏輯', () => {
 // ────────────────────────────────────────────
 // PHP 參考未實作的長尾 token
 // ────────────────────────────────────────────
-describe('PHP 長尾 token（❌ 未實作）', () => {
-  // 以下 token 在 PHP diam1.3.61 中存在，CF 版尚未實作
+  describe('PHP 長尾 token（❌ 未實作）', () => {
+  // 以下 token 在 PHP diam1.3.61 中存在，CF 版僅有 parse stub（roomOptions）
+  // 但遊戲邏輯尚未消耗
 
-  const missingGameOptionTokens = [
+  const missingConsumedGameOptionTokens = [
     {
-      token: 'real_time',
+      token: 'realTime',
       description: '即時制（白天/夜晚獨立計時器）',
       phpBehavior: '白天和夜晚各有獨立的即時計時器，時間到自動切換',
+      stubStatus: '✅ 已解析',
     },
     {
       token: 'comoutl',
       description: '連續出局處刑',
       phpBehavior: '連續投票最高票者直接處刑，不進入決選',
+      stubStatus: '✅ 已解析',
     },
     {
-      token: 'votedme',
-      description: '被投訴顯示',
-      phpBehavior: '玩家可以看到投給自己的票數',
+      token: 'voteDisplay',
+      description: '投票結果展示模式',
+      phpBehavior: '控制投票結果的顯示方式（0=全隱, 1=全顯, 2=匿名）',
+      stubStatus: '✅ 已解析',
+    },
+    {
+      token: 'custDummy',
+      description: '自訂啞巴男',
+      phpBehavior: '允許自訂啞巴男的發言限制條件',
+      stubStatus: '✅ 已解析',
     },
     {
       token: 'istrip',
       description: '旅人制度',
       phpBehavior: '使用 tripcode 追蹤玩家歷史戰績',
-    },
-    {
-      token: 'cust_dummy',
-      description: '自訂啞巴男',
-      phpBehavior: '允許自訂啞巴男的發言限制條件',
-    },
-    {
-      token: 'votedisplay',
-      description: '投票結果展示模式',
-      phpBehavior: '控制投票結果的顯示方式（全部/匿名/隱藏）',
+      stubStatus: '✅ 已解析',
     },
   ];
 
@@ -368,23 +369,33 @@ describe('PHP 長尾 token（❌ 未實作）', () => {
     },
   ];
 
-  it(`未實作 gameOption token 共 ${missingGameOptionTokens.length} 個`, () => {
-    expect(missingGameOptionTokens).toHaveLength(6);
+  it(`未消耗 gameOption token 共 ${missingConsumedGameOptionTokens.length} 個（皆有 parse stub）`, () => {
+    expect(missingConsumedGameOptionTokens).toHaveLength(5);
   });
 
   it(`未實作 optionRole token 共 ${missingRoleTokens.length} 個`, () => {
     expect(missingRoleTokens).toHaveLength(3);
   });
 
-  describe('未實作 token 清單（文件用途）', () => {
-    for (const t of missingGameOptionTokens) {
-      it(`❌ gameOption: ${t.token} — ${t.description}`, () => {
-        // 文件測試：確保清單不會遺漏
-        expect(t.token).toBeTruthy();
+  describe('未消耗 gameOption token 清單（有 stub 無 game logic）', () => {
+    for (const t of missingConsumedGameOptionTokens) {
+      it(`⚠️ ${t.stubStatus} ${t.token} — ${t.description}`, () => {
+        // 測試 parse stub 存在且正確解析
+        const testValue = t.token === 'voteDisplay' ? 2 : true;
+        const opts = parseRoomOptions({ [t.token]: testValue });
+        expect(opts[t.token as keyof typeof opts]).toBe(testValue);
+        // 預設值
+        expect(parseRoomOptions({})[t.token as keyof typeof opts]).toBe(
+          DEFAULT_ROOM_OPTIONS[t.token as keyof typeof DEFAULT_ROOM_OPTIONS]
+        );
       });
     }
+  });
+
+  describe('未實作 optionRole token 清單（文件用途）', () => {
     for (const t of missingRoleTokens) {
       it(`❌ optionRole: ${t.token} — ${t.description}`, () => {
+        // 文件測試：確保清單不會遺漏
         expect(t.token).toBeTruthy();
       });
     }
