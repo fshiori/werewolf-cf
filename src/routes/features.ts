@@ -808,15 +808,15 @@ app.post('/api/whispers', async (c) => {
       return c.json({ error: 'Message too long (max 300 chars)' }, 400);
     }
 
-    // 取得房間玩家列表，用於權限檢查
+    // 取得房間玩家列表（user_entry），用於權限檢查
     const playersResult = await c.env.DB.prepare(
-      'SELECT * FROM players WHERE room_no = ?'
+      'SELECT uname, role, live FROM user_entry WHERE room_no = ?'
     ).bind(data.roomNo).all();
 
     const players = playersResult.results as any[];
 
     // 檢查密語權限（純函數，依據角色 + 階段 + 存活狀態）
-    const phase = data.phase || (players.length > 0 ? (players[0] as any).day_night : 'day');
+    const phase = data.phase || 'day';
     const can = canWhisper(data.from, data.to, phase, players);
     if (!can) {
       return c.json({ error: 'Permission denied: cannot whisper at this time' }, 403);

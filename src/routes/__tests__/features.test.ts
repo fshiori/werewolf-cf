@@ -56,7 +56,7 @@ function createMockEnv(): Env {
     if (query.includes('game_events')) return 'game_events';
     if (query.includes('achievements')) return 'achievements';
     if (query.includes('spectators')) return 'spectators';
-    if (query.includes('players')) return 'players';
+    if (query.includes('user_entry')) return 'user_entry';
     if (query.includes('game_settings')) return 'game_settings';
     return 'unknown';
   }
