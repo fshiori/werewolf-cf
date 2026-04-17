@@ -696,5 +696,14 @@ describe('Night Action System', () => {
       expect(canWolfKillTarget(players, 'wolf1', 'wolf2', 2, false)).toBe(false);
       expect(canWolfKillTarget(players, 'wolf1', 'alice', 2, false)).toBe(true);
     });
+
+    it('不能投 GM（legacy parity）', () => {
+      const players = new Map<string, Player>([
+        ['wolf1', makePlayer('wolf1', 'wolf')],
+        ['gm1', makePlayer('gm1', 'GM')],
+      ]);
+
+      expect(canWolfKillTarget(players, 'wolf1', 'gm1', 2, false)).toBe(false);
+    });
   });
 });
