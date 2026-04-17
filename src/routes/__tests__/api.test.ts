@@ -721,6 +721,96 @@ describe('API Routes', () => {
       expect(data.success).toBe(true);
     });
 
+    it('房間 status 非 waiting 時應拒絕 join（400）', async () => {
+      const env = createMockEnv();
+      env.DB = {
+        prepare: (_query: string) => ({
+          bind: (..._args: any[]) => ({
+            run: async () => ({ success: true }),
+            first: async () => ({
+              is_private: 0,
+              password_hash: null,
+              game_option: 'as_gm gm:GMTRIP',
+              status: 'playing',
+              day_night: 'day'
+            }),
+            all: async () => ({ results: [] })
+          })
+        })
+      } as any;
+
+      const testApp = new Hono();
+      testApp.route('/', api);
+
+      const response = await testApp.request(
+        new Request('http://localhost/api/rooms/12345/join', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'CF-Connecting-IP': '203.0.113.44'
+          },
+          body: JSON.stringify({
+            uname: 'latejoin',
+            handleName: 'LateJoin',
+            trip: 'GMTRIP',
+            iconNo: 1,
+            sex: 'male'
+          })
+        }),
+        undefined,
+        env
+      );
+
+      expect(response.status).toBe(400);
+      const data = await response.json();
+      expect(data.error).toContain('Game already started');
+    });
+
+    it('房間 day_night 非 beforegame 時應拒絕 join（400）', async () => {
+      const env = createMockEnv();
+      env.DB = {
+        prepare: (_query: string) => ({
+          bind: (..._args: any[]) => ({
+            run: async () => ({ success: true }),
+            first: async () => ({
+              is_private: 0,
+              password_hash: null,
+              game_option: 'as_gm gm:GMTRIP',
+              status: 'waiting',
+              day_night: 'night'
+            }),
+            all: async () => ({ results: [] })
+          })
+        })
+      } as any;
+
+      const testApp = new Hono();
+      testApp.route('/', api);
+
+      const response = await testApp.request(
+        new Request('http://localhost/api/rooms/12345/join', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'CF-Connecting-IP': '203.0.113.45'
+          },
+          body: JSON.stringify({
+            uname: 'latejoin2',
+            handleName: 'LateJoin2',
+            trip: 'GMTRIP',
+            iconNo: 1,
+            sex: 'male'
+          })
+        }),
+        undefined,
+        env
+      );
+
+      expect(response.status).toBe(400);
+      const data = await response.json();
+      expect(data.error).toContain('Game already started');
+    });
+
     it('私人房間，密碼正確但不帶 password 欄位 → 403', async () => {
       const correctHash = await sha256hex('correct-pw');
       const privateEnv = createMockEnv();
