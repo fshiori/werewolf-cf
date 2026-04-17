@@ -5,6 +5,7 @@
  * - wolf: 狼人勝利（狼人 >= 村民）
  * - fox: 妖狐勝利（妖狐存活、狼人全滅、妖狐 >= 村民）
  * - betr: 背德者勝利（妖狐死亡、背德者存活、狼人全滅）
+ * - lovers: 戀人勝利（僅剩戀人存活）
  * - draw: 平局 / force_end
  */
 
@@ -123,20 +124,7 @@ describe('Victory Conditions', () => {
         makePlayer('wfbig1', 'wfbig'),
         makePlayer('w1', 'wolf'),
       ];
-      // wfbig 不包含 'wolf' 字串，在 getRoleTeam 中被歸為 'human'
-      // 因此 aliveWolves=1, aliveVillagers=2 → 村民多於狼人 → 繼續
-      // 但在 checkVictory 中，wfbig 的判定可能不同
-      const victory = checkVictory(players);
-      // wfbig 角色在 checkVictory 中可能被特殊處理
-      // 如果不算狼人，則 1 wolf < 2 villagers → null (繼續)
-      // 如果算狼人，則 2 wolves >= 1 villager → wolf
-      // 根據實作，wfbig 的 role 不含 'wolf' 字串
-      if (victory === 'wolf') {
-        expect(victory).toBe('wolf');
-      } else {
-        // wfbig 不算狼人陣營的話，遊戲繼續
-        expect(victory).toBeNull();
-      }
+      expect(checkVictory(players)).toBe('wolf');
     });
 
     it('狂人存活時也算狼人陣營', () => {
@@ -258,6 +246,31 @@ describe('Victory Conditions', () => {
   });
 
   // ========================================
+  // 戀人勝利路徑
+  // ========================================
+  describe('戀人勝利 (lovers)', () => {
+    it('僅剩兩位戀人存活 → 戀人勝利', () => {
+      const players: Player[] = [
+        makePlayer('l1', 'lovers'),
+        makePlayer('l2', 'lovers_partner'),
+        makePlayer('w1', 'wolf', 'dead'),
+        makePlayer('h1', 'human', 'dead'),
+      ];
+      expect(checkVictory(players)).toBe('lovers');
+    });
+
+    it('戀人存活但仍有其他角色存活 → 非戀人勝利', () => {
+      const players: Player[] = [
+        makePlayer('l1', 'lovers'),
+        makePlayer('l2', 'lovers_partner'),
+        makePlayer('h1', 'human'),
+        makePlayer('w1', 'wolf', 'dead'),
+      ];
+      expect(checkVictory(players)).not.toBe('lovers');
+    });
+  });
+
+  // ========================================
   // 平局 / 遊戲繼續
   // ========================================
   describe('平局 / 遊戲繼續', () => {
@@ -317,8 +330,13 @@ describe('Victory Conditions', () => {
       expect(getVictoryMessage('betr')).toBe('妖狐死亡但背德者存活，背德者單獨獲勝！');
     });
 
+    it('戀人勝利訊息', () => {
+      expect(getVictoryMessage('lovers')).toBe('戀人存活至最後，戀人陣營獲勝！');
+    });
+
     it('未知勝利陣營訊息', () => {
-      expect(getVictoryMessage('draw')).toBe('未知勝利陣營：draw');
+      expect(getVictoryMessage('draw')).toBe('投票多次平手，遊戲以平局結束。');
+      expect(getVictoryMessage('godmode')).toBe('未知勝利陣營：godmode');
     });
   });
 
@@ -341,8 +359,7 @@ describe('Victory Conditions', () => {
       expect(getRoleTeam('wolf')).toBe('wolf');
       expect(getRoleTeam('wolf_partner')).toBe('wolf');
       expect(getRoleTeam('mad')).toBe('wolf');
-      // wfbig 不含 'wolf' 字串，實作中歸為 human
-      expect(getRoleTeam('wfbig')).toBe('human');
+      expect(getRoleTeam('wfbig')).toBe('wolf');
     });
 
     it('妖狐陣營角色', () => {

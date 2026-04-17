@@ -127,15 +127,17 @@ describe('StatsManager', () => {
       expect(stats.averageGameDuration).toBe(300000);
     });
 
-    it('應該正確統計不同陣營勝利', async () => {
+    it('應該正確統計不同陣營勝利（含 betr/lovers）', async () => {
       await manager.recordGameEnd('human', 300000);
       await manager.recordGameEnd('wolf', 400000);
       await manager.recordGameEnd('fox', 500000);
-      
+      await manager.recordGameEnd('betr', 600000);
+      await manager.recordGameEnd('lovers', 700000);
+
       const stats = await manager.getStats();
-      expect(stats.humanWins).toBe(1);
+      expect(stats.humanWins).toBe(2); // human + lovers
       expect(stats.wolfWins).toBe(1);
-      expect(stats.foxWins).toBe(1);
+      expect(stats.foxWins).toBe(2); // fox + betr
     });
 
     it('應該正確計算平均遊戲時長', async () => {

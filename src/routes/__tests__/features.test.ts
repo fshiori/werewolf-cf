@@ -28,6 +28,7 @@ function resetTables() {
   tables = {
     game_logs: [],
     vote_history: [],
+    vote_history_archive: [],
     trip_scores: [],
     user_blacklist: [],
     user_whitelist: [],
@@ -35,6 +36,9 @@ function resetTables() {
     wills: [],
     whispers: [],
     game_events: [],
+    game_events_archive: [],
+    talk: [],
+    talk_archive: [],
     achievements: [],
     room: [],
   };
@@ -47,6 +51,7 @@ function createMockEnv(): Env {
   // 建立一個可以根據 query 名稱選擇資料表的機制
   function getTable(query: string): string {
     if (query.includes('game_logs')) return 'game_logs';
+    if (query.includes('vote_history_archive')) return 'vote_history_archive';
     if (query.includes('vote_history')) return 'vote_history';
     if (query.includes('trip_scores')) return 'trip_scores';
     if (query.includes('user_blacklist')) return 'user_blacklist';
@@ -54,7 +59,10 @@ function createMockEnv(): Env {
     if (query.includes('ng_users')) return 'ng_users';
     if (query.includes('wills')) return 'wills';
     if (query.includes('whispers')) return 'whispers';
+    if (query.includes('game_events_archive')) return 'game_events_archive';
     if (query.includes('game_events')) return 'game_events';
+    if (query.includes('talk_archive')) return 'talk_archive';
+    if (query.includes('talk')) return 'talk';
     if (query.includes('achievements')) return 'achievements';
     if (query.includes('spectators')) return 'spectators';
     if (query.includes('user_entry')) return 'user_entry';
@@ -215,6 +223,56 @@ describe('Features Routes', () => {
     it('不存在的記錄應返回 404', async () => {
       const res = await request('/api/game-logs/99999');
       expect(res.status).toBe(404);
+    });
+  });
+
+  describe('GET /api/replay/:roomNo — 回放模式', () => {
+    it('不存在的房間應返回 404', async () => {
+      const res = await request('/api/replay/404');
+      expect(res.status).toBe(404);
+    });
+
+    it('mode=heaven 應只回傳天國聊天', async () => {
+      (mockEnv.DB as any)._insert('game_logs', { room_no: '1', room_name: 'r1' });
+      (mockEnv.DB as any)._insert('game_events', { room_no: '1', date: 1, event_type: 'execution', related_uname: 'dead1', time: 1 });
+      (mockEnv.DB as any)._insert('talk', { room_no: '1', date: 1, uname: 'dead1', font_type: 'heaven', sentence: 'heaven msg', time: 2 });
+      (mockEnv.DB as any)._insert('talk', { room_no: '1', date: 1, uname: 'live1', font_type: 'normal', sentence: 'normal msg', time: 3 });
+
+      const res = await request('/api/replay/1?mode=heaven');
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(Array.isArray(data.talks)).toBe(true);
+      expect(data.talks.length).toBe(1);
+      expect(data.talks[0].font_type).toBe('heaven');
+    });
+
+    it('mode=heaven_only 應僅保留死亡相關事件與死亡者天國訊息', async () => {
+      (mockEnv.DB as any)._insert('game_logs', { room_no: '2', room_name: 'r2' });
+      (mockEnv.DB as any)._insert('game_events', { room_no: '2', date: 1, event_type: 'execution', related_uname: 'dead1', time: 1 });
+      (mockEnv.DB as any)._insert('game_events', { room_no: '2', date: 1, event_type: 'system', related_uname: 'live1', time: 2 });
+      (mockEnv.DB as any)._insert('talk', { room_no: '2', date: 1, uname: 'dead1', font_type: 'heaven', sentence: 'from dead', time: 3 });
+      (mockEnv.DB as any)._insert('talk', { room_no: '2', date: 1, uname: 'live1', font_type: 'heaven', sentence: 'from live', time: 4 });
+
+      const res = await request('/api/replay/2?mode=heaven_only');
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(data.events.every((e: any) => e.event_type === 'execution' || e.event_type === 'night_death')).toBe(true);
+      expect(data.talks.length).toBe(1);
+      expect(data.talks[0].uname).toBe('dead1');
+    });
+
+    it('主表無資料時應 fallback 到 archive 表', async () => {
+      (mockEnv.DB as any)._insert('game_logs', { room_no: '3', room_name: 'r3' });
+      (mockEnv.DB as any)._insert('game_events_archive', { room_no: '3', date: 1, event_type: 'execution', target: 'deadA', time: 10 });
+      (mockEnv.DB as any)._insert('vote_history_archive', { room_no: '3', date: 1, round: 1, voter: 'u1', candidate: 'u2', time: 11 });
+      (mockEnv.DB as any)._insert('talk_archive', { room_no: '3', date: 1, uname: 'deadA', font_type: 'heaven', sentence: 'archive heaven', time: 12 });
+
+      const res = await request('/api/replay/3?mode=full');
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(data.events.length).toBe(1);
+      expect(data.votes.length).toBe(1);
+      expect(data.talks.length).toBe(1);
     });
   });
 

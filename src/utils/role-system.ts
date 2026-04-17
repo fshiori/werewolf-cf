@@ -13,7 +13,7 @@ export type RoleTeam = 'human' | 'wolf' | 'fox';
  * 判斷角色陣營
  */
 export function getRoleTeam(role: Role): RoleTeam {
-  if (role.includes('wolf') || role === 'mad') {
+  if (role.includes('wolf') || role === 'mad' || role === 'wfbig') {
     return 'wolf';
   } else if (role.includes('fox') || role === 'betr' || role === 'fosi') {
     return 'fox';
@@ -75,7 +75,7 @@ export function canActAtDay(role: Role): boolean {
  */
 export function checkVictory(players: Player[]): string | null {
   const alivePlayers = players.filter(p => p.live === 'live');
-  
+
   if (alivePlayers.length === 0) {
     return null;
   }
@@ -84,6 +84,12 @@ export function checkVictory(players: Player[]): string | null {
   const aliveVillagers = alivePlayers.filter(p => isHumanTeam(p.role)).length;
   const aliveFoxes = alivePlayers.filter(p => p.role === 'fox' || p.role === 'fosi').length;
   const aliveBetr = alivePlayers.filter(p => p.role === 'betr').length;
+  const aliveLovers = alivePlayers.filter(p => isLover(p.role)).length;
+
+  // 戀人獨存（兩位戀人都活著且其餘角色全滅）
+  if (aliveLovers >= 2 && alivePlayers.every(p => isLover(p.role))) {
+    return 'lovers';
+  }
 
   // 檢查妖狐勝利條件（妖狐存活且狼人全滅且妖狐數量 >= 村民數量）
   if (aliveFoxes > 0 && aliveWolves === 0 && aliveFoxes >= aliveVillagers) {
@@ -123,6 +129,10 @@ export function getVictoryMessage(winner: string): string {
       return '妖狐存活且狼人全滅，妖狐陣營獲勝！';
     case 'betr':
       return '妖狐死亡但背德者存活，背德者單獨獲勝！';
+    case 'lovers':
+      return '戀人存活至最後，戀人陣營獲勝！';
+    case 'draw':
+      return '投票多次平手，遊戲以平局結束。';
     default:
       return `未知勝利陣營：${winner}`;
   }
