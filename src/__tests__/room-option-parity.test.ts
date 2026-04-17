@@ -246,7 +246,7 @@ describe('optionRole token 解析邏輯', () => {
     {
       token: 'foxs',
       description: '雙狐模式',
-      expected: 'fox=2, 取消基本表 fox',
+      expected: '20+ 追加 1 狐成為雙狐；若搭配 pobe+poison(cat) 會再追加 wolf+毒系',
       status: '✅' as const,
     },
     {
@@ -363,6 +363,13 @@ describe('optionRole runtime consume（parseRoleConfig）', () => {
   it('20+ foxs 會成為雙狐（基本 1 狐 + 追加 1 狐）', () => {
     const rc = parseRoleConfigFor(20, 'foxs');
     expect(rc.fox).toBe(2);
+  });
+
+  it('20+ foxs + pobe + poison 會追加 wolf + poison', () => {
+    const rc = parseRoleConfigFor(20, 'foxs pobe poison');
+    expect(rc.fox).toBe(2);
+    expect(rc.poison).toBe(1);
+    expect(rc.wolf).toBe(4);
   });
 
   it('20+ fosi + pobe + cat 會追加 wolf + cat', () => {

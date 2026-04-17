@@ -215,7 +215,7 @@ These control which special roles appear in the role list at game start.
 | `cat` | Poison variant: cat-style (poison = 貓又) | ✅ | ✅ `cat` count injection | ✅ Full（20+ 注入 + 夜晚被咬反噴狼 + CAT_DO 夜間秘術 + 被咬不死機率） |
 | `pobe` | Poison variant: wolf-team poisoner (pobe+poison→extra wolf+poison at 20+) | ✅ | ✅ `pobe` | ✅ Full (20+ `foxVariant + poison/cat + pobe` 追加 wolf+毒系配對) |
 | `betr` | Add 背德者 role (fox-team, wins if fox dead + wolves dead) | ✅ | ✅ `betr` role + victory condition | ✅ Full（20+ 注入 + 狐線全滅即殉滅，並串接 day/night/sudden-death） |
-| `foxs` | Add 雙狐 role (two foxes) | ✅ | ✅ dual-fox count injection | ⚠️ Partial（20+ 雙狐注入已實作；完整 legacy 細節仍在收斂） |
+| `foxs` | Add 雙狐 role (two foxes) | ✅ | ✅ dual-fox count injection | ✅ Full（20+ 雙狐注入 + foxs+pobe+poison(cat) 追加 wolf+毒系分支已覆蓋） |
 | `fosi` | Add 子狐 role (fox-team sub-role) | ✅ | ✅ `fosi` role exists | ✅ Full（20+ 注入 + FOSI_DO 夜間占卜 + nofosi 偽裝 + 大狼偽裝分支） |
 | `wfbig` | Add 大狼 role (strong wolf) | ✅ | ✅ `wfbig` count injection | ✅ Full（20+ 注入 + 狼陣營判定 + mage/fosi 占卜偽裝分支） |
 | `lovers` | Add 戀人 role (paired lovers, die together) | ✅ | ✅ lovers replacement injection | ⚠️ Partial（13+ 以 common/human 置換 2 名 lovers；連帶死亡已覆蓋 day/night/sudden-death，但子職附掛模型仍有差異） |
