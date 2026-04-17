@@ -455,6 +455,54 @@ describe('Night Action System', () => {
       expect(dead.length).toBe(1);
       expect(dead[0].live).toBe('dead');
     });
+
+    it('夜晚毒系死亡應反噴一名狼人', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0); // pick first wolf
+      const nightState = createNightState(1, 1);
+      const players = new Map<string, Player>();
+
+      players.set('poisoner', {
+        userNo: 1,
+        uname: 'poisoner',
+        handleName: 'Poisoner',
+        trip: '',
+        iconNo: 1,
+        sex: '',
+        role: 'poison',
+        live: 'live',
+        score: 0
+      });
+      players.set('wolf1', {
+        userNo: 2,
+        uname: 'wolf1',
+        handleName: 'Wolf1',
+        trip: '',
+        iconNo: 1,
+        sex: '',
+        role: 'wolf',
+        live: 'live',
+        score: 0
+      });
+      players.set('human1', {
+        userNo: 3,
+        uname: 'human1',
+        handleName: 'Human1',
+        trip: '',
+        iconNo: 1,
+        sex: '',
+        role: 'human',
+        live: 'live',
+        score: 0
+      });
+
+      nightState.victims.push('poisoner');
+      const dead = processNightResult(nightState, players);
+
+      expect(dead.map(p => p.uname)).toContain('poisoner');
+      expect(dead.map(p => p.uname)).toContain('wolf1');
+      expect(players.get('wolf1')?.live).toBe('dead');
+      expect(players.get('human1')?.live).toBe('live');
+    });
   });
 
   describe('夜晚行動完成檢查', () => {

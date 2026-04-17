@@ -338,6 +338,26 @@ export function processNightResult(
     }
   }
 
+  // legacy parity: 夜晚被狼咬死的毒系（poison/cat）會反噴一名存活狼人
+  const poisonTriggers = dead.filter(p => p.role === 'poison' || p.role === 'cat');
+  for (const _trigger of poisonTriggers) {
+    const aliveWolves = Array.from(players.values()).filter(
+      p => p.live === 'live' && (p.role.includes('wolf') || p.role === 'wfbig')
+    );
+    if (aliveWolves.length === 0) {
+      continue;
+    }
+
+    const idx = Math.floor(Math.random() * aliveWolves.length);
+    const retaliationTarget = aliveWolves[idx];
+    if (!retaliationTarget || retaliationTarget.live !== 'live') {
+      continue;
+    }
+
+    retaliationTarget.live = 'dead';
+    dead.push(retaliationTarget);
+  }
+
   return dead;
 }
 

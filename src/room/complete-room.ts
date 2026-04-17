@@ -1314,6 +1314,46 @@ export class WerewolfRoom extends DurableObject {
   }
 
   /**
+   * 日間毒系（poison/cat）被處決時，反噴一名存活玩家（不含自身/dummy/GM）
+   */
+  private applyDayPoisonRetaliation(deadPlayers: Player[]): Player[] {
+    const hasPoisonTrigger = deadPlayers.some(
+      p => p.role === 'poison' || p.role === 'cat'
+    );
+    if (!hasPoisonTrigger) {
+      return [];
+    }
+
+    const excluded = new Set(deadPlayers.map(p => p.uname));
+    const candidates = Array.from(this.roomData.players.values()).filter(
+      p => p.live === 'live' &&
+        !excluded.has(p.uname) &&
+        p.uname !== 'dummy_boy' &&
+        p.role !== 'GM'
+    );
+
+    if (candidates.length === 0) {
+      return [];
+    }
+
+    const idx = Math.floor(Math.random() * candidates.length);
+    const victim = candidates[idx];
+    if (!victim || victim.live !== 'live') {
+      return [];
+    }
+
+    victim.live = 'dead';
+    (victim as any).death = Date.now();
+
+    this.broadcast({
+      type: 'system',
+      data: { message: `☠️ 毒系反噴：${victim.handleName}` }
+    });
+
+    return [victim];
+  }
+
+  /**
    * 日間超時後的突然死（core）：未投票存活者直接死亡
    */
   private async applySuddenDeathForNoVote() {
@@ -1588,7 +1628,14 @@ export class WerewolfRoom extends DurableObject {
     const displayInfo = filterVoteDisplay(voteData, voteDisplayMode);
 
     const loversChain = this.applyLoversChainDeath(result.executed);
-    const executedPlayers = [...result.executed, ...loversChain];
+    const poisonRetaliation = this.applyDayPoisonRetaliation([...result.executed, ...loversChain]);
+    const retaliationLoversChain = this.applyLoversChainDeath(poisonRetaliation);
+    const executedPlayers = [
+      ...result.executed,
+      ...loversChain,
+      ...poisonRetaliation,
+      ...retaliationLoversChain,
+    ];
 
     if (executedPlayers.length > 0) {
       this.broadcast({
