@@ -189,3 +189,19 @@ export function getRealTimeRemainingSec(state: TimeState, config: TimeConfig): n
 export function startRealTimePhase(state: TimeState): void {
   state.phaseStartTimeMs = Date.now();
 }
+
+/**
+ * 日間超時後，是否到達突然死處理窗口
+ * legacy 參考值：120 秒 grace period
+ */
+export function shouldTriggerSuddenDeath(
+  phase: GamePhase,
+  dayTimeoutAtMs: number | undefined,
+  nowMs: number,
+  graceSec = 120,
+): boolean {
+  if (phase !== 'day' || !dayTimeoutAtMs) {
+    return false;
+  }
+  return (nowMs - dayTimeoutAtMs) >= graceSec * 1000;
+}

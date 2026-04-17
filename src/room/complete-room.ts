@@ -8,7 +8,7 @@ import { DurableObject } from 'cloudflare:workers';
 import type { DurableObjectState } from '@cloudflare/workers-types';
 import type { Env, Player, RoomData, Message, Role } from '../types';
 import { createRoom, addPlayer, removePlayer, startGame, endGame, getPublicRoomInfo } from '../utils/room-manager';
-import { advanceTime, checkSilence, transitionPhase, DEFAULT_TIME_CONFIG, isRealTimeEnabled, isRealTimeExpired, startRealTimePhase, getRealTimeRemainingSec } from '../utils/time-progression';
+import { checkSilence, advanceSilenceTime, shouldTriggerSuddenDeath, DEFAULT_TIME_CONFIG, isRealTimeExpired } from '../utils/time-progression';
 import { assignRoles, checkVictory, canSpeak, getRoleTeam, getVictoryMessage, createDummyBoyPlayer } from '../utils/role-system';
 import { createVoteData, addVote, getVoteResult, executeVote, isVoteComplete, calculateWeightedVotes, resolveWeightedVoteResult, filterVoteDisplay, resolveVoteDisplayMode, canVoteTarget, getVotedUsers, getDayVoteParticipants } from '../utils/vote-system';
 import { createNightState, wolfKill, seerDivine, guardTarget, processNightResult, getNightSummary, isNightActionsComplete, canWolfKillTarget } from '../utils/night-action';
@@ -36,10 +36,11 @@ export class WerewolfRoom extends DurableObject {
   // @ts-ignore - ctx is a DurableObject property
   private storage = this.ctx.storage;
 
-  // 清理機制時間常數
-  private static readonly CLEANUP_CHECK_INTERVAL_MS = 5 * 60 * 1000;  // 每 5 分鐘檢查
-  private static readonly ENDED_ROOM_TTL_MS = 30 * 60 * 1000;           // 結束後 30 分鐘清理
-  private static readonly INACTIVE_ROOM_TTL_MS = 2 * 60 * 60 * 1000;    // 無活動 2 小時清理
+  // 時間/清理機制常數
+  private static readonly GAME_TICK_INTERVAL_MS = 1000;                  // 遊戲中每秒 tick
+  private static readonly CLEANUP_CHECK_INTERVAL_MS = 5 * 60 * 1000;     // 非遊戲中每 5 分鐘檢查
+  private static readonly ENDED_ROOM_TTL_MS = 30 * 60 * 1000;            // 結束後 30 分鐘清理
+  private static readonly INACTIVE_ROOM_TTL_MS = 2 * 60 * 60 * 1000;     // 無活動 2 小時清理
 
   // @ts-ignore - env is a DurableObject property
   constructor(state: DurableObjectState, env: Env) {
@@ -100,16 +101,23 @@ export class WerewolfRoom extends DurableObject {
       return;
     }
 
-    // 否則重新設定 alarm 繼續監控
-    await this.storage.setAlarm(now + WerewolfRoom.CLEANUP_CHECK_INTERVAL_MS);
+    // 遊戲進行中：使用 tick 驅動 realTime / silence / sudden death grace
+    if (this.roomData.status === 'playing' && (this.roomData.dayNight === 'day' || this.roomData.dayNight === 'night')) {
+      await this.advanceGameTime(0);
+    }
+
+    await this.scheduleCleanupCheck();
   }
 
   /**
-   * 排程下一次清理檢查
+   * 排程下一次檢查（遊戲中以高頻 tick，其他狀態維持低頻 cleanup 檢查）
    */
   private async scheduleCleanupCheck() {
     try {
-      await this.storage.setAlarm(Date.now() + WerewolfRoom.CLEANUP_CHECK_INTERVAL_MS);
+      const interval = (this.roomData.status === 'playing' && (this.roomData.dayNight === 'day' || this.roomData.dayNight === 'night'))
+        ? WerewolfRoom.GAME_TICK_INTERVAL_MS
+        : WerewolfRoom.CLEANUP_CHECK_INTERVAL_MS;
+      await this.storage.setAlarm(Date.now() + interval);
     } catch (e) {
       console.error('Failed to schedule cleanup check:', e);
     }
@@ -534,6 +542,12 @@ export class WerewolfRoom extends DurableObject {
       return;
     }
 
+    const now = Date.now();
+    this.roomData.lastUpdated = now;
+    this.roomData.uptime = now;
+    (this.roomData as any)._lastMessageTimeMs = now;
+    (this.roomData as any)._lastSilenceTickMs = now;
+
     const comoutlEnabled = !!this.roomData.roomOptions?.comoutl;
     const isCommon = player.role === 'common';
     const isLover = player.role === 'lovers';
@@ -907,6 +921,10 @@ export class WerewolfRoom extends DurableObject {
     if (this.roomData.roomOptions?.realTime) {
       (this.roomData as any)._phaseStartTimeMs = Date.now();
     }
+    delete (this.roomData as any)._dayTimeoutAtMs;
+    (this.roomData as any)._isSilence = false;
+    (this.roomData as any)._lastMessageTimeMs = Date.now();
+    delete (this.roomData as any)._lastSilenceTickMs;
 
     this.voteData = createVoteData(this.roomData.roomNo, this.roomData.date);
     this.maybeRunDummyBoyAI('day');
@@ -1023,40 +1041,98 @@ export class WerewolfRoom extends DurableObject {
 
   /**
    * 推進遊戲時間
-   * 即時制 (realTime) 啟用時，以實際時間為主，但仍追蹤發言次數作為備用
+   * - realTime: 由實際秒數到期驅動
+   * - 非 realTime: 由發言單位 + silence 加速驅動
+   * - day timeout: 進入 sudden-death grace window（預設 120 秒）後才結算突然死
    */
   private async advanceGameTime(units: number) {
-    const realTimeEnabled = !!this.roomData.roomOptions?.realTime;
+    if (this.roomData.status !== 'playing' || (this.roomData.dayNight !== 'day' && this.roomData.dayNight !== 'night')) {
+      return;
+    }
 
+    const now = Date.now();
+    let changed = false;
+
+    const realTimeEnabled = !!this.roomData.roomOptions?.realTime;
+    const silenceModeEnabled = !!this.roomData.roomOptions?.silenceMode;
+
+    // 非 realTime 且啟用 silence 時，由 alarm tick 補推進度
+    if (!realTimeEnabled && silenceModeEnabled) {
+      const lastMessageTimeMs = ((this.roomData as any)._lastMessageTimeMs as number | undefined)
+        || this.roomData.lastUpdated
+        || this.roomData.uptime
+        || now;
+
+      const state = {
+        date: this.roomData.date,
+        dayNight: this.roomData.dayNight,
+        timeSpent: this.roomData.timeSpent || 0,
+        lastMessageTime: lastMessageTimeMs,
+        isSilence: !!(this.roomData as any)._isSilence,
+        phaseStartTimeMs: (this.roomData as any)._phaseStartTimeMs || this.roomData.uptime || now,
+      };
+
+      if (checkSilence(state, now, DEFAULT_TIME_CONFIG)) {
+        const lastTickMs = ((this.roomData as any)._lastSilenceTickMs as number | undefined) || lastMessageTimeMs;
+        const silenceUnits = advanceSilenceTime(state, now - lastTickMs, DEFAULT_TIME_CONFIG);
+        if (silenceUnits > 0) {
+          units += silenceUnits;
+          changed = true;
+        }
+        (this.roomData as any)._lastSilenceTickMs = now;
+      }
+
+      (this.roomData as any)._isSilence = state.isSilence;
+    }
+
+    let expired = false;
     if (realTimeEnabled) {
-      // 即時制：檢查實際時間是否到期
       const timeState = {
         dayNight: this.roomData.dayNight,
-        phaseStartTimeMs: (this.roomData as any)._phaseStartTimeMs || this.roomData.uptime || Date.now(),
+        phaseStartTimeMs: (this.roomData as any)._phaseStartTimeMs || this.roomData.uptime || now,
       };
       const timeConfig = {
         ...DEFAULT_TIME_CONFIG,
         realTimeDayLimitSec: this.roomData.roomOptions?.realTimeDayLimitSec || this.roomData.roomOptions?.timeLimit || 300,
         realTimeNightLimitSec: this.roomData.roomOptions?.realTimeNightLimitSec || Math.floor((this.roomData.roomOptions?.timeLimit || 300) * 0.5),
       };
-
-      if (isRealTimeExpired(timeState, timeConfig)) {
-        await this.transitionPhase();
-      }
-      // 即時制下，發言不直接推進階段（依靠 alarm 或下次發言時檢查）
+      expired = isRealTimeExpired(timeState, timeConfig);
     } else {
-      // 正常模式：以發言次數推進
-      this.roomData.timeSpent = (this.roomData.timeSpent || 0) + units;
+      if (units > 0) {
+        this.roomData.timeSpent = (this.roomData.timeSpent || 0) + units;
+        changed = true;
+      }
       const limit = this.roomData.dayNight === 'day'
         ? DEFAULT_TIME_CONFIG.dayLimit
         : DEFAULT_TIME_CONFIG.nightLimit;
+      expired = (this.roomData.timeSpent || 0) >= limit;
+    }
 
-      if (this.roomData.timeSpent >= limit) {
+    if (expired) {
+      if (this.roomData.dayNight === 'day') {
+        const dayTimeoutAtMs = (this.roomData as any)._dayTimeoutAtMs as number | undefined;
+        if (!dayTimeoutAtMs) {
+          (this.roomData as any)._dayTimeoutAtMs = now;
+          changed = true;
+          this.broadcast({
+            type: 'system',
+            data: { message: '⏰ 白天時間到，120 秒內未投票者將突然死亡' }
+          });
+        }
+
+        if (shouldTriggerSuddenDeath('day', (this.roomData as any)._dayTimeoutAtMs, now)) {
+          await this.transitionPhase();
+          return;
+        }
+      } else {
         await this.transitionPhase();
+        return;
       }
     }
 
-    await this.saveState();
+    if (changed) {
+      await this.saveState();
+    }
   }
 
   /**
@@ -1344,6 +1420,10 @@ export class WerewolfRoom extends DurableObject {
       (this.roomData as any)._phaseStartTimeMs = Date.now();
     }
 
+    delete (this.roomData as any)._dayTimeoutAtMs;
+    (this.roomData as any)._isSilence = false;
+    delete (this.roomData as any)._lastSilenceTickMs;
+
     if (this.roomData.dayNight === 'day') {
       // 白天超時：先處理突然死，再結算投票
       await this.applySuddenDeathForNoVote();
@@ -1355,6 +1435,7 @@ export class WerewolfRoom extends DurableObject {
       // 無投票資料時才直接進夜晚
       this.roomData.dayNight = 'night';
       this.roomData.timeSpent = 0;
+      (this.roomData as any)._lastMessageTimeMs = Date.now();
       this.nightState = createNightState(this.roomData.roomNo, this.roomData.date);
 
       this.broadcast({
@@ -1379,6 +1460,7 @@ export class WerewolfRoom extends DurableObject {
       this.roomData.timeSpent = 0;
       this.roomData.date++;
       (this.roomData as any)._revoteCount = 0;
+      (this.roomData as any)._lastMessageTimeMs = Date.now();
 
       const summary = nightState ? getNightSummary(nightState) : '昨晚是平安夜';
 
@@ -1524,6 +1606,10 @@ export class WerewolfRoom extends DurableObject {
 
     this.roomData.dayNight = 'night';
     this.roomData.timeSpent = 0;
+    delete (this.roomData as any)._dayTimeoutAtMs;
+    (this.roomData as any)._isSilence = false;
+    (this.roomData as any)._lastMessageTimeMs = Date.now();
+    delete (this.roomData as any)._lastSilenceTickMs;
     this.nightState = createNightState(this.roomData.roomNo, this.roomData.date);
     this.broadcast({
       type: 'phase_change',

@@ -4,6 +4,7 @@
 
 import { describe, it, expect } from 'vitest';
 import type { GamePhase, Player, Role } from '../types';
+import { shouldTriggerSuddenDeath, checkSilence, advanceSilenceTime, DEFAULT_TIME_CONFIG } from '../utils/time-progression';
 
 describe('Time Progression System', () => {
   describe('時間計算', () => {
@@ -131,6 +132,34 @@ describe('Time Progression System', () => {
       const elapsed = (Date.now() - phaseStartTimeMs) / 1000;
       const isExpired = elapsed >= realTimeDayLimitSec;
       expect(isExpired).toBe(false);
+    });
+  });
+
+  describe('sudden death / silence helpers', () => {
+    it('白天超時 120 秒後才觸發突然死窗口', () => {
+      const timeoutAt = Date.now() - 119000;
+      expect(shouldTriggerSuddenDeath('day', timeoutAt, Date.now())).toBe(false);
+      expect(shouldTriggerSuddenDeath('day', timeoutAt, timeoutAt + 120000)).toBe(true);
+    });
+
+    it('夜晚不觸發突然死窗口', () => {
+      const timeoutAt = Date.now() - 999999;
+      expect(shouldTriggerSuddenDeath('night', timeoutAt, Date.now())).toBe(false);
+    });
+
+    it('silence helper 會在超過閾值後開始加速單位', () => {
+      const now = Date.now();
+      const state = {
+        date: 1,
+        dayNight: 'day' as const,
+        timeSpent: 0,
+        lastMessageTime: now - 65000,
+        isSilence: false,
+        phaseStartTimeMs: now - 65000,
+      };
+      expect(checkSilence(state, now, DEFAULT_TIME_CONFIG)).toBe(true);
+      const units = advanceSilenceTime(state, 30000, DEFAULT_TIME_CONFIG);
+      expect(units).toBeGreaterThan(0);
     });
   });
 });
