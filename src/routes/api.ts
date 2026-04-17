@@ -530,16 +530,23 @@ app.post('/api/rooms/:roomNo/join', checkBan, rateLimit, async (c) => {
 
       if (roomRow) {
         if (roomRow.game_option) {
+          let roomOptions = parseRoomOptions({});
+
           try {
-            const roomOptions = parseRoomOptions(JSON.parse(roomRow.game_option as string));
+            // 優先走 JSON（新版資料）
+            roomOptions = parseRoomOptions(JSON.parse(roomRow.game_option as string));
+          } catch (_e) {
+            // 回退走 legacy token string（舊版資料）
+            roomOptions = parseRoomOptions(roomRow.game_option as string);
+          }
 
-            // tripRequired 檢查：若房間啟用 tripRequired，玩家必須提供有效的 trip
-            if (roomOptions.tripRequired === true && !data.trip?.trim()) {
-              return c.json({ error: 'Trip code required for this room' }, 403);
-            }
+          // trip/istrip 檢查：若房間啟用 tripRequired 或 istrip，玩家必須提供有效 trip
+          const requireTrip = roomOptions.tripRequired === true || roomOptions.istrip === true;
+          if (requireTrip && !data.trip?.trim()) {
+            return c.json({ error: 'Trip code required for this room' }, 403);
+          }
 
-            wishRoleEnabled = roomOptions.wishRole === true;
-          } catch (_e) { /* game_option 解析失敗，忽略 */ }
+          wishRoleEnabled = roomOptions.wishRole === true;
         }
 
         if (roomRow.is_private === 1) {

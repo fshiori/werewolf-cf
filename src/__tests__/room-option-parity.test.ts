@@ -398,12 +398,6 @@ describe('optionRole runtime consume（parseRoleConfig）', () => {
       phpBehavior: '允許自訂啞巴男的發言限制條件',
       stubStatus: '✅ 已解析',
     },
-    {
-      token: 'istrip',
-      description: '旅人制度',
-      phpBehavior: '使用 tripcode 追蹤玩家歷史戰績',
-      stubStatus: '✅ 已解析',
-    },
   ];
 
   const missingRoleTokens = [
@@ -420,7 +414,7 @@ describe('optionRole runtime consume（parseRoleConfig）', () => {
   ];
 
   it(`未消耗 gameOption token 共 ${missingConsumedGameOptionTokens.length} 個（皆有 parse stub）`, () => {
-    expect(missingConsumedGameOptionTokens).toHaveLength(2);
+    expect(missingConsumedGameOptionTokens).toHaveLength(1);
   });
 
   it(`未實作 optionRole token 共 ${missingRoleTokens.length} 個`, () => {

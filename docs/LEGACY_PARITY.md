@@ -86,7 +86,7 @@
 | `game_vote.php?command=MAGE` | POST | Mage fortune tell | WS msg `{ type: "night_action" }` | ✅ Full |
 | `game_vote.php?command=GUARD` | POST | Guard protect | WS msg `{ type: "night_action" }` | ✅ Full |
 | `game_up.php` (auto-reload) | GET | Poll game state | WebSocket push (no polling needed) | 🔄 Redesigned |
-| `game_vote.php?command=OBJECTION` | POST | "Objection!" button | ❌ Not implemented | ❌ Missing |
+| `game_vote.php?command=OBJECTION` | POST | "Objection!" button | WS msg `{ type: "objection" }` | ⚠️ Partial |
 
 ### 2.4 Admin
 
@@ -193,6 +193,7 @@ CF replaces this with a typed `RoomOptions` interface (see `src/types/room-optio
 | `comoutl` | 共生者夜晚對話顯示（show lover/common night whisper to others） | ✅ | ✅ `comoutl` | ✅ Full (comoutl=true: others see 「悄悄話...」; comoutl=false: hidden) |
 | `vote_me` | Allow self-vote | ✅ | ✅ `voteMe` | ✅ Full (frontend target filtering + backend vote validation) |
 | `trip` | Require tripcode to join | ✅ | ✅ `tripRequired` | ✅ Full (join-time enforcement in API) |
+| `istrip` | Legacy trip enforcement token | ✅ | ✅ `istrip` | ✅ Full（join-time enforced；legacy token string 路徑可阻擋無 trip 加入） |
 | `will` | Enable last-words (遺言) | ✅ | ✅ `will` | ✅ Full |
 | `gm:XXXXX` | Designate a specific trip as GM | ✅ | ⚠️ | ⚠️ Partial (legacy token parsing + runtime 指派 + maxUser+1 GM 加入席次已接上；仍有少量 edge case 待收斂) |
 | `as_gm` | Activate GM role | ✅ | ⚠️ | ⚠️ Partial (`as_gm` token 可啟用 GM；仍有部分 legacy 行為差異待補) |
