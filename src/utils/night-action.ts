@@ -97,6 +97,11 @@ export function canWolfKillTarget(
     return false;
   }
 
+  // legacy parity: GM 不屬於可被夜晚擊殺目標
+  if (target.role === 'GM') {
+    return false;
+  }
+
   // legacy parity: dummy_boy 啟用且第 1 天夜晚，狼人只能投 dummy_boy
   if (dummyBoyEnabled && currentDate === 1 && targetUname !== 'dummy_boy') {
     return false;
