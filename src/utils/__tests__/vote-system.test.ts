@@ -579,5 +579,20 @@ describe('Vote System', () => {
       expect(canVoteTarget(players, 'alice', 'bob', true)).toBe(false);
       expect(canVoteTarget(players, 'alice', 'ghost', true)).toBe(false);
     });
+
+    it('canVoteTarget: 不允許投給 dummy_boy 或 GM（legacy parity）', () => {
+      const gm = makeTarget('gm');
+      gm.role = 'GM';
+
+      const players = new Map<string, Player>([
+        ['alice', makeTarget('alice')],
+        ['dummy_boy', makeTarget('dummy_boy')],
+        ['gm', gm],
+      ]);
+
+      expect(canVoteTarget(players, 'alice', 'dummy_boy', true)).toBe(false);
+      expect(canVoteTarget(players, 'alice', 'gm', true)).toBe(false);
+      expect(canVoteTarget(players, 'alice', 'alice', true)).toBe(true);
+    });
   });
 });
