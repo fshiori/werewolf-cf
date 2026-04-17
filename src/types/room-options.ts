@@ -87,7 +87,11 @@ export interface LegacyGameOptionParseResult {
 
 /**
  * 解析 legacy 空白分隔 game_option token 字串。
- * 目前提供 gm:trip / as_gm 對齊所需資訊（其餘 token 只做最小必要映射）。
+ *
+ * 支援 PHP 版常見 token：
+ * - gm:TRIP / as_gm
+ * - istrip / wish_role / dummy_boy / open_vote / comoutl / votedme(vote_me) / votedisplay / cust_dummy
+ * - real_time:D:N
  */
 export function parseLegacyGameOptionTokens(value: string): LegacyGameOptionParseResult {
   const tokens = value
@@ -102,6 +106,32 @@ export function parseLegacyGameOptionTokens(value: string): LegacyGameOptionPars
   }
   if (tokens.includes('istrip')) {
     roomOptions.istrip = true;
+  }
+  if (tokens.includes('wish_role')) {
+    roomOptions.wishRole = true;
+  }
+  if (tokens.includes('dummy_boy')) {
+    roomOptions.dummyBoy = true;
+  }
+  if (tokens.includes('open_vote')) {
+    roomOptions.openVote = true;
+  }
+  if (tokens.includes('comoutl')) {
+    roomOptions.comoutl = true;
+  }
+  if (tokens.includes('votedme') || tokens.includes('vote_me')) {
+    roomOptions.voteMe = true;
+  }
+  if (tokens.includes('votedisplay')) {
+    roomOptions.votedisplay = true;
+  }
+  if (tokens.includes('cust_dummy')) {
+    roomOptions.custDummy = true;
+  }
+
+  const realTimeToken = tokens.find(t => t === 'real_time' || t.startsWith('real_time:'));
+  if (realTimeToken) {
+    roomOptions.realTime = realTimeToken === 'real_time' ? true : (realTimeToken as any);
   }
 
   const gmToken = tokens.find(t => t.startsWith('gm:'));

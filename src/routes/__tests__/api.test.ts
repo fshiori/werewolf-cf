@@ -760,6 +760,60 @@ describe('API Routes', () => {
       expect(savedSession?.wishRole).toBe('none');
     });
 
+    it('legacy game_option=wish_role 時，join 會保存 wishRole 到 session', async () => {
+      let savedSession: any = null;
+      const env = createMockEnv();
+      env.DB = {
+        prepare: (_query: string) => ({
+          bind: (..._args: any[]) => ({
+            run: async () => ({ success: true }),
+            first: async () => ({
+              is_private: 0,
+              password_hash: null,
+              game_option: 'wish_role votedisplay'
+            }),
+            all: async () => ({ results: [] })
+          })
+        })
+      } as any;
+      env.KV = {
+        get: async () => null,
+        put: async (key: string, value: string) => {
+          if (key.startsWith('session:')) {
+            savedSession = JSON.parse(value);
+          }
+        },
+        delete: async () => {},
+        list: async () => ({ keys: [] })
+      } as any;
+
+      const testApp = new Hono();
+      testApp.route('/', api);
+
+      const response = await testApp.request(
+        new Request('http://localhost/api/rooms/12345/join', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'CF-Connecting-IP': '203.0.113.49'
+          },
+          body: JSON.stringify({
+            uname: 'legacywish',
+            handleName: 'LegacyWish',
+            trip: '',
+            iconNo: 1,
+            sex: 'male',
+            wishRole: 'wolf'
+          })
+        }),
+        undefined,
+        env
+      );
+
+      expect(response.status).toBe(200);
+      expect(savedSession?.wishRole).toBe('wolf');
+    });
+
     it('legacy token game_option=istrip 時，不帶 trip 的 join 會被拒絕（403）', async () => {
       const env = createMockEnv();
       env.DB = {
