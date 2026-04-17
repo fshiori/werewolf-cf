@@ -41,7 +41,7 @@
 | `upload2.php` | Icon upload callback (success/cancel) | Merged into `POST /api/icons` response | 🔄 Redesigned |
 | `rule.php` | Rule display page (time calculations) | `GET /api/rule-summary` | ✅ Full |
 | `script_info.php` | Server info page (time limits, silence config) | `GET /api/version` + `GET /api/script-info` + `GET /api/rule-summary` | ✅ Full |
-| `stats.php` | Win-rate statistics per tripcode (22p/30p breakdown) | `GET /api/stats/:trip` + `GET /api/leaderboard` | ⚠️ Partial |
+| `stats.php` | Win-rate statistics per tripcode (22p/30p breakdown) | `GET /api/stats/:trip`（含 22p/30p breakdown） + `GET /api/leaderboard` | ✅ Full |
 | `version.php` | Version changelog display | `GET /api/version` | ✅ Full |
 | `api.php` | Room list API for server federation | `GET /api/rooms` (JSON API) | ✅ Full |
 | `setting.php` | Server configuration (DB, timezone, options, role lists) | `wrangler.toml` + env vars + `DEFAULT_ROOM_OPTIONS` | 🔄 Redesigned |
@@ -141,7 +141,7 @@
 | `game_view.php` | GET | View past game log | `GET /api/replay/:roomNo?mode=full|reverse|heaven|heaven_only` | ✅ Full |
 | `game_log.php` | GET | View last-words archive | `GET /api/replay/:roomNo?mode=full` | ✅ Full |
 | `old_log.php` | GET | Browse archived games | `GET /api/replay/:roomNo`（fallback archive） | ✅ Full |
-| `stats.php` | GET | Win-rate statistics | `GET /api/stats/:trip` | ⚠️ Partial |
+| `stats.php` | GET | Win-rate statistics（含 22p/30p breakdown） | `GET /api/stats/:trip` | ✅ Full |
 | — | GET | Leaderboard | `GET /api/leaderboard` | ✅ Full (new) |
 | — | POST | Update player stats | `POST /api/stats/:trip` | ✅ Full (new) |
 
@@ -268,7 +268,7 @@ CF has the role **types** defined but the **auto-assignment logic** that modifie
 | `img/*.jpg` / `img/*.gif` | Background images, role icons, status icons | `public/img/` (Cloudflare Assets) | 📋 Planned |
 | `swf/*.swf` | Sound notifications | Web Audio API cues in `public/game.html` (legacy SWF replacement) | 🔄 Redesigned |
 | `user_icon/` | User-uploaded icon files | R2 bucket `icons/` prefix | 🔄 Redesigned |
-| `user_emot/` | Custom emoticons | `GET /api/emoticons` + `GET /emot/:filename` + client token rendering `:name:` | ⚠️ Partial |
+| `user_emot/` | Custom emoticons | `POST /api/emoticons` + `GET /api/emoticons` + `DELETE /api/emoticons/:filename` + `GET /emot/:filename` + client token rendering `:name:` | ✅ Full |
 | `lang/cht/` / `lang/jpn/` | Language files | `public/i18n.js` + `public/locales/{zh-TW,ja}.json` | ✅ Full |
 | `tmp/cache_*.php` | Server-side talk cache | WebSocket push (no server cache needed) | 🔄 Redesigned |
 | `announcement.txt` | Server announcement | `GET /api/announcement`（ENV `ANNOUNCEMENT_TEXT`） | ✅ Full |

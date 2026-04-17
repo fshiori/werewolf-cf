@@ -1,0 +1,5 @@
+-- Add legacy stats.php 22p/30p breakdown counters
+ALTER TABLE trip_scores ADD COLUMN games_22p INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE trip_scores ADD COLUMN wins_22p INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE trip_scores ADD COLUMN games_30p INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE trip_scores ADD COLUMN wins_30p INTEGER NOT NULL DEFAULT 0;
