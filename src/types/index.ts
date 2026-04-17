@@ -16,6 +16,8 @@ export interface Env {
   JWT_SECRET?: string;
   ASSETS?: any; // 靜態資源（Cloudflare Assets Fetcher）
   FEDERATED_SOURCES?: string; // JSON array of { name, url }
+  ANNOUNCEMENT_TEXT?: string;
+  REGIST_ONE_IP_ADDRESS?: string; // legacy $regist_one_ip_address equivalent
 }
 
 // 玩家角色類型

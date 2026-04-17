@@ -142,7 +142,7 @@ describe('E2E Game Loop', () => {
       const victory1 = checkVictory(allPlayers);
       if (victory1) {
         // 如果遊戲已經結束
-        expect(['human', 'wolf', 'fox', 'betr']).toContain(victory1);
+        expect(['human', 'wolf', 'fox', 'betr', 'lovers']).toContain(victory1);
         return;
       }
 
@@ -203,7 +203,7 @@ describe('E2E Game Loop', () => {
       const victory2 = checkVictory(updatedPlayers);
       // 勝負可能已經決定，或者遊戲繼續
       if (victory2) {
-        expect(['human', 'wolf', 'fox', 'betr']).toContain(victory2);
+        expect(['human', 'wolf', 'fox', 'betr', 'lovers']).toContain(victory2);
         expect(getVictoryMessage(victory2)).toBeTruthy();
       }
     });

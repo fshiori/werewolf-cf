@@ -29,9 +29,9 @@
 | `game_up.php` | Top frame: player list + input form for speech | Part of `public/room.html` (client-side) | 🔄 Redesigned |
 | `game_play.php` | Main play frame: talk log, votes, last words, system messages | Part of `public/room.html` (client-side) + WebSocket messages | 🔄 Redesigned |
 | `game_vote.php` | Vote submission + game-start logic + role assignment + night actions | `complete-room.ts` (Durable Object) via WebSocket `vote` action | ⚠️ Partial |
-| `game_view.php` | Spectator / log viewer (read-only view of past games) | `GET /api/game-logs/:roomNo` + `GET /api/game-logs` | ⚠️ Partial |
-| `game_log.php` | Past last-words archive viewer | `GET /api/game-logs/:roomNo` (includes last words) | ⚠️ Partial |
-| `old_log.php` | Archived game log browser (room_old table) | `GET /api/game-logs` | ⚠️ Partial |
+| `game_view.php` | Spectator / log viewer (read-only view of past games) | `GET /api/replay/:roomNo?mode=full|reverse|heaven|heaven_only` | ✅ Full |
+| `game_log.php` | Past last-words archive viewer | `GET /api/replay/:roomNo?mode=full`（含 wills） | ✅ Full |
+| `old_log.php` | Archived game log browser (room_old table) | `GET /api/replay/:roomNo`（主表空時 fallback archive） | ✅ Full |
 | `bbs.php` | BBS / discussion board with posts + replies | `GET /api/bbs` + `POST /api/bbs` + `POST /api/bbs/:id/reply` | ✅ Full |
 | `trip.php` | Tripcode-based BBS system | `POST /api/trip/register` + `POST /api/trip/verify` + `POST /api/trip` | ✅ Full |
 | `admin.php` | Admin panel: force-end rooms (廢村) | `POST /api/admin/login` + `DELETE /api/admin/rooms/:roomNo` + `POST /api/admin/rooms/:roomNo/kick` | ✅ Full |
@@ -40,15 +40,15 @@
 | `upload.php` | Icon upload handler (resize, validate, store) | `POST /api/icons` (R2 storage) | ✅ Full |
 | `upload2.php` | Icon upload callback (success/cancel) | Merged into `POST /api/icons` response | 🔄 Redesigned |
 | `rule.php` | Rule display page (time calculations) | `GET /api/rule-summary` | ✅ Full |
-| `script_info.php` | Server info page (time limits, silence config) | `GET /api/version` + `GET /api/rule-summary` | ⚠️ Partial |
+| `script_info.php` | Server info page (time limits, silence config) | `GET /api/version` + `GET /api/script-info` + `GET /api/rule-summary` | ✅ Full |
 | `stats.php` | Win-rate statistics per tripcode (22p/30p breakdown) | `GET /api/stats/:trip` + `GET /api/leaderboard` | ⚠️ Partial |
 | `version.php` | Version changelog display | `GET /api/version` | ✅ Full |
 | `api.php` | Room list API for server federation | `GET /api/rooms` (JSON API) | ✅ Full |
 | `setting.php` | Server configuration (DB, timezone, options, role lists) | `wrangler.toml` + env vars + `DEFAULT_ROOM_OPTIONS` | 🔄 Redesigned |
 | `functions.php` | Shared DB helper + misc functions | Replaced by CF SDK (D1, KV, R2) | 🔄 Redesigned |
 | `game_functions.php` | Shared game helper (output, session check, etc.) | Replaced by `complete-room.ts` + `role-system.ts` + `vote-system.ts` | 🔄 Redesigned |
-| `dummy.php` | Default last-words array (遺言模板) | Not yet ported | ❌ Missing |
-| `announcement.txt` | Server announcement text file | Not yet ported (could be KV or static) | ❌ Missing |
+| `dummy.php` | Default last-words array (遺言模板) | `src/utils/role-system.ts` `DEFAULT_DUMMY_LAST_WORDS` + `createDummyBoyPlayer()` | ✅ Full |
+| `announcement.txt` | Server announcement text file | `GET /api/announcement`（ENV `ANNOUNCEMENT_TEXT`） | ✅ Full |
 
 ---
 
@@ -86,7 +86,7 @@
 | `game_vote.php?command=MAGE` | POST | Mage fortune tell | WS msg `{ type: "night_action" }` | ✅ Full |
 | `game_vote.php?command=GUARD` | POST | Guard protect | WS msg `{ type: "night_action" }` | ✅ Full |
 | `game_up.php` (auto-reload) | GET | Poll game state | WebSocket push (no polling needed) | 🔄 Redesigned |
-| `game_vote.php?command=OBJECTION` | POST | "Objection!" button | WS msg `{ type: "objection" }` | ⚠️ Partial |
+| `game_vote.php?command=OBJECTION` | POST | "Objection!" button | WS msg `{ type: "objection" }` | ✅ Full |
 
 ### 2.4 Admin
 
@@ -131,16 +131,16 @@
 | `icon_view.php` | GET | List icons | `GET /api/icons` | ✅ Full |
 | `icon_upload.php` → `upload.php` | POST | Upload icon | `POST /api/icons` | ✅ Full |
 | `upload2.php?regist=success` | GET | Confirm upload | Merged into `POST /api/icons` | 🔄 Redesigned |
-| `upload2.php?regist=cancel` | GET | Cancel upload | ❌ No cancel flow | ❌ Missing |
+| `upload2.php?regist=cancel` | GET | Cancel upload | `GET /api/icons/upload/cancel` | ✅ Full |
 | `icon_view.php` (serve) | GET | Serve icon image | `GET /icons/:filename` | ✅ Full |
 
 ### 2.8 Game Logs & Stats
 
 | PHP Endpoint | Method | Description | CF Endpoint | Status |
 |-------------|--------|-------------|-------------|--------|
-| `game_view.php` | GET | View past game log | `GET /api/game-logs/:roomNo` | ⚠️ Partial |
-| `game_log.php` | GET | View last-words archive | `GET /api/game-logs/:roomNo` | ⚠️ Partial |
-| `old_log.php` | GET | Browse archived games | `GET /api/game-logs` | ⚠️ Partial |
+| `game_view.php` | GET | View past game log | `GET /api/replay/:roomNo?mode=full|reverse|heaven|heaven_only` | ✅ Full |
+| `game_log.php` | GET | View last-words archive | `GET /api/replay/:roomNo?mode=full` | ✅ Full |
+| `old_log.php` | GET | Browse archived games | `GET /api/replay/:roomNo`（fallback archive） | ✅ Full |
 | `stats.php` | GET | Win-rate statistics | `GET /api/stats/:trip` | ⚠️ Partial |
 | — | GET | Leaderboard | `GET /api/leaderboard` | ✅ Full (new) |
 | — | POST | Update player stats | `POST /api/stats/:trip` | ✅ Full (new) |
@@ -150,7 +150,7 @@
 | PHP Endpoint | Method | Description | CF Endpoint | Status |
 |-------------|--------|-------------|-------------|--------|
 | `rule.php` | GET | Rule display | `GET /api/rule-summary` | ✅ Full |
-| `script_info.php` | GET | Server info | `GET /api/version` | ⚠️ Partial |
+| `script_info.php` | GET | Server info | `GET /api/version` + `GET /api/script-info` | ✅ Full |
 | `version.php` | GET | Version / changelog | `GET /api/version` | ✅ Full |
 
 ### 2.10 New in CF (no PHP equivalent)
@@ -195,10 +195,10 @@ CF replaces this with a typed `RoomOptions` interface (see `src/types/room-optio
 | `trip` | Require tripcode to join | ✅ | ✅ `tripRequired` | ✅ Full (join-time enforcement in API) |
 | `istrip` | Legacy trip enforcement token | ✅ | ✅ `istrip` | ✅ Full（join-time enforced；legacy token string 路徑可阻擋無 trip 加入） |
 | `will` | Enable last-words (遺言) | ✅ | ✅ `will` | ✅ Full |
-| `gm:XXXXX` | Designate a specific trip as GM | ✅ | ⚠️ | ⚠️ Partial (legacy token parsing + runtime 指派 + maxUser+1 GM 加入席次 + join 僅 waiting/beforegame + 夜晚狼刀不可指向 GM + 白天投票完成判定排除 GM + GM 不可作為白天投票者已接上；仍有少量 edge case 待收斂) |
-| `as_gm` | Activate GM role | ✅ | ⚠️ | ⚠️ Partial (`as_gm` token 可啟用 GM；仍有部分 legacy 行為差異待補) |
+| `gm:XXXXX` | Designate a specific trip as GM | ✅ | ✅ | ✅ Full（legacy token parsing + runtime 指派 + maxUser+1 GM 加入席次 + join waiting/beforegame 限制 + 夜晚狼刀不可指向 GM + 白天投票完成判定排除 GM + GM 不可作為白天投票者） |
+| `as_gm` | Activate GM role | ✅ | ✅ | ✅ Full（需與 `gm:trip` 配對才會實際指派 GM，符合 legacy） |
 | `votedisplay` | Show who has already voted (start-game & day) | ✅ | ✅ `votedisplay` | ✅ Full（等待中 start-game 投票與白天投票皆下發 votedUsers） |
-| `cust_dummy` | Custom dummy-boy name/last-words | ⚠️ | ⚠️ `custDummy` + `dummyCustomName` + `dummyCustomLastWords` | ⚠️ Partial (parser/runtime 已支援；create-room UI 尚未提供完整設定控件) |
+| `cust_dummy` | Custom dummy-boy name/last-words | ✅ | ✅ `custDummy` + `dummyCustomName` + `dummyCustomLastWords` | ✅ Full（parser/runtime + create-room UI 控件 + payload 已串接） |
 
 ---
 
@@ -217,7 +217,7 @@ These control which special roles appear in the role list at game start.
 | `betr` | Add 背德者 role (fox-team, wins if fox dead + wolves dead) | ✅ | ✅ `betr` role + victory condition | ⚠️ Partial (20+ 注入已實作；與 legacy 子規則仍有差異) |
 | `foxs` | Add 雙狐 role (two foxes) | ✅ | ✅ dual-fox count injection | ⚠️ Partial (20+ 雙狐注入已實作；完整 legacy 互斥/細節仍在收斂) |
 | `fosi` | Add 子狐 role (fox-team sub-role) | ✅ | ✅ `fosi` role exists | ⚠️ Partial (20+ 注入已實作；完整夜晚子狐行為仍在收斂) |
-| `wfbig` | Add 大狼 role (strong wolf) | ✅ | ✅ `wfbig` count injection | ⚠️ Partial (20+ 注入已實作；大狼專屬行為仍未齊) |
+| `wfbig` | Add 大狼 role (strong wolf) | ✅ | ✅ `wfbig` count injection | ⚠️ Partial (20+ 注入已實作；已修正為狼人陣營判定，仍缺大狼專屬 legacy 行為) |
 | `lovers` | Add 戀人 role (paired lovers, die together) | ✅ | ✅ lovers replacement injection | ⚠️ Partial (13+ 以 common/human 置換 2 名 lovers；與 legacy 子職附掛模型仍有差異) |
 
 ### PHP Role Assignment Logic (not yet ported)
@@ -247,17 +247,17 @@ CF has the role **types** defined but the **auto-assignment logic** that modifie
 | Sudden death | `$suddendeath_threshhold_time` (120s after time runs out) | Day timeout 時未投票者會突然死 | ⚠️ Partial |
 | Auto-reload / polling | HTTP meta-refresh every N seconds | WebSocket push (real-time) | 🔄 Redesigned |
 | Federation | `list.php` fetches from `$room_server_list` via HTTP | `GET /api/rooms/federated` with configurable `FEDERATED_SOURCES` env var | ✅ Full |
-| Dead-room cleanup | `CheckDieRoom()` after `$die_room_threshhold_time` (600s) | Manual delete + admin delete | ⚠️ Partial |
-| IP restriction | `$regist_one_ip_address` prevents multi-join from same IP | Not enforced | ❌ Missing |
-| Sound notifications | SWF-based sound (morning, revote, objection) | ❌ Not implemented | ❌ Missing |
-| Objection system | `$maxcount_objection = 2` times per game | WS `objection` + 每人上限 2 次 + 廣播提示 | ⚠️ Partial |
-| Revote draw limit | `$revote_draw_times = 10` → draw after N revotes | Configured in vote system (constant) | ⚠️ Partial |
+| Dead-room cleanup | `CheckDieRoom()` after `$die_room_threshhold_time` (600s) | DO alarm + cron stale-room scan + API/admin cleanup | 🔄 Redesigned |
+| IP restriction | `$regist_one_ip_address` prevents multi-join from same IP | `POST /api/rooms/:roomNo/join` same-IP guard via env `REGIST_ONE_IP_ADDRESS=1` | ✅ Full |
+| Sound notifications | SWF-based sound (morning, revote, objection) | `public/game.html` Web Audio cues（morning / objection / revote） | ✅ Full |
+| Objection system | `$maxcount_objection = 2` times per game | WS `objection` + 每人上限 2 次 + 廣播提示 | ✅ Full |
+| Revote draw limit | `$revote_draw_times = 10` → draw after N revotes | 連續平手計數達 10 次自動判定 draw | ✅ Full |
 | Font types (发言强度) | normal, strong, weak | `fontType` in `Message` interface | ✅ Full |
 | Night actions (mage/guard/wolf) | `game_vote.php` command switch | WebSocket `night_action` type | ✅ Full |
-| Victory conditions | human / wolf / fox / betr / lovers / draw | `role-system.ts` checkVictory() | ⚠️ Partial (human/wolf/fox/betr implemented; lovers-only win condition not verified) |
-| GM system | `gm:trip` + `as_gm` tokens, GM can whisper/role-assign | `gmEnabled` flag, GM actions via WebSocket | ⚠️ Partial |
+| Victory conditions | human / wolf / fox / betr / lovers / draw | `role-system.ts` checkVictory() | ✅ Full |
+| GM system | `gm:trip` + `as_gm` tokens, GM can whisper/role-assign | token parsing + runtime GM 指派 + GM whisper/role actions（WebSocket） | ✅ Full |
 | Whisper (secret talk) | common / wolf night talk channels | `whisper-manager.ts` + `whispers` D1 table | ✅ Full |
-| Heaven (dead player view) | `dead_mode=on` loads separate heaven frame | `getHeavenRecipients()` in `gm-system.ts` | ⚠️ Partial |
+| Heaven (dead player view) | `dead_mode=on` loads separate heaven frame | `getHeavenRecipients()` + `GET /api/replay/:roomNo?mode=heaven|heaven_only` | ✅ Full |
 
 ---
 
@@ -266,16 +266,18 @@ CF has the role **types** defined but the **auto-assignment logic** that modifie
 | PHP Asset | Description | CF Equivalent | Status |
 |-----------|-------------|---------------|--------|
 | `img/*.jpg` / `img/*.gif` | Background images, role icons, status icons | `public/img/` (Cloudflare Assets) | 📋 Planned |
-| `swf/*.swf` | Sound notifications | ❌ (consider Web Audio API) | ❌ Missing |
+| `swf/*.swf` | Sound notifications | Web Audio API cues in `public/game.html` (legacy SWF replacement) | 🔄 Redesigned |
 | `user_icon/` | User-uploaded icon files | R2 bucket `icons/` prefix | 🔄 Redesigned |
-| `user_emot/` | Custom emoticons | ❌ Not ported | ❌ Missing |
-| `lang/cht/` / `lang/jpn/` | Language files | Client-side i18n (not yet implemented) | ❌ Missing |
+| `user_emot/` | Custom emoticons | `GET /api/emoticons` + `GET /emot/:filename` + client token rendering `:name:` | ⚠️ Partial |
+| `lang/cht/` / `lang/jpn/` | Language files | `public/i18n.js` + `public/locales/{zh-TW,ja}.json` | ✅ Full |
 | `tmp/cache_*.php` | Server-side talk cache | WebSocket push (no server cache needed) | 🔄 Redesigned |
-| `announcement.txt` | Server announcement | Could be KV or static file | ❌ Missing |
+| `announcement.txt` | Server announcement | `GET /api/announcement`（ENV `ANNOUNCEMENT_TEXT`） | ✅ Full |
 
 ---
 
 ## 7. Summary Counts
+
+> Note: counts below are historical snapshot; row-level statuses above are the source of truth and were partially updated after 2026-04-17 parity fixes.
 
 | Category | Total | ✅ Full | ⚠️ Partial | ❌ Missing | 🔄 Redesigned | 📋 Planned |
 |----------|------:|--------:|-----------:|-----------:|-------------:|-----------:|

@@ -132,12 +132,12 @@ export class WerewolfRoom extends DurableObject {
         ).bind(roomNo),
         this.env.DB.prepare(
           `INSERT INTO game_events_archive (id, room_no, date, event_type, description, actor, target, time, archived_at)
-           SELECT id, room_no, date, event_type, description, actor, target, time, strftime('%s','now')
+           SELECT id, room_no, date, event_type, description, NULL as actor, related_uname as target, time, strftime('%s','now')
            FROM game_events WHERE room_no = ?`
         ).bind(roomNo),
         this.env.DB.prepare(
           `INSERT INTO vote_history_archive (id, room_no, date, round, voter, candidate, time, archived_at)
-           SELECT id, room_no, date, round, voter, candidate, time, strftime('%s','now')
+           SELECT id, room_no, date, NULL as round, voter_uname as voter, target_uname as candidate, time, strftime('%s','now')
            FROM vote_history WHERE room_no = ?`
         ).bind(roomNo),
       ]);
@@ -1378,6 +1378,7 @@ export class WerewolfRoom extends DurableObject {
       this.roomData.dayNight = 'day';
       this.roomData.timeSpent = 0;
       this.roomData.date++;
+      (this.roomData as any)._revoteCount = 0;
 
       const summary = nightState ? getNightSummary(nightState) : '昨晚是平安夜';
 
@@ -1433,11 +1434,26 @@ export class WerewolfRoom extends DurableObject {
     const result = resolveWeightedVoteResult(voteData, this.roomData.players);
 
     if (result.revote) {
+      const REVOTE_DRAW_LIMIT = 10;
+      const revoteCount = ((this.roomData as any)._revoteCount || 0) + 1;
+      (this.roomData as any)._revoteCount = revoteCount;
+
+      if (revoteCount >= REVOTE_DRAW_LIMIT) {
+        this.broadcast({
+          type: 'vote_tie',
+          data: {
+            message: `投票連續平手 ${REVOTE_DRAW_LIMIT} 次，判定平局。`
+          }
+        });
+        await this.endGame('draw');
+        return;
+      }
+
       // 平手處理 → 重新投票
       this.broadcast({
         type: 'vote_tie',
         data: {
-          message: '投票平手！需要重新投票...'
+          message: `投票平手！需要重新投票...（${revoteCount}/${REVOTE_DRAW_LIMIT}）`
         }
       });
 
@@ -1446,6 +1462,9 @@ export class WerewolfRoom extends DurableObject {
       await this.saveState();
       return;
     }
+
+    // 有明確處決結果時，重置日內平票累積
+    (this.roomData as any)._revoteCount = 0;
 
     // voteDisplay/openVote: 根據模式過濾投票結果廣播
     const voteDisplayMode = resolveVoteDisplayMode(
@@ -1564,6 +1583,7 @@ export class WerewolfRoom extends DurableObject {
     this.roomData.dayNight = 'day';
     this.roomData.timeSpent = 0;
     this.roomData.date++;
+    (this.roomData as any)._revoteCount = 0;
 
     this.broadcast({
       type: 'phase_change',
@@ -1613,6 +1633,16 @@ export class WerewolfRoom extends DurableObject {
         .map(p => p.uname)
         .join(',');
 
+      const winnerLabelMap: Record<string, string> = {
+        human: '村民',
+        wolf: '狼人',
+        fox: '妖狐',
+        betr: '背德者',
+        lovers: '戀人',
+        draw: '平局',
+      };
+      const winnerLabel = winnerLabelMap[winner] || winner;
+
       // @ts-ignore
       await this.env.DB.prepare(`
         INSERT INTO game_logs (room_no, room_name, winner, total_days, player_count, roles, death_order, key_events, created_at)
@@ -1622,21 +1652,26 @@ export class WerewolfRoom extends DurableObject {
       `).bind(
         this.roomData.roomNo, this.roomData.roomName, winner,
         this.roomData.date, players.length, roles, deathOrder || '',
-        `${winner === 'human' ? '村民' : '狼人'}陣營勝利`, Date.now(),
+        `${winnerLabel}陣營勝利`, Date.now(),
         winner, this.roomData.date, deathOrder || '',
-        `${winner === 'human' ? '村民' : '狼人'}陣營勝利`
+        `${winnerLabel}陣營勝利`
       ).run();
 
       // 更新每位玩家的 trip_scores
-      const isWolfWin = winner.includes('wolf') || winner === 'mad';
+      const winnerTeam: 'human' | 'wolf' | 'fox' | null =
+        (winner.includes('wolf') || winner === 'mad') ? 'wolf'
+          : (winner.includes('fox') || winner === 'betr') ? 'fox'
+            : (winner === 'human' || winner === 'lovers') ? 'human'
+              : null;
+
       for (const player of players) {
         const trip = player.trip;
         if (!trip) continue;
 
         const playerTeam = getRoleTeam(player.role);
-        const winTeam = getRoleTeam(winner);
-        const playerWon = playerTeam === winTeam;
+        const playerWon = winnerTeam !== null && playerTeam === winnerTeam;
         const survived = player.live === 'live';
+        const winScore = winnerTeam === 'wolf' ? 15 : winnerTeam === 'fox' ? 20 : winnerTeam === 'human' ? 10 : 0;
 
         // @ts-ignore
         await this.env.DB.prepare(`
@@ -1648,13 +1683,15 @@ export class WerewolfRoom extends DurableObject {
             score = score + ?,
             human_wins = human_wins + ?,
             wolf_wins = wolf_wins + ?,
+            fox_wins = fox_wins + ?,
             survivor_count = survivor_count + ?,
             last_played = ?
         `).bind(
           trip, Date.now(),
-          (playerWon ? (isWolfWin ? 15 : 10) : 0) + (survived ? 5 : 0),
-          (!isWolfWin && playerWon) ? 1 : 0,
-          (isWolfWin && playerWon) ? 1 : 0,
+          (playerWon ? winScore : 0) + (survived ? 5 : 0),
+          (winnerTeam === 'human' && playerWon) ? 1 : 0,
+          (winnerTeam === 'wolf' && playerWon) ? 1 : 0,
+          (winnerTeam === 'fox' && playerWon) ? 1 : 0,
           survived ? 1 : 0,
           Date.now()
         ).run();

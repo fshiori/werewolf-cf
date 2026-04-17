@@ -133,11 +133,11 @@ export class StatsManager {
     const stats = await this.getStats();
     stats.completedGames++;
     
-    if (winner === 'human') {
+    if (winner === 'human' || winner === 'lovers') {
       stats.humanWins++;
     } else if (winner.includes('wolf') || winner === 'mad') {
       stats.wolfWins++;
-    } else if (winner.includes('fox')) {
+    } else if (winner.includes('fox') || winner === 'betr') {
       stats.foxWins++;
     }
 
