@@ -351,6 +351,33 @@ describe('API Routes', () => {
       expect(lastDoInitBody.roomOptions.silenceMode).toBe(false); // 預設值
     });
 
+    it('POST /api/rooms legacy gameOption token 字串應可解析並傳入 DO', async () => {
+      const response = await request('/api/rooms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          roomName: 'Legacy Token Room',
+          maxUser: 16,
+          gameOption: 'wish_role open_vote dummy_boy comoutl votedme votedisplay cust_dummy real_time:5:2 as_gm gm:GMABC123'
+        })
+      });
+
+      expect(response.status).toBe(200);
+      expect(lastDoInitBody).not.toBeNull();
+      expect(lastDoInitBody.roomOptions.wishRole).toBe(true);
+      expect(lastDoInitBody.roomOptions.openVote).toBe(true);
+      expect(lastDoInitBody.roomOptions.dummyBoy).toBe(true);
+      expect(lastDoInitBody.roomOptions.comoutl).toBe(true);
+      expect(lastDoInitBody.roomOptions.voteMe).toBe(true);
+      expect(lastDoInitBody.roomOptions.votedisplay).toBe(true);
+      expect(lastDoInitBody.roomOptions.custDummy).toBe(true);
+      expect(lastDoInitBody.roomOptions.realTime).toBe(true);
+      expect(lastDoInitBody.roomOptions.realTimeDayLimitSec).toBe(300);
+      expect(lastDoInitBody.roomOptions.realTimeNightLimitSec).toBe(120);
+      expect(lastDoInitBody.roomOptions.gmEnabled).toBe(true);
+      expect(lastDoInitBody.gmTrip).toBe('GMABC123');
+    });
+
     it('POST /api/rooms 帶密碼 + options → 兩者都正確傳入', async () => {
       const response = await request('/api/rooms', {
         method: 'POST',
