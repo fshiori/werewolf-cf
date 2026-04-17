@@ -15,7 +15,7 @@ import { createNightState, wolfKill, seerDivine, fosiDivine, catResurrect, guard
 import { buildStartGameVoteState } from '../utils/start-game';
 import { createSessionManager, type SessionValue } from '../utils/session-manager';
 import { sanitizePlayersForViewer } from '../utils/player-visibility';
-import { buildRoleConfig } from '../utils/role-config';
+import { buildRoleConfig, getLegacyRoleTable } from '../utils/role-config';
 import {
   isGM,
   canUseHeavenChat,
@@ -2060,49 +2060,17 @@ export class WerewolfRoom extends DurableObject {
   }
 
   /**
-   * 角色分配表（依原版 DIAM setting.php 的 $role_list）
-   * 根據人數自動分配基本角色
-   */
-  private static readonly ROLE_TABLE: Record<number, Role[]> = {
-    8:  ['human','human','human','human','human','wolf','wolf','mage'],
-    9:  ['human','human','human','human','human','wolf','wolf','mage','necromancer'],
-    10: ['human','human','human','human','human','wolf','wolf','mage','necromancer','mad'],
-    11: ['human','human','human','human','human','wolf','wolf','mage','necromancer','mad','guard'],
-    12: ['human','human','human','human','human','human','wolf','wolf','mage','necromancer','mad','guard'],
-    13: ['human','human','human','human','human','wolf','wolf','mage','necromancer','mad','guard','common','common'],
-    14: ['human','human','human','human','human','human','wolf','wolf','mage','necromancer','mad','guard','common','common'],
-    15: ['human','human','human','human','human','human','wolf','wolf','mage','necromancer','mad','guard','common','common','fox'],
-    16: ['human','human','human','human','human','human','wolf','wolf','wolf','mage','necromancer','mad','guard','common','common','fox'],
-    17: ['human','human','human','human','human','human','human','wolf','wolf','wolf','mage','necromancer','mad','guard','common','common','fox'],
-    18: ['human','human','human','human','human','human','human','human','wolf','wolf','wolf','mage','necromancer','mad','guard','common','common','fox'],
-    19: ['human','human','human','human','human','human','human','human','human','wolf','wolf','wolf','mage','necromancer','mad','guard','common','common','fox'],
-    20: ['human','human','human','human','human','human','human','human','human','human','fox','wolf','wolf','wolf','mage','necromancer','mad','guard','common','common'],
-    22: ['human','human','human','human','human','human','human','human','human','human','human','human','fox','wolf','wolf','wolf','mage','necromancer','mad','guard','common','common'],
-    30: ['human','human','human','human','human','human','human','human','human','human','human','human','fox','wolf','wolf','wolf','wolf','wolf','wolf','mage','mage','necromancer','necromancer','mad','guard','guard','common','common','common'],
-  };
-
-  /**
-   * 取得角色分配表（找最接近的人數）
-   */
-  private getRoleTable(count: number): Role[] {
-    const keys = Object.keys(WerewolfRoom.ROLE_TABLE).map(Number).sort((a, b) => a - b);
-    for (const k of keys) {
-      if (count <= k) return WerewolfRoom.ROLE_TABLE[k];
-    }
-    return WerewolfRoom.ROLE_TABLE[30];
-  }
-
-  /**
    * 解析角色配置
    * 格式: "lovers decide authority wfbig poison foxs" （空格分隔的選項）
    * 基本角色依人數自動分配，額外選項覆蓋上去
    */
   private parseRoleConfig(config: string): Record<Role, number> {
-    const baseRoles = this.getRoleTable(this.roomData.maxUser || 22);
+    const userCount = this.roomData.maxUser || 22;
+    const baseRoles = getLegacyRoleTable(userCount);
     return buildRoleConfig(
       baseRoles,
       config,
-      this.roomData.maxUser || 22,
+      userCount,
       this.roomData.roomOptions
     );
   }

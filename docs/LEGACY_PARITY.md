@@ -232,7 +232,7 @@ In PHP, `game_vote.php` lines ~715–790 implement role-list mutation at game st
 6. **authority at 16+**: `authority` overwrites a `human` in the role list
 7. **Role list tables**: PHP has per-player-count role lists for 8–30 players (`setting.php` lines 196–219)
 
-CF has ported the core role-list mutation pipeline and token parsing; remaining gaps are the rows still marked ⚠️ Partial above (`foxs`, `lovers`, `dummy_boy` AI-detail equivalence).
+CF has ported the core role-list mutation pipeline and token parsing; remaining gaps are the rows still marked ⚠️ Partial above (`lovers`, `dummy_boy` AI-detail equivalence).
 
 ---
 
