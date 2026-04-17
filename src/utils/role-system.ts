@@ -302,6 +302,23 @@ export function isFoxRelated(role: Role): boolean {
   return role === 'fox' || role === 'fosi' || role === 'betr' || role === 'betr_partner';
 }
 
+/**
+ * 妖狐全滅時，背德者會連動死亡（legacy parity）
+ */
+export function getBetrayerCollapseVictims(players: Map<string, Player>): Player[] {
+  const aliveFoxes = Array.from(players.values()).filter(
+    p => p.live === 'live' && (p.role === 'fox' || p.role === 'fosi')
+  );
+
+  if (aliveFoxes.length > 0) {
+    return [];
+  }
+
+  return Array.from(players.values()).filter(
+    p => p.live === 'live' && p.role === 'betr'
+  );
+}
+
 // ── custDummy token: 自訂啞巴男 ──
 
 /**

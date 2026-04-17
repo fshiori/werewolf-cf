@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import type { Player, Role } from '../../types';
-import { assignRoles, getLoverChainVictims } from '../role-system';
+import { assignRoles, getLoverChainVictims, getBetrayerCollapseVictims } from '../role-system';
 
 function createPlayer(uname: string, wishRole: Role | 'none' = 'none'): Player {
   return {
@@ -97,6 +97,30 @@ describe('lovers chain death parity helpers', () => {
     ]);
 
     const victims = getLoverChainVictims(players, ['a', 'b']);
+    expect(victims).toHaveLength(0);
+  });
+});
+
+describe('betrayer collapse parity helpers', () => {
+  it('妖狐全滅時，存活背德者應被回傳', () => {
+    const players = new Map<string, Player>([
+      ['betr', { ...createPlayer('betr'), role: 'betr' }],
+      ['fox', { ...createPlayer('fox'), role: 'fox', live: 'dead' }],
+      ['fosi', { ...createPlayer('fosi'), role: 'fosi', live: 'dead' }],
+      ['human', { ...createPlayer('human'), role: 'human' }],
+    ]);
+
+    const victims = getBetrayerCollapseVictims(players);
+    expect(victims.map(v => v.uname)).toEqual(['betr']);
+  });
+
+  it('仍有任一妖狐存活時，背德者不會連動死亡', () => {
+    const players = new Map<string, Player>([
+      ['betr', { ...createPlayer('betr'), role: 'betr' }],
+      ['fox', { ...createPlayer('fox'), role: 'fox' }],
+    ]);
+
+    const victims = getBetrayerCollapseVictims(players);
     expect(victims).toHaveLength(0);
   });
 });

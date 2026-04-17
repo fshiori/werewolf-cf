@@ -9,7 +9,7 @@ import type { DurableObjectState } from '@cloudflare/workers-types';
 import type { Env, Player, RoomData, Message, Role } from '../types';
 import { createRoom, addPlayer, removePlayer, startGame, endGame, getPublicRoomInfo } from '../utils/room-manager';
 import { checkSilence, advanceSilenceTime, shouldTriggerSuddenDeath, DEFAULT_TIME_CONFIG, isRealTimeExpired } from '../utils/time-progression';
-import { assignRoles, checkVictory, canSpeak, getRoleTeam, getVictoryMessage, createDummyBoyPlayer, getLoverChainVictims } from '../utils/role-system';
+import { assignRoles, checkVictory, canSpeak, getRoleTeam, getVictoryMessage, createDummyBoyPlayer, getLoverChainVictims, getBetrayerCollapseVictims } from '../utils/role-system';
 import { createVoteData, addVote, getVoteResult, executeVote, isVoteComplete, calculateWeightedVotes, resolveWeightedVoteResult, filterVoteDisplay, resolveVoteDisplayMode, canVoteTarget, getVotedUsers, getDayVoteParticipants } from '../utils/vote-system';
 import { createNightState, wolfKill, seerDivine, guardTarget, processNightResult, getNightSummary, isNightActionsComplete, canWolfKillTarget } from '../utils/night-action';
 import { buildStartGameVoteState } from '../utils/start-game';
@@ -1354,6 +1354,29 @@ export class WerewolfRoom extends DurableObject {
   }
 
   /**
+   * 妖狐全滅時，背德者連帶死亡
+   */
+  private applyBetrayerCollapseOnFoxExtinction(): Player[] {
+    const victims = getBetrayerCollapseVictims(this.roomData.players);
+    if (victims.length === 0) {
+      return [];
+    }
+
+    const now = Date.now();
+    for (const p of victims) {
+      p.live = 'dead';
+      (p as any).death = now;
+    }
+
+    this.broadcast({
+      type: 'system',
+      data: { message: `🦊 妖狐全滅，背德者殉滅：${victims.map(p => p.handleName).join('、')}` }
+    });
+
+    return victims;
+  }
+
+  /**
    * 日間超時後的突然死（core）：未投票存活者直接死亡
    */
   private async applySuddenDeathForNoVote() {
@@ -1379,7 +1402,9 @@ export class WerewolfRoom extends DurableObject {
     }
 
     const loversChain = this.applyLoversChainDeath(suddenDead);
-    const allDead = [...suddenDead, ...loversChain];
+    const betrayerCollapse = this.applyBetrayerCollapseOnFoxExtinction();
+    const collapseLoversChain = this.applyLoversChainDeath(betrayerCollapse);
+    const allDead = [...suddenDead, ...loversChain, ...betrayerCollapse, ...collapseLoversChain];
 
     this.broadcast({
       type: 'system',
@@ -1547,7 +1572,9 @@ export class WerewolfRoom extends DurableObject {
       if (nightState) {
         const dead = processNightResult(nightState, this.roomData.players);
         const loversChain = this.applyLoversChainDeath(dead);
-        const allDead = [...dead, ...loversChain];
+        const betrayerCollapse = this.applyBetrayerCollapseOnFoxExtinction();
+        const collapseLoversChain = this.applyLoversChainDeath(betrayerCollapse);
+        const allDead = [...dead, ...loversChain, ...betrayerCollapse, ...collapseLoversChain];
         if (allDead.length > 0) {
           this.broadcast({
             type: 'players_died',
@@ -1630,11 +1657,15 @@ export class WerewolfRoom extends DurableObject {
     const loversChain = this.applyLoversChainDeath(result.executed);
     const poisonRetaliation = this.applyDayPoisonRetaliation([...result.executed, ...loversChain]);
     const retaliationLoversChain = this.applyLoversChainDeath(poisonRetaliation);
+    const betrayerCollapse = this.applyBetrayerCollapseOnFoxExtinction();
+    const collapseLoversChain = this.applyLoversChainDeath(betrayerCollapse);
     const executedPlayers = [
       ...result.executed,
       ...loversChain,
       ...poisonRetaliation,
       ...retaliationLoversChain,
+      ...betrayerCollapse,
+      ...collapseLoversChain,
     ];
 
     if (executedPlayers.length > 0) {
@@ -1723,7 +1754,9 @@ export class WerewolfRoom extends DurableObject {
     // 處理死亡
     const dead = processNightResult(nightState, this.roomData.players);
     const loversChain = this.applyLoversChainDeath(dead);
-    const allDead = [...dead, ...loversChain];
+    const betrayerCollapse = this.applyBetrayerCollapseOnFoxExtinction();
+    const collapseLoversChain = this.applyLoversChainDeath(betrayerCollapse);
+    const allDead = [...dead, ...loversChain, ...betrayerCollapse, ...collapseLoversChain];
 
     if (allDead.length > 0) {
       this.broadcast({
