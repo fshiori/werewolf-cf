@@ -95,6 +95,24 @@ describe('Room Manager', () => {
       
       expect(success).toBe(false);
     });
+
+    it('房間狀態非 waiting 時不應加入（legacy parity）', () => {
+      room.status = 'playing';
+      room.dayNight = 'day';
+
+      const success = addPlayer(room, { ...testPlayer, uname: 'late-user' });
+      expect(success).toBe(false);
+      expect(room.players.size).toBe(0);
+    });
+
+    it('dayNight 非 beforegame 時不應加入（legacy parity）', () => {
+      room.status = 'waiting';
+      room.dayNight = 'night';
+
+      const success = addPlayer(room, { ...testPlayer, uname: 'late-user-2' });
+      expect(success).toBe(false);
+      expect(room.players.size).toBe(0);
+    });
   });
 
   describe('移除玩家', () => {

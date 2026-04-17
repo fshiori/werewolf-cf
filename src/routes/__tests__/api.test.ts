@@ -533,6 +533,45 @@ describe('API Routes', () => {
       expect(data.success).toBe(true);
     });
 
+    it('房間不存在時，join 應回 404', async () => {
+      const env = createMockEnv();
+      env.DB = {
+        prepare: (_query: string) => ({
+          bind: (..._args: any[]) => ({
+            run: async () => ({ success: true }),
+            first: async () => null,
+            all: async () => ({ results: [] })
+          })
+        })
+      } as any;
+
+      const testApp = new Hono();
+      testApp.route('/', api);
+
+      const response = await testApp.request(
+        new Request('http://localhost/api/rooms/99999/join', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'CF-Connecting-IP': '203.0.113.46'
+          },
+          body: JSON.stringify({
+            uname: 'nouser',
+            handleName: 'NoUser',
+            trip: '',
+            iconNo: 1,
+            sex: 'male'
+          })
+        }),
+        undefined,
+        env
+      );
+
+      expect(response.status).toBe(404);
+      const data = await response.json();
+      expect(data.error).toContain('Room not found');
+    });
+
     it('wishRole 房規啟用時，join 會保存希望角色到 session', async () => {
       let savedSession: any = null;
       const env = createMockEnv();

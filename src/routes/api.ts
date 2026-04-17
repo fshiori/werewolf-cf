@@ -528,6 +528,10 @@ app.post('/api/rooms/:roomNo/join', checkBan, rateLimit, async (c) => {
         'SELECT is_private, password_hash, game_option, status, day_night FROM room WHERE room_no = ?'
       ).bind(roomNo).first();
 
+      if (!roomRow) {
+        return c.json({ error: 'Room not found' }, 404);
+      }
+
       if (roomRow) {
         // legacy parity: 僅 waiting + beforegame 可新加入
         const roomStatus = (roomRow as any).status as string | undefined;
