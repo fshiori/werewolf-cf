@@ -23,10 +23,24 @@ let lastDoInitBody: any = null;
 function createMockEnv(): Env {
   return {
     DB: {
-      prepare: () => ({
-        bind: (..._args: any[]) => ({
+      prepare: (query: string) => ({
+        bind: (...args: any[]) => ({
           run: async () => ({ success: true }),
-          first: async () => null,
+          first: async () => {
+            if (query.includes('SELECT setting_value FROM game_settings')) {
+              const settingName = args[0];
+              const mockSettings: Record<string, string> = {
+                default_time_limit: '300',
+                silence_mode_enabled: '1',
+                silence_mode_timeout: '60',
+                allow_spectators: '1',
+                max_spectators: '10',
+              };
+              const settingValue = mockSettings[settingName];
+              return settingValue ? { setting_value: settingValue } : null;
+            }
+            return null;
+          },
           all: async () => ({ results: [] })
         })
       })
@@ -54,6 +68,7 @@ function createMockEnv(): Env {
         }
       })
     } as any,
+    ENVIRONMENT: 'development',
     ASSETS: {
       fetch: async () => null
     } as any
@@ -216,6 +231,16 @@ describe('API Routes', () => {
       
       expect(response.status).toBe(400);
     });
+
+    it('GET /api/icons/upload/cancel 應該回傳取消成功', async () => {
+      const response = await request('/api/icons/upload/cancel');
+      expect(response.status).toBe(200);
+
+      const data = await response.json();
+      expect(data.success).toBe(true);
+      expect(data.cancelled).toBe(true);
+      expect(data.message).toContain('cancel');
+    });
   });
 
   describe('頭像列表', () => {
@@ -226,6 +251,76 @@ describe('API Routes', () => {
       
       const data = await response.json();
       expect(Array.isArray(data.icons)).toBe(true);
+    });
+  });
+
+  describe('自訂表情（user_emot parity）', () => {
+    it('GET /api/emoticons 應該回傳 emot/ 前綴列表', async () => {
+      const env = createMockEnv();
+      env.R2 = {
+        put: async () => {},
+        get: async () => null,
+        list: async ({ prefix }: { prefix?: string }) => {
+          if (prefix === 'emot/') {
+            return {
+              objects: [
+                { key: 'emot/smile.png', size: 123, uploaded: '2026-01-01T00:00:00.000Z' },
+                { key: 'emot/wolf.gif', size: 456, uploaded: '2026-01-02T00:00:00.000Z' },
+              ]
+            };
+          }
+          return { objects: [] };
+        }
+      } as any;
+
+      const testApp = new Hono();
+      testApp.route('/', api);
+
+      const response = await testApp.request(
+        new Request('http://localhost/api/emoticons'),
+        undefined,
+        env
+      );
+
+      expect(response.status).toBe(200);
+      const data = await response.json();
+      expect(Array.isArray(data.emoticons)).toBe(true);
+      expect(data.emoticons.length).toBe(2);
+      expect(data.emoticons[0].name).toBe('smile');
+      expect(data.emoticons[0].url).toContain('/emot/smile.png');
+    });
+
+    it('GET /emot/:filename 應該回傳對應檔案', async () => {
+      const env = createMockEnv();
+      env.R2 = {
+        put: async () => {},
+        list: async () => ({ objects: [] }),
+        get: async (key: string) => {
+          if (key === 'emot/smile.png') {
+            return {
+              body: new ReadableStream(),
+              httpEtag: 'test-etag',
+              writeHttpMetadata: (headers: Headers) => {
+                headers.set('content-type', 'image/png');
+              }
+            };
+          }
+          return null;
+        }
+      } as any;
+
+      const testApp = new Hono();
+      testApp.route('/', api);
+
+      const response = await testApp.request(
+        new Request('http://localhost/emot/smile.png'),
+        undefined,
+        env
+      );
+
+      expect(response.status).toBe(200);
+      expect(response.headers.get('content-type')).toContain('image/png');
+      expect(response.headers.get('etag')).toBe('test-etag');
     });
   });
 
@@ -927,6 +1022,142 @@ describe('API Routes', () => {
       expect(data.success).toBe(true);
     });
 
+    it('REGIST_ONE_IP_ADDRESS=1 且同 IP 已在房內時，join 應拒絕（403）', async () => {
+      const env = createMockEnv();
+      env.REGIST_ONE_IP_ADDRESS = '1';
+      env.DB = {
+        prepare: (_query: string) => ({
+          bind: (..._args: any[]) => ({
+            run: async () => ({ success: true }),
+            first: async () => ({
+              is_private: 0,
+              password_hash: null,
+              game_option: ''
+            }),
+            all: async () => ({ results: [] })
+          })
+        })
+      } as any;
+      env.KV = {
+        get: async (key: string) => {
+          if (key === 'session:existing') {
+            return {
+              sessionId: 'existing',
+              uname: 'existing_user',
+              roomNo: 12345,
+              userNo: 0,
+              handleName: 'Existing',
+              role: 'human',
+              ipAddress: '203.0.113.88',
+              createdAt: Date.now() - 1000,
+              expiresAt: Date.now() + 3600_000,
+            };
+          }
+          return null;
+        },
+        put: async () => {},
+        delete: async () => {},
+        list: async () => ({ keys: [{ name: 'session:existing' }] })
+      } as any;
+
+      const testApp = new Hono();
+      testApp.route('/', api);
+
+      const response = await testApp.request(
+        new Request('http://localhost/api/rooms/12345/join', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'CF-Connecting-IP': '203.0.113.88'
+          },
+          body: JSON.stringify({
+            uname: 'newuser',
+            handleName: 'NewUser',
+            trip: '',
+            iconNo: 1,
+            sex: 'male'
+          })
+        }),
+        undefined,
+        env
+      );
+
+      expect(response.status).toBe(403);
+      const data = await response.json();
+      expect(data.error).toContain('Same IP already joined this room');
+    });
+
+    it('REGIST_ONE_IP_ADDRESS=1 但不同 IP 時，join 仍可成功', async () => {
+      let savedSession: any = null;
+      const env = createMockEnv();
+      env.REGIST_ONE_IP_ADDRESS = 'true';
+      env.DB = {
+        prepare: (_query: string) => ({
+          bind: (..._args: any[]) => ({
+            run: async () => ({ success: true }),
+            first: async () => ({
+              is_private: 0,
+              password_hash: null,
+              game_option: ''
+            }),
+            all: async () => ({ results: [] })
+          })
+        })
+      } as any;
+      env.KV = {
+        get: async (key: string) => {
+          if (key === 'session:existing') {
+            return {
+              sessionId: 'existing',
+              uname: 'existing_user',
+              roomNo: 12345,
+              userNo: 0,
+              handleName: 'Existing',
+              role: 'human',
+              ipAddress: '203.0.113.90',
+              createdAt: Date.now() - 1000,
+              expiresAt: Date.now() + 3600_000,
+            };
+          }
+          return null;
+        },
+        put: async (key: string, value: string) => {
+          if (key.startsWith('session:')) {
+            savedSession = JSON.parse(value);
+          }
+        },
+        delete: async () => {},
+        list: async () => ({ keys: [{ name: 'session:existing' }] })
+      } as any;
+
+      const testApp = new Hono();
+      testApp.route('/', api);
+
+      const response = await testApp.request(
+        new Request('http://localhost/api/rooms/12345/join', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'CF-Connecting-IP': '203.0.113.91'
+          },
+          body: JSON.stringify({
+            uname: 'newuser2',
+            handleName: 'NewUser2',
+            trip: '',
+            iconNo: 1,
+            sex: 'male'
+          })
+        }),
+        undefined,
+        env
+      );
+
+      expect(response.status).toBe(200);
+      const data = await response.json();
+      expect(data.success).toBe(true);
+      expect(savedSession?.ipAddress).toBe('203.0.113.91');
+    });
+
     it('房間 status 非 waiting 時應拒絕 join（400）', async () => {
       const env = createMockEnv();
       env.DB = {
@@ -1417,6 +1648,51 @@ describe('API Routes', () => {
       expect(data.tech).toBeDefined();
       expect(typeof data.tech).toBe('string');
       expect(data.tech).toContain('Cloudflare Workers');
+
+      expect(data.scriptInfo).toBeDefined();
+      expect(data.scriptInfo.timezone).toBe('Asia/Taipei');
+      expect(data.scriptInfo.defaultTimeLimitSec).toBe(300);
+      expect(data.scriptInfo.silenceModeEnabled).toBe(true);
+      expect(data.scriptInfo.silenceModeTimeoutSec).toBe(60);
+      expect(data.scriptInfo.allowSpectators).toBe(true);
+      expect(data.scriptInfo.maxSpectators).toBe(10);
+    });
+  });
+
+  describe('Task 6: /api/script-info', () => {
+    it('GET /api/script-info 應該返回 script 設定摘要', async () => {
+      const response = await request('/api/script-info');
+      expect(response.status).toBe(200);
+
+      const data = await response.json();
+      expect(data.scriptInfo).toBeDefined();
+      expect(data.scriptInfo.timezone).toBe('Asia/Taipei');
+      expect(data.scriptInfo.defaultTimeLimitSec).toBe(300);
+      expect(data.scriptInfo.silenceModeEnabled).toBe(true);
+      expect(data.scriptInfo.silenceModeTimeoutSec).toBe(60);
+      expect(data.scriptInfo.allowSpectators).toBe(true);
+      expect(data.scriptInfo.maxSpectators).toBe(10);
+    });
+  });
+
+  describe('Task 6: /api/announcement', () => {
+    it('GET /api/announcement 無公告時應該返回空字串', async () => {
+      const response = await request('/api/announcement');
+      expect(response.status).toBe(200);
+
+      const data = await response.json();
+      expect(data.announcement).toBe('');
+      expect(data.hasAnnouncement).toBe(false);
+    });
+
+    it('GET /api/announcement 有設定公告時應該返回內容', async () => {
+      mockEnv.ANNOUNCEMENT_TEXT = '  server maintenance tonight  ';
+      const response = await request('/api/announcement');
+      expect(response.status).toBe(200);
+
+      const data = await response.json();
+      expect(data.announcement).toBe('server maintenance tonight');
+      expect(data.hasAnnouncement).toBe(true);
     });
   });
 

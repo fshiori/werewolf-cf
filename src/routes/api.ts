@@ -72,6 +72,15 @@ async function rateLimit(c: any, next: any) {
   await next();
 }
 
+function isSingleIpRestrictionEnabled(c: any): boolean {
+  const raw = c.env.REGIST_ONE_IP_ADDRESS;
+  if (typeof raw !== 'string') {
+    return false;
+  }
+  const normalized = raw.trim().toLowerCase();
+  return normalized === '1' || normalized === 'true' || normalized === 'on' || normalized === 'yes';
+}
+
 // ==================== 房間管理 ====================
 
 /**
@@ -614,8 +623,19 @@ app.post('/api/rooms/:roomNo/join', checkBan, rateLimit, async (c) => {
     const safeUname = escapeHtml(data.uname);
     const safeHandleName = escapeHtml(data.handleName);
 
-    // 生成 session
     const sessionManager = createSessionManager(c.env.KV);
+    const requestIp = c.req.header('CF-Connecting-IP') || 'unknown';
+
+    // legacy parity: 同房間限制單一 IP（可用 REGIST_ONE_IP_ADDRESS=1 啟用）
+    if (isSingleIpRestrictionEnabled(c) && requestIp !== 'unknown') {
+      const roomSessions = await sessionManager.getByRoom(roomNo);
+      const alreadyJoinedBySameIp = roomSessions.some(s => s.ipAddress === requestIp && s.uname !== safeUname);
+      if (alreadyJoinedBySameIp) {
+        return c.json({ error: 'Same IP already joined this room' }, 403);
+      }
+    }
+
+    // 生成 session
     const { sessionId, session } = createSession(
       safeUname,
       roomNo,
@@ -630,6 +650,7 @@ app.post('/api/rooms/:roomNo/join', checkBan, rateLimit, async (c) => {
     session.iconNo = data.iconNo || 1;
     session.sex = data.sex || 'male';
     session.wishRole = wishRoleEnabled ? requestedWishRole : 'none';
+    session.ipAddress = requestIp;
 
     // 儲存 session
     await sessionManager.save(session);
@@ -821,6 +842,7 @@ app.post('/api/icons', checkBan, rateLimit, async (c) => {
 /**
  * 獲取頭像
  */
+// GET /api/icons
 app.get('/api/icons', async (c) => {
   try {
     const prefix = c.req.query('prefix') || 'icons/';
@@ -839,8 +861,17 @@ app.get('/api/icons', async (c) => {
   }
 });
 
+// GET /api/icons/upload/cancel
+app.get('/api/icons/upload/cancel', async (c) => {
+  return c.json({
+    success: true,
+    cancelled: true,
+    message: 'Icon upload cancelled',
+  });
+});
+
 /**
- * 獲取頭像圖片
+ * 取得頭像檔案
  */
 app.get('/icons/:filename', async (c) => {
   try {
@@ -862,14 +893,111 @@ app.get('/icons/:filename', async (c) => {
   }
 });
 
+/**
+ * 取得自訂表情列表（legacy user_emot 對應，R2 emot/）
+ */
+app.get('/api/emoticons', async (c) => {
+  try {
+    const listed = await c.env.R2.list({ prefix: 'emot/' });
+    const emoticons = listed.objects.map(obj => ({
+      key: obj.key,
+      name: obj.key.replace(/^emot\//, '').replace(/\.[^.]+$/, ''),
+      size: obj.size,
+      uploaded: obj.uploaded,
+      url: `/emot/${encodeURIComponent(obj.key.replace(/^emot\//, ''))}`,
+    }));
+
+    return c.json({ emoticons });
+  } catch (error) {
+    console.error('List emoticons error:', error);
+    return c.json({ error: 'Failed to list emoticons' }, 500);
+  }
+});
+
+/**
+ * 取得自訂表情檔案
+ */
+app.get('/emot/:filename', async (c) => {
+  try {
+    const filename = decodeURIComponent(c.req.param('filename'));
+    const object = await c.env.R2.get(`emot/${filename}`);
+
+    if (!object) {
+      return c.text('Not found', 404);
+    }
+
+    const headers = new Headers() as any;
+    object.writeHttpMetadata(headers);
+    headers.set('etag', object.httpEtag);
+
+    return new Response(object.body as any, { headers });
+  } catch (error) {
+    console.error('Get emoticon error:', error);
+    return c.text('Failed to get emoticon', 500);
+  }
+});
+
 // ==================== Task 6: Version & Rule Summary APIs ====================
+
+async function getGameSetting(c: any, settingName: string, fallbackValue: string): Promise<string> {
+  try {
+    const row = await c.env.DB
+      .prepare('SELECT setting_value FROM game_settings WHERE setting_name = ?')
+      .bind(settingName)
+      .first();
+
+    const value = (row as { setting_value?: string } | null)?.setting_value;
+    if (typeof value === 'string' && value.length > 0) {
+      return value;
+    }
+  } catch (error) {
+    console.error(`Get game setting failed (${settingName}):`, error);
+  }
+  return fallbackValue;
+}
+
+async function buildScriptInfo(c: any) {
+  const [defaultTimeLimit, silenceModeEnabled, silenceModeTimeout, allowSpectators, maxSpectators] = await Promise.all([
+    getGameSetting(c, 'default_time_limit', '300'),
+    getGameSetting(c, 'silence_mode_enabled', '1'),
+    getGameSetting(c, 'silence_mode_timeout', '60'),
+    getGameSetting(c, 'allow_spectators', '1'),
+    getGameSetting(c, 'max_spectators', '10'),
+  ]);
+
+  return {
+    timezone: 'Asia/Taipei',
+    defaultTimeLimitSec: parseInt(defaultTimeLimit, 10) || 300,
+    silenceModeEnabled: silenceModeEnabled === '1',
+    silenceModeTimeoutSec: parseInt(silenceModeTimeout, 10) || 60,
+    allowSpectators: allowSpectators === '1',
+    maxSpectators: parseInt(maxSpectators, 10) || 10,
+  };
+}
 
 // GET /api/version
 app.get('/api/version', async (c) => {
+  const scriptInfo = await buildScriptInfo(c);
   return c.json({
     version: '1.0.0',
     buildDate: '2026-04-16',
     tech: 'Cloudflare Workers + Durable Objects + D1 + R2 + KV',
+    scriptInfo,
+  });
+});
+
+// GET /api/script-info
+app.get('/api/script-info', async (c) => {
+  const scriptInfo = await buildScriptInfo(c);
+  return c.json({ scriptInfo });
+});
+
+// GET /api/announcement
+app.get('/api/announcement', async (c) => {
+  const announcement = (c.env.ANNOUNCEMENT_TEXT || '').trim();
+  return c.json({
+    announcement,
+    hasAnnouncement: announcement.length > 0,
   });
 });
 
