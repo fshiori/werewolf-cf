@@ -322,6 +322,36 @@ describe('Features Routes', () => {
       expect(data.totalGames).toBe(0);
       expect(data.humanWins).toBe(0);
       expect(data.score).toBe(0);
+      expect(data.breakdown22p).toEqual({ games: 0, wins: 0, winRate: 0 });
+      expect(data.breakdown30p).toEqual({ games: 0, wins: 0, winRate: 0 });
+    });
+
+    it('存在的 trip 應回傳 22p/30p 勝率分解', async () => {
+      (mockEnv.DB as any)._insert('trip_scores', {
+        trip: 'trip_1',
+        score: 99,
+        games_played: 10,
+        total_games: 10,
+        human_wins: 3,
+        wolf_wins: 4,
+        fox_wins: 1,
+        games_22p: 4,
+        wins_22p: 3,
+        games_30p: 2,
+        wins_30p: 1,
+        role_history: '{"wolf":2}',
+        last_played: Date.now(),
+      });
+
+      const res = await request('/api/stats/trip_1');
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(data.breakdown22p.games).toBe(4);
+      expect(data.breakdown22p.wins).toBe(3);
+      expect(data.breakdown22p.winRate).toBe(75);
+      expect(data.breakdown30p.games).toBe(2);
+      expect(data.breakdown30p.wins).toBe(1);
+      expect(data.breakdown30p.winRate).toBe(50);
     });
   });
 

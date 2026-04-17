@@ -211,11 +211,27 @@ app.get('/api/stats/:trip', async (c) => {
         humanWins: 0,
         wolfWins: 0,
         foxWins: 0,
-        score: 0
+        score: 0,
+        breakdown22p: {
+          games: 0,
+          wins: 0,
+          winRate: 0,
+        },
+        breakdown30p: {
+          games: 0,
+          wins: 0,
+          winRate: 0,
+        },
       });
     }
 
-    const stats = result.results[0] as { role_history?: string };
+    const stats = result.results[0] as {
+      role_history?: string;
+      games_22p?: number;
+      wins_22p?: number;
+      games_30p?: number;
+      wins_30p?: number;
+    };
 
     // 解析 role_history JSON
     let roleHistory: Record<string, number> = {};
@@ -227,9 +243,24 @@ app.get('/api/stats/:trip', async (c) => {
       }
     }
 
+    const games22 = Number(stats.games_22p || 0);
+    const wins22 = Number(stats.wins_22p || 0);
+    const games30 = Number(stats.games_30p || 0);
+    const wins30 = Number(stats.wins_30p || 0);
+
     return c.json({
       ...stats,
-      roleHistory
+      roleHistory,
+      breakdown22p: {
+        games: games22,
+        wins: wins22,
+        winRate: games22 > 0 ? Math.round((wins22 / games22) * 10000) / 100 : 0,
+      },
+      breakdown30p: {
+        games: games30,
+        wins: wins30,
+        winRate: games30 > 0 ? Math.round((wins30 / games30) * 10000) / 100 : 0,
+      },
     });
   } catch (error) {
     console.error('Get trip stats error:', error);
@@ -247,6 +278,7 @@ app.post('/api/stats/:trip', async (c) => {
       result: 'human_win' | 'wolf_win' | 'fox_win' | 'lose';
       role: string;
       survived: boolean;
+      playerCount?: number;
     }>();
 
     // 獲取現有統計
@@ -262,6 +294,10 @@ app.post('/api/stats/:trip', async (c) => {
       fox_wins: number;
       total_games: number;
       survivor_count: number;
+      games_22p: number;
+      wins_22p: number;
+      games_30p: number;
+      wins_30p: number;
       role_history: string;
       last_played: number;
     }
@@ -277,6 +313,10 @@ app.post('/api/stats/:trip', async (c) => {
       fox_wins: 0,
       total_games: 0,
       survivor_count: 0,
+      games_22p: 0,
+      wins_22p: 0,
+      games_30p: 0,
+      wins_30p: 0,
       role_history: '{}',
       last_played: Date.now()
     };
@@ -314,14 +354,27 @@ app.post('/api/stats/:trip', async (c) => {
       roleHistory[data.role] = (roleHistory[data.role] || 0) + 1;
       stats.role_history = JSON.stringify(roleHistory);
     }
+    if (data.playerCount === 22) {
+      stats.games_22p = (stats.games_22p || 0) + 1;
+      if (data.result !== 'lose') {
+        stats.wins_22p = (stats.wins_22p || 0) + 1;
+      }
+    } else if (data.playerCount === 30) {
+      stats.games_30p = (stats.games_30p || 0) + 1;
+      if (data.result !== 'lose') {
+        stats.wins_30p = (stats.wins_30p || 0) + 1;
+      }
+    }
+
     stats.last_played = Date.now();
 
     // UPSERT
     const upsertStmt = c.env.DB.prepare(`
       INSERT INTO trip_scores (
         trip, score, games_played, human_wins, wolf_wins, fox_wins,
-        total_games, survivor_count, role_history, last_played
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        total_games, survivor_count, games_22p, wins_22p, games_30p, wins_30p,
+        role_history, last_played
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(trip) DO UPDATE SET
         score = ?,
         games_played = ?,
@@ -330,6 +383,10 @@ app.post('/api/stats/:trip', async (c) => {
         fox_wins = ?,
         total_games = ?,
         survivor_count = ?,
+        games_22p = ?,
+        wins_22p = ?,
+        games_30p = ?,
+        wins_30p = ?,
         role_history = ?,
         last_played = ?
     `);
@@ -337,10 +394,12 @@ app.post('/api/stats/:trip', async (c) => {
     await upsertStmt.bind(
       trip, stats.score, stats.games_played, stats.human_wins,
       stats.wolf_wins, stats.fox_wins, stats.total_games,
-      stats.survivor_count, stats.role_history, stats.last_played,
+      stats.survivor_count, stats.games_22p, stats.wins_22p, stats.games_30p, stats.wins_30p,
+      stats.role_history, stats.last_played,
       stats.score, stats.games_played, stats.human_wins,
       stats.wolf_wins, stats.fox_wins, stats.total_games,
-      stats.survivor_count, stats.role_history, stats.last_played
+      stats.survivor_count, stats.games_22p, stats.wins_22p, stats.games_30p, stats.wins_30p,
+      stats.role_history, stats.last_played
     ).all();
 
     return c.json({ success: true });

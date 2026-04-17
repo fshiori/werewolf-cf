@@ -1664,6 +1664,10 @@ export class WerewolfRoom extends DurableObject {
             : (winner === 'human' || winner === 'lovers') ? 'human'
               : null;
 
+      const playerCount = players.length;
+      const is22p = playerCount === 22;
+      const is30p = playerCount === 30;
+
       for (const player of players) {
         const trip = player.trip;
         if (!trip) continue;
@@ -1675,8 +1679,12 @@ export class WerewolfRoom extends DurableObject {
 
         // @ts-ignore
         await this.env.DB.prepare(`
-          INSERT INTO trip_scores (trip, score, games_played, human_wins, wolf_wins, fox_wins, total_games, survivor_count, role_history, last_played)
-          VALUES (?, 0, 0, 0, 0, 0, 0, 0, '{}', ?)
+          INSERT INTO trip_scores (
+            trip, score, games_played, human_wins, wolf_wins, fox_wins,
+            total_games, survivor_count, games_22p, wins_22p, games_30p, wins_30p,
+            role_history, last_played
+          )
+          VALUES (?, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, '{}', ?)
           ON CONFLICT(trip) DO UPDATE SET
             games_played = games_played + 1,
             total_games = total_games + 1,
@@ -1685,6 +1693,10 @@ export class WerewolfRoom extends DurableObject {
             wolf_wins = wolf_wins + ?,
             fox_wins = fox_wins + ?,
             survivor_count = survivor_count + ?,
+            games_22p = games_22p + ?,
+            wins_22p = wins_22p + ?,
+            games_30p = games_30p + ?,
+            wins_30p = wins_30p + ?,
             last_played = ?
         `).bind(
           trip, Date.now(),
@@ -1693,6 +1705,10 @@ export class WerewolfRoom extends DurableObject {
           (winnerTeam === 'wolf' && playerWon) ? 1 : 0,
           (winnerTeam === 'fox' && playerWon) ? 1 : 0,
           survived ? 1 : 0,
+          is22p ? 1 : 0,
+          (is22p && playerWon) ? 1 : 0,
+          is30p ? 1 : 0,
+          (is30p && playerWon) ? 1 : 0,
           Date.now()
         ).run();
       }
