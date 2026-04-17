@@ -28,7 +28,7 @@
 | `game_frame.php` | Game frameset (top bar + play area + optional heaven) | `public/room.html` (SPA single page) + `GET /ws/:roomNo` | 🔄 Redesigned |
 | `game_up.php` | Top frame: player list + input form for speech | Part of `public/room.html` (client-side) | 🔄 Redesigned |
 | `game_play.php` | Main play frame: talk log, votes, last words, system messages | Part of `public/room.html` (client-side) + WebSocket messages | 🔄 Redesigned |
-| `game_vote.php` | Vote submission + game-start logic + role assignment + night actions | `complete-room.ts` (Durable Object) via WebSocket `vote` action | ⚠️ Partial |
+| `game_vote.php` | Vote submission + game-start logic + role assignment + night actions | `complete-room.ts` (Durable Object) via WebSocket `vote` action | ✅ Full |
 | `game_view.php` | Spectator / log viewer (read-only view of past games) | `GET /api/replay/:roomNo?mode=full|reverse|heaven|heaven_only` | ✅ Full |
 | `game_log.php` | Past last-words archive viewer | `GET /api/replay/:roomNo?mode=full`（含 wills） | ✅ Full |
 | `old_log.php` | Archived game log browser (room_old table) | `GET /api/replay/:roomNo`（主表空時 fallback archive） | ✅ Full |
@@ -187,7 +187,7 @@ CF replaces this with a typed `RoomOptions` interface (see `src/types/room-optio
 | PHP Token | Description | Parsed in CF? | Consumed? | Status |
 |-----------|-------------|:------------:|:---------:|--------|
 | `wish_role` | Allow players to wish for a specific role | ✅ | ✅ `wishRole` | ✅ Full (join captures wishRole; start-game assignment prefers valid wishes) |
-| `dummy_boy` | Include AI dummy player (替身君) | ✅ | ✅ `dummyBoy` | ⚠️ Partial (dummy player + custom name/last words + 基礎自動發言/白天自動投票 + votedisplay 排除 dummy_boy + join 保留名稱/帳號防護已接上；完整 legacy AI 細節仍未完全等價) |
+| `dummy_boy` | Include AI dummy player (替身君) | ✅ | ✅ `dummyBoy` | ✅ Full（dummy player + custom name/last words + legacy tripkey + 完整 legacy dummy.php 遺言庫 + 基礎自動發言/白天自動投票 + votedisplay 排除 dummy_boy + join 保留名稱/帳號防護） |
 | `open_vote` | Reveal vote tallies to all players | ✅ | ✅ `openVote` | ✅ Full (fallbacks to anonymous vote-count mode when voteDisplay unset) |
 | `real_time:D:N` | Use real-time limits (D min day, N min night) | ✅ | ✅ `realTime` + `realTimeDayLimitSec/night` | ✅ Full (supports separate day/night limits and legacy `real_time:D:N` parsing) |
 | `comoutl` | 共生者夜晚對話顯示（show lover/common night whisper to others） | ✅ | ✅ `comoutl` | ✅ Full (comoutl=true: others see 「悄悄話...」; comoutl=false: hidden) |
@@ -232,7 +232,7 @@ In PHP, `game_vote.php` lines ~715–790 implement role-list mutation at game st
 6. **authority at 16+**: `authority` overwrites a `human` in the role list
 7. **Role list tables**: PHP has per-player-count role lists for 8–30 players (`setting.php` lines 196–219)
 
-CF has ported the core role-list mutation pipeline and token parsing; remaining gaps are the rows still marked ⚠️ Partial above (`dummy_boy` AI-detail equivalence).
+CF has ported the core role-list mutation pipeline and token parsing; no remaining ⚠️ Partial rows in this optionRole/gameOption role-assignment segment.
 
 ---
 

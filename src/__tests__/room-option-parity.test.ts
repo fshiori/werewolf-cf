@@ -109,8 +109,8 @@ describe('parseRoomOptions — gameOption token parity', () => {
     // 已串接：votedisplay=true 時，等待中 start_game 投票與白天 vote_update 都會下發 votedUsers，前端玩家清單顯示「已投票」
   });
 
-  // ── dummyBoy ⚠️（已解析，遊戲邏輯大部分消耗）──
-  describe('dummyBoy（啞巴男角色）⚠️ 已解析大部分消耗', () => {
+  // ── dummyBoy ✅（已解析，遊戲邏輯已消耗）──
+  describe('dummyBoy（啞巴男角色）✅ 已解析已消耗', () => {
     it('正確解析 true', () => {
       expect(parseRoomOptions({ dummyBoy: true }).dummyBoy).toBe(true);
     });
@@ -119,7 +119,7 @@ describe('parseRoomOptions — gameOption token parity', () => {
       expect(parseRoomOptions({}).dummyBoy).toBe(false);
     });
 
-    // 已串接：開局建立 dummy_boy、legacy tripkey、custDummy 自訂名稱/遺言、基礎自動發言/白天投票、第 1 天夜晚狼人僅可投 dummy_boy；完整 legacy AI 細節仍待補
+    // 已串接：開局建立 dummy_boy、legacy tripkey、custDummy 自訂名稱/遺言、完整 legacy dummy.php 遺言庫、基礎自動發言/白天投票、第 1 天夜晚狼人僅可投 dummy_boy
   });
 
   // ── wishRole ✅（已解析，遊戲邏輯已消耗）──
