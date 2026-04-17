@@ -18,7 +18,7 @@ export default {
     try {
       // 查找所有殘留房間：ended 超過 30 分鐘，或 playing/waiting 超過 2 小時無活動
       const endedThreshold = 30 * 60 * 1000; // 30 分鐘
-      const result = await env.DB.prepare(`
+      const staleResult = await env.DB.prepare(`
         SELECT room_no, status, last_updated 
         FROM room 
         WHERE 
@@ -26,13 +26,37 @@ export default {
           OR ((status = 'playing' OR status = 'waiting') AND last_updated < ?)
       `).bind(now - endedThreshold, now - staleThreshold).all();
 
-      const rooms = result.results as any[];
+      // 補強：沒有任何存活真人（排除 dummy_boy）的房間，10 分鐘後就清掉
+      // 避免 UI 長期堆積「看起來沒人在玩的殘留房」。
+      const emptyRoomThreshold = 10 * 60 * 1000; // 10 分鐘
+      const emptyResult = await env.DB.prepare(`
+        SELECT r.room_no, r.status, r.last_updated
+        FROM room r
+        LEFT JOIN user_entry u
+          ON u.room_no = r.room_no
+         AND u.user_no > 0
+         AND u.live = 'live'
+         AND u.uname <> 'dummy_boy'
+        GROUP BY r.room_no
+        HAVING COUNT(u.uname) = 0
+           AND r.last_updated < ?
+      `).bind(now - emptyRoomThreshold).all();
+
+      const merged = new Map<number, any>();
+      for (const room of (staleResult.results as any[])) {
+        merged.set(room.room_no, room);
+      }
+      for (const room of (emptyResult.results as any[])) {
+        merged.set(room.room_no, room);
+      }
+      const rooms = Array.from(merged.values());
+
       if (rooms.length === 0) {
-        console.log('[Cron] No stale rooms found');
+        console.log('[Cron] No stale/empty rooms found');
         return;
       }
 
-      console.log(`[Cron] Found ${rooms.length} stale rooms to clean up`);
+      console.log(`[Cron] Found ${rooms.length} stale/empty rooms to clean up`);
 
       let cleaned = 0;
       let failed = 0;

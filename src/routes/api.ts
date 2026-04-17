@@ -268,18 +268,28 @@ app.get('/api/rooms', async (c) => {
     if (roomNos.length > 0) {
       const placeholders = roomNos.map(() => '?').join(',');
       const countStmt = c.env.DB.prepare(
-        `SELECT room_no, COUNT(*) as player_count FROM user_entry WHERE room_no IN (${placeholders}) GROUP BY room_no`
+        `SELECT room_no, COUNT(*) as player_count
+         FROM user_entry
+         WHERE room_no IN (${placeholders})
+           AND user_no > 0
+           AND live = 'live'
+         GROUP BY room_no`
       );
       const countResult = await countStmt.bind(...roomNos).all();
       for (const row of countResult.results as any[]) {
-        playerCounts[row.room_no] = row.player_count;
+        playerCounts[row.room_no] = Number(row.player_count) || 0;
       }
     }
 
-    const enrichedRooms = rooms.map(r => ({
-      ...r,
-      playerCount: playerCounts[r.room_no] || 0
-    }));
+    const enrichedRooms = rooms.map(r => {
+      const count = playerCounts[r.room_no] || 0;
+      return {
+        ...r,
+        playerCount: count,
+        // backward compatibility for older frontend pages still reading snake_case
+        player_count: count,
+      };
+    });
 
     return c.json({ rooms: enrichedRooms, count: enrichedRooms.length });
   } catch (error) {
@@ -685,6 +695,7 @@ app.post('/api/rooms/:roomNo/join', checkBan, rateLimit, async (c) => {
  */
 app.post('/api/rooms/:roomNo/leave', async (c) => {
   try {
+    const roomNo = parseInt(c.req.param('roomNo'));
     const sessionToken = c.req.header('Authorization')?.replace('Bearer ', '');
 
     if (!sessionToken) {
@@ -692,6 +703,49 @@ app.post('/api/rooms/:roomNo/leave', async (c) => {
     }
 
     const sessionManager = createSessionManager(c.env.KV);
+    const session = await sessionManager.validate(sessionToken);
+
+    // 先嘗試通知 DO 讓房間內狀態（players map）同步移除玩家
+    if (session && session.roomNo === roomNo) {
+      try {
+        const id = c.env.WEREWOLF_ROOM.idFromName(roomNo.toString());
+        const stub = c.env.WEREWOLF_ROOM.get(id);
+        await stub.fetch(new Request('https://internal/leave', {
+          method: 'POST',
+          body: JSON.stringify({ uname: session.uname }),
+        }));
+      } catch (e) {
+        console.warn('DO leave sync failed, fallback to D1 cleanup only:', e);
+      }
+
+      // 兜底：確保 D1 user_entry 不會殘留離開玩家
+      // （若 DO 因 evict/錯誤沒成功處理，這裡仍可避免房間玩家數卡住）
+      // @ts-ignore
+      await c.env.DB.prepare('DELETE FROM user_entry WHERE room_no = ? AND uname = ?').bind(roomNo, session.uname).run();
+
+      // 若等待中房間已無存活真人（排除 dummy_boy），立刻清理房間
+      // 避免「沒人卻還掛在列表上」的殘留情況。
+      // @ts-ignore
+      const remain = await c.env.DB.prepare(`
+        SELECT COUNT(*) AS c
+        FROM user_entry
+        WHERE room_no = ?
+          AND user_no > 0
+          AND live = 'live'
+          AND uname <> 'dummy_boy'
+      `).bind(roomNo).first() as { c: number } | null;
+
+      if ((Number(remain?.c) || 0) === 0) {
+        // @ts-ignore
+        const roomRow = await c.env.DB.prepare('SELECT status FROM room WHERE room_no = ?').bind(roomNo).first() as { status: string } | null;
+        if (roomRow?.status === 'waiting') {
+          const id = c.env.WEREWOLF_ROOM.idFromName(roomNo.toString());
+          const stub = c.env.WEREWOLF_ROOM.get(id);
+          await stub.fetch(new Request('https://internal/cleanup', { method: 'POST' }));
+        }
+      }
+    }
+
     await sessionManager.delete(sessionToken);
 
     return c.json({ success: true, message: 'Left room successfully' });
