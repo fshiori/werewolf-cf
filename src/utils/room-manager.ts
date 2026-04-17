@@ -150,6 +150,15 @@ export function hasPlayer(room: RoomData, uname: string): boolean {
  * 獲取公開的房間資訊
  */
 export function getPublicRoomInfo(room: RoomData) {
+  const players = Array.from(room.players.values()).map((player) => ({
+    userNo: player.userNo,
+    uname: player.uname,
+    handleName: player.handleName,
+    trip: player.trip,
+    iconNo: player.iconNo,
+    live: player.live,
+  }));
+
   return {
     roomNo: room.roomNo,
     roomName: room.roomName,
@@ -159,6 +168,7 @@ export function getPublicRoomInfo(room: RoomData) {
     date: room.date,
     dayNight: room.dayNight,
     playerCount: room.players.size,
+    players,
     lastUpdated: room.lastUpdated,
     host: room.host || null
   };
