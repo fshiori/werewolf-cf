@@ -572,6 +572,92 @@ describe('API Routes', () => {
       expect(data.error).toContain('Room not found');
     });
 
+    it('trip 含非英數字元時 join 應拒絕（400）', async () => {
+      const env = createMockEnv();
+      env.DB = {
+        prepare: (_query: string) => ({
+          bind: (..._args: any[]) => ({
+            run: async () => ({ success: true }),
+            first: async () => ({
+              is_private: 0,
+              password_hash: null,
+              game_option: ''
+            }),
+            all: async () => ({ results: [] })
+          })
+        })
+      } as any;
+
+      const testApp = new Hono();
+      testApp.route('/', api);
+
+      const response = await testApp.request(
+        new Request('http://localhost/api/rooms/12345/join', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'CF-Connecting-IP': '203.0.113.47'
+          },
+          body: JSON.stringify({
+            uname: 'badtrip',
+            handleName: 'BadTrip',
+            trip: 'abc_123',
+            iconNo: 1,
+            sex: 'male'
+          })
+        }),
+        undefined,
+        env
+      );
+
+      expect(response.status).toBe(400);
+      const data = await response.json();
+      expect(data.error).toContain('Invalid trip format');
+    });
+
+    it('trip 缺少英數混合（僅字母）時 join 應拒絕（400）', async () => {
+      const env = createMockEnv();
+      env.DB = {
+        prepare: (_query: string) => ({
+          bind: (..._args: any[]) => ({
+            run: async () => ({ success: true }),
+            first: async () => ({
+              is_private: 0,
+              password_hash: null,
+              game_option: ''
+            }),
+            all: async () => ({ results: [] })
+          })
+        })
+      } as any;
+
+      const testApp = new Hono();
+      testApp.route('/', api);
+
+      const response = await testApp.request(
+        new Request('http://localhost/api/rooms/12345/join', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'CF-Connecting-IP': '203.0.113.48'
+          },
+          body: JSON.stringify({
+            uname: 'badtrip2',
+            handleName: 'BadTrip2',
+            trip: 'abcdef',
+            iconNo: 1,
+            sex: 'male'
+          })
+        }),
+        undefined,
+        env
+      );
+
+      expect(response.status).toBe(400);
+      const data = await response.json();
+      expect(data.error).toContain('Invalid trip format');
+    });
+
     it('wishRole 房規啟用時，join 會保存希望角色到 session', async () => {
       let savedSession: any = null;
       const env = createMockEnv();
@@ -769,7 +855,7 @@ describe('API Routes', () => {
             first: async () => ({
               is_private: 0,
               password_hash: null,
-              game_option: 'as_gm gm:GMTRIP',
+              game_option: 'as_gm gm:GM123TRIP',
               status: 'playing',
               day_night: 'day'
             }),
@@ -791,7 +877,7 @@ describe('API Routes', () => {
           body: JSON.stringify({
             uname: 'latejoin',
             handleName: 'LateJoin',
-            trip: 'GMTRIP',
+            trip: 'GM123TRIP',
             iconNo: 1,
             sex: 'male'
           })
@@ -814,7 +900,7 @@ describe('API Routes', () => {
             first: async () => ({
               is_private: 0,
               password_hash: null,
-              game_option: 'as_gm gm:GMTRIP',
+              game_option: 'as_gm gm:GM123TRIP',
               status: 'waiting',
               day_night: 'night'
             }),
@@ -836,7 +922,7 @@ describe('API Routes', () => {
           body: JSON.stringify({
             uname: 'latejoin2',
             handleName: 'LateJoin2',
-            trip: 'GMTRIP',
+            trip: 'GM123TRIP',
             iconNo: 1,
             sex: 'male'
           })
