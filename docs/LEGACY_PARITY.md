@@ -187,7 +187,7 @@ CF replaces this with a typed `RoomOptions` interface (see `src/types/room-optio
 | PHP Token | Description | Parsed in CF? | Consumed? | Status |
 |-----------|-------------|:------------:|:---------:|--------|
 | `wish_role` | Allow players to wish for a specific role | ✅ | ✅ `wishRole` | ✅ Full (join captures wishRole; start-game assignment prefers valid wishes) |
-| `dummy_boy` | Include AI dummy player (替身君) | ✅ | ✅ `dummyBoy` | ⚠️ Partial (dummy player + custom name/last words + 基礎自動發言/白天自動投票 + votedisplay 排除 dummy_boy 已接上；完整 legacy AI 細節仍未完全等價) |
+| `dummy_boy` | Include AI dummy player (替身君) | ✅ | ✅ `dummyBoy` | ⚠️ Partial (dummy player + custom name/last words + 基礎自動發言/白天自動投票 + votedisplay 排除 dummy_boy + join 保留名稱/帳號防護已接上；完整 legacy AI 細節仍未完全等價) |
 | `open_vote` | Reveal vote tallies to all players | ✅ | ✅ `openVote` | ✅ Full (fallbacks to anonymous vote-count mode when voteDisplay unset) |
 | `real_time:D:N` | Use real-time limits (D min day, N min night) | ✅ | ✅ `realTime` + `realTimeDayLimitSec/night` | ✅ Full (supports separate day/night limits and legacy `real_time:D:N` parsing) |
 | `comoutl` | 共生者夜晚對話顯示（show lover/common night whisper to others） | ✅ | ✅ `comoutl` | ✅ Full (comoutl=true: others see 「悄悄話...」; comoutl=false: hidden) |

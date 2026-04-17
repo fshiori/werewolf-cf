@@ -908,6 +908,64 @@ describe('API Routes', () => {
       expect(data.error).toContain('Room not found');
     });
 
+    it('保留 uname=dummy_boy 時 join 應拒絕（400）', async () => {
+      const env = createMockEnv();
+      const testApp = new Hono();
+      testApp.route('/', api);
+
+      const response = await testApp.request(
+        new Request('http://localhost/api/rooms/12345/join', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'CF-Connecting-IP': '203.0.113.47'
+          },
+          body: JSON.stringify({
+            uname: 'dummy_boy',
+            handleName: 'NotDummy',
+            trip: '',
+            iconNo: 1,
+            sex: 'male'
+          })
+        }),
+        undefined,
+        env
+      );
+
+      expect(response.status).toBe(400);
+      const data = await response.json();
+      expect(data.error).toContain('Reserved username');
+    });
+
+    it('保留 handleName=替身君 時 join 應拒絕（400）', async () => {
+      const env = createMockEnv();
+      const testApp = new Hono();
+      testApp.route('/', api);
+
+      const response = await testApp.request(
+        new Request('http://localhost/api/rooms/12345/join', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'CF-Connecting-IP': '203.0.113.48'
+          },
+          body: JSON.stringify({
+            uname: 'normal_user',
+            handleName: '替身君',
+            trip: '',
+            iconNo: 1,
+            sex: 'male'
+          })
+        }),
+        undefined,
+        env
+      );
+
+      expect(response.status).toBe(400);
+      const data = await response.json();
+      expect(data.error).toContain('Reserved display name');
+    });
+
     it('trip 含非英數字元時 join 應拒絕（400）', async () => {
       const env = createMockEnv();
       env.DB = {
@@ -932,7 +990,7 @@ describe('API Routes', () => {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'CF-Connecting-IP': '203.0.113.47'
+            'CF-Connecting-IP': '203.0.113.49'
           },
           body: JSON.stringify({
             uname: 'badtrip',
