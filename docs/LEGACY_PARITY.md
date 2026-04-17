@@ -198,7 +198,7 @@ CF replaces this with a typed `RoomOptions` interface (see `src/types/room-optio
 | `gm:XXXXX` | Designate a specific trip as GM | ✅ | ✅ | ✅ Full（legacy token parsing + runtime 指派 + maxUser+1 GM 加入席次 + join waiting/beforegame 限制 + 夜晚狼刀不可指向 GM + 白天投票完成判定排除 GM + GM 不可作為白天投票者） |
 | `as_gm` | Activate GM role | ✅ | ✅ | ✅ Full（需與 `gm:trip` 配對才會實際指派 GM，符合 legacy） |
 | `votedisplay` | Show who has already voted (start-game & day) | ✅ | ✅ `votedisplay` | ✅ Full（等待中 start-game 投票與白天投票皆下發 votedUsers） |
-| `cust_dummy` | Custom dummy-boy name/last-words | ⚠️ | ⚠️ `custDummy` + `dummyCustomName` + `dummyCustomLastWords` | ⚠️ Partial (parser/runtime 已支援；create-room UI 尚未提供完整設定控件) |
+| `cust_dummy` | Custom dummy-boy name/last-words | ✅ | ✅ `custDummy` + `dummyCustomName` + `dummyCustomLastWords` | ✅ Full（parser/runtime + create-room UI 控件 + payload 已串接） |
 
 ---
 

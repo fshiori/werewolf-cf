@@ -505,8 +505,21 @@
             <div style="margin-bottom:10px;">
               <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:4px 0;">
                 <input type="checkbox" id="optCustDummy" style="width:auto;margin:0;">
-                <span><strong>自訂替身</strong> <small style="color:#999;">啟用自訂替身君設定</small></span>
+                <span><strong>自訂替身</strong> <small style="color:#999;">啟用自訂替身君名稱/遺言</small></span>
               </label>
+            </div>
+
+            <div id="custDummyRow" style="margin-bottom:10px;display:none;padding:10px;border:1px dashed #d0d0d0;border-radius:8px;background:#fafafa;">
+              <div style="display:flex;flex-direction:column;gap:8px;">
+                <label style="display:flex;flex-direction:column;gap:4px;">
+                  <span><strong>替身君名稱</strong> <small style="color:#999;">預設：替身君</small></span>
+                  <input type="text" id="optDummyCustomName" maxlength="32" placeholder="例如：村口的稻草人" style="margin:0;">
+                </label>
+                <label style="display:flex;flex-direction:column;gap:4px;">
+                  <span><strong>替身君遺言</strong> <small style="color:#999;">可留空，最多 120 字</small></span>
+                  <textarea id="optDummyCustomLastWords" maxlength="120" rows="2" placeholder="例如：我只是個替身..." style="margin:0;resize:vertical;"></textarea>
+                </label>
+              </div>
             </div>
 
             <div style="margin-bottom:10px;">
@@ -869,6 +882,10 @@
     }
 
     function getGameOptions() {
+      const custDummyEnabled = document.getElementById('optCustDummy').checked;
+      const customDummyName = document.getElementById('optDummyCustomName').value.trim();
+      const customDummyLastWords = document.getElementById('optDummyCustomLastWords').value.trim();
+
       return {
         timeLimit: parseInt(document.getElementById('timeLimit').value),
         silenceMode: document.getElementById('silenceMode').checked,
@@ -887,7 +904,9 @@
         comoutl: document.getElementById('optComoutl').checked,
         voteDisplay: parseInt(document.getElementById('optVoteDisplay').value),
         votedisplay: document.getElementById('optVotedisplay').checked,
-        custDummy: document.getElementById('optCustDummy').checked,
+        custDummy: custDummyEnabled,
+        dummyCustomName: custDummyEnabled ? customDummyName : '',
+        dummyCustomLastWords: custDummyEnabled ? customDummyLastWords : '',
         istrip: document.getElementById('optIstrip').checked,
       };
     }
@@ -901,6 +920,16 @@
     // GM Trip 可見性切換
     document.getElementById('optGmEnabled').addEventListener('change', function() {
       document.getElementById('gmTripRow').style.display = this.checked ? 'block' : 'none';
+    });
+
+    // 自訂替身可見性切換
+    document.getElementById('optCustDummy').addEventListener('change', function() {
+      const visible = this.checked;
+      document.getElementById('custDummyRow').style.display = visible ? 'block' : 'none';
+      if (!visible) {
+        document.getElementById('optDummyCustomName').value = '';
+        document.getElementById('optDummyCustomLastWords').value = '';
+      }
     });
 
     // 頁面載入
@@ -958,6 +987,11 @@
 
       if (!roomName) {
         showError('請輸入房間名稱');
+        return;
+      }
+
+      if (gameOpts.custDummy && !gameOpts.dummyBoy) {
+        showError('啟用「自訂替身」前，請先勾選「替身君」');
         return;
       }
 

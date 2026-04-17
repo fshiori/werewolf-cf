@@ -473,6 +473,32 @@ describe('API Routes', () => {
       expect(lastDoInitBody.gmTrip).toBe('GMABC123');
     });
 
+    it('POST /api/rooms gameOption JSON 帶 custDummy 自訂欄位應傳入 DO', async () => {
+      const response = await request('/api/rooms', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'CF-Connecting-IP': '198.51.100.77'
+        },
+        body: JSON.stringify({
+          roomName: 'Custom Dummy Room',
+          maxUser: 16,
+          gameOption: JSON.stringify({
+            dummyBoy: true,
+            custDummy: true,
+            dummyCustomName: '村口稻草人',
+            dummyCustomLastWords: '我只是替身，別太想我。'
+          })
+        })
+      });
+
+      expect(response.status).toBe(200);
+      expect(lastDoInitBody.roomOptions.dummyBoy).toBe(true);
+      expect(lastDoInitBody.roomOptions.custDummy).toBe(true);
+      expect(lastDoInitBody.roomOptions.dummyCustomName).toBe('村口稻草人');
+      expect(lastDoInitBody.roomOptions.dummyCustomLastWords).toBe('我只是替身，別太想我。');
+    });
+
     it('POST /api/rooms 帶密碼 + options → 兩者都正確傳入', async () => {
       const response = await request('/api/rooms', {
         method: 'POST',
