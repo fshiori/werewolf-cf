@@ -344,6 +344,11 @@ export function canVoteTarget(
     return false;
   }
 
+  const voter = players.get(voterUname);
+  if (!voter || voter.live !== 'live' || voter.role === 'GM') {
+    return false;
+  }
+
   const target = players.get(targetUname);
   if (!target || target.live !== 'live') {
     return false;

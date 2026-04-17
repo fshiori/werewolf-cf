@@ -633,5 +633,17 @@ describe('Vote System', () => {
       expect(canVoteTarget(players, 'alice', 'gm', true)).toBe(false);
       expect(canVoteTarget(players, 'alice', 'alice', true)).toBe(true);
     });
+
+    it('canVoteTarget: GM 不可作為投票者（legacy parity）', () => {
+      const gm = makeTarget('gm');
+      gm.role = 'GM';
+
+      const players = new Map<string, Player>([
+        ['gm', gm],
+        ['alice', makeTarget('alice')],
+      ]);
+
+      expect(canVoteTarget(players, 'gm', 'alice', true)).toBe(false);
+    });
   });
 });
