@@ -8,6 +8,7 @@ import {
   wolfKill,
   seerDivine,
   fosiDivine,
+  catResurrect,
   foxDivine,
   betrayerConvert,
   guardShoot,
@@ -294,6 +295,65 @@ describe('Night Action System', () => {
 
       const result = fosiDivine(nightState, players, 'mage', 'target');
       expect(result).toBeNull();
+    });
+  });
+
+  describe('貓又秘術（CAT_DO）', () => {
+    const makePlayer = (uname: string, role: Player['role'], live: 'live' | 'dead' = 'live'): Player => ({
+      userNo: 0,
+      uname,
+      handleName: uname,
+      trip: '',
+      iconNo: 1,
+      sex: '',
+      role,
+      live,
+      score: 0
+    });
+
+    it('貓又可以提交 cat_resurrect 行動', () => {
+      const nightState = createNightState(1, 1);
+      const players = new Map<string, Player>();
+      players.set('cat', makePlayer('cat', 'cat'));
+      players.set('dead1', makePlayer('dead1', 'human', 'dead'));
+
+      const ok = catResurrect(nightState, players, 'cat', 'dead1');
+      expect(ok).toBe(true);
+      expect(nightState.actions.some(a => a.type === 'cat_resurrect' && a.actor === 'cat')).toBe(true);
+    });
+
+    it('貓又被狼咬時可觸發不死，且當晚秘術失效', () => {
+      vi.spyOn(Math, 'random')
+        .mockReturnValueOnce(0.01) // cat被咬不死
+        .mockReturnValueOnce(0.01); // 即使秘術判定會成功，也應被 catBlocked 擋掉
+
+      const nightState = createNightState(1, 1);
+      const players = new Map<string, Player>();
+      players.set('cat', makePlayer('cat', 'cat'));
+      players.set('dead1', makePlayer('dead1', 'human', 'dead'));
+
+      nightState.victims.push('cat');
+      catResurrect(nightState, players, 'cat', 'dead1');
+
+      const dead = processNightResult(nightState, players);
+      expect(players.get('cat')?.live).toBe('live');
+      expect(players.get('dead1')?.live).toBe('dead');
+      expect(dead.some(p => p.uname === 'cat')).toBe(false);
+    });
+
+    it('貓又未被封鎖且機率命中時可復活目標', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.01);
+
+      const nightState = createNightState(1, 1);
+      const players = new Map<string, Player>();
+      players.set('cat', makePlayer('cat', 'cat'));
+      players.set('dead1', makePlayer('dead1', 'human', 'dead'));
+
+      catResurrect(nightState, players, 'cat', 'dead1');
+      const dead = processNightResult(nightState, players);
+
+      expect(players.get('dead1')?.live).toBe('live');
+      expect(dead.some(p => p.uname === 'dead1')).toBe(false);
     });
   });
 
@@ -674,6 +734,80 @@ describe('Night Action System', () => {
 
       nightState.actions.push({ type: 'wolf_kill' as any, actor: 'wolf', target: 'victim' });
       nightState.actions.push({ type: 'fosi_divine' as any, actor: 'fosi', target: 'target1' });
+      expect(isNightActionsComplete(nightState, players)).toBe(true);
+    });
+
+    it('有存活貓又但未行動應返回 false', () => {
+      const nightState = createNightState(1, 1);
+      const players = new Map<string, Player>();
+
+      players.set('wolf', {
+        userNo: 1,
+        uname: 'wolf',
+        handleName: 'Wolf',
+        trip: '',
+        iconNo: 1,
+        sex: '',
+        role: 'wolf',
+        live: 'live',
+        score: 0
+      });
+      players.set('cat', {
+        userNo: 2,
+        uname: 'cat',
+        handleName: 'Cat',
+        trip: '',
+        iconNo: 2,
+        sex: '',
+        role: 'cat',
+        live: 'live',
+        score: 0
+      });
+
+      nightState.actions.push({ type: 'wolf_kill' as any, actor: 'wolf', target: 'victim' });
+      expect(isNightActionsComplete(nightState, players)).toBe(false);
+    });
+
+    it('貓又提交 cat_resurrect 後夜晚可完成', () => {
+      const nightState = createNightState(1, 1);
+      const players = new Map<string, Player>();
+
+      players.set('wolf', {
+        userNo: 1,
+        uname: 'wolf',
+        handleName: 'Wolf',
+        trip: '',
+        iconNo: 1,
+        sex: '',
+        role: 'wolf',
+        live: 'live',
+        score: 0
+      });
+      players.set('cat', {
+        userNo: 2,
+        uname: 'cat',
+        handleName: 'Cat',
+        trip: '',
+        iconNo: 2,
+        sex: '',
+        role: 'cat',
+        live: 'live',
+        score: 0
+      });
+      players.set('dead1', {
+        userNo: 3,
+        uname: 'dead1',
+        handleName: 'Dead1',
+        trip: '',
+        iconNo: 3,
+        sex: '',
+        role: 'human',
+        live: 'dead',
+        score: 0
+      });
+
+      nightState.actions.push({ type: 'wolf_kill' as any, actor: 'wolf', target: 'victim' });
+      nightState.actions.push({ type: 'cat_resurrect' as any, actor: 'cat', target: 'dead1' });
       expect(isNightActionsComplete(nightState, players)).toBe(true);
     });
   });

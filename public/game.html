@@ -2158,6 +2158,17 @@
 
         populateTargetSelect(targetSelect, targets, actionBtn);
 
+      } else if (myRole === 'cat') {
+        // Cat resurrect: target dead players except self
+        currentNightAction = 'cat_resurrect';
+        const targets = players.filter(p => p.live === 'dead' && p.uname !== myPlayer?.uname);
+
+        header.innerHTML = `<span>🐱 貓又秘術</span><span class="na-role-badge mage-badge">貓又</span>`;
+        actionBtn.textContent = '🐱 嘗試復活';
+        actionBtn.className = 'na-btn na-btn-divine';
+
+        populateTargetSelect(targetSelect, targets, actionBtn);
+
       } else if (myRole === 'guard') {
         // Guard: target any alive player except self
         currentNightAction = 'guard';
@@ -2237,6 +2248,7 @@
         wolf_kill: '擊殺',
         seer_divine: '驗證',
         fosi_divine: '子狐占卜',
+        cat_resurrect: '貓又秘術',
         guard: '守護'
       };
       addSystemMessage(`✅ 夜晚行動已提交：${actionNames[currentNightAction] || currentNightAction} ${target}`);

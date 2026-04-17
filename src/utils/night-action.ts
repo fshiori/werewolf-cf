@@ -11,6 +11,7 @@ export enum NightActionType {
   WolfKill = 'wolf_kill',
   SeerDivine = 'seer_divine',
   FosiDivine = 'fosi_divine',
+  CatResurrect = 'cat_resurrect',
   FoxDivine = 'fox_divine',
   BetrConvert = 'betr_convert',
   GuardShoot = 'guard_shoot',
@@ -379,6 +380,35 @@ export function guardTarget(
 }
 
 /**
+ * 貓又夜晚行動（CAT_DO）
+ * 指定一名目標，夜晚結算時有機率復活目標
+ */
+export function catResurrect(
+  state: NightState,
+  players: Map<string, Player>,
+  cat: string,
+  target: string
+): boolean {
+  const catPlayer = players.get(cat);
+  const targetPlayer = players.get(target);
+
+  if (!catPlayer || !targetPlayer) {
+    return false;
+  }
+
+  if (catPlayer.role !== 'cat' || catPlayer.live !== 'live') {
+    return false;
+  }
+
+  if (cat === target) {
+    return false;
+  }
+
+  addNightAction(state, NightActionType.CatResurrect, cat, target);
+  return true;
+}
+
+/**
  * 處理夜晚結果
  * 返回死亡玩家列表
  */
@@ -387,14 +417,22 @@ export function processNightResult(
   players: Map<string, Player>
 ): Player[] {
   const dead: Player[] = [];
+  const catBlocked = new Set<string>();
 
-  // 處理所有受害者
+  // 處理所有受害者（legacy: 貓又被狼咬有機率不死）
   for (const victim of state.victims) {
     const player = players.get(victim);
-    if (player && player.live === 'live') {
-      player.live = 'dead';
-      dead.push(player);
+    if (!player || player.live !== 'live') {
+      continue;
     }
+
+    if (player.role === 'cat' && Math.random() < 0.11) {
+      catBlocked.add(player.uname);
+      continue;
+    }
+
+    player.live = 'dead';
+    dead.push(player);
   }
 
   // legacy parity: 夜晚被狼咬死的毒系（poison/cat）會反噴一名存活狼人
@@ -415,6 +453,31 @@ export function processNightResult(
 
     retaliationTarget.live = 'dead';
     dead.push(retaliationTarget);
+  }
+
+  // legacy parity: CAT_DO（cat_resurrect）
+  const catActions = state.actions.filter(a => a.type === NightActionType.CatResurrect);
+  for (const action of catActions) {
+    const actor = players.get(action.actor);
+    const target = action.target ? players.get(action.target) : undefined;
+
+    if (!actor || actor.role !== 'cat' || actor.live !== 'live') {
+      continue;
+    }
+    if (catBlocked.has(actor.uname)) {
+      continue;
+    }
+    if (!target || target.live !== 'dead') {
+      continue;
+    }
+
+    if (Math.random() < 0.11) {
+      target.live = 'live';
+      const idx = dead.findIndex(p => p.uname === target.uname);
+      if (idx >= 0) {
+        dead.splice(idx, 1);
+      }
+    }
   }
 
   return dead;
@@ -455,6 +518,10 @@ export function isNightActionsComplete(
     p => p.role === 'fosi' && p.live === 'live'
   );
 
+  const aliveCats = Array.from(players.values()).filter(
+    p => p.role === 'cat' && p.live === 'live'
+  );
+
   // 檢查狼人是否行動（殺人或跳過）
   const wolfActed = state.actions.some(a =>
     a.type === NightActionType.WolfKill ||
@@ -479,6 +546,12 @@ export function isNightActionsComplete(
     (a.type === NightActionType.Skip && aliveFosi.some(f => f.uname === a.actor))
   );
 
+  // 檢查貓又是否行動（CAT_DO 或跳過）
+  const catActed = state.actions.some(a =>
+    a.type === NightActionType.CatResurrect ||
+    (a.type === NightActionType.Skip && aliveCats.some(c => c.uname === a.actor))
+  );
+
   if (aliveWolves.length > 0 && !wolfActed) {
     return false;
   }
@@ -492,6 +565,10 @@ export function isNightActionsComplete(
   }
 
   if (aliveFosi.length > 0 && !fosiActed) {
+    return false;
+  }
+
+  if (aliveCats.length > 0 && !catActed) {
     return false;
   }
 
