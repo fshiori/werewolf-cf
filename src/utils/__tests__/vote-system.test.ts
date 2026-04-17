@@ -15,6 +15,7 @@ import {
   clearVotes,
   getVoteStats,
   getVotedUsers,
+  getDayVoteParticipants,
   resolveWeightedVoteResult,
   filterVoteDisplay,
   resolveVoteDisplayMode,
@@ -502,6 +503,35 @@ describe('Vote System', () => {
       addVote(voteData, 'bob', 'targetB');
 
       expect(getVotedUsers(voteData, ['dummy_boy'])).toEqual(['alice', 'bob']);
+    });
+
+    it('getDayVoteParticipants 應排除 GM（legacy parity）', () => {
+      const players = new Map<string, Player>([
+        ['alice', {
+          userNo: 1,
+          uname: 'alice',
+          handleName: 'alice',
+          trip: '',
+          iconNo: 1,
+          sex: 'female',
+          role: 'human',
+          live: 'live',
+          score: 0,
+        }],
+        ['gm1', {
+          userNo: 2,
+          uname: 'gm1',
+          handleName: 'gm1',
+          trip: 'GM1234',
+          iconNo: 1,
+          sex: 'male',
+          role: 'GM',
+          live: 'live',
+          score: 0,
+        }],
+      ]);
+
+      expect(getDayVoteParticipants(players).map(p => p.uname)).toEqual(['alice']);
     });
   });
 

@@ -10,7 +10,7 @@ import type { Env, Player, RoomData, Message, Role } from '../types';
 import { createRoom, addPlayer, removePlayer, startGame, endGame, getPublicRoomInfo } from '../utils/room-manager';
 import { advanceTime, checkSilence, transitionPhase, DEFAULT_TIME_CONFIG, isRealTimeEnabled, isRealTimeExpired, startRealTimePhase, getRealTimeRemainingSec } from '../utils/time-progression';
 import { assignRoles, checkVictory, canSpeak, getRoleTeam, getVictoryMessage, createDummyBoyPlayer } from '../utils/role-system';
-import { createVoteData, addVote, getVoteResult, executeVote, isVoteComplete, calculateWeightedVotes, resolveWeightedVoteResult, filterVoteDisplay, resolveVoteDisplayMode, canVoteTarget, getVotedUsers } from '../utils/vote-system';
+import { createVoteData, addVote, getVoteResult, executeVote, isVoteComplete, calculateWeightedVotes, resolveWeightedVoteResult, filterVoteDisplay, resolveVoteDisplayMode, canVoteTarget, getVotedUsers, getDayVoteParticipants } from '../utils/vote-system';
 import { createNightState, wolfKill, seerDivine, guardTarget, processNightResult, getNightSummary, isNightActionsComplete, canWolfKillTarget } from '../utils/night-action';
 import { createSessionManager, type SessionValue } from '../utils/session-manager';
 import { sanitizePlayersForViewer } from '../utils/player-visibility';
@@ -731,9 +731,9 @@ export class WerewolfRoom extends DurableObject {
         }
       });
 
-      // 檢查投票是否完成
-      const alivePlayers = Array.from(this.roomData.players.values()).filter(p => p.live === 'live');
-      if (isVoteComplete(this.voteData, alivePlayers)) {
+      // 檢查投票是否完成（legacy parity：排除 GM）
+      const voteParticipants = getDayVoteParticipants(this.roomData.players);
+      if (isVoteComplete(this.voteData, voteParticipants)) {
         await this.processVoteResult();
       }
     }
