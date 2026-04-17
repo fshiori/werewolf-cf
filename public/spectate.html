@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>觀戰模式 - 人狼遊戲</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      color: #1f2937;
+      padding: 16px;
+    }
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.25);
+      overflow: hidden;
+    }
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #fff;
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .meta {
+      display: flex;
+      gap: 12px;
+      font-size: 13px;
+      opacity: .95;
+      flex-wrap: wrap;
+    }
+    .btn {
+      border: none;
+      padding: 8px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .btn-light { background: #fff; color: #4f46e5; }
+    .btn-danger { background: #ef4444; color: #fff; }
+    .grid {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      min-height: calc(100vh - 180px);
+    }
+    .panel {
+      border-right: 1px solid #e5e7eb;
+      padding: 14px;
+      overflow: auto;
+    }
+    .panel:last-child { border-right: 0; }
+    .card {
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+    .status {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      background: #e0e7ff;
+      color: #4338ca;
+    }
+    .list { display: flex; flex-direction: column; gap: 8px; }
+    .item {
+      padding: 8px 10px;
+      border-radius: 8px;
+      background: #f3f4f6;
+      font-size: 13px;
+    }
+    .events {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: calc(100vh - 280px);
+      overflow: auto;
+    }
+    .event {
+      border-left: 4px solid #6366f1;
+      background: #f8fafc;
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 13px;
+    }
+    .time { color: #6b7280; font-size: 12px; margin-bottom: 4px; }
+    .empty { color: #9ca3af; font-size: 13px; }
+    @media (max-width: 900px) {
+      .grid { grid-template-columns: 1fr; }
+      .panel { border-right: 0; border-bottom: 1px solid #e5e7eb; }
+      .panel:last-child { border-bottom: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div>
+        <div style="font-size:20px;font-weight:700;">👀 觀戰模式</div>
+        <div class="meta">
+          <span>房號 #<strong id="roomNo">--</strong></span>
+          <span>名稱：<strong id="roomName">--</strong></span>
+          <span>你的身分：<strong id="viewerName">--</strong></span>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-light" onclick="location.href='/'">回大廳</button>
+        <button class="btn btn-danger" onclick="leaveSpectate()">離開觀戰</button>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="panel">
+        <div class="card">
+          <div style="font-weight:700;margin-bottom:6px;">房間狀態</div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span class="status" id="roomStatus">--</span>
+            <span id="dayNight">--</span>
+          </div>
+          <div style="margin-top:8px;font-size:13px;color:#4b5563;">
+            玩家：<strong id="playerCount">0</strong>/<strong id="maxUser">0</strong>
+          </div>
+        </div>
+
+        <div class="card">
+          <div style="font-weight:700;margin-bottom:8px;">玩家列表</div>
+          <div class="list" id="players"></div>
+        </div>
+
+        <div class="card">
+          <div style="font-weight:700;margin-bottom:8px;">觀戰者列表</div>
+          <div class="list" id="spectators"></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <h3 style="margin:0;">遊戲事件（輪詢）</h3>
+          <small style="color:#6b7280;">每 5 秒更新</small>
+        </div>
+        <div class="events" id="events"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = window.location.origin;
+    const params = new URLSearchParams(window.location.search);
+    const roomNo = params.get('roomNo');
+    const trip = params.get('trip');
+    const handleName = params.get('handleName');
+    let pollTimer = null;
+
+    function fmtStatus(status) {
+      if (status === 'waiting') return '等待中';
+      if (status === 'playing') return '遊戲中';
+      if (status === 'ended' || status === 'finished') return '已結束';
+      return status || '--';
+    }
+
+    function fmtDayNight(mode, date) {
+      if (mode === 'night') return `🌙 夜晚（第 ${date || 0} 天）`;
+      if (mode === 'day') return `☀️ 白天（第 ${date || 0} 天）`;
+      return '⏳ 準備中';
+    }
+
+    function renderPlayers(players) {
+      const root = document.getElementById('players');
+      if (!players || players.length === 0) {
+        root.innerHTML = '<div class="empty">目前無玩家資料</div>';
+        return;
+      }
+      root.innerHTML = players.map((p) => {
+        const liveText = p.live === 'dead' ? '💀 死亡' : '✅ 存活';
+        const tripText = p.trip ? ` ◆${p.trip}` : '';
+        return `<div class="item"><strong>${p.handleName || p.uname}</strong>${tripText}<br><small>${liveText}</small></div>`;
+      }).join('');
+    }
+
+    function renderSpectators(list) {
+      const root = document.getElementById('spectators');
+      if (!list || list.length === 0) {
+        root.innerHTML = '<div class="empty">目前無觀戰者</div>';
+        return;
+      }
+      root.innerHTML = list.map((s) => `<div class="item">👀 <strong>${s.handle_name || s.handleName || '-'}</strong> ◆${s.trip || '-'}</div>`).join('');
+    }
+
+    function renderEvents(list) {
+      const root = document.getElementById('events');
+      if (!list || list.length === 0) {
+        root.innerHTML = '<div class="empty">目前沒有事件</div>';
+        return;
+      }
+      root.innerHTML = list.slice(0, 120).map((e) => {
+        const time = e.created_at ? new Date(e.created_at).toLocaleTimeString('zh-TW') : '';
+        const title = e.event_type || e.eventType || 'event';
+        const desc = e.description || e.message || JSON.stringify(e);
+        return `<div class="event"><div class="time">${time} · ${title}</div><div>${desc}</div></div>`;
+      }).join('');
+    }
+
+    async function refreshAll() {
+      const [roomRes, specRes, eventRes] = await Promise.all([
+        fetch(`${API_BASE}/api/rooms/${roomNo}`),
+        fetch(`${API_BASE}/api/spectate/${roomNo}`),
+        fetch(`${API_BASE}/api/game-events/${roomNo}`)
+      ]);
+
+      if (!roomRes.ok) throw new Error('room fetch failed');
+
+      const room = await roomRes.json();
+      const spec = specRes.ok ? await specRes.json() : { spectators: [] };
+      const events = eventRes.ok ? await eventRes.json() : { events: [] };
+
+      document.getElementById('roomNo').textContent = roomNo;
+      document.getElementById('roomName').textContent = room.roomName || room.room_name || '--';
+      document.getElementById('viewerName').textContent = handleName || '-';
+      document.getElementById('roomStatus').textContent = fmtStatus(room.status);
+      document.getElementById('dayNight').textContent = fmtDayNight(room.dayNight, room.date);
+      document.getElementById('playerCount').textContent = String(room.playerCount ?? room.player_count ?? 0);
+      document.getElementById('maxUser').textContent = String(room.maxUser ?? room.max_user ?? 0);
+
+      renderPlayers(room.players || []);
+      renderSpectators(spec.spectators || []);
+      renderEvents(events.events || []);
+    }
+
+    async function leaveSpectate() {
+      if (trip) {
+        try {
+          await fetch(`${API_BASE}/api/spectate/${roomNo}/${encodeURIComponent(trip)}`, { method: 'DELETE' });
+        } catch (_) {}
+      }
+      window.location.href = '/';
+    }
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      if (!roomNo || !trip || !handleName) {
+        alert('缺少觀戰資訊，請從大廳重新進入');
+        window.location.href = '/';
+        return;
+      }
+
+      try {
+        await refreshAll();
+        pollTimer = setInterval(async () => {
+          try { await refreshAll(); } catch (_) {}
+        }, 5000);
+      } catch (err) {
+        alert('觀戰載入失敗，請稍後重試');
+        window.location.href = '/';
+      }
+    });
+
+    window.addEventListener('beforeunload', () => {
+      if (pollTimer) clearInterval(pollTimer);
+    });
+  </script>
+</body>
+</html>

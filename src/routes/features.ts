@@ -714,6 +714,17 @@ app.post('/api/spectate/:roomNo', async (c) => {
       handleName: string;
     }>();
 
+    const trip = (data.trip || '').trim();
+    const handleName = (data.handleName || '').trim();
+
+    if (!trip || !handleName) {
+      return c.json({ error: 'Missing required fields: trip, handleName' }, 400);
+    }
+
+    if (trip.length > 20 || handleName.length > 32) {
+      return c.json({ error: 'trip/handleName too long' }, 400);
+    }
+
     const policy = await getRoomSpectatePolicy(c, roomNo);
     if (!policy.allowSpectators) {
       return c.json({ error: 'Spectator mode disabled for this room' }, 403);
@@ -739,10 +750,10 @@ app.post('/api/spectate/:roomNo', async (c) => {
 
     await stmt.bind(
       roomNo,
-      data.trip,
-      data.handleName,
+      trip,
+      handleName,
       Date.now(),
-      data.handleName,
+      handleName,
       Date.now()
     ).all();
 
