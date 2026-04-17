@@ -84,6 +84,25 @@ describe('assignRoles wishRole parity', () => {
     expect(players.filter(p => p.role === 'wolf')).toHaveLength(1);
     expect(players.filter(p => p.role === 'human')).toHaveLength(3);
   });
+
+  it('lovers 子職附掛會排除 dummy_boy 與 GM', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.1);
+
+    const dummy = createPlayer('dummy_boy');
+    dummy.role = 'human';
+    const gm = createPlayer('gm');
+    gm.role = 'GM';
+
+    const players = [dummy, gm, createPlayer('a'), createPlayer('b'), createPlayer('c')];
+
+    assignRoles(players, { human: 4, wolf: 1 } as Record<Role, number>, {
+      loversEnabled: true,
+    });
+
+    expect(dummy.isLover).toBe(false);
+    expect(gm.isLover).toBe(false);
+    expect(players.filter(p => p.isLover === true)).toHaveLength(2);
+  });
 });
 
 describe('lovers chain death parity helpers', () => {
