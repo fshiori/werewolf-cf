@@ -12,6 +12,7 @@ import { advanceTime, checkSilence, transitionPhase, DEFAULT_TIME_CONFIG, isReal
 import { assignRoles, checkVictory, canSpeak, getRoleTeam, getVictoryMessage, createDummyBoyPlayer } from '../utils/role-system';
 import { createVoteData, addVote, getVoteResult, executeVote, isVoteComplete, calculateWeightedVotes, resolveWeightedVoteResult, filterVoteDisplay, resolveVoteDisplayMode, canVoteTarget, getVotedUsers, getDayVoteParticipants } from '../utils/vote-system';
 import { createNightState, wolfKill, seerDivine, guardTarget, processNightResult, getNightSummary, isNightActionsComplete, canWolfKillTarget } from '../utils/night-action';
+import { buildStartGameVoteState } from '../utils/start-game';
 import { createSessionManager, type SessionValue } from '../utils/session-manager';
 import { sanitizePlayersForViewer } from '../utils/player-visibility';
 import { buildRoleConfig } from '../utils/role-config';
@@ -815,26 +816,29 @@ export class WerewolfRoom extends DurableObject {
       return;
     }
 
+    const waitingUsers = waitingPlayers.map(p => p.uname);
+    const voters = this.getStartGameVoters();
+    voters.add(uname);
+
+    const startVoteState = buildStartGameVoteState(Array.from(voters), waitingUsers);
+    this.setStartGameVoters(new Set(startVoteState.votedUsers));
+
     const showStartVoteProgress = this.roomData.roomOptions?.votedisplay === true;
     if (showStartVoteProgress) {
-      const voters = this.getStartGameVoters();
-      voters.add(uname);
-      this.setStartGameVoters(voters);
-
       this.broadcast({
         type: 'start_game_vote_update',
         data: {
-          votedUsers: Array.from(voters),
-          votedCount: voters.size,
-          totalRequired: waitingPlayers.length,
+          votedUsers: startVoteState.votedUsers,
+          votedCount: startVoteState.votedCount,
+          totalRequired: startVoteState.totalRequired,
         }
       });
+    }
 
-      await this.saveState();
+    await this.saveState();
 
-      if (voters.size < waitingPlayers.length) {
-        return;
-      }
+    if (!startVoteState.ready) {
+      return;
     }
 
     await this.startGameNow();
