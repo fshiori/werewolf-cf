@@ -203,6 +203,15 @@ export function getVotedUsers(voteData: VoteData, excludeUnames: string[] = []):
 }
 
 /**
+ * 取得白天投票完成判定用的玩家名單（legacy parity：排除 GM）
+ */
+export function getDayVoteParticipants(players: Map<string, Player>): Player[] {
+  return Array.from(players.values())
+    .filter(p => p.live === 'live')
+    .filter(p => p.role !== 'GM');
+}
+
+/**
  * 獲取玩家的投票目標
  */
 export function getPlayerVote(voteData: VoteData, uname: string): string | undefined {
