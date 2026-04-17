@@ -421,6 +421,62 @@ describe('API Routes', () => {
       expect(data.emoticons[0].url).toContain('/emot/smile.png');
     });
 
+    it('DELETE /api/emoticons/:filename 應該可刪除已存在表情', async () => {
+      const env = createMockEnv();
+      let deletedKey = '';
+      env.R2 = {
+        put: async () => {},
+        list: async () => ({ objects: [] }),
+        get: async (key: string) => (key === 'emot/smile.png' ? ({ key } as any) : null),
+        delete: async (key: string) => {
+          deletedKey = key;
+        }
+      } as any;
+
+      const testApp = new Hono();
+      testApp.route('/', api);
+
+      const response = await testApp.request(
+        new Request('http://localhost/api/emoticons/smile.png', {
+          method: 'DELETE',
+          headers: { 'CF-Connecting-IP': '198.51.100.125' }
+        }),
+        undefined,
+        env
+      );
+
+      expect(response.status).toBe(200);
+      const data = await response.json();
+      expect(data.success).toBe(true);
+      expect(deletedKey).toBe('emot/smile.png');
+    });
+
+    it('DELETE /api/emoticons/:filename 非法檔名應回傳 400', async () => {
+      const env = createMockEnv();
+      env.R2 = {
+        put: async () => {},
+        list: async () => ({ objects: [] }),
+        get: async () => null,
+        delete: async () => {}
+      } as any;
+
+      const testApp = new Hono();
+      testApp.route('/', api);
+
+      const response = await testApp.request(
+        new Request('http://localhost/api/emoticons/bad$.png', {
+          method: 'DELETE',
+          headers: { 'CF-Connecting-IP': '198.51.100.126' }
+        }),
+        undefined,
+        env
+      );
+
+      expect(response.status).toBe(400);
+      const data = await response.json();
+      expect(data.error).toContain('Invalid filename');
+    });
+
     it('GET /emot/:filename 應該回傳對應檔案', async () => {
       const env = createMockEnv();
       env.R2 = {
@@ -437,7 +493,8 @@ describe('API Routes', () => {
             };
           }
           return null;
-        }
+        },
+        delete: async () => {}
       } as any;
 
       const testApp = new Hono();
