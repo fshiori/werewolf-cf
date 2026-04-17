@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import type { Player, Role } from '../../types';
-import { assignRoles } from '../role-system';
+import { assignRoles, getLoverChainVictims } from '../role-system';
 
 function createPlayer(uname: string, wishRole: Role | 'none' = 'none'): Player {
   return {
@@ -64,5 +64,39 @@ describe('assignRoles wishRole parity', () => {
     const wolfCount = players.filter(p => p.role === 'wolf').length;
     expect(wolfCount).toBe(1);
     expect(players.map(p => p.role).sort()).toEqual(['human', 'human', 'wolf']);
+  });
+});
+
+describe('lovers chain death parity helpers', () => {
+  it('當新死亡名單含戀人時，回傳其他存活戀人作為殉情名單', () => {
+    const players = new Map<string, Player>([
+      ['a', { ...createPlayer('a'), role: 'lovers' }],
+      ['b', { ...createPlayer('b'), role: 'lovers' }],
+      ['c', { ...createPlayer('c'), role: 'human' }],
+    ]);
+
+    const victims = getLoverChainVictims(players, ['a']);
+    expect(victims.map(v => v.uname)).toEqual(['b']);
+  });
+
+  it('若新死亡名單不含戀人，則不會觸發殉情', () => {
+    const players = new Map<string, Player>([
+      ['a', { ...createPlayer('a'), role: 'lovers' }],
+      ['b', { ...createPlayer('b'), role: 'lovers' }],
+      ['c', { ...createPlayer('c'), role: 'human' }],
+    ]);
+
+    const victims = getLoverChainVictims(players, ['c']);
+    expect(victims).toHaveLength(0);
+  });
+
+  it('已在新死亡名單中的戀人不重複回傳', () => {
+    const players = new Map<string, Player>([
+      ['a', { ...createPlayer('a'), role: 'lovers' }],
+      ['b', { ...createPlayer('b'), role: 'lovers' }],
+    ]);
+
+    const victims = getLoverChainVictims(players, ['a', 'b']);
+    expect(victims).toHaveLength(0);
   });
 });

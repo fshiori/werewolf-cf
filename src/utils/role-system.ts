@@ -268,6 +268,34 @@ export function isLover(role: Role): boolean {
 }
 
 /**
+ * 依戀人連動規則找出需要連帶死亡的玩家
+ * legacy parity: 任一戀人死亡時，其餘仍存活戀人會殉情
+ */
+export function getLoverChainVictims(
+  players: Map<string, Player>,
+  newlyDeadUnames: string[]
+): Player[] {
+  if (newlyDeadUnames.length === 0) {
+    return [];
+  }
+
+  const deadSet = new Set(newlyDeadUnames);
+  const trigger = newlyDeadUnames.some(uname => {
+    const p = players.get(uname);
+    return !!p && isLover(p.role);
+  });
+
+  if (!trigger) {
+    return [];
+  }
+
+  return Array.from(players.values())
+    .filter(p => p.live === 'live')
+    .filter(p => isLover(p.role))
+    .filter(p => !deadSet.has(p.uname));
+}
+
+/**
  * 判斷角色是否為妖狐相關
  */
 export function isFoxRelated(role: Role): boolean {

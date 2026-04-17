@@ -9,7 +9,7 @@ import type { DurableObjectState } from '@cloudflare/workers-types';
 import type { Env, Player, RoomData, Message, Role } from '../types';
 import { createRoom, addPlayer, removePlayer, startGame, endGame, getPublicRoomInfo } from '../utils/room-manager';
 import { checkSilence, advanceSilenceTime, shouldTriggerSuddenDeath, DEFAULT_TIME_CONFIG, isRealTimeExpired } from '../utils/time-progression';
-import { assignRoles, checkVictory, canSpeak, getRoleTeam, getVictoryMessage, createDummyBoyPlayer } from '../utils/role-system';
+import { assignRoles, checkVictory, canSpeak, getRoleTeam, getVictoryMessage, createDummyBoyPlayer, getLoverChainVictims } from '../utils/role-system';
 import { createVoteData, addVote, getVoteResult, executeVote, isVoteComplete, calculateWeightedVotes, resolveWeightedVoteResult, filterVoteDisplay, resolveVoteDisplayMode, canVoteTarget, getVotedUsers, getDayVoteParticipants } from '../utils/vote-system';
 import { createNightState, wolfKill, seerDivine, guardTarget, processNightResult, getNightSummary, isNightActionsComplete, canWolfKillTarget } from '../utils/night-action';
 import { buildStartGameVoteState } from '../utils/start-game';
@@ -1287,6 +1287,33 @@ export class WerewolfRoom extends DurableObject {
   }
 
   /**
+   * 套用戀人連帶死亡（殉情）
+   */
+  private applyLoversChainDeath(initialDead: Player[]): Player[] {
+    const chainVictims = getLoverChainVictims(
+      this.roomData.players,
+      initialDead.map(p => p.uname)
+    );
+
+    if (chainVictims.length === 0) {
+      return [];
+    }
+
+    const now = Date.now();
+    for (const p of chainVictims) {
+      p.live = 'dead';
+      (p as any).death = now;
+    }
+
+    this.broadcast({
+      type: 'system',
+      data: { message: `💔 戀人殉情：${chainVictims.map(p => p.handleName).join('、')}` }
+    });
+
+    return chainVictims;
+  }
+
+  /**
    * 日間超時後的突然死（core）：未投票存活者直接死亡
    */
   private async applySuddenDeathForNoVote() {
@@ -1311,13 +1338,16 @@ export class WerewolfRoom extends DurableObject {
       (p as any).death = now;
     }
 
+    const loversChain = this.applyLoversChainDeath(suddenDead);
+    const allDead = [...suddenDead, ...loversChain];
+
     this.broadcast({
       type: 'system',
       data: { message: `⚠️ 未投票者突然死：${suddenDead.map(p => p.handleName).join('、')}` }
     });
     this.broadcast({
       type: 'players_died',
-      data: suddenDead.map(p => ({ uname: p.uname, handleName: p.handleName }))
+      data: allDead.map(p => ({ uname: p.uname, handleName: p.handleName }))
     });
     this.pushPlayersUpdate();
   }
@@ -1476,10 +1506,12 @@ export class WerewolfRoom extends DurableObject {
       // 處理夜晚結果
       if (nightState) {
         const dead = processNightResult(nightState, this.roomData.players);
-        if (dead.length > 0) {
+        const loversChain = this.applyLoversChainDeath(dead);
+        const allDead = [...dead, ...loversChain];
+        if (allDead.length > 0) {
           this.broadcast({
             type: 'players_died',
-            data: dead.map(p => ({ uname: p.uname, handleName: p.handleName }))
+            data: allDead.map(p => ({ uname: p.uname, handleName: p.handleName }))
           });
         }
       }
@@ -1555,10 +1587,13 @@ export class WerewolfRoom extends DurableObject {
     );
     const displayInfo = filterVoteDisplay(voteData, voteDisplayMode);
 
-    if (result.executed.length > 0) {
+    const loversChain = this.applyLoversChainDeath(result.executed);
+    const executedPlayers = [...result.executed, ...loversChain];
+
+    if (executedPlayers.length > 0) {
       this.broadcast({
         type: 'players_executed',
-        data: result.executed.map(p => ({ uname: p.uname, handleName: p.handleName })),
+        data: executedPlayers.map(p => ({ uname: p.uname, handleName: p.handleName })),
         // 附加 voteDisplay 資訊
         voteDisplay: displayInfo.showResults ? {
           voteCounts: displayInfo.voteCounts,
@@ -1569,7 +1604,7 @@ export class WerewolfRoom extends DurableObject {
     }
 
     // 記錄處決事件
-    for (const p of result.executed) {
+    for (const p of executedPlayers) {
       try {
         // @ts-ignore
         await this.env.DB.prepare(`
@@ -1640,16 +1675,18 @@ export class WerewolfRoom extends DurableObject {
 
     // 處理死亡
     const dead = processNightResult(nightState, this.roomData.players);
+    const loversChain = this.applyLoversChainDeath(dead);
+    const allDead = [...dead, ...loversChain];
 
-    if (dead.length > 0) {
+    if (allDead.length > 0) {
       this.broadcast({
         type: 'players_died',
-        data: dead.map(p => ({ uname: p.uname, handleName: p.handleName }))
+        data: allDead.map(p => ({ uname: p.uname, handleName: p.handleName }))
       });
       this.pushPlayersUpdate();
 
       // 記錄死亡事件到 D1
-      for (const p of dead) {
+      for (const p of allDead) {
         try {
           // @ts-ignore
           await this.env.DB.prepare(`
