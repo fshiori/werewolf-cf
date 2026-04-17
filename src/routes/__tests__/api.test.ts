@@ -635,6 +635,92 @@ describe('API Routes', () => {
       expect(savedSession?.wishRole).toBe('none');
     });
 
+    it('legacy token game_option=istrip 時，不帶 trip 的 join 會被拒絕（403）', async () => {
+      const env = createMockEnv();
+      env.DB = {
+        prepare: (_query: string) => ({
+          bind: (..._args: any[]) => ({
+            run: async () => ({ success: true }),
+            first: async () => ({
+              is_private: 0,
+              password_hash: null,
+              game_option: 'istrip votedisplay'
+            }),
+            all: async () => ({ results: [] })
+          })
+        })
+      } as any;
+
+      const testApp = new Hono();
+      testApp.route('/', api);
+
+      const response = await testApp.request(
+        new Request('http://localhost/api/rooms/12345/join', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'CF-Connecting-IP': '203.0.113.41'
+          },
+          body: JSON.stringify({
+            uname: 'testuser',
+            handleName: 'Test',
+            trip: '',
+            iconNo: 1,
+            sex: 'male'
+          })
+        }),
+        undefined,
+        env
+      );
+
+      expect(response.status).toBe(403);
+      const data = await response.json();
+      expect(data.error).toContain('Trip code required');
+    });
+
+    it('legacy token game_option=istrip 時，帶 trip 的 join 可成功', async () => {
+      const env = createMockEnv();
+      env.DB = {
+        prepare: (_query: string) => ({
+          bind: (..._args: any[]) => ({
+            run: async () => ({ success: true }),
+            first: async () => ({
+              is_private: 0,
+              password_hash: null,
+              game_option: 'istrip votedisplay'
+            }),
+            all: async () => ({ results: [] })
+          })
+        })
+      } as any;
+
+      const testApp = new Hono();
+      testApp.route('/', api);
+
+      const response = await testApp.request(
+        new Request('http://localhost/api/rooms/12345/join', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'CF-Connecting-IP': '203.0.113.42'
+          },
+          body: JSON.stringify({
+            uname: 'testuser',
+            handleName: 'Test',
+            trip: 'TRIP1234',
+            iconNo: 1,
+            sex: 'male'
+          })
+        }),
+        undefined,
+        env
+      );
+
+      expect(response.status).toBe(200);
+      const data = await response.json();
+      expect(data.success).toBe(true);
+    });
+
     it('私人房間，密碼正確但不帶 password 欄位 → 403', async () => {
       const correctHash = await sha256hex('correct-pw');
       const privateEnv = createMockEnv();
@@ -657,7 +743,10 @@ describe('API Routes', () => {
       const response = await privateApp.request(
         new Request('http://localhost/api/rooms/12345/join', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'CF-Connecting-IP': '203.0.113.43'
+          },
           body: JSON.stringify({
             uname: 'testuser',
             handleName: 'Test',
