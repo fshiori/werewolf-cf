@@ -894,6 +894,53 @@ app.get('/icons/:filename', async (c) => {
 });
 
 /**
+ * 上傳自訂表情（legacy user_emot 對應，R2 emot/）
+ */
+app.post('/api/emoticons', checkBan, rateLimit, async (c) => {
+  try {
+    const formData = await c.req.formData();
+    const file = formData.get('emoticon') as File;
+    const name = (formData.get('name') as string) || '';
+
+    if (!file || !name) {
+      return c.json({ error: 'Missing file or name' }, 400);
+    }
+
+    const safeName = name.trim().replace(/[^A-Za-z0-9_-]/g, '').slice(0, 32);
+    if (!safeName) {
+      return c.json({ error: 'Invalid emoticon name' }, 400);
+    }
+
+    if (!file.type.startsWith('image/')) {
+      return c.json({ error: 'File must be an image' }, 400);
+    }
+
+    // 表情檔上限 64KB
+    if (file.size > 64 * 1024) {
+      return c.json({ error: 'File too large (max 64KB)' }, 400);
+    }
+
+    const ext = (file.type.split('/')[1] || 'png').toLowerCase();
+    const arrayBuffer = await file.arrayBuffer();
+    const key = `emot/${safeName}.${ext}`;
+
+    await c.env.R2.put(key, arrayBuffer, {
+      httpMetadata: { contentType: file.type }
+    });
+
+    return c.json({
+      success: true,
+      key,
+      name: safeName,
+      url: `/emot/${encodeURIComponent(`${safeName}.${ext}`)}`,
+    });
+  } catch (error) {
+    console.error('Upload emoticon error:', error);
+    return c.json({ error: 'Failed to upload emoticon' }, 500);
+  }
+});
+
+/**
  * 取得自訂表情列表（legacy user_emot 對應，R2 emot/）
  */
 app.get('/api/emoticons', async (c) => {

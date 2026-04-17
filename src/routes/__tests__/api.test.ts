@@ -255,6 +255,38 @@ describe('API Routes', () => {
   });
 
   describe('自訂表情（user_emot parity）', () => {
+    it('POST /api/emoticons 應該可上傳表情並回傳 URL', async () => {
+      const env = createMockEnv();
+      let savedKey = '';
+      env.R2 = {
+        put: async (key: string) => {
+          savedKey = key;
+        },
+        get: async () => null,
+        list: async () => ({ objects: [] })
+      } as any;
+
+      const testApp = new Hono();
+      testApp.route('/', api);
+
+      const formData = new FormData();
+      const pngData = new Uint8Array([137, 80, 78, 71]);
+      formData.append('emoticon', new File([pngData], 'smile.png', { type: 'image/png' }));
+      formData.append('name', 'smile_face');
+
+      const response = await testApp.request(
+        new Request('http://localhost/api/emoticons', { method: 'POST', body: formData }),
+        undefined,
+        env
+      );
+
+      expect(response.status).toBe(200);
+      const data = await response.json();
+      expect(data.success).toBe(true);
+      expect(savedKey).toBe('emot/smile_face.png');
+      expect(data.url).toContain('/emot/smile_face.png');
+    });
+
     it('GET /api/emoticons 應該回傳 emot/ 前綴列表', async () => {
       const env = createMockEnv();
       env.R2 = {
@@ -839,7 +871,10 @@ describe('API Routes', () => {
       const response = await testApp.request(
         new Request('http://localhost/api/rooms/12345/join', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'CF-Connecting-IP': '198.51.100.88'
+          },
           body: JSON.stringify({
             uname: 'testuser',
             handleName: 'Test',
@@ -890,7 +925,10 @@ describe('API Routes', () => {
       const response = await testApp.request(
         new Request('http://localhost/api/rooms/12345/join', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'CF-Connecting-IP': '198.51.100.88'
+          },
           body: JSON.stringify({
             uname: 'testuser',
             handleName: 'Test',
