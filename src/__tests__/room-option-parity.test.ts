@@ -398,20 +398,18 @@ describe('optionRole runtime consume（parseRoleConfig）', () => {
     stubStatus: string;
   }> = [];
 
-  const missingRoleTokens = [
-    {
-      token: 'suspect',
-      description: '疑心深重者',
-      phpBehavior: '夜間可指定一人，若為人狼則白天可額外發言',
-    },
-  ];
+  const missingRoleTokens: Array<{
+    token: string;
+    description: string;
+    phpBehavior: string;
+  }> = [];
 
   it(`未消耗 gameOption token 共 ${missingConsumedGameOptionTokens.length} 個（皆有 parse stub）`, () => {
     expect(missingConsumedGameOptionTokens).toHaveLength(0);
   });
 
   it(`未實作 optionRole token 共 ${missingRoleTokens.length} 個`, () => {
-    expect(missingRoleTokens).toHaveLength(1);
+    expect(missingRoleTokens).toHaveLength(0);
   });
 
   describe('未消耗 gameOption token 清單（有 stub 無 game logic）', () => {
@@ -437,6 +435,13 @@ describe('optionRole runtime consume（parseRoleConfig）', () => {
   });
 
   describe('未實作 optionRole token 清單（文件用途）', () => {
+    if (missingRoleTokens.length === 0) {
+      it('目前已清空（無待補 token）', () => {
+        expect(missingRoleTokens).toHaveLength(0);
+      });
+      return;
+    }
+
     for (const t of missingRoleTokens) {
       it(`❌ optionRole: ${t.token} — ${t.description}`, () => {
         // 文件測試：確保清單不會遺漏

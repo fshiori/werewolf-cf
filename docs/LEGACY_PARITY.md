@@ -220,9 +220,9 @@ These control which special roles appear in the role list at game start.
 | `wfbig` | Add 大狼 role (strong wolf) | ✅ | ✅ `wfbig` count injection | ✅ Full（20+ 注入 + 狼陣營判定 + mage/fosi 占卜偽裝分支） |
 | `lovers` | Add 戀人 role (paired lovers, die together) | ✅ | ✅ lovers replacement injection | ⚠️ Partial（13+ 以 common/human 置換 2 名 lovers；連帶死亡已覆蓋 day/night/sudden-death，但子職附掛模型仍有差異） |
 
-### PHP Role Assignment Logic (not yet ported)
+### PHP Role Assignment Logic (mostly ported)
 
-In PHP, `game_vote.php` lines ~715–790 implement complex role-list mutation at game start:
+In PHP, `game_vote.php` lines ~715–790 implement role-list mutation at game start:
 
 1. **20+ players required**: `betr`, `poison`, `foxs`, `wfbig`, `fosi` only activate when `user_count >= 20`
 2. **Mutual exclusivity**: Only one of `betr`, `foxs`, `fosi`, or plain `poison` can be active
@@ -232,7 +232,7 @@ In PHP, `game_vote.php` lines ~715–790 implement complex role-list mutation at
 6. **authority at 16+**: `authority` overwrites a `human` in the role list
 7. **Role list tables**: PHP has per-player-count role lists for 8–30 players (`setting.php` lines 196–219)
 
-CF has the role **types** defined but the **auto-assignment logic** that modifies the role list based on optionRole tokens is not yet fully ported.
+CF has ported the core role-list mutation pipeline and token parsing; remaining gaps are the rows still marked ⚠️ Partial above (`foxs`, `lovers`, `dummy_boy` AI-detail equivalence).
 
 ---
 
