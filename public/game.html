@@ -906,7 +906,8 @@
             <button class="action-btn" id="btnVote" data-tooltip="投票" data-i18n-title="game.btn.vote" onclick="openVotePanel()" disabled title="投票">🗳️</button>
             <button class="action-btn" id="btnWill" data-tooltip="遺書" data-i18n-title="game.btn.will" onclick="openWillPanel()" disabled title="遺書">📝</button>
             <button class="action-btn" id="btnWhisper" data-tooltip="密語" data-i18n-title="game.btn.whisper" onclick="openWhisperPanel()" disabled title="密語">🤫</button>
-            <button class="action-btn" id="btnStart" data-tooltip="開始遊戲" data-i18n-title="game.btn.start" onclick="requestStartGame()" disabled title="開始遊戲">▶️</button>
+            <button class="action-btn" id="btnStart" data-tooltip="開始遊戲投票" data-i18n-title="game.btn.start" onclick="requestStartGame()" disabled title="開始遊戲投票">▶️</button>
+            <button class="action-btn" id="btnObjection" data-tooltip="提出異議" onclick="requestObjection()" disabled title="提出異議">❗</button>
           </div>
           <button class="btn btn-primary" id="sendBtn" onclick="sendMessage()" data-i18n="common.send">發送</button>
         </div>
@@ -1239,6 +1240,12 @@
           addSystemMessage(data.data.message || data.data);
           break;
 
+        case 'objection_update':
+          if (data.data?.uname && data.data?.left != null) {
+            addSystemMessage(`異議：${data.data.uname} 已用 ${data.data.count} 次（剩餘 ${data.data.left}）`);
+          }
+          break;
+
         // ---- Player Join/Leave ----
         case 'user_joined':
         case 'player_join':
@@ -1266,6 +1273,16 @@
           break;
 
         // ---- Game Start ----
+        case 'start_game_vote_update':
+          if (Array.isArray(data.data?.votedUsers)) {
+            votedUsers = new Set(data.data.votedUsers);
+            updatePlayersList(players);
+          }
+          if (data.data?.votedCount != null && data.data?.totalRequired != null) {
+            addSystemMessage(`開始遊戲投票進度：${data.data.votedCount}/${data.data.totalRequired}`);
+          }
+          break;
+
         case 'game_start':
           handleGameStart(data.data);
           break;
@@ -1470,6 +1487,8 @@
     }
 
     function handleGameStart(data) {
+      votedUsers = new Set();
+
       if (data.role) {
         myRole = data.role;
         showRoleBanner(data.role);
@@ -1621,9 +1640,11 @@
       const canWhisper = isAlive && isNight && myRole && ['wolf', 'wolf_partner', 'common', 'common_partner', 'lovers', 'lovers_partner'].includes(myRole);
       document.getElementById('btnWhisper').disabled = !canWhisper;
 
-      // Start game button: host during waiting
-      const isHost = params.get('isHost') === 'true';
-      document.getElementById('btnStart').disabled = !(isWaiting && isHost);
+      // Start game vote button: waiting + alive player
+      document.getElementById('btnStart').disabled = !(isWaiting && isAlive);
+
+      // Objection button: playing day + alive
+      document.getElementById('btnObjection').disabled = !(phase === 'day' && isAlive);
 
       // Send button
       canSpeak = (isWaiting || phase === 'day') && isAlive;
@@ -1665,7 +1686,15 @@
       }
 
       ws.send(JSON.stringify({ type: 'start_game' }));
-      addSystemMessage('已發送開始遊戲請求');
+      addSystemMessage('已送出開始遊戲投票');
+    }
+
+    function requestObjection() {
+      if (!ws || ws.readyState !== WebSocket.OPEN) {
+        addSystemMessage('⚠️ 尚未連線');
+        return;
+      }
+      ws.send(JSON.stringify({ type: 'objection' }));
     }
 
     // ==================== Vote System ====================

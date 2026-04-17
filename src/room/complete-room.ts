@@ -517,6 +517,9 @@ export class WerewolfRoom extends DurableObject {
           await this.handleHeavenChat(uname, data.text);
         }
         break;
+      case 'objection':
+        await this.handleObjection(uname);
+        break;
     }
   }
 
@@ -799,13 +802,58 @@ export class WerewolfRoom extends DurableObject {
   }
 
   /**
-   * 開始遊戲
+   * 開始遊戲（legacy parity：等待中先投 GAMESTART，同步 votedisplay 進度）
    */
   private async handleStartGame(uname: string) {
     if (this.roomData.status !== 'waiting') {
       return;
     }
 
+    const waitingPlayers = Array.from(this.roomData.players.values())
+      .filter(p => p.live === 'live' && p.uname !== 'dummy_boy');
+    if (!waitingPlayers.some(p => p.uname === uname)) {
+      return;
+    }
+
+    const showStartVoteProgress = this.roomData.roomOptions?.votedisplay === true;
+    if (showStartVoteProgress) {
+      const voters = this.getStartGameVoters();
+      voters.add(uname);
+      this.setStartGameVoters(voters);
+
+      this.broadcast({
+        type: 'start_game_vote_update',
+        data: {
+          votedUsers: Array.from(voters),
+          votedCount: voters.size,
+          totalRequired: waitingPlayers.length,
+        }
+      });
+
+      await this.saveState();
+
+      if (voters.size < waitingPlayers.length) {
+        return;
+      }
+    }
+
+    await this.startGameNow();
+  }
+
+  private getStartGameVoters(): Set<string> {
+    const arr = ((this.roomData as any)._startGameVoters as string[] | undefined) || [];
+    return new Set(arr);
+  }
+
+  private setStartGameVoters(voters: Set<string>) {
+    (this.roomData as any)._startGameVoters = Array.from(voters);
+  }
+
+  private clearStartGameVoters() {
+    delete (this.roomData as any)._startGameVoters;
+  }
+
+  private async startGameNow() {
     const players = Array.from(this.roomData.players.values());
 
     // 隨機分配角色（wishRole 啟用時，優先滿足玩家希望角色）
@@ -818,18 +866,18 @@ export class WerewolfRoom extends DurableObject {
     const gmEnabled = this.roomData.roomOptions?.gmEnabled === true;
     const gmTrip = ((this.roomData as any).gmTrip as string | undefined)?.trim();
     if (gmEnabled && gmTrip) {
-      // 在已加入的玩家中找到匹配 trip 的玩家
       const gmPlayer = players.find(p => (p.trip || '').trim() === gmTrip);
       if (gmPlayer) {
         gmPlayer.role = 'GM';
       }
     }
 
-    // 開始遊戲
     const success = startGame(this.roomData);
     if (!success) {
       return;
     }
+
+    this.clearStartGameVoters();
 
     // custDummy / dummyBoy: 啟用啞巴男時建立啞巴男玩家
     if (this.roomData.roomOptions?.dummyBoy) {
@@ -844,8 +892,6 @@ export class WerewolfRoom extends DurableObject {
     }
 
     // istrip: 如果啟用，驗證所有玩家都有 trip（在 startGame 時檢查）
-    // 如果有玩家沒有 trip 且 istrip 啟用，記錄警告但不阻止遊戲開始
-    // （PHP 中是在 user_manager.php 加入時檢查，這裡做為兜底）
     if (this.roomData.roomOptions?.istrip) {
       const noTripPlayers = Array.from(this.roomData.players.values())
         .filter(p => p.uname !== 'dummy_boy' && !p.trip);
@@ -854,15 +900,13 @@ export class WerewolfRoom extends DurableObject {
       }
     }
 
-    // 即時制：記錄遊戲開始時間作為第一個階段的開始時間
     if (this.roomData.roomOptions?.realTime) {
       (this.roomData as any)._phaseStartTimeMs = Date.now();
     }
 
-    // 初始化投票資料（遊戲從白天開始，需要投票資料）
     this.voteData = createVoteData(this.roomData.roomNo, this.roomData.date);
+    this.maybeRunDummyBoyAI('day');
 
-    // 通知所有玩家
     for (const [playerUname, ws] of this.sessions) {
       const player = this.roomData.players.get(playerUname);
       if (player && ws) {
@@ -879,7 +923,6 @@ export class WerewolfRoom extends DurableObject {
 
     await this.saveState();
 
-    // 更新 KV 統計
     try {
       const { StatsManager } = await import('../utils/stats-manager');
       const statsManager = new StatsManager(this.env.KV);
@@ -889,7 +932,6 @@ export class WerewolfRoom extends DurableObject {
       console.error('Stats update error:', e);
     }
 
-    // 記錄遊戲開始事件
     try {
       // @ts-ignore
       await this.env.DB.prepare(`
@@ -1118,6 +1160,160 @@ export class WerewolfRoom extends DurableObject {
   }
 
   /**
+   * 異議系統（legacy objection 核心）
+   */
+  private async handleObjection(uname: string) {
+    if (this.roomData.status !== 'playing' || this.roomData.dayNight === 'night') {
+      return;
+    }
+
+    const player = this.roomData.players.get(uname);
+    if (!player || player.live !== 'live') {
+      return;
+    }
+
+    const MAX_OBJECTION = 2;
+    const objectionMap = ((this.roomData as any)._objectionCounts || {}) as Record<string, number>;
+    const current = objectionMap[uname] || 0;
+    if (current >= MAX_OBJECTION) {
+      const ws = this.sessions.get(uname);
+      if (ws) {
+        ws.send(JSON.stringify({
+          type: 'system',
+          data: { message: `異議次數已達上限（${MAX_OBJECTION}）` }
+        }));
+      }
+      return;
+    }
+
+    objectionMap[uname] = current + 1;
+    (this.roomData as any)._objectionCounts = objectionMap;
+
+    this.broadcast({
+      type: 'system',
+      data: { message: `❗ ${player.handleName} 提出異議！` }
+    });
+
+    this.broadcast({
+      type: 'objection_update',
+      data: {
+        uname,
+        count: objectionMap[uname],
+        left: Math.max(0, MAX_OBJECTION - objectionMap[uname]),
+      }
+    });
+
+    await this.saveState();
+  }
+
+  /**
+   * 日間超時後的突然死（core）：未投票存活者直接死亡
+   */
+  private async applySuddenDeathForNoVote() {
+    if (!this.voteData || this.roomData.dayNight !== 'day') {
+      return;
+    }
+
+    const votedUsers = new Set(getVotedUsers(this.voteData));
+    const suddenDead = Array.from(this.roomData.players.values())
+      .filter(p => p.live === 'live')
+      .filter(p => p.uname !== 'dummy_boy')
+      .filter(p => p.role !== 'GM')
+      .filter(p => !votedUsers.has(p.uname));
+
+    if (suddenDead.length === 0) {
+      return;
+    }
+
+    const now = Date.now();
+    for (const p of suddenDead) {
+      p.live = 'dead';
+      (p as any).death = now;
+    }
+
+    this.broadcast({
+      type: 'system',
+      data: { message: `⚠️ 未投票者突然死：${suddenDead.map(p => p.handleName).join('、')}` }
+    });
+    this.broadcast({
+      type: 'players_died',
+      data: suddenDead.map(p => ({ uname: p.uname, handleName: p.handleName }))
+    });
+    this.pushPlayersUpdate();
+  }
+
+  /**
+   * dummy_boy 簡易 AI（發言 + 白天自動投票）
+   */
+  private maybeRunDummyBoyAI(phase: 'day' | 'night') {
+    const dummy = this.roomData.players.get('dummy_boy');
+    if (!dummy || dummy.live !== 'live') {
+      return;
+    }
+
+    const linesDay = ['我只是個替身…', '今天也要努力活著。', '大家冷靜投票喔。'];
+    const linesNight = ['夜深了…', '我先睡一下。', '晚安，各位。'];
+    const sentence = phase === 'day'
+      ? linesDay[Math.floor(Math.random() * linesDay.length)]
+      : linesNight[Math.floor(Math.random() * linesNight.length)];
+
+    const msg: Message = {
+      id: `${Date.now()}-${Math.random()}`,
+      roomNo: this.roomData.roomNo,
+      date: this.roomData.date,
+      location: this.roomData.dayNight,
+      uname: dummy.uname,
+      handleName: dummy.handleName,
+      sentence,
+      fontType: 'normal',
+      time: Date.now(),
+    };
+    this.broadcast({ type: 'message', data: msg });
+
+    if (phase !== 'day' || !this.voteData || this.voteData.votes.has('dummy_boy')) {
+      return;
+    }
+
+    const voteCandidates = Array.from(this.roomData.players.values())
+      .filter(p => p.live === 'live')
+      .filter(p => p.uname !== 'dummy_boy')
+      .filter(p => p.role !== 'GM');
+
+    if (voteCandidates.length === 0) {
+      return;
+    }
+
+    const target = voteCandidates[Math.floor(Math.random() * voteCandidates.length)];
+    if (!target) {
+      return;
+    }
+
+    const success = addVote(this.voteData, 'dummy_boy', target.uname);
+    if (!success) {
+      return;
+    }
+
+    const voteDisplayMode = resolveVoteDisplayMode(
+      this.roomData.roomOptions?.voteDisplay,
+      this.roomData.roomOptions?.openVote
+    );
+    const displayInfo = filterVoteDisplay(this.voteData, voteDisplayMode);
+    const showVoteProgress = this.roomData.roomOptions?.votedisplay === true;
+
+    this.broadcast({
+      type: 'vote_update',
+      data: {
+        uname: 'dummy_boy',
+        target: target.uname,
+        voteCounts: displayInfo.showResults ? displayInfo.voteCounts : [],
+        voterMap: displayInfo.voterMap ?? undefined,
+        showResults: displayInfo.showResults,
+        votedUsers: showVoteProgress ? getVotedUsers(this.voteData) : undefined,
+      }
+    });
+  }
+
+  /**
    * 廣播訊息給特定玩家
    */
   private broadcastTo(message: any, recipients: string[]) {
@@ -1145,7 +1341,14 @@ export class WerewolfRoom extends DurableObject {
     }
 
     if (this.roomData.dayNight === 'day') {
-      // 白天 → 夜晚
+      // 白天超時：先處理突然死，再結算投票
+      await this.applySuddenDeathForNoVote();
+      if (this.voteData) {
+        await this.processVoteResult();
+        return;
+      }
+
+      // 無投票資料時才直接進夜晚
       this.roomData.dayNight = 'night';
       this.roomData.timeSpent = 0;
       this.nightState = createNightState(this.roomData.roomNo, this.roomData.date);
@@ -1306,6 +1509,7 @@ export class WerewolfRoom extends DurableObject {
         message: '夜幕降臨，請關閉燈光...'
       }
     });
+    this.maybeRunDummyBoyAI('night');
 
     await this.saveState();
   }
@@ -1375,6 +1579,7 @@ export class WerewolfRoom extends DurableObject {
 
     // 建立投票資料
     this.voteData = createVoteData(this.roomData.roomNo, this.roomData.date);
+    this.maybeRunDummyBoyAI('day');
     this._pendingNightSummary = null;
 
     await this.saveState();

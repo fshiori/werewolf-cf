@@ -106,7 +106,7 @@ describe('parseRoomOptions — gameOption token parity', () => {
       expect(parseRoomOptions({}).votedisplay).toBe(false);
     });
 
-    // 已串接：votedisplay=true 時 vote_update 會下發 votedUsers，前端玩家清單顯示「已投票」
+    // 已串接：votedisplay=true 時，等待中 start_game 投票與白天 vote_update 都會下發 votedUsers，前端玩家清單顯示「已投票」
   });
 
   // ── dummyBoy ⚠️（已解析，遊戲邏輯部分消耗）──
