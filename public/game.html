@@ -2088,7 +2088,7 @@
     }
 
     // ==================== Night Action System ====================
-    let currentNightAction = null; // 'wolf_kill' | 'seer_divine' | 'guard'
+    let currentNightAction = null; // 'wolf_kill' | 'seer_divine' | 'fosi_divine' | 'guard'
 
     function showNightActionPanel() {
       const panel = document.getElementById('nightActionPanel');
@@ -2143,6 +2143,17 @@
 
         header.innerHTML = `<span>🔮 預言家驗證</span><span class="na-role-badge mage-badge">預言家</span>`;
         actionBtn.textContent = '🔮 驗證';
+        actionBtn.className = 'na-btn na-btn-divine';
+
+        populateTargetSelect(targetSelect, targets, actionBtn);
+
+      } else if (myRole === 'fosi') {
+        // Fosi divine: target any alive player except self
+        currentNightAction = 'fosi_divine';
+        const targets = players.filter(p => p.live === 'live' && p.uname !== myPlayer?.uname);
+
+        header.innerHTML = `<span>🦊 子狐占卜</span><span class="na-role-badge mage-badge">子狐</span>`;
+        actionBtn.textContent = '🦊 占卜';
         actionBtn.className = 'na-btn na-btn-divine';
 
         populateTargetSelect(targetSelect, targets, actionBtn);
@@ -2225,6 +2236,7 @@
       const actionNames = {
         wolf_kill: '擊殺',
         seer_divine: '驗證',
+        fosi_divine: '子狐占卜',
         guard: '守護'
       };
       addSystemMessage(`✅ 夜晚行動已提交：${actionNames[currentNightAction] || currentNightAction} ${target}`);

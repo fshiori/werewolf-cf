@@ -10,6 +10,7 @@ import type { Player, Role } from '../types';
 export enum NightActionType {
   WolfKill = 'wolf_kill',
   SeerDivine = 'seer_divine',
+  FosiDivine = 'fosi_divine',
   FoxDivine = 'fox_divine',
   BetrConvert = 'betr_convert',
   GuardShoot = 'guard_shoot',
@@ -144,6 +145,20 @@ export function shouldMaskWfbigAsHuman(): boolean {
 }
 
 /**
+ * 子狐對大狼的占卜偽裝判定（legacy 近似行為，偽裝率更高）
+ */
+export function shouldMaskWfbigAsHumanForFosi(): boolean {
+  return Math.random() < 0.96;
+}
+
+/**
+ * 子狐占卜結果是否偽裝為 nofosi（legacy: randme(101,200) >= 140）
+ */
+export function shouldReturnNoFosiResult(): boolean {
+  return Math.random() < 0.61;
+}
+
+/**
  * 預言家占卜
  */
 export function seerDivine(
@@ -176,6 +191,50 @@ export function seerDivine(
 
   state.divineResults.set(seer, result);
   addNightAction(state, NightActionType.SeerDivine, seer, target, result);
+
+  return result;
+}
+
+/**
+ * 子狐占卜（legacy FOSI_DO 近似）
+ * - 可檢出狼（含大狼）
+ * - 對大狼有高機率誤判為 human
+ * - 整體結果可被偽裝為 nofosi
+ */
+export function fosiDivine(
+  state: NightState,
+  players: Map<string, Player>,
+  fosi: string,
+  target: string
+): 'wolf' | 'human' | 'nofosi' | null {
+  const fosiPlayer = players.get(fosi);
+  const targetPlayer = players.get(target);
+
+  if (!fosiPlayer || !targetPlayer) {
+    return null;
+  }
+
+  if (fosiPlayer.role !== 'fosi') {
+    return null;
+  }
+
+  const isWolfLike = targetPlayer.role.includes('wolf') || targetPlayer.role === 'wfbig';
+
+  let result: 'wolf' | 'human' | 'nofosi' = 'human';
+  if (isWolfLike) {
+    if (targetPlayer.role === 'wfbig') {
+      result = shouldMaskWfbigAsHumanForFosi() ? 'human' : 'wolf';
+    } else {
+      result = 'wolf';
+    }
+  }
+
+  if (shouldReturnNoFosiResult()) {
+    result = 'nofosi';
+  }
+
+  state.divineResults.set(fosi, result);
+  addNightAction(state, NightActionType.FosiDivine, fosi, target, result);
 
   return result;
 }
@@ -392,6 +451,10 @@ export function isNightActionsComplete(
     p => p.role === 'guard' && p.live === 'live'
   );
 
+  const aliveFosi = Array.from(players.values()).filter(
+    p => p.role === 'fosi' && p.live === 'live'
+  );
+
   // 檢查狼人是否行動（殺人或跳過）
   const wolfActed = state.actions.some(a =>
     a.type === NightActionType.WolfKill ||
@@ -410,6 +473,12 @@ export function isNightActionsComplete(
     (a.type === NightActionType.Skip && aliveGuards.some(g => g.uname === a.actor))
   );
 
+  // 檢查子狐是否行動（占卜或跳過）
+  const fosiActed = state.actions.some(a =>
+    a.type === NightActionType.FosiDivine ||
+    (a.type === NightActionType.Skip && aliveFosi.some(f => f.uname === a.actor))
+  );
+
   if (aliveWolves.length > 0 && !wolfActed) {
     return false;
   }
@@ -419,6 +488,10 @@ export function isNightActionsComplete(
   }
 
   if (aliveGuards.length > 0 && !guardActed) {
+    return false;
+  }
+
+  if (aliveFosi.length > 0 && !fosiActed) {
     return false;
   }
 

@@ -7,6 +7,7 @@ import {
   createNightState,
   wolfKill,
   seerDivine,
+  fosiDivine,
   foxDivine,
   betrayerConvert,
   guardShoot,
@@ -230,6 +231,68 @@ describe('Night Action System', () => {
       
       const result = seerDivine(nightState, players, 'villager', 'target');
       
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('子狐占卜', () => {
+    const makePlayer = (uname: string, role: Player['role']): Player => ({
+      userNo: 0,
+      uname,
+      handleName: uname,
+      trip: '',
+      iconNo: 1,
+      sex: '',
+      role,
+      live: 'live',
+      score: 0
+    });
+
+    it('子狐可占出一般狼人', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.99); // nofosi=false
+      const nightState = createNightState(1, 1);
+      const players = new Map<string, Player>();
+      players.set('fosi', makePlayer('fosi', 'fosi'));
+      players.set('wolf', makePlayer('wolf', 'wolf'));
+
+      const result = fosiDivine(nightState, players, 'fosi', 'wolf');
+
+      expect(result).toBe('wolf');
+      expect(nightState.divineResults.get('fosi')).toBe('wolf');
+    });
+
+    it('子狐占到大狼時可被偽裝為 human', () => {
+      vi.spyOn(Math, 'random')
+        .mockReturnValueOnce(0.1)  // wfbig mask -> human
+        .mockReturnValueOnce(0.99); // nofosi=false
+
+      const nightState = createNightState(1, 1);
+      const players = new Map<string, Player>();
+      players.set('fosi', makePlayer('fosi', 'fosi'));
+      players.set('wfbig', makePlayer('wfbig', 'wfbig'));
+
+      const result = fosiDivine(nightState, players, 'fosi', 'wfbig');
+      expect(result).toBe('human');
+    });
+
+    it('子狐結果可被偽裝為 nofosi', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.1); // < 0.61 => nofosi
+      const nightState = createNightState(1, 1);
+      const players = new Map<string, Player>();
+      players.set('fosi', makePlayer('fosi', 'fosi'));
+      players.set('human', makePlayer('human', 'human'));
+
+      const result = fosiDivine(nightState, players, 'fosi', 'human');
+      expect(result).toBe('nofosi');
+    });
+
+    it('非子狐角色不能使用子狐占卜', () => {
+      const nightState = createNightState(1, 1);
+      const players = new Map<string, Player>();
+      players.set('mage', makePlayer('mage', 'mage'));
+      players.set('target', makePlayer('target', 'human'));
+
+      const result = fosiDivine(nightState, players, 'mage', 'target');
       expect(result).toBeNull();
     });
   });
@@ -549,6 +612,69 @@ describe('Night Action System', () => {
       });
       
       expect(isNightActionsComplete(nightState, players)).toBe(false);
+    });
+
+    it('有存活子狐但未行動應返回 false', () => {
+      const nightState = createNightState(1, 1);
+      const players = new Map<string, Player>();
+
+      players.set('wolf', {
+        userNo: 1,
+        uname: 'wolf',
+        handleName: 'Wolf',
+        trip: '',
+        iconNo: 1,
+        sex: '',
+        role: 'wolf',
+        live: 'live',
+        score: 0
+      });
+      players.set('fosi', {
+        userNo: 2,
+        uname: 'fosi',
+        handleName: 'Fosi',
+        trip: '',
+        iconNo: 2,
+        sex: '',
+        role: 'fosi',
+        live: 'live',
+        score: 0
+      });
+
+      nightState.actions.push({ type: 'wolf_kill' as any, actor: 'wolf', target: 'victim' });
+      expect(isNightActionsComplete(nightState, players)).toBe(false);
+    });
+
+    it('子狐行動後夜晚可完成', () => {
+      const nightState = createNightState(1, 1);
+      const players = new Map<string, Player>();
+
+      players.set('wolf', {
+        userNo: 1,
+        uname: 'wolf',
+        handleName: 'Wolf',
+        trip: '',
+        iconNo: 1,
+        sex: '',
+        role: 'wolf',
+        live: 'live',
+        score: 0
+      });
+      players.set('fosi', {
+        userNo: 2,
+        uname: 'fosi',
+        handleName: 'Fosi',
+        trip: '',
+        iconNo: 2,
+        sex: '',
+        role: 'fosi',
+        live: 'live',
+        score: 0
+      });
+
+      nightState.actions.push({ type: 'wolf_kill' as any, actor: 'wolf', target: 'victim' });
+      nightState.actions.push({ type: 'fosi_divine' as any, actor: 'fosi', target: 'target1' });
+      expect(isNightActionsComplete(nightState, players)).toBe(true);
     });
   });
 

@@ -11,7 +11,7 @@ import { createRoom, addPlayer, removePlayer, startGame, endGame, getPublicRoomI
 import { checkSilence, advanceSilenceTime, shouldTriggerSuddenDeath, DEFAULT_TIME_CONFIG, isRealTimeExpired } from '../utils/time-progression';
 import { assignRoles, checkVictory, canSpeak, getRoleTeam, getVictoryMessage, createDummyBoyPlayer, getLoverChainVictims, getBetrayerCollapseVictims } from '../utils/role-system';
 import { createVoteData, addVote, getVoteResult, executeVote, isVoteComplete, calculateWeightedVotes, resolveWeightedVoteResult, filterVoteDisplay, resolveVoteDisplayMode, canVoteTarget, getVotedUsers, getDayVoteParticipants } from '../utils/vote-system';
-import { createNightState, wolfKill, seerDivine, guardTarget, processNightResult, getNightSummary, isNightActionsComplete, canWolfKillTarget } from '../utils/night-action';
+import { createNightState, wolfKill, seerDivine, fosiDivine, guardTarget, processNightResult, getNightSummary, isNightActionsComplete, canWolfKillTarget } from '../utils/night-action';
 import { buildStartGameVoteState } from '../utils/start-game';
 import { createSessionManager, type SessionValue } from '../utils/session-manager';
 import { sanitizePlayersForViewer } from '../utils/player-visibility';
@@ -794,6 +794,20 @@ export class WerewolfRoom extends DurableObject {
               ws.send(JSON.stringify({
                 type: 'divine_result',
                 data: { target, result }
+              }));
+            }
+          }
+        }
+        break;
+      case 'fosi_divine':
+        if (target) {
+          const result = fosiDivine(this.nightState, this.roomData.players, uname, target);
+          if (result) {
+            const ws = this.sessions.get(uname);
+            if (ws) {
+              ws.send(JSON.stringify({
+                type: 'divine_result',
+                data: { target, result, source: 'fosi' }
               }));
             }
           }
