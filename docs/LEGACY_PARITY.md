@@ -265,7 +265,7 @@ CF has ported the core role-list mutation pipeline and token parsing; no remaini
 
 | PHP Asset | Description | CF Equivalent | Status |
 |-----------|-------------|---------------|--------|
-| `img/*.jpg` / `img/*.gif` | Background images, role icons, status icons | `public/img/` (Cloudflare Assets) | 📋 Planned |
+| `img/*.jpg` / `img/*.gif` | Background images, role icons, status icons | `public/img/` (Cloudflare Assets) | ✅ Full（已匯入 legacy 對應靜態圖資，含角色/房規/勝利圖示與背景資產） |
 | `swf/*.swf` | Sound notifications | Web Audio API cues in `public/game.html` (legacy SWF replacement) | 🔄 Redesigned |
 | `user_icon/` | User-uploaded icon files | R2 bucket `icons/` prefix | 🔄 Redesigned |
 | `user_emot/` | Custom emoticons | `POST /api/emoticons` + `GET /api/emoticons` + `DELETE /api/emoticons/:filename` + `GET /emot/:filename` + client token rendering `:name:` | ✅ Full |
