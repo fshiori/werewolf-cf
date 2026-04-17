@@ -652,6 +652,21 @@ describe('Features Routes', () => {
 
   // ==================== 觀戰模式 ====================
   describe('POST /api/spectate/:roomNo — 加入觀戰', () => {
+    it('缺少 trip/handleName 時應回 400', async () => {
+      const res = await request('/api/spectate/1', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          trip: '',
+          handleName: '',
+        }),
+      });
+
+      expect(res.status).toBe(400);
+      const data = await res.json();
+      expect(data.error).toContain('Missing required fields');
+    });
+
     it('應該成功加入觀戰', async () => {
       // room option: allowSpectators=true, maxSpectators=10
       (mockEnv.DB as any)._insert('room', {
