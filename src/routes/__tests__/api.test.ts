@@ -2008,4 +2008,72 @@ describe('API Routes', () => {
       expect(typeof data.winConditions.wolf).toBe('string');
     });
   });
+
+  describe('房間列表 zombie playing 過濾', () => {
+    it('GET /api/rooms 應過濾 playing + 0人 + stale 的殭屍房', async () => {
+      const now = Date.now();
+      mockEnv.DB = {
+        prepare: (query: string) => ({
+          bind: (...args: any[]) => ({
+            all: async () => {
+              if (query.includes('FROM room')) {
+                return {
+                  results: [
+                    {
+                      room_no: 1,
+                      room_name: 'zombie',
+                      room_comment: '',
+                      max_user: 16,
+                      status: 'playing',
+                      date: 1,
+                      day_night: 'day',
+                      is_private: 0,
+                      time_limit: 300,
+                      silence_mode: 0,
+                      uptime: now - 60_000,
+                      last_updated: now - 16 * 60 * 1000,
+                    },
+                    {
+                      room_no: 2,
+                      room_name: 'healthy',
+                      room_comment: '',
+                      max_user: 16,
+                      status: 'playing',
+                      date: 1,
+                      day_night: 'day',
+                      is_private: 0,
+                      time_limit: 300,
+                      silence_mode: 0,
+                      uptime: now - 60_000,
+                      last_updated: now - 60_000,
+                    },
+                  ],
+                };
+              }
+
+              if (query.includes('FROM user_entry')) {
+                return {
+                  results: [
+                    { room_no: 2, player_count: 1 },
+                  ],
+                };
+              }
+
+              return { results: [] };
+            },
+            first: async () => null,
+            run: async () => ({ success: true }),
+          }),
+        }),
+      } as any;
+
+      const response = await request('/api/rooms');
+      expect(response.status).toBe(200);
+      const data = await response.json();
+
+      const roomNos = data.rooms.map((r: any) => r.room_no);
+      expect(roomNos).toContain(2);
+      expect(roomNos).not.toContain(1);
+    });
+  });
 });

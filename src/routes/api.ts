@@ -16,6 +16,7 @@ import adminRoutes from './admin';
 import featuresRoutes from './features';
 import bbsRoutes from './bbs';
 import tripRoutes from './trip';
+import { shouldHideZombiePlayingRoom } from '../utils/presence-cleanup';
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -242,7 +243,7 @@ app.get('/api/rooms', async (c) => {
     const offset = parseInt(c.req.query('offset') || '0');
     const status = c.req.query('status');
 
-    let query = 'SELECT room_no, room_name, room_comment, max_user, status, date, day_night, is_private, time_limit, silence_mode, uptime FROM room';
+    let query = 'SELECT room_no, room_name, room_comment, max_user, status, date, day_night, is_private, time_limit, silence_mode, uptime, last_updated FROM room';
     const params: any[] = [];
 
     if (status) {
@@ -291,7 +292,14 @@ app.get('/api/rooms', async (c) => {
       };
     });
 
-    return c.json({ rooms: enrichedRooms, count: enrichedRooms.length });
+    const filteredRooms = enrichedRooms.filter((room) => !shouldHideZombiePlayingRoom({
+      status: room.status,
+      playerCount: room.playerCount,
+      lastUpdated: room.last_updated,
+      now: Date.now(),
+    }));
+
+    return c.json({ rooms: filteredRooms, count: filteredRooms.length });
   } catch (error) {
     console.error('Get rooms list error:', error);
     return c.json({ error: 'Failed to get rooms list' }, 500);

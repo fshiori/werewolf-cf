@@ -9,6 +9,11 @@ import type { DurableObjectState } from '@cloudflare/workers-types';
 import type { Env, Player, RoomData, Message, Role } from '../types';
 import { createRoom, addPlayer, removePlayer, startGame, endGame, getPublicRoomInfo } from '../utils/room-manager';
 import { checkSilence, advanceSilenceTime, shouldTriggerSuddenDeath, DEFAULT_TIME_CONFIG, isRealTimeExpired, calculateSpeechSpendUnits } from '../utils/time-progression';
+import {
+  PRESENCE_HEARTBEAT_MS,
+  resolveLastPresenceAt,
+  shouldCleanupForNoPresence,
+} from '../utils/presence-cleanup';
 import { assignRoles, checkVictory, canSpeak, getRoleTeam, getVictoryMessage, createDummyBoyPlayer, getLoverChainVictims, getBetrayerCollapseVictims, isLoverPlayer } from '../utils/role-system';
 import { createVoteData, addVote, getVoteResult, executeVote, isVoteComplete, calculateWeightedVotes, resolveWeightedVoteResult, filterVoteDisplay, resolveVoteDisplayMode, canVoteTarget, getVotedUsers, getDayVoteParticipants } from '../utils/vote-system';
 import { createNightState, wolfKill, seerDivine, fosiDivine, catResurrect, guardTarget, processNightResult, getNightSummary, isNightActionsComplete, canWolfKillTarget } from '../utils/night-action';
@@ -72,26 +77,59 @@ export class WerewolfRoom extends DurableObject {
     }
   }
 
+  private getLastPresenceAt(now: number = Date.now()): number {
+    return resolveLastPresenceAt({
+      lastPresenceAt: (this.roomData as any).lastPresenceAt,
+      lastUpdated: this.roomData.lastUpdated,
+      uptime: this.roomData.uptime,
+      now,
+    });
+  }
+
+  private touchPresence(now: number = Date.now(), updateLastUpdated: boolean = true): void {
+    (this.roomData as any).lastPresenceAt = now;
+    this.roomData.uptime = now;
+    if (updateLastUpdated) {
+      this.roomData.lastUpdated = now;
+    }
+  }
+
   /**
    * Durable Object alarm handler — 定期檢查是否需要清理房間
    * 由 Cloudflare Workers 自動呼叫，無需外部觸發
    */
   async alarm() {
     const now = Date.now();
+
+    // 有連線玩家時定期刷新 presence，避免 cron 誤清理活房
+    if (this.sessions.size > 0 && now - this.getLastPresenceAt(now) >= PRESENCE_HEARTBEAT_MS) {
+      this.touchPresence(now, true);
+      await this.saveState();
+    }
+
     const lastActive = this.roomData.lastUpdated || this.roomData.uptime || now;
     const inactiveMs = now - lastActive;
+    const lastPresenceAt = this.getLastPresenceAt(now);
 
     let shouldCleanup = false;
 
     if (this.roomData.status === 'ended' && inactiveMs > WerewolfRoom.ENDED_ROOM_TTL_MS) {
       // 遊戲結束超過 30 分鐘 → 清理
       shouldCleanup = true;
+    } else if (shouldCleanupForNoPresence({
+      status: this.roomData.status,
+      sessionsSize: this.sessions.size,
+      lastPresenceAt,
+      now,
+    })) {
+      // waiting/playing 無任何連線超過門檻 → 清理
+      shouldCleanup = true;
     } else if (
       (this.roomData.status === 'waiting' || this.roomData.status === 'playing') &&
       this.sessions.size === 0 &&
       inactiveMs > WerewolfRoom.INACTIVE_ROOM_TTL_MS
     ) {
-      // 等待中或遊戲中，但 0 人連線超過 2 小時 → 清理（殘留房間）
+      // 舊兜底：無連線超過 2 小時 → 清理
       shouldCleanup = true;
     }
 
@@ -436,6 +474,10 @@ export class WerewolfRoom extends DurableObject {
     // 保存連線
     this.sessions.set(session.uname, server as WebSocket);
 
+    // 連線即視為 presence 心跳
+    this.touchPresence(Date.now(), true);
+    await this.saveState();
+
     // 發送初始資料
     server.send(JSON.stringify({
       type: 'connected',
@@ -452,6 +494,7 @@ export class WerewolfRoom extends DurableObject {
     // 監聽訊息
     server.addEventListener('message', async (event) => {
       try {
+        this.touchPresence(Date.now(), true);
         const data = JSON.parse(event.data as string);
         await this.handleClientMessage(session.uname, data);
       } catch (e) {
@@ -1961,10 +2004,29 @@ export class WerewolfRoom extends DurableObject {
    * 處理玩家斷線
    */
   private async handlePlayerDisconnect(uname: string) {
+    const removedInLobby =
+      this.roomData.status === 'waiting' &&
+      this.roomData.dayNight === 'beforegame' &&
+      removePlayer(this.roomData, uname);
+
+    if (removedInLobby && this.roomData.host === uname) {
+      const nextHost = Array.from(this.roomData.players.values())
+        .sort((a, b) => a.userNo - b.userNo)[0];
+      this.roomData.host = nextHost?.uname || undefined;
+    }
+
     this.broadcast({
       type: 'user_left',
-      data: { uname }
+      data: {
+        uname,
+        players: this.getVisiblePlayersFor(uname),
+      }
     });
+
+    if (removedInLobby) {
+      this.pushPlayersUpdate();
+      await this.saveState();
+    }
   }
 
   private getVisiblePlayersFor(viewerUname: string) {
@@ -2015,6 +2077,9 @@ export class WerewolfRoom extends DurableObject {
 
     // 同步房間到 D1
     try {
+      const now = Date.now();
+      const persistedLastUpdated = this.roomData.lastUpdated || now;
+
       // @ts-ignore
       await this.env.DB.prepare(`
         INSERT INTO room (room_no, room_name, room_comment, max_user, game_option, option_role, status, date, day_night, victory_role, uptime, last_updated, is_private, password_hash, time_limit, silence_mode)
@@ -2027,11 +2092,11 @@ export class WerewolfRoom extends DurableObject {
         this.roomData.roomNo, this.roomData.roomName, this.roomData.roomComment || '',
         this.roomData.maxUser, this.roomData.gameOption || '', this.roomData.optionRole || '',
         this.roomData.status, this.roomData.date, this.roomData.dayNight,
-        this.roomData.victoryRole || null, this.roomData.uptime || Date.now(), Date.now(),
+        this.roomData.victoryRole || null, this.roomData.uptime || now, persistedLastUpdated,
         this.roomData.isPrivate ? 1 : 0, this.roomData.passwordHash || null,
         this.roomData.roomOptions?.timeLimit || 300, this.roomData.roomOptions?.silenceMode ? 1 : 0,
         this.roomData.roomName, this.roomData.roomComment || '', this.roomData.status,
-        this.roomData.date, this.roomData.dayNight, this.roomData.victoryRole || null, Date.now(),
+        this.roomData.date, this.roomData.dayNight, this.roomData.victoryRole || null, persistedLastUpdated,
         this.roomData.isPrivate ? 1 : 0, this.roomData.passwordHash || null,
         this.roomData.roomOptions?.timeLimit || 300, this.roomData.roomOptions?.silenceMode ? 1 : 0
       ).run();
@@ -2054,6 +2119,21 @@ export class WerewolfRoom extends DurableObject {
           player.role || 'human', player.live || 'live', player.sessionId || '',
           player.ipAddress || '', player.score || 0
         ).run();
+      }
+
+      const playerNames = Array.from(this.roomData.players.keys());
+      if (playerNames.length > 0) {
+        const placeholders = playerNames.map(() => '?').join(',');
+        // @ts-ignore
+        await this.env.DB.prepare(
+          `DELETE FROM user_entry
+           WHERE room_no = ? AND user_no > 0 AND uname NOT IN (${placeholders})`
+        ).bind(this.roomData.roomNo, ...playerNames).run();
+      } else {
+        // @ts-ignore
+        await this.env.DB.prepare(
+          `DELETE FROM user_entry WHERE room_no = ? AND user_no > 0`
+        ).bind(this.roomData.roomNo).run();
       }
     } catch (e) {
       console.error('D1 sync error:', e);
