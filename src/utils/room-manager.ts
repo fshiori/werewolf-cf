@@ -38,6 +38,11 @@ export function createRoom(config: {
  * 加入玩家
  */
 export function addPlayer(room: RoomData, player: Player): boolean {
+  // legacy parity: 遊戲開始後（非 waiting / 非 beforegame）不可新加入
+  if (room.status !== 'waiting' || room.dayNight !== 'beforegame') {
+    return false;
+  }
+
   // 檢查人數限制
   if (room.players.size >= room.maxUser) {
     return false;
