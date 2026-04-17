@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { checkVictory, getVictoryMessage, createDummyBoyPlayer, getDummyBoyLastWords, DEFAULT_DUMMY_LAST_WORDS } from '../utils/role-system';
+import { checkVictory, getVictoryMessage, createDummyBoyPlayer, getDummyBoyLastWords, DEFAULT_DUMMY_LAST_WORDS, LEGACY_DUMMY_TRIP } from '../utils/role-system';
 import type { Role, Player, PlayerStatus } from '../types';
 
 /** 建立測試用玩家的輔助函式 */
@@ -299,6 +299,7 @@ describe('Role System', () => {
       expect(dummy.uname).toBe('dummy_boy');
       expect(dummy.handleName).toBe('替身君');
       expect(dummy.userNo).toBe(1);
+      expect(dummy.trip).toBe(LEGACY_DUMMY_TRIP);
       expect(dummy.role).toBe('human');
       expect(dummy.live).toBe('live');
       expect(dummy.lastWords).toBeTruthy();

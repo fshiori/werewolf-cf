@@ -367,6 +367,8 @@ export function getDummyBoyLastWords(custDummy: boolean, customLastWords?: strin
  * @param customName 自訂名稱
  * @returns Player 物件
  */
+export const LEGACY_DUMMY_TRIP = 'DJjMDk2N';
+
 export function createDummyBoyPlayer(
   roomNo: number,
   custDummy: boolean,
@@ -377,7 +379,8 @@ export function createDummyBoyPlayer(
     userNo: 1,  // 啞巴男永遠是 userNo=1（與 PHP parity）
     uname: 'dummy_boy',
     handleName: customName?.trim() || '替身君',
-    trip: '',
+    // legacy parity (setting.php $tripkey)
+    trip: LEGACY_DUMMY_TRIP,
     iconNo: 0,
     sex: 'male',
     role: 'human',
