@@ -280,7 +280,7 @@ describe('optionRole token 解析邏輯', () => {
     {
       token: 'lovers',
       description: '戀人',
-      expected: 'lovers=common（共有者變戀人）',
+      expected: '13+ 時 common 轉 human，並在 assignRoles 附掛 2 名戀人子職',
       status: '✅' as const,
     },
     {
@@ -379,10 +379,11 @@ describe('optionRole runtime consume（parseRoleConfig）', () => {
     expect(rc.wolf).toBe(4);
   });
 
-  it('lovers 在 13+ 啟用，優先替換 common 為 2 位 lovers', () => {
+  it('lovers 在 13+ 啟用，common 先轉 human（戀人改為子職附掛）', () => {
     const rc = parseRoleConfigFor(13, 'lovers');
     expect(rc.common).toBe(0);
-    expect(rc.lovers).toBe(2);
+    expect(rc.human).toBe(7);
+    expect(rc.lovers || 0).toBe(0);
   });
 
   it('authority 需 16+ 才啟用', () => {

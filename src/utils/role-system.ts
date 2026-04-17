@@ -84,10 +84,10 @@ export function checkVictory(players: Player[]): string | null {
   const aliveVillagers = alivePlayers.filter(p => isHumanTeam(p.role)).length;
   const aliveFoxes = alivePlayers.filter(p => p.role === 'fox' || p.role === 'fosi').length;
   const aliveBetr = alivePlayers.filter(p => p.role === 'betr').length;
-  const aliveLovers = alivePlayers.filter(p => isLover(p.role)).length;
+  const aliveLovers = alivePlayers.filter(p => isLoverPlayer(p)).length;
 
   // 戀人獨存（兩位戀人都活著且其餘角色全滅）
-  if (aliveLovers >= 2 && alivePlayers.every(p => isLover(p.role))) {
+  if (aliveLovers >= 2 && alivePlayers.every(p => isLoverPlayer(p))) {
     return 'lovers';
   }
 
@@ -140,6 +140,7 @@ export function getVictoryMessage(winner: string): string {
 
 export interface AssignRolesOptions {
   wishRoleEnabled?: boolean;
+  loversEnabled?: boolean;
 }
 
 /**
@@ -153,8 +154,11 @@ export function assignRoles(
   // 建立角色池
   const rolePool: Role[] = [];
   for (const [role, count] of Object.entries(roleConfig)) {
+    const r = role as Role;
+    // lovers 在 legacy 是子職附掛，不是 primary role pool
+    if (r === 'lovers' || r === 'lovers_partner') continue;
     for (let i = 0; i < count; i++) {
-      rolePool.push(role as Role);
+      rolePool.push(r);
     }
   }
 
@@ -163,6 +167,26 @@ export function assignRoles(
       const j = Math.floor(Math.random() * (i + 1));
       [arr[i], arr[j]] = [arr[j], arr[i]];
     }
+  };
+
+  const applyLoversSubrole = () => {
+    for (const p of players) {
+      p.isLover = false;
+    }
+
+    if (!options.loversEnabled) {
+      return;
+    }
+
+    const candidates = players.filter(p => p.role !== 'GM' && p.uname !== 'dummy_boy');
+    if (candidates.length < 2) {
+      return;
+    }
+
+    const randomized = [...candidates];
+    shuffle(randomized);
+    randomized[0].isLover = true;
+    randomized[1].isLover = true;
   };
 
   // Fisher-Yates 洗牌
@@ -192,6 +216,8 @@ export function assignRoles(
     unassignedPlayers.forEach((player, index) => {
       player.role = remainingRoles[index] || 'human';
     });
+
+    applyLoversSubrole();
     return;
   }
 
@@ -203,6 +229,8 @@ export function assignRoles(
       player.role = 'human'; // 超出人數的默認為村民
     }
   });
+
+  applyLoversSubrole();
 }
 
 /**
@@ -267,6 +295,10 @@ export function isLover(role: Role): boolean {
   return role === 'lovers' || role === 'lovers_partner';
 }
 
+export function isLoverPlayer(player: Player): boolean {
+  return player.isLover === true || isLover(player.role);
+}
+
 /**
  * 依戀人連動規則找出需要連帶死亡的玩家
  * legacy parity: 任一戀人死亡時，其餘仍存活戀人會殉情
@@ -282,7 +314,7 @@ export function getLoverChainVictims(
   const deadSet = new Set(newlyDeadUnames);
   const trigger = newlyDeadUnames.some(uname => {
     const p = players.get(uname);
-    return !!p && isLover(p.role);
+    return !!p && isLoverPlayer(p);
   });
 
   if (!trigger) {
@@ -291,7 +323,7 @@ export function getLoverChainVictims(
 
   return Array.from(players.values())
     .filter(p => p.live === 'live')
-    .filter(p => isLover(p.role))
+    .filter(p => isLoverPlayer(p))
     .filter(p => !deadSet.has(p.uname));
 }
 

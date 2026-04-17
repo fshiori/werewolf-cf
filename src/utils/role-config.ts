@@ -97,14 +97,12 @@ export function buildRoleConfig(
     }
 
     if (options.includes('lovers') && userCount >= 13) {
-      const fromCommon = Math.min(2, roleConfig.common || 0);
-      if (fromCommon > 0) {
-        roleConfig.common = (roleConfig.common || 0) - fromCommon;
-        roleConfig.lovers = (roleConfig.lovers || 0) + fromCommon;
-      } else if ((roleConfig.human || 0) >= 2) {
-        roleConfig.human = (roleConfig.human || 0) - 2;
-        roleConfig.lovers = (roleConfig.lovers || 0) + 2;
+      // legacy parity: lovers 是子職，先把 common 全轉 human，再由 assignRoles 階段附掛給兩名玩家
+      if ((roleConfig.common || 0) > 0) {
+        roleConfig.human = (roleConfig.human || 0) + (roleConfig.common || 0);
+        roleConfig.common = 0;
       }
+      roleConfig.lovers = 0;
     }
 
     if (options.includes('decide') && userCount >= 16 && !roleConfig.decide) {

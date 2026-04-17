@@ -218,7 +218,7 @@ These control which special roles appear in the role list at game start.
 | `foxs` | Add 雙狐 role (two foxes) | ✅ | ✅ dual-fox count injection | ✅ Full（20+ 雙狐注入 + foxs+pobe+poison(cat) 追加 wolf+毒系分支已覆蓋） |
 | `fosi` | Add 子狐 role (fox-team sub-role) | ✅ | ✅ `fosi` role exists | ✅ Full（20+ 注入 + FOSI_DO 夜間占卜 + nofosi 偽裝 + 大狼偽裝分支） |
 | `wfbig` | Add 大狼 role (strong wolf) | ✅ | ✅ `wfbig` count injection | ✅ Full（20+ 注入 + 狼陣營判定 + mage/fosi 占卜偽裝分支） |
-| `lovers` | Add 戀人 role (paired lovers, die together) | ✅ | ✅ lovers replacement injection | ⚠️ Partial（13+ 以 common/human 置換 2 名 lovers；連帶死亡已覆蓋 day/night/sudden-death，但子職附掛模型仍有差異） |
+| `lovers` | Add 戀人 role (paired lovers, die together) | ✅ | ✅ lovers subrole attach + chain-death | ✅ Full（13+ 時 common 轉 human，開局附掛 2 名戀人子職；連帶死亡覆蓋 day/night/sudden-death） |
 
 ### PHP Role Assignment Logic (mostly ported)
 
@@ -227,12 +227,12 @@ In PHP, `game_vote.php` lines ~715–790 implement role-list mutation at game st
 1. **20+ players required**: `betr`, `poison`, `foxs`, `wfbig`, `fosi` only activate when `user_count >= 20`
 2. **Mutual exclusivity**: Only one of `betr`, `foxs`, `fosi`, or plain `poison` can be active
 3. **pobe + poison combo**: When both `pobe` and `poison` (or `cat`) are set, an extra wolf is added
-4. **lovers replaces common**: When `lovers` is set, one `common` in the role list is replaced with `lovers`
+4. **lovers subrole flow**: When `lovers` is set (13+), `common` entries are first normalized to `human`, then two players are randomly tagged with lovers subrole
 5. **decide at 16+**: `decide` overwrites a `human` in the role list
 6. **authority at 16+**: `authority` overwrites a `human` in the role list
 7. **Role list tables**: PHP has per-player-count role lists for 8–30 players (`setting.php` lines 196–219)
 
-CF has ported the core role-list mutation pipeline and token parsing; remaining gaps are the rows still marked ⚠️ Partial above (`lovers`, `dummy_boy` AI-detail equivalence).
+CF has ported the core role-list mutation pipeline and token parsing; remaining gaps are the rows still marked ⚠️ Partial above (`dummy_boy` AI-detail equivalence).
 
 ---
 

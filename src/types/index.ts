@@ -64,6 +64,7 @@ export interface Player {
   wishRole?: Role | 'none'; // 希望角色（wish_role 啟用時使用）
   role: Role;              // 角色
   roleDesc?: string;       // 角色描述
+  isLover?: boolean;       // 戀人子職標記（legacy lovers 附掛）
   gColor?: string;         // 角色顏色
   live: PlayerStatus;      // 存活狀態
   score: number;           // 評分

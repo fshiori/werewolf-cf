@@ -65,13 +65,32 @@ describe('assignRoles wishRole parity', () => {
     expect(wolfCount).toBe(1);
     expect(players.map(p => p.role).sort()).toEqual(['human', 'human', 'wolf']);
   });
+
+  it('loversEnabled 時會附掛 2 名戀人子職，不改 primary role 池', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.1);
+
+    const players = [
+      createPlayer('a'),
+      createPlayer('b'),
+      createPlayer('c'),
+      createPlayer('d'),
+    ];
+
+    assignRoles(players, { wolf: 1, human: 3 } as Record<Role, number>, {
+      loversEnabled: true,
+    });
+
+    expect(players.filter(p => p.isLover === true)).toHaveLength(2);
+    expect(players.filter(p => p.role === 'wolf')).toHaveLength(1);
+    expect(players.filter(p => p.role === 'human')).toHaveLength(3);
+  });
 });
 
 describe('lovers chain death parity helpers', () => {
-  it('當新死亡名單含戀人時，回傳其他存活戀人作為殉情名單', () => {
+  it('當新死亡名單含戀人時，回傳其他存活戀人作為殉情名單（含子職標記）', () => {
     const players = new Map<string, Player>([
-      ['a', { ...createPlayer('a'), role: 'lovers' }],
-      ['b', { ...createPlayer('b'), role: 'lovers' }],
+      ['a', { ...createPlayer('a'), role: 'human', isLover: true }],
+      ['b', { ...createPlayer('b'), role: 'wolf', isLover: true }],
       ['c', { ...createPlayer('c'), role: 'human' }],
     ]);
 

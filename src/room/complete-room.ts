@@ -9,7 +9,7 @@ import type { DurableObjectState } from '@cloudflare/workers-types';
 import type { Env, Player, RoomData, Message, Role } from '../types';
 import { createRoom, addPlayer, removePlayer, startGame, endGame, getPublicRoomInfo } from '../utils/room-manager';
 import { checkSilence, advanceSilenceTime, shouldTriggerSuddenDeath, DEFAULT_TIME_CONFIG, isRealTimeExpired, calculateSpeechSpendUnits } from '../utils/time-progression';
-import { assignRoles, checkVictory, canSpeak, getRoleTeam, getVictoryMessage, createDummyBoyPlayer, getLoverChainVictims, getBetrayerCollapseVictims } from '../utils/role-system';
+import { assignRoles, checkVictory, canSpeak, getRoleTeam, getVictoryMessage, createDummyBoyPlayer, getLoverChainVictims, getBetrayerCollapseVictims, isLoverPlayer } from '../utils/role-system';
 import { createVoteData, addVote, getVoteResult, executeVote, isVoteComplete, calculateWeightedVotes, resolveWeightedVoteResult, filterVoteDisplay, resolveVoteDisplayMode, canVoteTarget, getVotedUsers, getDayVoteParticipants } from '../utils/vote-system';
 import { createNightState, wolfKill, seerDivine, fosiDivine, catResurrect, guardTarget, processNightResult, getNightSummary, isNightActionsComplete, canWolfKillTarget } from '../utils/night-action';
 import { buildStartGameVoteState } from '../utils/start-game';
@@ -550,7 +550,7 @@ export class WerewolfRoom extends DurableObject {
 
     const comoutlEnabled = !!this.roomData.roomOptions?.comoutl;
     const isCommon = player.role === 'common';
-    const isLover = player.role === 'lovers';
+    const isLover = isLoverPlayer(player);
     const spendUnits = calculateSpeechSpendUnits(text);
 
     // 共生者/戀人夜晚對話：comoutl 控制其他玩家是否能看到「悄悄話」提示
@@ -558,7 +558,7 @@ export class WerewolfRoom extends DurableObject {
       // comoutl 關閉：共生者夜晚對話僅限共生者/戀人/GM 可見
       const recipients: string[] = [];
       for (const [name, p] of this.roomData.players) {
-        if (p.role === 'common' || p.role === 'lovers' || p.role === 'GM') {
+        if (p.role === 'common' || isLoverPlayer(p) || p.role === 'GM') {
           recipients.push(name);
         }
       }
@@ -637,7 +637,7 @@ export class WerewolfRoom extends DurableObject {
         const ws = this.sessions.get(name);
         if (!ws) continue;
         try {
-          if (p.role === 'common' || p.role === 'lovers' || p.role === 'GM') {
+          if (p.role === 'common' || isLoverPlayer(p) || p.role === 'GM') {
             ws.send(fullData);
           } else if (p.live === 'live') {
             ws.send(whisperData);
@@ -898,6 +898,7 @@ export class WerewolfRoom extends DurableObject {
     const roleConfig = this.parseRoleConfig(this.roomData.optionRole);
     assignRoles(players, roleConfig, {
       wishRoleEnabled: this.roomData.roomOptions?.wishRole === true,
+      loversEnabled: /(?:^|\s)lovers(?:\s|$)/.test(this.roomData.optionRole || ''),
     });
 
     // legacy parity: 只有同時啟用 as_gm(gmEnabled) + 指定 gm:trip，才會指派 GM
