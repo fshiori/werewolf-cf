@@ -304,10 +304,10 @@ describe('optionRole token 解析邏輯', () => {
       status: '✅' as const,
     },
     {
-      token: 'gm',
-      description: 'GM 令牌',
-      expected: 'gmEnabled=true',
-      status: '✅' as const,
+      token: 'gm/as_gm',
+      description: 'GM 令牌（需 as_gm + gm:trip）',
+      expected: 'as_gm 啟用 GM；gm:trip 指派對應 trip 為 GM',
+      status: '⚠️' as const,
     },
     {
       token: 'pobe',

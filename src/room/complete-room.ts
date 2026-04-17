@@ -376,6 +376,14 @@ export class WerewolfRoom extends DurableObject {
     // 嘗試加入玩家到房間（如果尚未加入）
     let player = this.roomData.players.get(session.uname);
     if (!player) {
+      const gmEnabled = this.roomData.roomOptions?.gmEnabled === true;
+      const gmTrip = ((this.roomData as any).gmTrip as string | undefined)?.trim();
+      const isDesignatedGM = !!(
+        gmEnabled &&
+        gmTrip &&
+        (session.trip || '').trim() === gmTrip
+      );
+
       const newPlayer: Player = {
         userNo: this.roomData.players.size + 1,
         uname: session.uname,
@@ -390,11 +398,28 @@ export class WerewolfRoom extends DurableObject {
         sessionId: sessionToken,
         ipAddress: req.headers.get('CF-Connecting-IP') || undefined,
       };
+
       // 第一個加入的玩家成為房長
       if (!this.roomData.host) {
         this.roomData.host = session.uname;
       }
-      addPlayer(this.roomData, newPlayer);
+
+      // legacy parity: 指定 GM 可在滿房時以 maxUser+1 席加入
+      let joined = false;
+      if (isDesignatedGM && this.roomData.players.size >= this.roomData.maxUser) {
+        newPlayer.userNo = this.roomData.maxUser + 1;
+        this.roomData.players.set(newPlayer.uname, newPlayer);
+        this.roomData.lastUpdated = Date.now();
+        joined = true;
+      } else {
+        joined = addPlayer(this.roomData, newPlayer);
+      }
+
+      if (!joined) {
+        server.close(1008, 'Room is full');
+        return new Response(null, { status: 101, webSocket: client as any });
+      }
+
       await this.saveState();
       player = newPlayer;
     }
@@ -789,22 +814,12 @@ export class WerewolfRoom extends DurableObject {
       wishRoleEnabled: this.roomData.roomOptions?.wishRole === true,
     });
 
-    // GM 啟用：透過 gmTrip 指定 Trip 為 GM，若無指定則房長自動成為 GM
+    // legacy parity: 只有同時啟用 as_gm(gmEnabled) + 指定 gm:trip，才會指派 GM
     const gmEnabled = this.roomData.roomOptions?.gmEnabled === true;
-    if (gmEnabled) {
-      let gmTarget = this.roomData.host || players[0]?.uname;
-      // gmTrip：建房地可指定某個 Trip 為 GM（legacy manager_trip/as_gm 對齊）
-      const gmTrip = (this.roomData as any).gmTrip as string | undefined;
-      if (gmTrip && gmTrip.trim()) {
-        // 在已加入的玩家中找到匹配 trip 的玩家
-        for (const p of players) {
-          if (p.trip === gmTrip.trim()) {
-            gmTarget = p.uname;
-            break;
-          }
-        }
-      }
-      const gmPlayer = gmTarget ? this.roomData.players.get(gmTarget) : undefined;
+    const gmTrip = ((this.roomData as any).gmTrip as string | undefined)?.trim();
+    if (gmEnabled && gmTrip) {
+      // 在已加入的玩家中找到匹配 trip 的玩家
+      const gmPlayer = players.find(p => (p.trip || '').trim() === gmTrip);
       if (gmPlayer) {
         gmPlayer.role = 'GM';
       }

@@ -194,8 +194,8 @@ CF replaces this with a typed `RoomOptions` interface (see `src/types/room-optio
 | `vote_me` | Allow self-vote | ✅ | ✅ `voteMe` | ✅ Full (frontend target filtering + backend vote validation) |
 | `trip` | Require tripcode to join | ✅ | ✅ `tripRequired` | ✅ Full (join-time enforcement in API) |
 | `will` | Enable last-words (遺言) | ✅ | ✅ `will` | ✅ Full |
-| `gm:XXXXX` | Designate a specific trip as GM | ❌ | ⚠️ | ⚠️ Partial (CF uses `gmEnabled` boolean for host-as-GM; PHP allows arbitrary trip) |
-| `as_gm` | Activate GM role | ⚠️ | ⚠️ | ⚠️ Partial (GM system exists but simpler than PHP) |
+| `gm:XXXXX` | Designate a specific trip as GM | ⚠️ | ⚠️ | ⚠️ Partial (legacy token parsing + runtime 指派已接上；但 join/席次等 legacy 細節仍未完全對齊) |
+| `as_gm` | Activate GM role | ✅ | ⚠️ | ⚠️ Partial (`as_gm` token 可啟用 GM；仍有部分 legacy 行為差異待補) |
 | `votedisplay` | Show who has already voted (start-game & day) | ⚠️ | ⚠️ `votedisplay` | ⚠️ Partial (day-phase vote progress wired via `vote_update.votedUsers`; start-game vote flow not ported) |
 | `cust_dummy` | Custom dummy-boy name/last-words | ⚠️ | ⚠️ `custDummy` + `dummyCustomName` + `dummyCustomLastWords` | ⚠️ Partial (parser/runtime 已支援；create-room UI 尚未提供完整設定控件) |
 
