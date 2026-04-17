@@ -525,10 +525,17 @@ app.post('/api/rooms/:roomNo/join', checkBan, rateLimit, async (c) => {
     let wishRoleEnabled = false;
     try {
       const roomRow = await c.env.DB.prepare(
-        'SELECT is_private, password_hash, game_option FROM room WHERE room_no = ?'
+        'SELECT is_private, password_hash, game_option, status, day_night FROM room WHERE room_no = ?'
       ).bind(roomNo).first();
 
       if (roomRow) {
+        // legacy parity: 僅 waiting + beforegame 可新加入
+        const roomStatus = (roomRow as any).status as string | undefined;
+        const dayNight = (roomRow as any).day_night as string | undefined;
+        if ((roomStatus && roomStatus !== 'waiting') || (dayNight && dayNight !== 'beforegame')) {
+          return c.json({ error: 'Game already started' }, 400);
+        }
+
         if (roomRow.game_option) {
           let roomOptions = parseRoomOptions({});
 
