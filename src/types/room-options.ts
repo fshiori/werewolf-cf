@@ -80,10 +80,58 @@ export const DEFAULT_ROOM_OPTIONS: Readonly<RoomOptions> = {
   istrip: false,
 };
 
+export interface LegacyGameOptionParseResult {
+  roomOptions: Partial<RoomOptions>;
+  gmTrip?: string;
+}
+
+/**
+ * 解析 legacy 空白分隔 game_option token 字串。
+ * 目前提供 gm:trip / as_gm 對齊所需資訊（其餘 token 只做最小必要映射）。
+ */
+export function parseLegacyGameOptionTokens(value: string): LegacyGameOptionParseResult {
+  const tokens = value
+    .split(/\s+/)
+    .map(t => t.trim())
+    .filter(Boolean);
+
+  const roomOptions: Partial<RoomOptions> = {};
+
+  if (tokens.includes('as_gm')) {
+    roomOptions.gmEnabled = true;
+  }
+  if (tokens.includes('istrip')) {
+    roomOptions.istrip = true;
+  }
+
+  const gmToken = tokens.find(t => t.startsWith('gm:'));
+  const gmTrip = gmToken ? gmToken.slice('gm:'.length).trim() : undefined;
+
+  return {
+    roomOptions,
+    gmTrip: gmTrip && gmTrip.length > 0 ? gmTrip : undefined,
+  };
+}
+
 /**
  * 解析未知輸入為 RoomOptions，缺少或非法的欄位會 fallback 到預設值。
  */
 export function parseRoomOptions(input: unknown): RoomOptions {
+  if (typeof input === 'string') {
+    const text = input.trim();
+    if (!text) {
+      return { ...DEFAULT_ROOM_OPTIONS };
+    }
+
+    try {
+      const parsed = JSON.parse(text);
+      return parseRoomOptions(parsed);
+    } catch {
+      const legacy = parseLegacyGameOptionTokens(text);
+      return parseRoomOptions(legacy.roomOptions);
+    }
+  }
+
   if (input == null || typeof input !== 'object' || Array.isArray(input)) {
     return { ...DEFAULT_ROOM_OPTIONS };
   }

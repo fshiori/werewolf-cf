@@ -187,16 +187,16 @@ CF replaces this with a typed `RoomOptions` interface (see `src/types/room-optio
 | PHP Token | Description | Parsed in CF? | Consumed? | Status |
 |-----------|-------------|:------------:|:---------:|--------|
 | `wish_role` | Allow players to wish for a specific role | ✅ | ✅ `wishRole` | ✅ Full (join captures wishRole; start-game assignment prefers valid wishes) |
-| `dummy_boy` | Include AI dummy player (替身君) | ✅ | ✅ `dummyBoy` | ⚠️ Partial (dummy player + custom last words wired; full legacy AI/speech behavior not complete) |
+| `dummy_boy` | Include AI dummy player (替身君) | ✅ | ✅ `dummyBoy` | ⚠️ Partial (dummy player + custom name/last words + 基礎自動發言/白天自動投票已接上；完整 legacy AI 細節仍未完全等價) |
 | `open_vote` | Reveal vote tallies to all players | ✅ | ✅ `openVote` | ✅ Full (fallbacks to anonymous vote-count mode when voteDisplay unset) |
 | `real_time:D:N` | Use real-time limits (D min day, N min night) | ✅ | ✅ `realTime` + `realTimeDayLimitSec/night` | ✅ Full (supports separate day/night limits and legacy `real_time:D:N` parsing) |
 | `comoutl` | 共生者夜晚對話顯示（show lover/common night whisper to others） | ✅ | ✅ `comoutl` | ✅ Full (comoutl=true: others see 「悄悄話...」; comoutl=false: hidden) |
 | `vote_me` | Allow self-vote | ✅ | ✅ `voteMe` | ✅ Full (frontend target filtering + backend vote validation) |
 | `trip` | Require tripcode to join | ✅ | ✅ `tripRequired` | ✅ Full (join-time enforcement in API) |
 | `will` | Enable last-words (遺言) | ✅ | ✅ `will` | ✅ Full |
-| `gm:XXXXX` | Designate a specific trip as GM | ❌ | ⚠️ | ⚠️ Partial (CF uses `gmEnabled` boolean for host-as-GM; PHP allows arbitrary trip) |
-| `as_gm` | Activate GM role | ⚠️ | ⚠️ | ⚠️ Partial (GM system exists but simpler than PHP) |
-| `votedisplay` | Show who has already voted (start-game & day) | ⚠️ | ⚠️ `votedisplay` | ⚠️ Partial (day-phase vote progress wired via `vote_update.votedUsers`; start-game vote flow not ported) |
+| `gm:XXXXX` | Designate a specific trip as GM | ✅ | ⚠️ | ⚠️ Partial (legacy token parsing + runtime 指派 + maxUser+1 GM 加入席次已接上；仍有少量 edge case 待收斂) |
+| `as_gm` | Activate GM role | ✅ | ⚠️ | ⚠️ Partial (`as_gm` token 可啟用 GM；仍有部分 legacy 行為差異待補) |
+| `votedisplay` | Show who has already voted (start-game & day) | ✅ | ✅ `votedisplay` | ✅ Full（等待中 start-game 投票與白天投票皆下發 votedUsers） |
 | `cust_dummy` | Custom dummy-boy name/last-words | ⚠️ | ⚠️ `custDummy` + `dummyCustomName` + `dummyCustomLastWords` | ⚠️ Partial (parser/runtime 已支援；create-room UI 尚未提供完整設定控件) |
 
 ---
@@ -208,16 +208,16 @@ These control which special roles appear in the role list at game start.
 
 | PHP Token | Description | Parsed in CF? | Consumed in Role Assignment? | Status |
 |-----------|-------------|:------------:|:----------------------------:|--------|
-| `decide` | Add 決定者 role (tie-breaker: dies on tie) | ✅ | ✅ `decide` role exists + vote tie logic | ⚠️ Partial (role type exists; auto-add to role list at 16+ players not implemented) |
-| `authority` | Add 權力者 role (2× vote weight) | ✅ | ✅ `authority` role exists + vote weight logic | ⚠️ Partial (role type exists; auto-add to role list at 16+ players not implemented) |
-| `poison` | Add 埋毒者 role (wolf-team poisoner) | ✅ | ⚠️ `poison` role type exists | ⚠️ Partial (type exists; auto-add to role list at 20+ players not implemented) |
-| `cat` | Poison variant: cat-style (poison = 貓又) | ❌ | ❌ | ❌ Missing |
-| `pobe` | Poison variant: wolf-team poisoner (pobe+poison→extra wolf+poison at 20+) | ✅ | ✅ `pobe` | ✅ Full (foxs+poison 互斥解除 + 20+ extra wolf+poison) |
-| `betr` | Add 背德者 role (fox-team, wins if fox dead + wolves dead) | ✅ | ✅ `betr` role + victory condition | ⚠️ Partial (role + victory exists; auto-add at 20+ not implemented) |
-| `foxs` | Add 雙狐 role (two foxes) | ✅ | ⚠️ `fox` role type exists | ⚠️ Partial (role exists; dual-fox assignment not implemented) |
-| `fosi` | Add 子狐 role (fox-team sub-role) | ✅ | ✅ `fosi` role exists | ⚠️ Partial (role exists; auto-add at 20+ not implemented) |
-| `wfbig` | Add 大狼 role (strong wolf) | ✅ | ⚠️ `wfbig` role type exists | ⚠️ Partial (type exists; auto-add at 20+ not implemented) |
-| `lovers` | Add 戀人 role (paired lovers, die together) | ✅ | ✅ `lovers`/`lovers_partner` roles | ⚠️ Partial (roles exist; auto-replace `common` in role list not implemented) |
+| `decide` | Add 決定者 role (tie-breaker: dies on tie) | ✅ | ✅ `decide` role exists + vote tie logic | ✅ Full (16+ 會注入，並以 vote-system 平手規則生效) |
+| `authority` | Add 權力者 role (2× vote weight) | ✅ | ✅ `authority` role exists + vote weight logic | ✅ Full (16+ 會注入，並以加權投票生效) |
+| `poison` | Add 埋毒者 role (wolf-team poisoner) | ✅ | ✅ `poison` count injection | ⚠️ Partial (20+ 注入已實作；夜晚行為/完整 legacy 細節仍未齊) |
+| `cat` | Poison variant: cat-style (poison = 貓又) | ✅ | ⚠️ `cat` count injection | ⚠️ Partial (20+ 注入已實作；貓又專屬行為仍未齊) |
+| `pobe` | Poison variant: wolf-team poisoner (pobe+poison→extra wolf+poison at 20+) | ✅ | ✅ `pobe` | ✅ Full (20+ `foxVariant + poison/cat + pobe` 追加 wolf+毒系配對) |
+| `betr` | Add 背德者 role (fox-team, wins if fox dead + wolves dead) | ✅ | ✅ `betr` role + victory condition | ⚠️ Partial (20+ 注入已實作；與 legacy 子規則仍有差異) |
+| `foxs` | Add 雙狐 role (two foxes) | ✅ | ✅ dual-fox count injection | ⚠️ Partial (20+ 雙狐注入已實作；完整 legacy 互斥/細節仍在收斂) |
+| `fosi` | Add 子狐 role (fox-team sub-role) | ✅ | ✅ `fosi` role exists | ⚠️ Partial (20+ 注入已實作；完整夜晚子狐行為仍在收斂) |
+| `wfbig` | Add 大狼 role (strong wolf) | ✅ | ✅ `wfbig` count injection | ⚠️ Partial (20+ 注入已實作；大狼專屬行為仍未齊) |
+| `lovers` | Add 戀人 role (paired lovers, die together) | ✅ | ✅ lovers replacement injection | ⚠️ Partial (13+ 以 common/human 置換 2 名 lovers；與 legacy 子職附掛模型仍有差異) |
 
 ### PHP Role Assignment Logic (not yet ported)
 
@@ -243,13 +243,13 @@ CF has the role **types** defined but the **auto-assignment logic** that modifie
 | Database | MySQL (`room`, `user_entry`, `talk`, `vote`, `system_message`, `user_icon`) | D1 (same tables) + KV (sessions, bans, stats) + R2 (icons) | 🔄 Redesigned |
 | Time system (spend_time) | Day: 12h ÷ `$day_limit_time`; Night: 6h ÷ `$night_limit_time` | Simplified `timeLimit` (seconds); silence mode | ⚠️ Partial |
 | Silence detection | `$silence_threshhold_time` (60s) → silence → time passes at `$silence_pass_time`× rate | `silenceMode: boolean` flag | ⚠️ Partial |
-| Sudden death | `$suddendeath_threshhold_time` (120s after time runs out) | ❌ Not implemented | ❌ Missing |
+| Sudden death | `$suddendeath_threshhold_time` (120s after time runs out) | Day timeout 時未投票者會突然死 | ⚠️ Partial |
 | Auto-reload / polling | HTTP meta-refresh every N seconds | WebSocket push (real-time) | 🔄 Redesigned |
 | Federation | `list.php` fetches from `$room_server_list` via HTTP | `GET /api/rooms/federated` with configurable `FEDERATED_SOURCES` env var | ✅ Full |
 | Dead-room cleanup | `CheckDieRoom()` after `$die_room_threshhold_time` (600s) | Manual delete + admin delete | ⚠️ Partial |
 | IP restriction | `$regist_one_ip_address` prevents multi-join from same IP | Not enforced | ❌ Missing |
 | Sound notifications | SWF-based sound (morning, revote, objection) | ❌ Not implemented | ❌ Missing |
-| Objection system | `$maxcount_objection = 2` times per game | ❌ Not implemented | ❌ Missing |
+| Objection system | `$maxcount_objection = 2` times per game | WS `objection` + 每人上限 2 次 + 廣播提示 | ⚠️ Partial |
 | Revote draw limit | `$revote_draw_times = 10` → draw after N revotes | Configured in vote system (constant) | ⚠️ Partial |
 | Font types (发言强度) | normal, strong, weak | `fontType` in `Message` interface | ✅ Full |
 | Night actions (mage/guard/wolf) | `game_vote.php` command switch | WebSocket `night_action` type | ✅ Full |

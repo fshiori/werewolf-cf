@@ -11,7 +11,7 @@ import { BanManager } from '../utils/ban-manager';
 import { StatsManager } from '../utils/stats-manager';
 import { escapeHtml, sanitizeHtml } from '../utils/security';
 import { defaultRateLimiter, apiRateLimiter } from '../utils/rate-limiter';
-import { parseRoomOptions } from '../types/room-options';
+import { parseLegacyGameOptionTokens, parseRoomOptions } from '../types/room-options';
 import adminRoutes from './admin';
 import featuresRoutes from './features';
 import bbsRoutes from './bbs';
@@ -160,17 +160,28 @@ app.post('/api/rooms', checkBan, rateLimit, async (c) => {
     // 解析 typed room options
     // 前端送 gameOption: JSON.stringify(gameOpts)，需先 JSON.parse
     let rawOpts: unknown;
+    let legacyTokens: ReturnType<typeof parseLegacyGameOptionTokens> | null = null;
     if (data.options) {
       rawOpts = data.options;
     } else if (typeof data.gameOption === 'string') {
-      try { rawOpts = JSON.parse(data.gameOption); } catch { rawOpts = undefined; }
+      try {
+        rawOpts = JSON.parse(data.gameOption);
+      } catch {
+        // legacy 相容：支援空白分隔 token（如 "gm:TRIP as_gm"）
+        legacyTokens = parseLegacyGameOptionTokens(data.gameOption);
+        rawOpts = legacyTokens.roomOptions;
+      }
     } else if (data.gameOption) {
       rawOpts = data.gameOption;
     }
     const roomOptions = parseRoomOptions(rawOpts);
 
-    // 從 gameOption JSON 裡提取 gmTrip（前端透過 getGameOptions() 塞在裡面）
-    const gmTrip = (rawOpts && typeof rawOpts === 'object' && (rawOpts as any).gmTrip) || data.gmTrip || '';
+    // gmTrip 優先序：JSON options > payload 欄位 > legacy token gm:trip
+    const gmTrip =
+      (rawOpts && typeof rawOpts === 'object' && (rawOpts as any).gmTrip) ||
+      data.gmTrip ||
+      legacyTokens?.gmTrip ||
+      '';
 
     // 生成房間編號
     const roomNo = Date.now();

@@ -13,6 +13,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { parseRoomOptions, DEFAULT_ROOM_OPTIONS } from '../types/room-options';
+import { buildRoleConfig } from '../utils/role-config';
 
 // ────────────────────────────────────────────
 // gameOption token 測試
@@ -105,7 +106,7 @@ describe('parseRoomOptions — gameOption token parity', () => {
       expect(parseRoomOptions({}).votedisplay).toBe(false);
     });
 
-    // 已串接：votedisplay=true 時 vote_update 會下發 votedUsers，前端玩家清單顯示「已投票」
+    // 已串接：votedisplay=true 時，等待中 start_game 投票與白天 vote_update 都會下發 votedUsers，前端玩家清單顯示「已投票」
   });
 
   // ── dummyBoy ⚠️（已解析，遊戲邏輯部分消耗）──
@@ -118,7 +119,7 @@ describe('parseRoomOptions — gameOption token parity', () => {
       expect(parseRoomOptions({}).dummyBoy).toBe(false);
     });
 
-    // 已串接：開局可建立 dummy_boy 並支援 custDummy 自訂遺言（完整 AI 行為仍待補）
+    // 已串接：開局可建立 dummy_boy、支援 custDummy 自訂名稱/遺言，且第 1 天夜晚狼人僅可投 dummy_boy（完整 AI 行為仍待補）
   });
 
   // ── wishRole ✅（已解析，遊戲邏輯已消耗）──
@@ -303,10 +304,10 @@ describe('optionRole token 解析邏輯', () => {
       status: '✅' as const,
     },
     {
-      token: 'gm',
-      description: 'GM 令牌',
-      expected: 'gmEnabled=true',
-      status: '✅' as const,
+      token: 'gm/as_gm',
+      description: 'GM 令牌（需 as_gm + gm:trip）',
+      expected: 'as_gm 啟用 GM；gm:trip 指派對應 trip 為 GM',
+      status: '⚠️' as const,
     },
     {
       token: 'pobe',
@@ -327,6 +328,61 @@ describe('optionRole token 解析邏輯', () => {
         expect(rt.token).toBeTruthy();
       });
     }
+  });
+});
+
+describe('optionRole runtime consume（parseRoleConfig）', () => {
+  const roleTable: Record<number, string[]> = {
+    13: ['human','human','human','human','human','wolf','wolf','mage','necromancer','mad','guard','common','common'],
+    15: ['human','human','human','human','human','human','wolf','wolf','mage','necromancer','mad','guard','common','common','fox'],
+    16: ['human','human','human','human','human','human','wolf','wolf','wolf','mage','necromancer','mad','guard','common','common','fox'],
+    20: ['human','human','human','human','human','human','human','human','human','human','fox','wolf','wolf','wolf','mage','necromancer','mad','guard','common','common'],
+  };
+
+  const parseRoleConfigFor = (maxUser: number, config: string) => {
+    return buildRoleConfig(roleTable[maxUser] as any, config, maxUser, { } as any) as Record<string, number>;
+  };
+
+  it('20 人以下不啟用 poison/cat/foxs/fosi/betr/wfbig', () => {
+    const rc = parseRoleConfigFor(16, 'poison foxs fosi betr wfbig');
+    expect(rc.poison || 0).toBe(0);
+    expect(rc.cat || 0).toBe(0);
+    expect(rc.fosi || 0).toBe(0);
+    expect(rc.betr || 0).toBe(0);
+    expect(rc.wfbig || 0).toBe(0);
+    // 16 人基本表本來就有 1 狐
+    expect(rc.fox).toBe(1);
+  });
+
+  it('20+ poison 會追加 wolf + poison', () => {
+    const rc = parseRoleConfigFor(20, 'poison');
+    expect(rc.poison).toBe(1);
+    expect(rc.wolf).toBe(4);
+  });
+
+  it('20+ foxs 會成為雙狐（基本 1 狐 + 追加 1 狐）', () => {
+    const rc = parseRoleConfigFor(20, 'foxs');
+    expect(rc.fox).toBe(2);
+  });
+
+  it('20+ fosi + pobe + cat 會追加 wolf + cat', () => {
+    const rc = parseRoleConfigFor(20, 'fosi pobe cat');
+    expect(rc.fosi).toBe(1);
+    expect(rc.cat).toBe(1);
+    expect(rc.wolf).toBe(4);
+  });
+
+  it('lovers 在 13+ 啟用，優先替換 common 為 2 位 lovers', () => {
+    const rc = parseRoleConfigFor(13, 'lovers');
+    expect(rc.common).toBe(0);
+    expect(rc.lovers).toBe(2);
+  });
+
+  it('authority 需 16+ 才啟用', () => {
+    const rc15 = parseRoleConfigFor(15, 'authority');
+    const rc16 = parseRoleConfigFor(16, 'authority');
+    expect(rc15.authority || 0).toBe(0);
+    expect(rc16.authority).toBe(1);
   });
 });
 

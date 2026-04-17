@@ -68,6 +68,44 @@ export function addNightAction(
 }
 
 /**
+ * 驗證狼人夜晚擊殺目標是否合法（含 dummy_boy parity）
+ */
+export function canWolfKillTarget(
+  players: Map<string, Player>,
+  actorUname: string,
+  targetUname: string,
+  currentDate: number,
+  dummyBoyEnabled: boolean
+): boolean {
+  const actor = players.get(actorUname);
+  const target = players.get(targetUname);
+
+  if (!actor || actor.live !== 'live' || !target || target.live !== 'live') {
+    return false;
+  }
+
+  const actorIsWolf = actor.role.includes('wolf') || actor.role === 'wfbig';
+  if (!actorIsWolf) {
+    return false;
+  }
+
+  if (actorUname === targetUname) {
+    return false;
+  }
+
+  if (target.role.includes('wolf')) {
+    return false;
+  }
+
+  // legacy parity: dummy_boy 啟用且第 1 天夜晚，狼人只能投 dummy_boy
+  if (dummyBoyEnabled && currentDate === 1 && targetUname !== 'dummy_boy') {
+    return false;
+  }
+
+  return true;
+}
+
+/**
  * 狼人殺人
  */
 export function wolfKill(

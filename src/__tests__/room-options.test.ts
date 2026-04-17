@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { parseRoomOptions, DEFAULT_ROOM_OPTIONS } from '../types/room-options';
+import { parseLegacyGameOptionTokens, parseRoomOptions, DEFAULT_ROOM_OPTIONS } from '../types/room-options';
 
 describe('DEFAULT_ROOM_OPTIONS', () => {
   it('應包含所有必要的預設值', () => {
@@ -184,5 +184,29 @@ describe('parseRoomOptions', () => {
   it('null 輸入 → fallback 到預設值', () => {
     const result = parseRoomOptions(null);
     expect(result).toEqual(DEFAULT_ROOM_OPTIONS);
+  });
+
+  it('legacy token 字串 as_gm + gm:trip 可解析 gmEnabled', () => {
+    const result = parseRoomOptions('gm:GMTRIP123 as_gm');
+    expect(result.gmEnabled).toBe(true);
+  });
+
+  it('legacy token 字串 istrip 可解析為 istrip=true', () => {
+    const result = parseRoomOptions('istrip votedisplay');
+    expect(result.istrip).toBe(true);
+  });
+});
+
+describe('parseLegacyGameOptionTokens', () => {
+  it('應解析出 gmTrip 與 gmEnabled', () => {
+    const parsed = parseLegacyGameOptionTokens('will gm:AAA111 as_gm votedisplay');
+    expect(parsed.gmTrip).toBe('AAA111');
+    expect(parsed.roomOptions.gmEnabled).toBe(true);
+  });
+
+  it('沒有 gm: token 時不應返回 gmTrip', () => {
+    const parsed = parseLegacyGameOptionTokens('will as_gm');
+    expect(parsed.gmTrip).toBeUndefined();
+    expect(parsed.roomOptions.gmEnabled).toBe(true);
   });
 });
