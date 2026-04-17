@@ -4,7 +4,7 @@
 
 import { describe, it, expect } from 'vitest';
 import type { GamePhase, Player, Role } from '../types';
-import { shouldTriggerSuddenDeath, checkSilence, advanceSilenceTime, DEFAULT_TIME_CONFIG } from '../utils/time-progression';
+import { shouldTriggerSuddenDeath, checkSilence, advanceSilenceTime, calculateSpeechSpendUnits, DEFAULT_TIME_CONFIG } from '../utils/time-progression';
 
 describe('Time Progression System', () => {
   describe('時間計算', () => {
@@ -29,6 +29,25 @@ describe('Time Progression System', () => {
       const limit = 48;
       const elapsedMinutes = (spentUnits / limit) * totalMinutes;
       expect(elapsedMinutes).toBe(15);
+    });
+
+    it('legacy spend_time：<=100 bytes 應為 1', () => {
+      expect(calculateSpeechSpendUnits('a'.repeat(100))).toBe(1);
+    });
+
+    it('legacy spend_time：101~200 bytes 應為 2', () => {
+      expect(calculateSpeechSpendUnits('a'.repeat(101))).toBe(2);
+      expect(calculateSpeechSpendUnits('a'.repeat(200))).toBe(2);
+    });
+
+    it('legacy spend_time：201~300 bytes 應為 3', () => {
+      expect(calculateSpeechSpendUnits('a'.repeat(201))).toBe(3);
+      expect(calculateSpeechSpendUnits('a'.repeat(300))).toBe(3);
+    });
+
+    it('legacy spend_time：>300 bytes 應為 4', () => {
+      expect(calculateSpeechSpendUnits('a'.repeat(301))).toBe(4);
+      expect(calculateSpeechSpendUnits('a'.repeat(800))).toBe(4);
     });
   });
 

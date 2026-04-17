@@ -35,6 +35,21 @@ export interface TimeState {
 }
 
 /**
+ * 計算單次發言的 spend_time 單位（legacy game_play.php）
+ * - <=100 bytes: 1
+ * - <=200 bytes: 2
+ * - <=300 bytes: 3
+ * - >300 bytes: 4
+ */
+export function calculateSpeechSpendUnits(text: string): number {
+  const bytes = new TextEncoder().encode(text || '').length;
+  if (bytes <= 100) return 1;
+  if (bytes <= 200) return 2;
+  if (bytes <= 300) return 3;
+  return 4;
+}
+
+/**
  * 計算虛擬時間
  */
 export function calculateVirtualTime(

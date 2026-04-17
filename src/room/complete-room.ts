@@ -8,7 +8,7 @@ import { DurableObject } from 'cloudflare:workers';
 import type { DurableObjectState } from '@cloudflare/workers-types';
 import type { Env, Player, RoomData, Message, Role } from '../types';
 import { createRoom, addPlayer, removePlayer, startGame, endGame, getPublicRoomInfo } from '../utils/room-manager';
-import { checkSilence, advanceSilenceTime, shouldTriggerSuddenDeath, DEFAULT_TIME_CONFIG, isRealTimeExpired } from '../utils/time-progression';
+import { checkSilence, advanceSilenceTime, shouldTriggerSuddenDeath, DEFAULT_TIME_CONFIG, isRealTimeExpired, calculateSpeechSpendUnits } from '../utils/time-progression';
 import { assignRoles, checkVictory, canSpeak, getRoleTeam, getVictoryMessage, createDummyBoyPlayer, getLoverChainVictims, getBetrayerCollapseVictims } from '../utils/role-system';
 import { createVoteData, addVote, getVoteResult, executeVote, isVoteComplete, calculateWeightedVotes, resolveWeightedVoteResult, filterVoteDisplay, resolveVoteDisplayMode, canVoteTarget, getVotedUsers, getDayVoteParticipants } from '../utils/vote-system';
 import { createNightState, wolfKill, seerDivine, fosiDivine, catResurrect, guardTarget, processNightResult, getNightSummary, isNightActionsComplete, canWolfKillTarget } from '../utils/night-action';
@@ -551,6 +551,7 @@ export class WerewolfRoom extends DurableObject {
     const comoutlEnabled = !!this.roomData.roomOptions?.comoutl;
     const isCommon = player.role === 'common';
     const isLover = player.role === 'lovers';
+    const spendUnits = calculateSpeechSpendUnits(text);
 
     // 共生者/戀人夜晚對話：comoutl 控制其他玩家是否能看到「悄悄話」提示
     if ((isCommon || isLover) && this.roomData.dayNight === 'night' && !comoutlEnabled) {
@@ -594,7 +595,7 @@ export class WerewolfRoom extends DurableObject {
           try { ws.send(data); } catch (_e) { this.sessions.delete(r); }
         }
       }
-      await this.advanceGameTime(1);
+      await this.advanceGameTime(spendUnits);
       return;
     }
 
@@ -645,7 +646,7 @@ export class WerewolfRoom extends DurableObject {
           this.sessions.delete(name);
         }
       }
-      await this.advanceGameTime(1);
+      await this.advanceGameTime(spendUnits);
       return;
     }
 
@@ -687,8 +688,8 @@ export class WerewolfRoom extends DurableObject {
       data: message
     });
 
-    // 時間流逝
-    await this.advanceGameTime(1);
+    // 時間流逝（legacy spend_time: 依發言長度 1..4）
+    await this.advanceGameTime(spendUnits);
   }
 
   /**
