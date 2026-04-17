@@ -339,6 +339,11 @@ export function canVoteTarget(
     return false;
   }
 
+  // legacy parity: 白天投票不可投給替身君或 GM
+  if (target.uname === 'dummy_boy' || target.role === 'GM') {
+    return false;
+  }
+
   if (!voteMeEnabled && voterUname === targetUname) {
     return false;
   }
