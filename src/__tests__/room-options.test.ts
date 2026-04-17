@@ -195,6 +195,24 @@ describe('parseRoomOptions', () => {
     const result = parseRoomOptions('istrip votedisplay');
     expect(result.istrip).toBe(true);
   });
+
+  it('legacy token 字串可解析 wish_role/open_vote/dummy_boy/comoutl/votedme/cust_dummy', () => {
+    const result = parseRoomOptions('wish_role open_vote dummy_boy comoutl votedme cust_dummy votedisplay');
+    expect(result.wishRole).toBe(true);
+    expect(result.openVote).toBe(true);
+    expect(result.dummyBoy).toBe(true);
+    expect(result.comoutl).toBe(true);
+    expect(result.voteMe).toBe(true);
+    expect(result.custDummy).toBe(true);
+    expect(result.votedisplay).toBe(true);
+  });
+
+  it('legacy token real_time:D:N 可解析為 day/night 秒數', () => {
+    const result = parseRoomOptions('real_time:5:2');
+    expect(result.realTime).toBe(true);
+    expect(result.realTimeDayLimitSec).toBe(300);
+    expect(result.realTimeNightLimitSec).toBe(120);
+  });
 });
 
 describe('parseLegacyGameOptionTokens', () => {
@@ -202,6 +220,19 @@ describe('parseLegacyGameOptionTokens', () => {
     const parsed = parseLegacyGameOptionTokens('will gm:AAA111 as_gm votedisplay');
     expect(parsed.gmTrip).toBe('AAA111');
     expect(parsed.roomOptions.gmEnabled).toBe(true);
+  });
+
+  it('應解析 legacy 常用 game_option token', () => {
+    const parsed = parseLegacyGameOptionTokens('wish_role dummy_boy open_vote comoutl votedme votedisplay cust_dummy istrip real_time:6:3');
+    expect(parsed.roomOptions.wishRole).toBe(true);
+    expect(parsed.roomOptions.dummyBoy).toBe(true);
+    expect(parsed.roomOptions.openVote).toBe(true);
+    expect(parsed.roomOptions.comoutl).toBe(true);
+    expect(parsed.roomOptions.voteMe).toBe(true);
+    expect(parsed.roomOptions.votedisplay).toBe(true);
+    expect(parsed.roomOptions.custDummy).toBe(true);
+    expect(parsed.roomOptions.istrip).toBe(true);
+    expect(parsed.roomOptions.realTime).toBe('real_time:6:3');
   });
 
   it('沒有 gm: token 時不應返回 gmTrip', () => {
