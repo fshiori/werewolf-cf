@@ -197,8 +197,9 @@ export function hasVoted(voteData: VoteData, uname: string): boolean {
 /**
  * 取得目前已完成投票的玩家列表（依投票先後順序）
  */
-export function getVotedUsers(voteData: VoteData): string[] {
-  return Array.from(voteData.votes.keys());
+export function getVotedUsers(voteData: VoteData, excludeUnames: string[] = []): string[] {
+  const excluded = new Set(excludeUnames);
+  return Array.from(voteData.votes.keys()).filter(uname => !excluded.has(uname));
 }
 
 /**
