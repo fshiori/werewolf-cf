@@ -135,6 +135,15 @@ export function wolfKill(
 }
 
 /**
+ * 大狼占卜偽裝判定（legacy 近似行為）
+ * 回傳 true 表示本次被判定為 human
+ */
+export function shouldMaskWfbigAsHuman(): boolean {
+  // 參照 legacy game_vote.php 的隨機偽裝語義（偏高機率）
+  return Math.random() < 0.7;
+}
+
+/**
  * 預言家占卜
  */
 export function seerDivine(
@@ -156,9 +165,14 @@ export function seerDivine(
   }
 
   // 占卜結果
-  const result = targetPlayer.role.includes('wolf') || targetPlayer.role === 'mad'
-    ? 'wolf'
-    : 'human';
+  let result: 'wolf' | 'human';
+  if (targetPlayer.role === 'wfbig') {
+    result = shouldMaskWfbigAsHuman() ? 'human' : 'wolf';
+  } else {
+    result = (targetPlayer.role.includes('wolf') || targetPlayer.role === 'mad')
+      ? 'wolf'
+      : 'human';
+  }
 
   state.divineResults.set(seer, result);
   addNightAction(state, NightActionType.SeerDivine, seer, target, result);

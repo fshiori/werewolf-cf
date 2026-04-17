@@ -2,7 +2,7 @@
  * 夜晚行動測試
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import {
   createNightState,
   wolfKill,
@@ -20,6 +20,10 @@ import {
 import type { Player } from '../types';
 
 describe('Night Action System', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   describe('建立夜晚狀態', () => {
     it('應該建立新的夜晚狀態', () => {
       const nightState = createNightState(1, 1);
@@ -140,6 +144,72 @@ describe('Night Action System', () => {
       const result = seerDivine(nightState, players, 'seer', 'villager');
       
       expect(result).toBe('human');
+    });
+
+    it('占卜大狼時可被偽裝為人類（隨機）', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.1); // < 0.7 -> human
+      const nightState = createNightState(1, 1);
+      const players = new Map<string, Player>();
+
+      players.set('seer', {
+        userNo: 1,
+        uname: 'seer',
+        handleName: 'Seer',
+        trip: '',
+        iconNo: 1,
+        sex: '',
+        role: 'mage',
+        live: 'live',
+        score: 0
+      });
+
+      players.set('wfbig', {
+        userNo: 2,
+        uname: 'wfbig',
+        handleName: 'BigWolf',
+        trip: '',
+        iconNo: 2,
+        sex: '',
+        role: 'wfbig',
+        live: 'live',
+        score: 0
+      });
+
+      const result = seerDivine(nightState, players, 'seer', 'wfbig');
+      expect(result).toBe('human');
+    });
+
+    it('占卜大狼時也可能被判定為狼人', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.95); // >= 0.7 -> wolf
+      const nightState = createNightState(1, 1);
+      const players = new Map<string, Player>();
+
+      players.set('seer', {
+        userNo: 1,
+        uname: 'seer',
+        handleName: 'Seer',
+        trip: '',
+        iconNo: 1,
+        sex: '',
+        role: 'mage',
+        live: 'live',
+        score: 0
+      });
+
+      players.set('wfbig', {
+        userNo: 2,
+        uname: 'wfbig',
+        handleName: 'BigWolf',
+        trip: '',
+        iconNo: 2,
+        sex: '',
+        role: 'wfbig',
+        live: 'live',
+        score: 0
+      });
+
+      const result = seerDivine(nightState, players, 'seer', 'wfbig');
+      expect(result).toBe('wolf');
     });
 
     it('非預言家不應該能占卜', () => {
