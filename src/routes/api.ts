@@ -962,6 +962,30 @@ app.get('/api/emoticons', async (c) => {
 });
 
 /**
+ * 刪除自訂表情
+ */
+app.delete('/api/emoticons/:filename', checkBan, rateLimit, async (c) => {
+  try {
+    const filename = decodeURIComponent(c.req.param('filename') || '').trim();
+    if (!/^[A-Za-z0-9_.-]{1,64}$/.test(filename)) {
+      return c.json({ error: 'Invalid filename' }, 400);
+    }
+
+    const key = `emot/${filename}`;
+    const existing = await c.env.R2.get(key);
+    if (!existing) {
+      return c.json({ error: 'Emoticon not found' }, 404);
+    }
+
+    await c.env.R2.delete(key);
+    return c.json({ success: true, key });
+  } catch (error) {
+    console.error('Delete emoticon error:', error);
+    return c.json({ error: 'Failed to delete emoticon' }, 500);
+  }
+});
+
+/**
  * 取得自訂表情檔案
  */
 app.get('/emot/:filename', async (c) => {

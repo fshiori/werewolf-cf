@@ -275,7 +275,11 @@ describe('API Routes', () => {
       formData.append('name', 'smile_face');
 
       const response = await testApp.request(
-        new Request('http://localhost/api/emoticons', { method: 'POST', body: formData }),
+        new Request('http://localhost/api/emoticons', {
+          method: 'POST',
+          headers: { 'CF-Connecting-IP': '198.51.100.120' },
+          body: formData
+        }),
         undefined,
         env
       );
@@ -285,6 +289,101 @@ describe('API Routes', () => {
       expect(data.success).toBe(true);
       expect(savedKey).toBe('emot/smile_face.png');
       expect(data.url).toContain('/emot/smile_face.png');
+    });
+
+    it('POST /api/emoticons 缺少 name 應回傳 400', async () => {
+      const env = createMockEnv();
+      const testApp = new Hono();
+      testApp.route('/', api);
+
+      const formData = new FormData();
+      formData.append('emoticon', new File([new Uint8Array([1, 2, 3])], 'x.png', { type: 'image/png' }));
+
+      const response = await testApp.request(
+        new Request('http://localhost/api/emoticons', {
+          method: 'POST',
+          headers: { 'CF-Connecting-IP': '198.51.100.121' },
+          body: formData
+        }),
+        undefined,
+        env
+      );
+
+      expect(response.status).toBe(400);
+      const data = await response.json();
+      expect(data.error).toContain('Missing file or name');
+    });
+
+    it('POST /api/emoticons 非 image 檔案應回傳 400', async () => {
+      const env = createMockEnv();
+      const testApp = new Hono();
+      testApp.route('/', api);
+
+      const formData = new FormData();
+      formData.append('name', 'bad_file');
+      formData.append('emoticon', new File([new TextEncoder().encode('hello')], 'x.txt', { type: 'text/plain' }));
+
+      const response = await testApp.request(
+        new Request('http://localhost/api/emoticons', {
+          method: 'POST',
+          headers: { 'CF-Connecting-IP': '198.51.100.122' },
+          body: formData
+        }),
+        undefined,
+        env
+      );
+
+      expect(response.status).toBe(400);
+      const data = await response.json();
+      expect(data.error).toContain('File must be an image');
+    });
+
+    it('POST /api/emoticons 超過 64KB 應回傳 400', async () => {
+      const env = createMockEnv();
+      const testApp = new Hono();
+      testApp.route('/', api);
+
+      const formData = new FormData();
+      formData.append('name', 'too_big');
+      formData.append('emoticon', new File([new Uint8Array(64 * 1024 + 1)], 'big.png', { type: 'image/png' }));
+
+      const response = await testApp.request(
+        new Request('http://localhost/api/emoticons', {
+          method: 'POST',
+          headers: { 'CF-Connecting-IP': '198.51.100.123' },
+          body: formData
+        }),
+        undefined,
+        env
+      );
+
+      expect(response.status).toBe(400);
+      const data = await response.json();
+      expect(data.error).toContain('File too large');
+    });
+
+    it('POST /api/emoticons name 淨化後為空應回傳 400', async () => {
+      const env = createMockEnv();
+      const testApp = new Hono();
+      testApp.route('/', api);
+
+      const formData = new FormData();
+      formData.append('name', '!!!***###');
+      formData.append('emoticon', new File([new Uint8Array([1, 2, 3])], 'x.png', { type: 'image/png' }));
+
+      const response = await testApp.request(
+        new Request('http://localhost/api/emoticons', {
+          method: 'POST',
+          headers: { 'CF-Connecting-IP': '198.51.100.124' },
+          body: formData
+        }),
+        undefined,
+        env
+      );
+
+      expect(response.status).toBe(400);
+      const data = await response.json();
+      expect(data.error).toContain('Invalid emoticon name');
     });
 
     it('GET /api/emoticons 應該回傳 emot/ 前綴列表', async () => {
@@ -322,6 +421,62 @@ describe('API Routes', () => {
       expect(data.emoticons[0].url).toContain('/emot/smile.png');
     });
 
+    it('DELETE /api/emoticons/:filename 應該可刪除已存在表情', async () => {
+      const env = createMockEnv();
+      let deletedKey = '';
+      env.R2 = {
+        put: async () => {},
+        list: async () => ({ objects: [] }),
+        get: async (key: string) => (key === 'emot/smile.png' ? ({ key } as any) : null),
+        delete: async (key: string) => {
+          deletedKey = key;
+        }
+      } as any;
+
+      const testApp = new Hono();
+      testApp.route('/', api);
+
+      const response = await testApp.request(
+        new Request('http://localhost/api/emoticons/smile.png', {
+          method: 'DELETE',
+          headers: { 'CF-Connecting-IP': '198.51.100.125' }
+        }),
+        undefined,
+        env
+      );
+
+      expect(response.status).toBe(200);
+      const data = await response.json();
+      expect(data.success).toBe(true);
+      expect(deletedKey).toBe('emot/smile.png');
+    });
+
+    it('DELETE /api/emoticons/:filename 非法檔名應回傳 400', async () => {
+      const env = createMockEnv();
+      env.R2 = {
+        put: async () => {},
+        list: async () => ({ objects: [] }),
+        get: async () => null,
+        delete: async () => {}
+      } as any;
+
+      const testApp = new Hono();
+      testApp.route('/', api);
+
+      const response = await testApp.request(
+        new Request('http://localhost/api/emoticons/bad$.png', {
+          method: 'DELETE',
+          headers: { 'CF-Connecting-IP': '198.51.100.126' }
+        }),
+        undefined,
+        env
+      );
+
+      expect(response.status).toBe(400);
+      const data = await response.json();
+      expect(data.error).toContain('Invalid filename');
+    });
+
     it('GET /emot/:filename 應該回傳對應檔案', async () => {
       const env = createMockEnv();
       env.R2 = {
@@ -338,7 +493,8 @@ describe('API Routes', () => {
             };
           }
           return null;
-        }
+        },
+        delete: async () => {}
       } as any;
 
       const testApp = new Hono();
