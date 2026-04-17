@@ -15,7 +15,8 @@ import {
   isRoomFull,
   hasPlayer,
   canStartGame,
-  countAlivePlayers
+  countAlivePlayers,
+  getPublicRoomInfo
 } from '../room-manager';
 import type { RoomData, Player } from '../types';
 
@@ -209,6 +210,30 @@ describe('Room Manager', () => {
       
       expect(room.status).toBe('ended');
       expect(room.victoryRole).toBe('human');
+    });
+  });
+
+  describe('公開房間資訊', () => {
+    it('getPublicRoomInfo 應包含玩家清單（供觀戰頁顯示）', () => {
+      addPlayer(room, { ...testPlayer, uname: 'user1', handleName: 'User 1', trip: 'TRIP001', live: 'live' });
+      addPlayer(room, { ...testPlayer, uname: 'user2', handleName: 'User 2', trip: 'TRIP002', live: 'dead' });
+
+      const info = getPublicRoomInfo(room) as any;
+
+      expect(Array.isArray(info.players)).toBe(true);
+      expect(info.players).toHaveLength(2);
+      expect(info.players[0]).toMatchObject({
+        uname: 'user1',
+        handleName: 'User 1',
+        trip: 'TRIP001',
+        live: 'live'
+      });
+      expect(info.players[1]).toMatchObject({
+        uname: 'user2',
+        handleName: 'User 2',
+        trip: 'TRIP002',
+        live: 'dead'
+      });
     });
   });
 
