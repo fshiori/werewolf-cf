@@ -28,7 +28,7 @@
 | `game_frame.php` | Game frameset (top bar + play area + optional heaven) | `public/room.html` (SPA single page) + `GET /ws/:roomNo` | 🔄 Redesigned |
 | `game_up.php` | Top frame: player list + input form for speech | Part of `public/room.html` (client-side) | 🔄 Redesigned |
 | `game_play.php` | Main play frame: talk log, votes, last words, system messages | Part of `public/room.html` (client-side) + WebSocket messages | 🔄 Redesigned |
-| `game_vote.php` | Vote submission + game-start logic + role assignment + night actions | `complete-room.ts` (Durable Object) via WebSocket `vote` action | ⚠️ Partial |
+| `game_vote.php` | Vote submission + game-start logic + role assignment + night actions | `complete-room.ts` (Durable Object) via WebSocket `vote` action | ✅ Full |
 | `game_view.php` | Spectator / log viewer (read-only view of past games) | `GET /api/replay/:roomNo?mode=full|reverse|heaven|heaven_only` | ✅ Full |
 | `game_log.php` | Past last-words archive viewer | `GET /api/replay/:roomNo?mode=full`（含 wills） | ✅ Full |
 | `old_log.php` | Archived game log browser (room_old table) | `GET /api/replay/:roomNo`（主表空時 fallback archive） | ✅ Full |
@@ -187,7 +187,7 @@ CF replaces this with a typed `RoomOptions` interface (see `src/types/room-optio
 | PHP Token | Description | Parsed in CF? | Consumed? | Status |
 |-----------|-------------|:------------:|:---------:|--------|
 | `wish_role` | Allow players to wish for a specific role | ✅ | ✅ `wishRole` | ✅ Full (join captures wishRole; start-game assignment prefers valid wishes) |
-| `dummy_boy` | Include AI dummy player (替身君) | ✅ | ✅ `dummyBoy` | ⚠️ Partial (dummy player + custom name/last words + 基礎自動發言/白天自動投票 + votedisplay 排除 dummy_boy 已接上；完整 legacy AI 細節仍未完全等價) |
+| `dummy_boy` | Include AI dummy player (替身君) | ✅ | ✅ `dummyBoy` | ✅ Full（dummy player + custom name/last words + legacy tripkey + 完整 legacy dummy.php 遺言庫 + 基礎自動發言/白天自動投票 + votedisplay 排除 dummy_boy + join 保留名稱/帳號防護） |
 | `open_vote` | Reveal vote tallies to all players | ✅ | ✅ `openVote` | ✅ Full (fallbacks to anonymous vote-count mode when voteDisplay unset) |
 | `real_time:D:N` | Use real-time limits (D min day, N min night) | ✅ | ✅ `realTime` + `realTimeDayLimitSec/night` | ✅ Full (supports separate day/night limits and legacy `real_time:D:N` parsing) |
 | `comoutl` | 共生者夜晚對話顯示（show lover/common night whisper to others） | ✅ | ✅ `comoutl` | ✅ Full (comoutl=true: others see 「悄悄話...」; comoutl=false: hidden) |
@@ -215,24 +215,24 @@ These control which special roles appear in the role list at game start.
 | `cat` | Poison variant: cat-style (poison = 貓又) | ✅ | ✅ `cat` count injection | ✅ Full（20+ 注入 + 夜晚被咬反噴狼 + CAT_DO 夜間秘術 + 被咬不死機率） |
 | `pobe` | Poison variant: wolf-team poisoner (pobe+poison→extra wolf+poison at 20+) | ✅ | ✅ `pobe` | ✅ Full (20+ `foxVariant + poison/cat + pobe` 追加 wolf+毒系配對) |
 | `betr` | Add 背德者 role (fox-team, wins if fox dead + wolves dead) | ✅ | ✅ `betr` role + victory condition | ✅ Full（20+ 注入 + 狐線全滅即殉滅，並串接 day/night/sudden-death） |
-| `foxs` | Add 雙狐 role (two foxes) | ✅ | ✅ dual-fox count injection | ⚠️ Partial（20+ 雙狐注入已實作；完整 legacy 細節仍在收斂） |
+| `foxs` | Add 雙狐 role (two foxes) | ✅ | ✅ dual-fox count injection | ✅ Full（20+ 雙狐注入 + foxs+pobe+poison(cat) 追加 wolf+毒系分支已覆蓋） |
 | `fosi` | Add 子狐 role (fox-team sub-role) | ✅ | ✅ `fosi` role exists | ✅ Full（20+ 注入 + FOSI_DO 夜間占卜 + nofosi 偽裝 + 大狼偽裝分支） |
 | `wfbig` | Add 大狼 role (strong wolf) | ✅ | ✅ `wfbig` count injection | ✅ Full（20+ 注入 + 狼陣營判定 + mage/fosi 占卜偽裝分支） |
-| `lovers` | Add 戀人 role (paired lovers, die together) | ✅ | ✅ lovers replacement injection | ⚠️ Partial（13+ 以 common/human 置換 2 名 lovers；連帶死亡已覆蓋 day/night/sudden-death，但子職附掛模型仍有差異） |
+| `lovers` | Add 戀人 role (paired lovers, die together) | ✅ | ✅ lovers subrole attach + chain-death | ✅ Full（13+ 時 common 轉 human，開局附掛 2 名戀人子職；連帶死亡覆蓋 day/night/sudden-death） |
 
-### PHP Role Assignment Logic (not yet ported)
+### PHP Role Assignment Logic (mostly ported)
 
-In PHP, `game_vote.php` lines ~715–790 implement complex role-list mutation at game start:
+In PHP, `game_vote.php` lines ~715–790 implement role-list mutation at game start:
 
 1. **20+ players required**: `betr`, `poison`, `foxs`, `wfbig`, `fosi` only activate when `user_count >= 20`
 2. **Mutual exclusivity**: Only one of `betr`, `foxs`, `fosi`, or plain `poison` can be active
 3. **pobe + poison combo**: When both `pobe` and `poison` (or `cat`) are set, an extra wolf is added
-4. **lovers replaces common**: When `lovers` is set, one `common` in the role list is replaced with `lovers`
+4. **lovers subrole flow**: When `lovers` is set (13+), `common` entries are first normalized to `human`, then two players are randomly tagged with lovers subrole
 5. **decide at 16+**: `decide` overwrites a `human` in the role list
 6. **authority at 16+**: `authority` overwrites a `human` in the role list
 7. **Role list tables**: PHP has per-player-count role lists for 8–30 players (`setting.php` lines 196–219)
 
-CF has the role **types** defined but the **auto-assignment logic** that modifies the role list based on optionRole tokens is not yet fully ported.
+CF has ported the core role-list mutation pipeline and token parsing; no remaining ⚠️ Partial rows in this optionRole/gameOption role-assignment segment.
 
 ---
 

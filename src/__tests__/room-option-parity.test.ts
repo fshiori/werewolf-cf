@@ -109,8 +109,8 @@ describe('parseRoomOptions — gameOption token parity', () => {
     // 已串接：votedisplay=true 時，等待中 start_game 投票與白天 vote_update 都會下發 votedUsers，前端玩家清單顯示「已投票」
   });
 
-  // ── dummyBoy ⚠️（已解析，遊戲邏輯大部分消耗）──
-  describe('dummyBoy（啞巴男角色）⚠️ 已解析大部分消耗', () => {
+  // ── dummyBoy ✅（已解析，遊戲邏輯已消耗）──
+  describe('dummyBoy（啞巴男角色）✅ 已解析已消耗', () => {
     it('正確解析 true', () => {
       expect(parseRoomOptions({ dummyBoy: true }).dummyBoy).toBe(true);
     });
@@ -119,7 +119,7 @@ describe('parseRoomOptions — gameOption token parity', () => {
       expect(parseRoomOptions({}).dummyBoy).toBe(false);
     });
 
-    // 已串接：開局建立 dummy_boy、legacy tripkey、custDummy 自訂名稱/遺言、基礎自動發言/白天投票、第 1 天夜晚狼人僅可投 dummy_boy；完整 legacy AI 細節仍待補
+    // 已串接：開局建立 dummy_boy、legacy tripkey、custDummy 自訂名稱/遺言、完整 legacy dummy.php 遺言庫、基礎自動發言/白天投票、第 1 天夜晚狼人僅可投 dummy_boy
   });
 
   // ── wishRole ✅（已解析，遊戲邏輯已消耗）──
@@ -246,7 +246,7 @@ describe('optionRole token 解析邏輯', () => {
     {
       token: 'foxs',
       description: '雙狐模式',
-      expected: 'fox=2, 取消基本表 fox',
+      expected: '20+ 追加 1 狐成為雙狐；若搭配 pobe+poison(cat) 會再追加 wolf+毒系',
       status: '✅' as const,
     },
     {
@@ -280,7 +280,7 @@ describe('optionRole token 解析邏輯', () => {
     {
       token: 'lovers',
       description: '戀人',
-      expected: 'lovers=common（共有者變戀人）',
+      expected: '13+ 時 common 轉 human，並在 assignRoles 附掛 2 名戀人子職',
       status: '✅' as const,
     },
     {
@@ -365,6 +365,13 @@ describe('optionRole runtime consume（parseRoleConfig）', () => {
     expect(rc.fox).toBe(2);
   });
 
+  it('20+ foxs + pobe + poison 會追加 wolf + poison', () => {
+    const rc = parseRoleConfigFor(20, 'foxs pobe poison');
+    expect(rc.fox).toBe(2);
+    expect(rc.poison).toBe(1);
+    expect(rc.wolf).toBe(4);
+  });
+
   it('20+ fosi + pobe + cat 會追加 wolf + cat', () => {
     const rc = parseRoleConfigFor(20, 'fosi pobe cat');
     expect(rc.fosi).toBe(1);
@@ -372,10 +379,11 @@ describe('optionRole runtime consume（parseRoleConfig）', () => {
     expect(rc.wolf).toBe(4);
   });
 
-  it('lovers 在 13+ 啟用，優先替換 common 為 2 位 lovers', () => {
+  it('lovers 在 13+ 啟用，common 先轉 human（戀人改為子職附掛）', () => {
     const rc = parseRoleConfigFor(13, 'lovers');
     expect(rc.common).toBe(0);
-    expect(rc.lovers).toBe(2);
+    expect(rc.human).toBe(7);
+    expect(rc.lovers || 0).toBe(0);
   });
 
   it('authority 需 16+ 才啟用', () => {
@@ -398,20 +406,18 @@ describe('optionRole runtime consume（parseRoleConfig）', () => {
     stubStatus: string;
   }> = [];
 
-  const missingRoleTokens = [
-    {
-      token: 'suspect',
-      description: '疑心深重者',
-      phpBehavior: '夜間可指定一人，若為人狼則白天可額外發言',
-    },
-  ];
+  const missingRoleTokens: Array<{
+    token: string;
+    description: string;
+    phpBehavior: string;
+  }> = [];
 
   it(`未消耗 gameOption token 共 ${missingConsumedGameOptionTokens.length} 個（皆有 parse stub）`, () => {
     expect(missingConsumedGameOptionTokens).toHaveLength(0);
   });
 
   it(`未實作 optionRole token 共 ${missingRoleTokens.length} 個`, () => {
-    expect(missingRoleTokens).toHaveLength(1);
+    expect(missingRoleTokens).toHaveLength(0);
   });
 
   describe('未消耗 gameOption token 清單（有 stub 無 game logic）', () => {
@@ -437,6 +443,13 @@ describe('optionRole runtime consume（parseRoleConfig）', () => {
   });
 
   describe('未實作 optionRole token 清單（文件用途）', () => {
+    if (missingRoleTokens.length === 0) {
+      it('目前已清空（無待補 token）', () => {
+        expect(missingRoleTokens).toHaveLength(0);
+      });
+      return;
+    }
+
     for (const t of missingRoleTokens) {
       it(`❌ optionRole: ${t.token} — ${t.description}`, () => {
         // 文件測試：確保清單不會遺漏

@@ -65,13 +65,51 @@ describe('assignRoles wishRole parity', () => {
     expect(wolfCount).toBe(1);
     expect(players.map(p => p.role).sort()).toEqual(['human', 'human', 'wolf']);
   });
+
+  it('loversEnabled 時會附掛 2 名戀人子職，不改 primary role 池', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.1);
+
+    const players = [
+      createPlayer('a'),
+      createPlayer('b'),
+      createPlayer('c'),
+      createPlayer('d'),
+    ];
+
+    assignRoles(players, { wolf: 1, human: 3 } as Record<Role, number>, {
+      loversEnabled: true,
+    });
+
+    expect(players.filter(p => p.isLover === true)).toHaveLength(2);
+    expect(players.filter(p => p.role === 'wolf')).toHaveLength(1);
+    expect(players.filter(p => p.role === 'human')).toHaveLength(3);
+  });
+
+  it('lovers 子職附掛會排除 dummy_boy 與 GM', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.1);
+
+    const dummy = createPlayer('dummy_boy');
+    dummy.role = 'human';
+    const gm = createPlayer('gm');
+    gm.role = 'GM';
+
+    const players = [dummy, gm, createPlayer('a'), createPlayer('b'), createPlayer('c')];
+
+    assignRoles(players, { human: 4, wolf: 1 } as Record<Role, number>, {
+      loversEnabled: true,
+    });
+
+    expect(dummy.isLover).toBe(false);
+    expect(gm.isLover).toBe(false);
+    expect(players.filter(p => p.isLover === true)).toHaveLength(2);
+  });
 });
 
 describe('lovers chain death parity helpers', () => {
-  it('當新死亡名單含戀人時，回傳其他存活戀人作為殉情名單', () => {
+  it('當新死亡名單含戀人時，回傳其他存活戀人作為殉情名單（含子職標記）', () => {
     const players = new Map<string, Player>([
-      ['a', { ...createPlayer('a'), role: 'lovers' }],
-      ['b', { ...createPlayer('b'), role: 'lovers' }],
+      ['a', { ...createPlayer('a'), role: 'human', isLover: true }],
+      ['b', { ...createPlayer('b'), role: 'wolf', isLover: true }],
       ['c', { ...createPlayer('c'), role: 'human' }],
     ]);
 

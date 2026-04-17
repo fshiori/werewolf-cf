@@ -525,8 +525,18 @@ app.post('/api/rooms/:roomNo/join', checkBan, rateLimit, async (c) => {
       return c.json({ error: 'Invalid username' }, 400);
     }
 
+    const normalizedUname = data.uname.trim().toLowerCase();
+    if (normalizedUname === 'dummy_boy' || normalizedUname === 'system') {
+      return c.json({ error: 'Reserved username' }, 400);
+    }
+
     if (!data.handleName || data.handleName.length > 32) {
       return c.json({ error: 'Invalid display name' }, 400);
+    }
+
+    const normalizedHandle = data.handleName.trim().toLowerCase();
+    if (data.handleName.trim() === '替身君' || data.handleName.trim() === '系統' || normalizedHandle === 'system') {
+      return c.json({ error: 'Reserved display name' }, 400);
     }
 
     // legacy parity: trip 若提供，必須為英數混合且僅含英數字元

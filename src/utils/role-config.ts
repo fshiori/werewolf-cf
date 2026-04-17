@@ -1,6 +1,41 @@
 import type { Role, RoomOptions } from '../types';
 
 /**
+ * legacy setting.php $role_list（8~30 全量）
+ */
+export const LEGACY_ROLE_TABLE: Record<number, Role[]> = {
+  8:  ['human','human','human','human','human','wolf','wolf','mage'],
+  9:  ['human','human','human','human','human','wolf','wolf','mage','necromancer'],
+  10: ['human','human','human','human','human','wolf','wolf','mage','necromancer','mad'],
+  11: ['human','human','human','human','human','wolf','wolf','mage','necromancer','mad','guard'],
+  12: ['human','human','human','human','human','human','wolf','wolf','mage','necromancer','mad','guard'],
+  13: ['human','human','human','human','human','wolf','wolf','mage','necromancer','mad','guard','common','common'],
+  14: ['human','human','human','human','human','human','wolf','wolf','mage','necromancer','mad','guard','common','common'],
+  15: ['human','human','human','human','human','human','wolf','wolf','mage','necromancer','mad','guard','common','common','fox'],
+  16: ['human','human','human','human','human','human','wolf','wolf','wolf','mage','necromancer','mad','guard','common','common','fox'],
+  17: ['human','human','human','human','human','human','human','wolf','wolf','wolf','mage','necromancer','mad','guard','common','common','fox'],
+  18: ['human','human','human','human','human','human','human','human','wolf','wolf','wolf','mage','necromancer','mad','guard','common','common','fox'],
+  19: ['human','human','human','human','human','human','human','human','human','wolf','wolf','wolf','mage','necromancer','mad','guard','common','common','fox'],
+  20: ['human','human','human','human','human','human','human','human','human','human','fox','wolf','wolf','wolf','mage','necromancer','mad','guard','common','common'],
+  21: ['human','human','human','human','human','human','human','human','human','human','human','fox','wolf','wolf','wolf','mage','necromancer','mad','guard','common','common'],
+  22: ['human','human','human','human','human','human','human','human','human','human','human','human','fox','wolf','wolf','wolf','mage','necromancer','mad','guard','common','common'],
+  23: ['human','human','human','human','human','human','human','human','human','human','human','human','fox','wolf','wolf','wolf','wolf','mage','necromancer','mad','guard','common','common'],
+  24: ['human','human','human','human','human','human','human','human','human','human','human','human','fox','wolf','wolf','wolf','wolf','wolf','mage','necromancer','mad','guard','common','common'],
+  25: ['human','human','human','human','human','human','human','human','human','human','human','human','fox','wolf','wolf','wolf','wolf','wolf','mage','necromancer','mad','guard','guard','common','common'],
+  26: ['human','human','human','human','human','human','human','human','human','human','human','human','human','fox','wolf','wolf','wolf','wolf','wolf','mage','necromancer','mad','guard','guard','common','common'],
+  27: ['human','human','human','human','human','human','human','human','human','human','human','human','human','fox','wolf','wolf','wolf','wolf','wolf','mage','necromancer','mad','guard','guard','common','common','common'],
+  28: ['human','human','human','human','human','human','human','human','human','human','human','human','human','fox','wolf','wolf','wolf','wolf','wolf','mage','mage','necromancer','mad','guard','guard','common','common','common'],
+  29: ['human','human','human','human','human','human','human','human','human','human','human','human','human','fox','wolf','wolf','wolf','wolf','wolf','mage','mage','necromancer','necromancer','mad','guard','guard','common','common','common'],
+  30: ['human','human','human','human','human','human','human','human','human','human','human','human','human','fox','wolf','wolf','wolf','wolf','wolf','wolf','mage','mage','necromancer','necromancer','mad','guard','guard','common','common','common'],
+};
+
+export function getLegacyRoleTable(userCount: number): Role[] {
+  const raw = Number.isFinite(userCount) ? userCount : 22;
+  const normalized = Math.max(8, Math.min(30, Math.floor(raw)));
+  return LEGACY_ROLE_TABLE[normalized] || LEGACY_ROLE_TABLE[22];
+}
+
+/**
  * 將 base role table + optionRole token 轉為最終角色配置。
  * 目標對齊 legacy game_vote.php 的 16+/20+ 與 option_role 規則。
  */
@@ -62,14 +97,12 @@ export function buildRoleConfig(
     }
 
     if (options.includes('lovers') && userCount >= 13) {
-      const fromCommon = Math.min(2, roleConfig.common || 0);
-      if (fromCommon > 0) {
-        roleConfig.common = (roleConfig.common || 0) - fromCommon;
-        roleConfig.lovers = (roleConfig.lovers || 0) + fromCommon;
-      } else if ((roleConfig.human || 0) >= 2) {
-        roleConfig.human = (roleConfig.human || 0) - 2;
-        roleConfig.lovers = (roleConfig.lovers || 0) + 2;
+      // legacy parity: lovers 是子職，先把 common 全轉 human，再由 assignRoles 階段附掛給兩名玩家
+      if ((roleConfig.common || 0) > 0) {
+        roleConfig.human = (roleConfig.human || 0) + (roleConfig.common || 0);
+        roleConfig.common = 0;
       }
+      roleConfig.lovers = 0;
     }
 
     if (options.includes('decide') && userCount >= 16 && !roleConfig.decide) {

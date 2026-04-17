@@ -302,7 +302,7 @@ describe('Role System', () => {
       expect(dummy.trip).toBe(LEGACY_DUMMY_TRIP);
       expect(dummy.role).toBe('human');
       expect(dummy.live).toBe('live');
-      expect(dummy.lastWords).toBeTruthy();
+      expect(typeof dummy.lastWords).toBe('string');
     });
 
     it('custDummy 啟用時應使用自訂遺言', () => {
@@ -341,6 +341,12 @@ describe('Role System', () => {
       // custDummy=true, no custom → random from defaults
       const words2 = getDummyBoyLastWords(true);
       expect(DEFAULT_DUMMY_LAST_WORDS).toContain(words2);
+    });
+
+    it('預設遺言庫應與 legacy dummy.php 規模一致（含空字串）', () => {
+      expect(DEFAULT_DUMMY_LAST_WORDS.length).toBe(66);
+      expect(DEFAULT_DUMMY_LAST_WORDS).toContain('');
+      expect(DEFAULT_DUMMY_LAST_WORDS).toContain('您所扮演的角色是無能，第一晚註定就是死。');
     });
   });
 });
