@@ -109,8 +109,8 @@ describe('parseRoomOptions — gameOption token parity', () => {
     // 已串接：votedisplay=true 時，等待中 start_game 投票與白天 vote_update 都會下發 votedUsers，前端玩家清單顯示「已投票」
   });
 
-  // ── dummyBoy ⚠️（已解析，遊戲邏輯部分消耗）──
-  describe('dummyBoy（啞巴男角色）⚠️ 已解析部分消耗', () => {
+  // ── dummyBoy ⚠️（已解析，遊戲邏輯大部分消耗）──
+  describe('dummyBoy（啞巴男角色）⚠️ 已解析大部分消耗', () => {
     it('正確解析 true', () => {
       expect(parseRoomOptions({ dummyBoy: true }).dummyBoy).toBe(true);
     });
@@ -119,7 +119,7 @@ describe('parseRoomOptions — gameOption token parity', () => {
       expect(parseRoomOptions({}).dummyBoy).toBe(false);
     });
 
-    // 已串接：開局可建立 dummy_boy、支援 custDummy 自訂名稱/遺言，且第 1 天夜晚狼人僅可投 dummy_boy（完整 AI 行為仍待補）
+    // 已串接：開局建立 dummy_boy、legacy tripkey、custDummy 自訂名稱/遺言、基礎自動發言/白天投票、第 1 天夜晚狼人僅可投 dummy_boy；完整 legacy AI 細節仍待補
   });
 
   // ── wishRole ✅（已解析，遊戲邏輯已消耗）──
@@ -391,14 +391,12 @@ describe('optionRole runtime consume（parseRoleConfig）', () => {
 // ────────────────────────────────────────────
   describe('PHP 長尾 token（❌ 未實作）', () => {
   // 以下 token 在 PHP diam1.3.61 中存在，CF 版有解析但仍是部分落地
-  const missingConsumedGameOptionTokens = [
-    {
-      token: 'custDummy',
-      description: '自訂啞巴男',
-      phpBehavior: '允許自訂啞巴男的發言限制條件',
-      stubStatus: '✅ 已解析',
-    },
-  ];
+  const missingConsumedGameOptionTokens: Array<{
+    token: string;
+    description: string;
+    phpBehavior: string;
+    stubStatus: string;
+  }> = [];
 
   const missingRoleTokens = [
     {
@@ -406,22 +404,24 @@ describe('optionRole runtime consume（parseRoleConfig）', () => {
       description: '疑心深重者',
       phpBehavior: '夜間可指定一人，若為人狼則白天可額外發言',
     },
-    {
-      token: 'guard',
-      description: '獵人（守衛）',
-      phpBehavior: '夜間可守護一名玩家使其免受人狼攻擊',
-    },
   ];
 
   it(`未消耗 gameOption token 共 ${missingConsumedGameOptionTokens.length} 個（皆有 parse stub）`, () => {
-    expect(missingConsumedGameOptionTokens).toHaveLength(1);
+    expect(missingConsumedGameOptionTokens).toHaveLength(0);
   });
 
   it(`未實作 optionRole token 共 ${missingRoleTokens.length} 個`, () => {
-    expect(missingRoleTokens).toHaveLength(2);
+    expect(missingRoleTokens).toHaveLength(1);
   });
 
   describe('未消耗 gameOption token 清單（有 stub 無 game logic）', () => {
+    if (missingConsumedGameOptionTokens.length === 0) {
+      it('目前已清空（無待補 token）', () => {
+        expect(missingConsumedGameOptionTokens).toHaveLength(0);
+      });
+      return;
+    }
+
     for (const t of missingConsumedGameOptionTokens) {
       it(`⚠️ ${t.stubStatus} ${t.token} — ${t.description}`, () => {
         // 測試 parse stub 存在且正確解析
