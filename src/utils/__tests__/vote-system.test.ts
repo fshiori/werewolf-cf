@@ -494,6 +494,15 @@ describe('Vote System', () => {
 
       expect(getVotedUsers(voteData)).toEqual(['alice', 'bob', 'carol']);
     });
+
+    it('getVotedUsers 可排除指定玩家（dummy_boy parity）', () => {
+      const voteData = createVoteData(1, 1);
+      addVote(voteData, 'alice', 'targetA');
+      addVote(voteData, 'dummy_boy', 'targetA');
+      addVote(voteData, 'bob', 'targetB');
+
+      expect(getVotedUsers(voteData, ['dummy_boy'])).toEqual(['alice', 'bob']);
+    });
   });
 
   describe('voteDisplay (投票結果展示)', () => {

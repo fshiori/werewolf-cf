@@ -727,7 +727,7 @@ export class WerewolfRoom extends DurableObject {
           voteCounts: displayInfo.showResults ? displayInfo.voteCounts : [],
           voterMap: displayInfo.voterMap ?? undefined,
           showResults: displayInfo.showResults,
-          votedUsers: showVoteProgress ? getVotedUsers(this.voteData) : undefined,
+          votedUsers: showVoteProgress ? getVotedUsers(this.voteData, ['dummy_boy']) : undefined,
         }
       });
 
@@ -1308,7 +1308,7 @@ export class WerewolfRoom extends DurableObject {
         voteCounts: displayInfo.showResults ? displayInfo.voteCounts : [],
         voterMap: displayInfo.voterMap ?? undefined,
         showResults: displayInfo.showResults,
-        votedUsers: showVoteProgress ? getVotedUsers(this.voteData) : undefined,
+        votedUsers: showVoteProgress ? getVotedUsers(this.voteData, ['dummy_boy']) : undefined,
       }
     });
   }
