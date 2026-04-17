@@ -520,6 +520,17 @@ app.post('/api/rooms/:roomNo/join', checkBan, rateLimit, async (c) => {
       return c.json({ error: 'Invalid display name' }, 400);
     }
 
+    // legacy parity: trip 若提供，必須為英數混合且僅含英數字元
+    const inputTrip = (data.trip || '').trim();
+    if (inputTrip.length > 0) {
+      const isAlnum = /^[A-Za-z0-9]+$/.test(inputTrip);
+      const hasLetter = /[A-Za-z]/.test(inputTrip);
+      const hasDigit = /[0-9]/.test(inputTrip);
+      if (!isAlnum || !hasLetter || !hasDigit) {
+        return c.json({ error: 'Invalid trip format' }, 400);
+      }
+    }
+
     // ---- 私人房間密碼驗證 + room option 檢查 ----
     // 從 D1 查詢房間是否為私人房間 / option policy
     let wishRoleEnabled = false;
