@@ -268,10 +268,55 @@ export function isLover(role: Role): boolean {
 }
 
 /**
+ * 依戀人連動規則找出需要連帶死亡的玩家
+ * legacy parity: 任一戀人死亡時，其餘仍存活戀人會殉情
+ */
+export function getLoverChainVictims(
+  players: Map<string, Player>,
+  newlyDeadUnames: string[]
+): Player[] {
+  if (newlyDeadUnames.length === 0) {
+    return [];
+  }
+
+  const deadSet = new Set(newlyDeadUnames);
+  const trigger = newlyDeadUnames.some(uname => {
+    const p = players.get(uname);
+    return !!p && isLover(p.role);
+  });
+
+  if (!trigger) {
+    return [];
+  }
+
+  return Array.from(players.values())
+    .filter(p => p.live === 'live')
+    .filter(p => isLover(p.role))
+    .filter(p => !deadSet.has(p.uname));
+}
+
+/**
  * 判斷角色是否為妖狐相關
  */
 export function isFoxRelated(role: Role): boolean {
   return role === 'fox' || role === 'fosi' || role === 'betr' || role === 'betr_partner';
+}
+
+/**
+ * 妖狐全滅時，背德者會連動死亡（legacy parity）
+ */
+export function getBetrayerCollapseVictims(players: Map<string, Player>): Player[] {
+  const aliveFoxes = Array.from(players.values()).filter(
+    p => p.live === 'live' && (p.role === 'fox' || p.role === 'fosi')
+  );
+
+  if (aliveFoxes.length > 0) {
+    return [];
+  }
+
+  return Array.from(players.values()).filter(
+    p => p.live === 'live' && p.role === 'betr'
+  );
 }
 
 // ── custDummy token: 自訂啞巴男 ──
@@ -322,6 +367,8 @@ export function getDummyBoyLastWords(custDummy: boolean, customLastWords?: strin
  * @param customName 自訂名稱
  * @returns Player 物件
  */
+export const LEGACY_DUMMY_TRIP = 'DJjMDk2N';
+
 export function createDummyBoyPlayer(
   roomNo: number,
   custDummy: boolean,
@@ -332,7 +379,8 @@ export function createDummyBoyPlayer(
     userNo: 1,  // 啞巴男永遠是 userNo=1（與 PHP parity）
     uname: 'dummy_boy',
     handleName: customName?.trim() || '替身君',
-    trip: '',
+    // legacy parity (setting.php $tripkey)
+    trip: LEGACY_DUMMY_TRIP,
     iconNo: 0,
     sex: 'male',
     role: 'human',

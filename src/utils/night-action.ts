@@ -10,6 +10,8 @@ import type { Player, Role } from '../types';
 export enum NightActionType {
   WolfKill = 'wolf_kill',
   SeerDivine = 'seer_divine',
+  FosiDivine = 'fosi_divine',
+  CatResurrect = 'cat_resurrect',
   FoxDivine = 'fox_divine',
   BetrConvert = 'betr_convert',
   GuardShoot = 'guard_shoot',
@@ -135,6 +137,29 @@ export function wolfKill(
 }
 
 /**
+ * 大狼占卜偽裝判定（legacy 近似行為）
+ * 回傳 true 表示本次被判定為 human
+ */
+export function shouldMaskWfbigAsHuman(): boolean {
+  // 參照 legacy game_vote.php 的隨機偽裝語義（偏高機率）
+  return Math.random() < 0.7;
+}
+
+/**
+ * 子狐對大狼的占卜偽裝判定（legacy 近似行為，偽裝率更高）
+ */
+export function shouldMaskWfbigAsHumanForFosi(): boolean {
+  return Math.random() < 0.96;
+}
+
+/**
+ * 子狐占卜結果是否偽裝為 nofosi（legacy: randme(101,200) >= 140）
+ */
+export function shouldReturnNoFosiResult(): boolean {
+  return Math.random() < 0.61;
+}
+
+/**
  * 預言家占卜
  */
 export function seerDivine(
@@ -156,12 +181,61 @@ export function seerDivine(
   }
 
   // 占卜結果
-  const result = targetPlayer.role.includes('wolf') || targetPlayer.role === 'mad'
-    ? 'wolf'
-    : 'human';
+  let result: 'wolf' | 'human';
+  if (targetPlayer.role === 'wfbig') {
+    result = shouldMaskWfbigAsHuman() ? 'human' : 'wolf';
+  } else {
+    result = (targetPlayer.role.includes('wolf') || targetPlayer.role === 'mad')
+      ? 'wolf'
+      : 'human';
+  }
 
   state.divineResults.set(seer, result);
   addNightAction(state, NightActionType.SeerDivine, seer, target, result);
+
+  return result;
+}
+
+/**
+ * 子狐占卜（legacy FOSI_DO 近似）
+ * - 可檢出狼（含大狼）
+ * - 對大狼有高機率誤判為 human
+ * - 整體結果可被偽裝為 nofosi
+ */
+export function fosiDivine(
+  state: NightState,
+  players: Map<string, Player>,
+  fosi: string,
+  target: string
+): 'wolf' | 'human' | 'nofosi' | null {
+  const fosiPlayer = players.get(fosi);
+  const targetPlayer = players.get(target);
+
+  if (!fosiPlayer || !targetPlayer) {
+    return null;
+  }
+
+  if (fosiPlayer.role !== 'fosi') {
+    return null;
+  }
+
+  const isWolfLike = targetPlayer.role.includes('wolf') || targetPlayer.role === 'wfbig';
+
+  let result: 'wolf' | 'human' | 'nofosi' = 'human';
+  if (isWolfLike) {
+    if (targetPlayer.role === 'wfbig') {
+      result = shouldMaskWfbigAsHumanForFosi() ? 'human' : 'wolf';
+    } else {
+      result = 'wolf';
+    }
+  }
+
+  if (shouldReturnNoFosiResult()) {
+    result = 'nofosi';
+  }
+
+  state.divineResults.set(fosi, result);
+  addNightAction(state, NightActionType.FosiDivine, fosi, target, result);
 
   return result;
 }
@@ -306,6 +380,35 @@ export function guardTarget(
 }
 
 /**
+ * 貓又夜晚行動（CAT_DO）
+ * 指定一名目標，夜晚結算時有機率復活目標
+ */
+export function catResurrect(
+  state: NightState,
+  players: Map<string, Player>,
+  cat: string,
+  target: string
+): boolean {
+  const catPlayer = players.get(cat);
+  const targetPlayer = players.get(target);
+
+  if (!catPlayer || !targetPlayer) {
+    return false;
+  }
+
+  if (catPlayer.role !== 'cat' || catPlayer.live !== 'live') {
+    return false;
+  }
+
+  if (cat === target) {
+    return false;
+  }
+
+  addNightAction(state, NightActionType.CatResurrect, cat, target);
+  return true;
+}
+
+/**
  * 處理夜晚結果
  * 返回死亡玩家列表
  */
@@ -314,13 +417,66 @@ export function processNightResult(
   players: Map<string, Player>
 ): Player[] {
   const dead: Player[] = [];
+  const catBlocked = new Set<string>();
 
-  // 處理所有受害者
+  // 處理所有受害者（legacy: 貓又被狼咬有機率不死）
   for (const victim of state.victims) {
     const player = players.get(victim);
-    if (player && player.live === 'live') {
-      player.live = 'dead';
-      dead.push(player);
+    if (!player || player.live !== 'live') {
+      continue;
+    }
+
+    if (player.role === 'cat' && Math.random() < 0.11) {
+      catBlocked.add(player.uname);
+      continue;
+    }
+
+    player.live = 'dead';
+    dead.push(player);
+  }
+
+  // legacy parity: 夜晚被狼咬死的毒系（poison/cat）會反噴一名存活狼人
+  const poisonTriggers = dead.filter(p => p.role === 'poison' || p.role === 'cat');
+  for (const _trigger of poisonTriggers) {
+    const aliveWolves = Array.from(players.values()).filter(
+      p => p.live === 'live' && (p.role.includes('wolf') || p.role === 'wfbig')
+    );
+    if (aliveWolves.length === 0) {
+      continue;
+    }
+
+    const idx = Math.floor(Math.random() * aliveWolves.length);
+    const retaliationTarget = aliveWolves[idx];
+    if (!retaliationTarget || retaliationTarget.live !== 'live') {
+      continue;
+    }
+
+    retaliationTarget.live = 'dead';
+    dead.push(retaliationTarget);
+  }
+
+  // legacy parity: CAT_DO（cat_resurrect）
+  const catActions = state.actions.filter(a => a.type === NightActionType.CatResurrect);
+  for (const action of catActions) {
+    const actor = players.get(action.actor);
+    const target = action.target ? players.get(action.target) : undefined;
+
+    if (!actor || actor.role !== 'cat' || actor.live !== 'live') {
+      continue;
+    }
+    if (catBlocked.has(actor.uname)) {
+      continue;
+    }
+    if (!target || target.live !== 'dead') {
+      continue;
+    }
+
+    if (Math.random() < 0.11) {
+      target.live = 'live';
+      const idx = dead.findIndex(p => p.uname === target.uname);
+      if (idx >= 0) {
+        dead.splice(idx, 1);
+      }
     }
   }
 
@@ -358,6 +514,14 @@ export function isNightActionsComplete(
     p => p.role === 'guard' && p.live === 'live'
   );
 
+  const aliveFosi = Array.from(players.values()).filter(
+    p => p.role === 'fosi' && p.live === 'live'
+  );
+
+  const aliveCats = Array.from(players.values()).filter(
+    p => p.role === 'cat' && p.live === 'live'
+  );
+
   // 檢查狼人是否行動（殺人或跳過）
   const wolfActed = state.actions.some(a =>
     a.type === NightActionType.WolfKill ||
@@ -376,6 +540,18 @@ export function isNightActionsComplete(
     (a.type === NightActionType.Skip && aliveGuards.some(g => g.uname === a.actor))
   );
 
+  // 檢查子狐是否行動（占卜或跳過）
+  const fosiActed = state.actions.some(a =>
+    a.type === NightActionType.FosiDivine ||
+    (a.type === NightActionType.Skip && aliveFosi.some(f => f.uname === a.actor))
+  );
+
+  // 檢查貓又是否行動（CAT_DO 或跳過）
+  const catActed = state.actions.some(a =>
+    a.type === NightActionType.CatResurrect ||
+    (a.type === NightActionType.Skip && aliveCats.some(c => c.uname === a.actor))
+  );
+
   if (aliveWolves.length > 0 && !wolfActed) {
     return false;
   }
@@ -385,6 +561,14 @@ export function isNightActionsComplete(
   }
 
   if (aliveGuards.length > 0 && !guardActed) {
+    return false;
+  }
+
+  if (aliveFosi.length > 0 && !fosiActed) {
+    return false;
+  }
+
+  if (aliveCats.length > 0 && !catActed) {
     return false;
   }
 

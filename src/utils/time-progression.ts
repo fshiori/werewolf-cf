@@ -35,6 +35,21 @@ export interface TimeState {
 }
 
 /**
+ * 計算單次發言的 spend_time 單位（legacy game_play.php）
+ * - <=100 bytes: 1
+ * - <=200 bytes: 2
+ * - <=300 bytes: 3
+ * - >300 bytes: 4
+ */
+export function calculateSpeechSpendUnits(text: string): number {
+  const bytes = new TextEncoder().encode(text || '').length;
+  if (bytes <= 100) return 1;
+  if (bytes <= 200) return 2;
+  if (bytes <= 300) return 3;
+  return 4;
+}
+
+/**
  * 計算虛擬時間
  */
 export function calculateVirtualTime(
@@ -188,4 +203,20 @@ export function getRealTimeRemainingSec(state: TimeState, config: TimeConfig): n
  */
 export function startRealTimePhase(state: TimeState): void {
   state.phaseStartTimeMs = Date.now();
+}
+
+/**
+ * 日間超時後，是否到達突然死處理窗口
+ * legacy 參考值：120 秒 grace period
+ */
+export function shouldTriggerSuddenDeath(
+  phase: GamePhase,
+  dayTimeoutAtMs: number | undefined,
+  nowMs: number,
+  graceSec = 120,
+): boolean {
+  if (phase !== 'day' || !dayTimeoutAtMs) {
+    return false;
+  }
+  return (nowMs - dayTimeoutAtMs) >= graceSec * 1000;
 }

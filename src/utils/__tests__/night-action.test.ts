@@ -2,11 +2,13 @@
  * 夜晚行動測試
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import {
   createNightState,
   wolfKill,
   seerDivine,
+  fosiDivine,
+  catResurrect,
   foxDivine,
   betrayerConvert,
   guardShoot,
@@ -20,6 +22,10 @@ import {
 import type { Player } from '../types';
 
 describe('Night Action System', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   describe('建立夜晚狀態', () => {
     it('應該建立新的夜晚狀態', () => {
       const nightState = createNightState(1, 1);
@@ -142,6 +148,72 @@ describe('Night Action System', () => {
       expect(result).toBe('human');
     });
 
+    it('占卜大狼時可被偽裝為人類（隨機）', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.1); // < 0.7 -> human
+      const nightState = createNightState(1, 1);
+      const players = new Map<string, Player>();
+
+      players.set('seer', {
+        userNo: 1,
+        uname: 'seer',
+        handleName: 'Seer',
+        trip: '',
+        iconNo: 1,
+        sex: '',
+        role: 'mage',
+        live: 'live',
+        score: 0
+      });
+
+      players.set('wfbig', {
+        userNo: 2,
+        uname: 'wfbig',
+        handleName: 'BigWolf',
+        trip: '',
+        iconNo: 2,
+        sex: '',
+        role: 'wfbig',
+        live: 'live',
+        score: 0
+      });
+
+      const result = seerDivine(nightState, players, 'seer', 'wfbig');
+      expect(result).toBe('human');
+    });
+
+    it('占卜大狼時也可能被判定為狼人', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.95); // >= 0.7 -> wolf
+      const nightState = createNightState(1, 1);
+      const players = new Map<string, Player>();
+
+      players.set('seer', {
+        userNo: 1,
+        uname: 'seer',
+        handleName: 'Seer',
+        trip: '',
+        iconNo: 1,
+        sex: '',
+        role: 'mage',
+        live: 'live',
+        score: 0
+      });
+
+      players.set('wfbig', {
+        userNo: 2,
+        uname: 'wfbig',
+        handleName: 'BigWolf',
+        trip: '',
+        iconNo: 2,
+        sex: '',
+        role: 'wfbig',
+        live: 'live',
+        score: 0
+      });
+
+      const result = seerDivine(nightState, players, 'seer', 'wfbig');
+      expect(result).toBe('wolf');
+    });
+
     it('非預言家不應該能占卜', () => {
       const nightState = createNightState(1, 1);
       const players = new Map<string, Player>();
@@ -161,6 +233,127 @@ describe('Night Action System', () => {
       const result = seerDivine(nightState, players, 'villager', 'target');
       
       expect(result).toBeNull();
+    });
+  });
+
+  describe('子狐占卜', () => {
+    const makePlayer = (uname: string, role: Player['role']): Player => ({
+      userNo: 0,
+      uname,
+      handleName: uname,
+      trip: '',
+      iconNo: 1,
+      sex: '',
+      role,
+      live: 'live',
+      score: 0
+    });
+
+    it('子狐可占出一般狼人', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.99); // nofosi=false
+      const nightState = createNightState(1, 1);
+      const players = new Map<string, Player>();
+      players.set('fosi', makePlayer('fosi', 'fosi'));
+      players.set('wolf', makePlayer('wolf', 'wolf'));
+
+      const result = fosiDivine(nightState, players, 'fosi', 'wolf');
+
+      expect(result).toBe('wolf');
+      expect(nightState.divineResults.get('fosi')).toBe('wolf');
+    });
+
+    it('子狐占到大狼時可被偽裝為 human', () => {
+      vi.spyOn(Math, 'random')
+        .mockReturnValueOnce(0.1)  // wfbig mask -> human
+        .mockReturnValueOnce(0.99); // nofosi=false
+
+      const nightState = createNightState(1, 1);
+      const players = new Map<string, Player>();
+      players.set('fosi', makePlayer('fosi', 'fosi'));
+      players.set('wfbig', makePlayer('wfbig', 'wfbig'));
+
+      const result = fosiDivine(nightState, players, 'fosi', 'wfbig');
+      expect(result).toBe('human');
+    });
+
+    it('子狐結果可被偽裝為 nofosi', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.1); // < 0.61 => nofosi
+      const nightState = createNightState(1, 1);
+      const players = new Map<string, Player>();
+      players.set('fosi', makePlayer('fosi', 'fosi'));
+      players.set('human', makePlayer('human', 'human'));
+
+      const result = fosiDivine(nightState, players, 'fosi', 'human');
+      expect(result).toBe('nofosi');
+    });
+
+    it('非子狐角色不能使用子狐占卜', () => {
+      const nightState = createNightState(1, 1);
+      const players = new Map<string, Player>();
+      players.set('mage', makePlayer('mage', 'mage'));
+      players.set('target', makePlayer('target', 'human'));
+
+      const result = fosiDivine(nightState, players, 'mage', 'target');
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('貓又秘術（CAT_DO）', () => {
+    const makePlayer = (uname: string, role: Player['role'], live: 'live' | 'dead' = 'live'): Player => ({
+      userNo: 0,
+      uname,
+      handleName: uname,
+      trip: '',
+      iconNo: 1,
+      sex: '',
+      role,
+      live,
+      score: 0
+    });
+
+    it('貓又可以提交 cat_resurrect 行動', () => {
+      const nightState = createNightState(1, 1);
+      const players = new Map<string, Player>();
+      players.set('cat', makePlayer('cat', 'cat'));
+      players.set('dead1', makePlayer('dead1', 'human', 'dead'));
+
+      const ok = catResurrect(nightState, players, 'cat', 'dead1');
+      expect(ok).toBe(true);
+      expect(nightState.actions.some(a => a.type === 'cat_resurrect' && a.actor === 'cat')).toBe(true);
+    });
+
+    it('貓又被狼咬時可觸發不死，且當晚秘術失效', () => {
+      vi.spyOn(Math, 'random')
+        .mockReturnValueOnce(0.01) // cat被咬不死
+        .mockReturnValueOnce(0.01); // 即使秘術判定會成功，也應被 catBlocked 擋掉
+
+      const nightState = createNightState(1, 1);
+      const players = new Map<string, Player>();
+      players.set('cat', makePlayer('cat', 'cat'));
+      players.set('dead1', makePlayer('dead1', 'human', 'dead'));
+
+      nightState.victims.push('cat');
+      catResurrect(nightState, players, 'cat', 'dead1');
+
+      const dead = processNightResult(nightState, players);
+      expect(players.get('cat')?.live).toBe('live');
+      expect(players.get('dead1')?.live).toBe('dead');
+      expect(dead.some(p => p.uname === 'cat')).toBe(false);
+    });
+
+    it('貓又未被封鎖且機率命中時可復活目標', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.01);
+
+      const nightState = createNightState(1, 1);
+      const players = new Map<string, Player>();
+      players.set('cat', makePlayer('cat', 'cat'));
+      players.set('dead1', makePlayer('dead1', 'human', 'dead'));
+
+      catResurrect(nightState, players, 'cat', 'dead1');
+      const dead = processNightResult(nightState, players);
+
+      expect(players.get('dead1')?.live).toBe('live');
+      expect(dead.some(p => p.uname === 'dead1')).toBe(false);
     });
   });
 
@@ -385,6 +578,54 @@ describe('Night Action System', () => {
       expect(dead.length).toBe(1);
       expect(dead[0].live).toBe('dead');
     });
+
+    it('夜晚毒系死亡應反噴一名狼人', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0); // pick first wolf
+      const nightState = createNightState(1, 1);
+      const players = new Map<string, Player>();
+
+      players.set('poisoner', {
+        userNo: 1,
+        uname: 'poisoner',
+        handleName: 'Poisoner',
+        trip: '',
+        iconNo: 1,
+        sex: '',
+        role: 'poison',
+        live: 'live',
+        score: 0
+      });
+      players.set('wolf1', {
+        userNo: 2,
+        uname: 'wolf1',
+        handleName: 'Wolf1',
+        trip: '',
+        iconNo: 1,
+        sex: '',
+        role: 'wolf',
+        live: 'live',
+        score: 0
+      });
+      players.set('human1', {
+        userNo: 3,
+        uname: 'human1',
+        handleName: 'Human1',
+        trip: '',
+        iconNo: 1,
+        sex: '',
+        role: 'human',
+        live: 'live',
+        score: 0
+      });
+
+      nightState.victims.push('poisoner');
+      const dead = processNightResult(nightState, players);
+
+      expect(dead.map(p => p.uname)).toContain('poisoner');
+      expect(dead.map(p => p.uname)).toContain('wolf1');
+      expect(players.get('wolf1')?.live).toBe('dead');
+      expect(players.get('human1')?.live).toBe('live');
+    });
   });
 
   describe('夜晚行動完成檢查', () => {
@@ -431,6 +672,143 @@ describe('Night Action System', () => {
       });
       
       expect(isNightActionsComplete(nightState, players)).toBe(false);
+    });
+
+    it('有存活子狐但未行動應返回 false', () => {
+      const nightState = createNightState(1, 1);
+      const players = new Map<string, Player>();
+
+      players.set('wolf', {
+        userNo: 1,
+        uname: 'wolf',
+        handleName: 'Wolf',
+        trip: '',
+        iconNo: 1,
+        sex: '',
+        role: 'wolf',
+        live: 'live',
+        score: 0
+      });
+      players.set('fosi', {
+        userNo: 2,
+        uname: 'fosi',
+        handleName: 'Fosi',
+        trip: '',
+        iconNo: 2,
+        sex: '',
+        role: 'fosi',
+        live: 'live',
+        score: 0
+      });
+
+      nightState.actions.push({ type: 'wolf_kill' as any, actor: 'wolf', target: 'victim' });
+      expect(isNightActionsComplete(nightState, players)).toBe(false);
+    });
+
+    it('子狐行動後夜晚可完成', () => {
+      const nightState = createNightState(1, 1);
+      const players = new Map<string, Player>();
+
+      players.set('wolf', {
+        userNo: 1,
+        uname: 'wolf',
+        handleName: 'Wolf',
+        trip: '',
+        iconNo: 1,
+        sex: '',
+        role: 'wolf',
+        live: 'live',
+        score: 0
+      });
+      players.set('fosi', {
+        userNo: 2,
+        uname: 'fosi',
+        handleName: 'Fosi',
+        trip: '',
+        iconNo: 2,
+        sex: '',
+        role: 'fosi',
+        live: 'live',
+        score: 0
+      });
+
+      nightState.actions.push({ type: 'wolf_kill' as any, actor: 'wolf', target: 'victim' });
+      nightState.actions.push({ type: 'fosi_divine' as any, actor: 'fosi', target: 'target1' });
+      expect(isNightActionsComplete(nightState, players)).toBe(true);
+    });
+
+    it('有存活貓又但未行動應返回 false', () => {
+      const nightState = createNightState(1, 1);
+      const players = new Map<string, Player>();
+
+      players.set('wolf', {
+        userNo: 1,
+        uname: 'wolf',
+        handleName: 'Wolf',
+        trip: '',
+        iconNo: 1,
+        sex: '',
+        role: 'wolf',
+        live: 'live',
+        score: 0
+      });
+      players.set('cat', {
+        userNo: 2,
+        uname: 'cat',
+        handleName: 'Cat',
+        trip: '',
+        iconNo: 2,
+        sex: '',
+        role: 'cat',
+        live: 'live',
+        score: 0
+      });
+
+      nightState.actions.push({ type: 'wolf_kill' as any, actor: 'wolf', target: 'victim' });
+      expect(isNightActionsComplete(nightState, players)).toBe(false);
+    });
+
+    it('貓又提交 cat_resurrect 後夜晚可完成', () => {
+      const nightState = createNightState(1, 1);
+      const players = new Map<string, Player>();
+
+      players.set('wolf', {
+        userNo: 1,
+        uname: 'wolf',
+        handleName: 'Wolf',
+        trip: '',
+        iconNo: 1,
+        sex: '',
+        role: 'wolf',
+        live: 'live',
+        score: 0
+      });
+      players.set('cat', {
+        userNo: 2,
+        uname: 'cat',
+        handleName: 'Cat',
+        trip: '',
+        iconNo: 2,
+        sex: '',
+        role: 'cat',
+        live: 'live',
+        score: 0
+      });
+      players.set('dead1', {
+        userNo: 3,
+        uname: 'dead1',
+        handleName: 'Dead1',
+        trip: '',
+        iconNo: 3,
+        sex: '',
+        role: 'human',
+        live: 'dead',
+        score: 0
+      });
+
+      nightState.actions.push({ type: 'wolf_kill' as any, actor: 'wolf', target: 'victim' });
+      nightState.actions.push({ type: 'cat_resurrect' as any, actor: 'cat', target: 'dead1' });
+      expect(isNightActionsComplete(nightState, players)).toBe(true);
     });
   });
 

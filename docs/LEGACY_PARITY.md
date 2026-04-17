@@ -2,7 +2,7 @@
 
 > Generated from PHP reference: `diam1.3.61.kz_Build0912`  
 > CF project: `werewolf-cf` (src/routes/\*, src/room/, src/utils/)  
-> Last updated: 2026-04-16
+> Last updated: 2026-04-17
 
 ## Status Legend
 
@@ -211,14 +211,14 @@ These control which special roles appear in the role list at game start.
 |-----------|-------------|:------------:|:----------------------------:|--------|
 | `decide` | Add 決定者 role (tie-breaker: dies on tie) | ✅ | ✅ `decide` role exists + vote tie logic | ✅ Full (16+ 會注入，並以 vote-system 平手規則生效) |
 | `authority` | Add 權力者 role (2× vote weight) | ✅ | ✅ `authority` role exists + vote weight logic | ✅ Full (16+ 會注入，並以加權投票生效) |
-| `poison` | Add 埋毒者 role (wolf-team poisoner) | ✅ | ✅ `poison` count injection | ⚠️ Partial (20+ 注入已實作；夜晚行為/完整 legacy 細節仍未齊) |
-| `cat` | Poison variant: cat-style (poison = 貓又) | ✅ | ⚠️ `cat` count injection | ⚠️ Partial (20+ 注入已實作；貓又專屬行為仍未齊) |
+| `poison` | Add 埋毒者 role (wolf-team poisoner) | ✅ | ✅ `poison` count injection | ✅ Full（20+ 注入 + 夜晚被咬反噴狼 + 白天被吊反噴流程） |
+| `cat` | Poison variant: cat-style (poison = 貓又) | ✅ | ✅ `cat` count injection | ✅ Full（20+ 注入 + 夜晚被咬反噴狼 + CAT_DO 夜間秘術 + 被咬不死機率） |
 | `pobe` | Poison variant: wolf-team poisoner (pobe+poison→extra wolf+poison at 20+) | ✅ | ✅ `pobe` | ✅ Full (20+ `foxVariant + poison/cat + pobe` 追加 wolf+毒系配對) |
-| `betr` | Add 背德者 role (fox-team, wins if fox dead + wolves dead) | ✅ | ✅ `betr` role + victory condition | ⚠️ Partial (20+ 注入已實作；與 legacy 子規則仍有差異) |
-| `foxs` | Add 雙狐 role (two foxes) | ✅ | ✅ dual-fox count injection | ⚠️ Partial (20+ 雙狐注入已實作；完整 legacy 互斥/細節仍在收斂) |
-| `fosi` | Add 子狐 role (fox-team sub-role) | ✅ | ✅ `fosi` role exists | ⚠️ Partial (20+ 注入已實作；完整夜晚子狐行為仍在收斂) |
-| `wfbig` | Add 大狼 role (strong wolf) | ✅ | ✅ `wfbig` count injection | ⚠️ Partial (20+ 注入已實作；已修正為狼人陣營判定，仍缺大狼專屬 legacy 行為) |
-| `lovers` | Add 戀人 role (paired lovers, die together) | ✅ | ✅ lovers replacement injection | ⚠️ Partial (13+ 以 common/human 置換 2 名 lovers；與 legacy 子職附掛模型仍有差異) |
+| `betr` | Add 背德者 role (fox-team, wins if fox dead + wolves dead) | ✅ | ✅ `betr` role + victory condition | ✅ Full（20+ 注入 + 狐線全滅即殉滅，並串接 day/night/sudden-death） |
+| `foxs` | Add 雙狐 role (two foxes) | ✅ | ✅ dual-fox count injection | ⚠️ Partial（20+ 雙狐注入已實作；完整 legacy 細節仍在收斂） |
+| `fosi` | Add 子狐 role (fox-team sub-role) | ✅ | ✅ `fosi` role exists | ✅ Full（20+ 注入 + FOSI_DO 夜間占卜 + nofosi 偽裝 + 大狼偽裝分支） |
+| `wfbig` | Add 大狼 role (strong wolf) | ✅ | ✅ `wfbig` count injection | ✅ Full（20+ 注入 + 狼陣營判定 + mage/fosi 占卜偽裝分支） |
+| `lovers` | Add 戀人 role (paired lovers, die together) | ✅ | ✅ lovers replacement injection | ⚠️ Partial（13+ 以 common/human 置換 2 名 lovers；連帶死亡已覆蓋 day/night/sudden-death，但子職附掛模型仍有差異） |
 
 ### PHP Role Assignment Logic (not yet ported)
 
@@ -242,9 +242,9 @@ CF has the role **types** defined but the **auto-assignment logic** that modifie
 |--------|-------------------|-------------------|--------|
 | Session management | PHP sessions (`$_SESSION`) | KV-backed sessions + `Authorization: Bearer` | 🔄 Redesigned |
 | Database | MySQL (`room`, `user_entry`, `talk`, `vote`, `system_message`, `user_icon`) | D1 (same tables) + KV (sessions, bans, stats) + R2 (icons) | 🔄 Redesigned |
-| Time system (spend_time) | Day: 12h ÷ `$day_limit_time`; Night: 6h ÷ `$night_limit_time` | Simplified `timeLimit` (seconds); silence mode | ⚠️ Partial |
-| Silence detection | `$silence_threshhold_time` (60s) → silence → time passes at `$silence_pass_time`× rate | `silenceMode: boolean` flag | ⚠️ Partial |
-| Sudden death | `$suddendeath_threshhold_time` (120s after time runs out) | Day timeout 時未投票者會突然死 | ⚠️ Partial |
+| Time system (spend_time) | Day: 12h ÷ `$day_limit_time`; Night: 6h ÷ `$night_limit_time` | spend_time 1..4（依發言長度 bytes）+ day/night limit 轉相位 | ✅ Full |
+| Silence detection | `$silence_threshhold_time` (60s) → silence → time passes at `$silence_pass_time`× rate | DO tick + silenceThreshold + silenceMultiplier（預設 60s/4x） | ✅ Full |
+| Sudden death | `$suddendeath_threshhold_time` (120s after time runs out) | day timeout 記錄 + 120s grace 後處理未投票者 | ✅ Full |
 | Auto-reload / polling | HTTP meta-refresh every N seconds | WebSocket push (real-time) | 🔄 Redesigned |
 | Federation | `list.php` fetches from `$room_server_list` via HTTP | `GET /api/rooms/federated` with configurable `FEDERATED_SOURCES` env var | ✅ Full |
 | Dead-room cleanup | `CheckDieRoom()` after `$die_room_threshhold_time` (600s) | DO alarm + cron stale-room scan + API/admin cleanup | 🔄 Redesigned |

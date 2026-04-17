@@ -4,6 +4,7 @@
 
 import { describe, it, expect } from 'vitest';
 import type { GamePhase, Player, Role } from '../types';
+import { shouldTriggerSuddenDeath, checkSilence, advanceSilenceTime, calculateSpeechSpendUnits, DEFAULT_TIME_CONFIG } from '../utils/time-progression';
 
 describe('Time Progression System', () => {
   describe('時間計算', () => {
@@ -28,6 +29,25 @@ describe('Time Progression System', () => {
       const limit = 48;
       const elapsedMinutes = (spentUnits / limit) * totalMinutes;
       expect(elapsedMinutes).toBe(15);
+    });
+
+    it('legacy spend_time：<=100 bytes 應為 1', () => {
+      expect(calculateSpeechSpendUnits('a'.repeat(100))).toBe(1);
+    });
+
+    it('legacy spend_time：101~200 bytes 應為 2', () => {
+      expect(calculateSpeechSpendUnits('a'.repeat(101))).toBe(2);
+      expect(calculateSpeechSpendUnits('a'.repeat(200))).toBe(2);
+    });
+
+    it('legacy spend_time：201~300 bytes 應為 3', () => {
+      expect(calculateSpeechSpendUnits('a'.repeat(201))).toBe(3);
+      expect(calculateSpeechSpendUnits('a'.repeat(300))).toBe(3);
+    });
+
+    it('legacy spend_time：>300 bytes 應為 4', () => {
+      expect(calculateSpeechSpendUnits('a'.repeat(301))).toBe(4);
+      expect(calculateSpeechSpendUnits('a'.repeat(800))).toBe(4);
     });
   });
 
@@ -131,6 +151,34 @@ describe('Time Progression System', () => {
       const elapsed = (Date.now() - phaseStartTimeMs) / 1000;
       const isExpired = elapsed >= realTimeDayLimitSec;
       expect(isExpired).toBe(false);
+    });
+  });
+
+  describe('sudden death / silence helpers', () => {
+    it('白天超時 120 秒後才觸發突然死窗口', () => {
+      const timeoutAt = Date.now() - 119000;
+      expect(shouldTriggerSuddenDeath('day', timeoutAt, Date.now())).toBe(false);
+      expect(shouldTriggerSuddenDeath('day', timeoutAt, timeoutAt + 120000)).toBe(true);
+    });
+
+    it('夜晚不觸發突然死窗口', () => {
+      const timeoutAt = Date.now() - 999999;
+      expect(shouldTriggerSuddenDeath('night', timeoutAt, Date.now())).toBe(false);
+    });
+
+    it('silence helper 會在超過閾值後開始加速單位', () => {
+      const now = Date.now();
+      const state = {
+        date: 1,
+        dayNight: 'day' as const,
+        timeSpent: 0,
+        lastMessageTime: now - 65000,
+        isSilence: false,
+        phaseStartTimeMs: now - 65000,
+      };
+      expect(checkSilence(state, now, DEFAULT_TIME_CONFIG)).toBe(true);
+      const units = advanceSilenceTime(state, 30000, DEFAULT_TIME_CONFIG);
+      expect(units).toBeGreaterThan(0);
     });
   });
 });
