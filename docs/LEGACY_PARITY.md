@@ -195,7 +195,7 @@ CF replaces this with a typed `RoomOptions` interface (see `src/types/room-optio
 | `trip` | Require tripcode to join | ✅ | ✅ `tripRequired` | ✅ Full (join-time enforcement in API) |
 | `istrip` | Legacy trip enforcement token | ✅ | ✅ `istrip` | ✅ Full（join-time enforced；legacy token string 路徑可阻擋無 trip 加入） |
 | `will` | Enable last-words (遺言) | ✅ | ✅ `will` | ✅ Full |
-| `gm:XXXXX` | Designate a specific trip as GM | ✅ | ⚠️ | ⚠️ Partial (legacy token parsing + runtime 指派 + maxUser+1 GM 加入席次 + join 僅 waiting/beforegame + 夜晚狼刀不可指向 GM + 白天投票完成判定排除 GM 已接上；仍有少量 edge case 待收斂) |
+| `gm:XXXXX` | Designate a specific trip as GM | ✅ | ⚠️ | ⚠️ Partial (legacy token parsing + runtime 指派 + maxUser+1 GM 加入席次 + join 僅 waiting/beforegame + 夜晚狼刀不可指向 GM + 白天投票完成判定排除 GM + GM 不可作為白天投票者已接上；仍有少量 edge case 待收斂) |
 | `as_gm` | Activate GM role | ✅ | ⚠️ | ⚠️ Partial (`as_gm` token 可啟用 GM；仍有部分 legacy 行為差異待補) |
 | `votedisplay` | Show who has already voted (start-game & day) | ✅ | ✅ `votedisplay` | ✅ Full（等待中 start-game 投票與白天投票皆下發 votedUsers） |
 | `cust_dummy` | Custom dummy-boy name/last-words | ⚠️ | ⚠️ `custDummy` + `dummyCustomName` + `dummyCustomLastWords` | ⚠️ Partial (parser/runtime 已支援；create-room UI 尚未提供完整設定控件) |
