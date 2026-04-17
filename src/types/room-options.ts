@@ -101,6 +101,9 @@ export function parseLegacyGameOptionTokens(value: string): LegacyGameOptionPars
 
   const roomOptions: Partial<RoomOptions> = {};
 
+  // legacy will：token 存在才啟用；缺省視為關閉
+  roomOptions.will = tokens.includes('will');
+
   if (tokens.includes('as_gm')) {
     roomOptions.gmEnabled = true;
   }
