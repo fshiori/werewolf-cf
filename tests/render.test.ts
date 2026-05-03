@@ -12,7 +12,10 @@ describe("render", () => {
       }
     ]);
 
-    expect(html).toContain("<table>");
+    expect(html).toContain("<fieldset>");
+    expect(html).toContain("選單");
+    expect(html).toContain("遊戲列表");
+    expect(html).toContain("建立村子");
     expect(html).toContain("&lt;Test&gt;");
     expect(html).toContain("/room/room_abc");
     expect(html).toContain("建立房間");
@@ -21,10 +24,12 @@ describe("render", () => {
   it("renders room page with websocket client script", () => {
     const html = renderRoom("room_abc");
 
-    expect(html).toContain("房間 room_abc");
+    expect(html).toContain("[room_abc]");
     expect(html).toContain("new WebSocket");
     expect(html).toContain("進入房間");
     expect(html).toContain("送出");
     expect(html).toContain("開始遊戲");
+    expect(html).toContain("玩家列表");
+    expect(html).toContain("能力發動 / 投票");
   });
 });

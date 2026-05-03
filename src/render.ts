@@ -9,50 +9,180 @@ function page(title: string, body: string): string {
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>${escapeHtml(title)}</title>
   <style>
-    body { margin: 12px; background: #eee8d8; color: #2b2118; font: 14px "Times New Roman", "Noto Serif TC", serif; }
-    table { border-collapse: collapse; width: 100%; max-width: 920px; margin: 0 auto 12px; background: #fffaf0; }
-    th, td { border: 1px solid #7d6b58; padding: 6px 8px; vertical-align: top; }
-    th { background: #c9b89a; color: #24190f; }
-    input, button { font: inherit; border: 1px solid #7d6b58; background: #fffdf6; padding: 4px 6px; }
-    button { background: #d8c7a6; cursor: pointer; }
-    a { color: #4f3622; }
-    #chatLog { height: 280px; overflow: auto; background: #fffdf6; }
-    #gameLog { height: 140px; overflow: auto; background: #fffdf6; }
+    a { color: blue; text-decoration: none; }
+    a:visited { color: blue; }
+    a:hover { color: #999999; text-decoration: underline; }
+    body {
+      margin: 0;
+      background: #ffffff;
+      color: #000000;
+      font: 14px "Times New Roman", "PMingLiU", "Noto Serif TC", serif;
+    }
+    table { border-collapse: collapse; }
+    input, button, select {
+      font: inherit;
+      border: 1px solid silver;
+      background-color: aliceblue;
+      padding: 2px 4px;
+    }
+    button { cursor: pointer; color: #000000; }
+    button:disabled { color: #777777; cursor: default; }
+    fieldset { border: 2px groove #d9d9d9; margin: 0 0 18px; padding: 10px 14px 14px; }
+    legend { padding: 0 4px; }
+    .site { width: 100%; }
+    .masthead { padding: 8px 8px 0; }
+    .title { color: #cc3300; font-size: 28px; font-weight: bold; line-height: 1; }
+    .subtitle { text-align: right; font-weight: bold; }
+    .side { width: 190px; padding: 8px 0 0 8px; vertical-align: top; }
+    .main { padding: 8px 16px 24px 18px; vertical-align: top; }
+    .menu-box { width: 140px; border: 1px solid #cc3300; }
+    .menu-box th { background: #ccffcc; padding: 5px; }
+    .menu-list td { padding: 2px 3px; }
+    .room-link { color: #cc3300; display: block; margin-bottom: 8px; }
+    .room-line { font-size: 16px; }
+    .room-comment { display: block; text-align: right; margin-left: 100px; color: #333333; }
+    .status {
+      display: inline-block;
+      min-width: 58px;
+      padding: 1px 4px;
+      margin-right: 3px;
+      border: 1px solid #333333;
+      color: #ffffff;
+      font-size: 12px;
+      text-align: center;
+    }
+    .status-lobby { background: #339933; }
+    .status-playing { background: #cc6600; }
+    .status-ended { background: #666666; }
+    .option-mark {
+      display: inline-block;
+      border: 1px solid #999999;
+      background: #eeeeee;
+      font-size: 11px;
+      padding: 0 3px;
+      margin-left: 2px;
+    }
+    .form-table td { padding: 4px 2px; vertical-align: top; }
+    .game-shell { width: 800px; margin: 8px auto 18px; }
+    .game-shell > tbody > tr > td { padding: 0 0 8px; }
+    .game-header {
+      width: 800px;
+      border: 1px solid #666666;
+      background: #efefef;
+    }
+    .game-header th { padding: 6px 8px; text-align: left; font-size: 15px; }
+    .game-header td { padding: 4px 8px; border-top: 1px solid #cccccc; }
+    .panel {
+      width: 800px;
+      border: 1px dotted #000000;
+      background: #ffffff;
+    }
+    .panel th {
+      padding: 4px 6px;
+      background: #ccffcc;
+      border-bottom: 1px solid #999999;
+      text-align: left;
+    }
+    .panel td { padding: 6px; vertical-align: top; }
+    .player-grid { border-spacing: 5px; border-collapse: separate; font-size: 10pt; }
+    .player-card { width: 148px; border: 1px solid #b0b0b0; background: #fafafa; }
+    .player-icon {
+      width: 42px;
+      height: 42px;
+      border: 2px solid #666666;
+      background: #e8eef8;
+      text-align: center;
+      font-weight: bold;
+      color: #333366;
+    }
+    .player-name { padding-left: 5px; }
+    .dead { background: #303030; color: #dddddd; text-decoration: line-through; }
+    #chatLog {
+      height: 280px;
+      overflow: auto;
+      background: #ffffff;
+      font-size: 12pt;
+      font-family: "PMingLiU", "Noto Serif TC", serif;
+    }
+    #chatLog div, #gameLog div { border-top: 1px dashed silver; padding: 2px 4px; }
+    #gameLog { max-height: 140px; overflow: auto; background: #ffffff; }
     #players button { margin: 2px 4px 2px 0; min-width: 7em; text-align: left; }
-    .dead { text-decoration: line-through; color: #7b6f65; }
-    .muted { color: #6c6258; }
+    .muted { color: #666666; }
   </style>
 </head>
 <body>${body}</body>
 </html>`;
 }
 
+function shell(body: string): string {
+  return `
+    <table class="site">
+      <tr>
+        <td colspan="2" class="masthead">
+          <a href="/" class="title">汝等是人是狼？</a>
+          <div class="subtitle">Werewolf Cloudflare Port</div>
+        </td>
+      </tr>
+      <tr>
+        <td class="side">
+          <table class="menu-box"><tr><th>選單</th></tr></table>
+          <table class="menu-list">
+            <tr><td><small><font color="#666666">・</font></small></td><td><a href="/">首頁</a></td></tr>
+            <tr><td><small><font color="#666666">・</font></small></td><td><a href="/api/rooms">房間 JSON</a></td></tr>
+            <tr><td><small><font color="#666666">・</font></small></td><td><a href="javascript:void(0)">規則</a></td></tr>
+            <tr><td><small><font color="#666666">・</font></small></td><td><a href="javascript:void(0)">版本</a></td></tr>
+          </table>
+        </td>
+        <td class="main">${body}</td>
+      </tr>
+    </table>
+  `;
+}
+
 export function renderHome(rooms: RoomSummary[]): string {
   const roomRows = rooms.length === 0
-    ? `<tr><td colspan="4" class="muted">目前沒有房間。</td></tr>`
-    : rooms.map((room) => `<tr>
-      <td><a href="/room/${escapeHtml(room.id)}">${escapeHtml(room.name)}</a></td>
-      <td>${escapeHtml(room.status)}</td>
-      <td>${escapeHtml(room.createdAt)}</td>
-      <td>${escapeHtml(room.id)}</td>
-    </tr>`).join("");
+    ? `<div class="muted">目前沒有村子。</div>`
+    : rooms.map((room) => {
+      const status = escapeHtml(room.status);
+      return `<a class="room-link" href="/room/${escapeHtml(room.id)}">
+        <span class="room-line"><span class="status status-${status}">${status}</span><small>[${escapeHtml(room.id)}]</small> ${escapeHtml(room.name)}村</span>
+        <small class="room-comment">～建立時間：${escapeHtml(room.createdAt)}～ <span class="option-mark">即時</span></small>
+      </a>`;
+    }).join("");
 
-  return page("Werewolf CF", `
-    <table>
-      <tr><th colspan="2">汝等是人是狼？</th></tr>
-      <tr>
-        <td style="width: 160px;">玩家暱稱</td>
-        <td><input id="nickname" maxlength="32"></td>
-      </tr>
-      <tr>
-        <td>房間名稱</td>
-        <td><input id="roomName" maxlength="48"> <button id="createRoom">建立房間</button></td>
-      </tr>
-    </table>
-    <table>
-      <tr><th>房間</th><th>狀態</th><th>建立時間</th><th>ID</th></tr>
-      ${roomRows}
-    </table>
+  return page("Werewolf CF", shell(`
+    <fieldset>
+      <legend><strong>伺服器公告</strong></legend>
+      <div style="line-height:135%;margin:12px 20px 18px;">
+        <strong>Cloudflare Workers / D1 / Durable Objects 移植進行中。</strong><br>
+        <span class="muted">目前支援建立村子、即時聊天、白天投票、夜晚行動與自動換日。</span>
+      </div>
+    </fieldset>
+    <fieldset>
+      <legend><strong>遊戲列表</strong></legend>
+      <div style="line-height:135%;margin:12px 20px 18px;"><strong>${roomRows}</strong></div>
+    </fieldset>
+    <fieldset>
+      <legend><strong>建立村子</strong></legend>
+      <table class="form-table">
+        <tr>
+          <td><label><strong>　玩家暱稱：</strong></label></td>
+          <td><input id="nickname" maxlength="32" size="28"></td>
+        </tr>
+        <tr>
+          <td><label><strong>　村子名稱：</strong></label></td>
+          <td><input id="roomName" maxlength="48" size="45"> 村</td>
+        </tr>
+        <tr>
+          <td><label><strong>　限時時間：</strong></label></td>
+          <td><small>日：3 分　夜：1.5 分　<span class="option-mark">固定</span></small></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td><button id="createRoom">建立房間</button></td>
+        </tr>
+      </table>
+    </fieldset>
     <script>
       const playerKey = "werewolf_cf_player_id";
       if (!localStorage.getItem(playerKey)) {
@@ -77,41 +207,68 @@ export function renderHome(rooms: RoomSummary[]): string {
         location.href = "/room/" + data.roomId;
       });
     </script>
-  `);
+  `));
 }
 
 export function renderRoom(roomId: string): string {
   return page(`Room ${roomId}`, `
-    <table>
-      <tr><th colspan="2">房間 ${escapeHtml(roomId)}</th></tr>
+    <table class="game-shell">
       <tr>
-        <td style="width: 180px;">玩家暱稱</td>
-        <td><input id="nickname" maxlength="32"> <button id="connect">進入房間</button> <a href="/">回房間列表</a></td>
-      </tr>
-    </table>
-    <table>
-      <tr><th style="width: 220px;">生存者</th><th>對話</th></tr>
-      <tr>
-        <td><div id="members" class="muted">尚未連線</div></td>
         <td>
-          <div id="chatLog"></div>
-          <input id="chatText" maxlength="500" style="width: 75%;">
-          <button id="sendChat">送出</button>
+          <table class="game-header">
+            <tr><th colspan="2">[${escapeHtml(roomId)}] 汝等是人是狼？</th></tr>
+            <tr>
+              <td style="width: 180px;">階段：<span id="phase">lobby</span></td>
+              <td>勝利：<span id="winner" class="muted">未定</span>　<a href="/">首頁</a></td>
+            </tr>
+            <tr>
+              <td>玩家暱稱</td>
+              <td><input id="nickname" maxlength="32" size="28"> <button id="connect">進入房間</button> <button id="startGame">開始遊戲</button></td>
+            </tr>
+          </table>
         </td>
       </tr>
-    </table>
-    <table>
-      <tr><th style="width: 220px;">遊戲</th><th>行動</th></tr>
       <tr>
         <td>
-          <div>階段：<span id="phase">lobby</span></div>
-          <div>身分：<span id="role" class="muted">未分配</span></div>
-          <div>勝利：<span id="winner" class="muted">未定</span></div>
-          <button id="startGame">開始遊戲</button>
+          <table class="panel">
+            <tr><th>玩家列表</th></tr>
+            <tr><td><div id="members" class="muted">尚未連線</div><table id="playerGrid" class="player-grid"></table></td></tr>
+          </table>
         </td>
+      </tr>
+      <tr>
         <td>
-          <div id="players" class="muted">等待狀態更新</div>
-          <div id="gameLog"></div>
+          <table class="panel">
+            <tr><th>能力發動 / 投票</th></tr>
+            <tr>
+              <td>
+                <div>身分：<span id="role" class="muted">未分配</span></div>
+                <div id="players" class="muted">等待狀態更新</div>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <table class="panel">
+            <tr><th>發言</th></tr>
+            <tr>
+              <td>
+                <div id="chatLog"></div>
+                <input id="chatText" maxlength="500" size="72">
+                <button id="sendChat">送出</button>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <table class="panel">
+            <tr><th>系統訊息</th></tr>
+            <tr><td><div id="gameLog"></div></td></tr>
+          </table>
         </td>
       </tr>
     </table>
@@ -174,8 +331,35 @@ export function renderRoom(roomId: string): string {
         document.querySelector("#startGame").disabled = game.phase !== "lobby";
         const currentPlayerId = localStorage.getItem(playerKey);
         const players = document.querySelector("#players");
+        const playerGrid = document.querySelector("#playerGrid");
         players.innerHTML = "";
+        playerGrid.innerHTML = "";
+        let row;
         game.players.forEach((player) => {
+          if (!row || row.children.length >= 5) {
+            row = document.createElement("tr");
+            playerGrid.appendChild(row);
+          }
+          const card = document.createElement("td");
+          card.className = "player-card" + (player.alive ? "" : " dead");
+          const initial = (player.nickname || "?").slice(0, 1);
+          const cardTable = document.createElement("table");
+          const cardRow = document.createElement("tr");
+          const iconCell = document.createElement("td");
+          iconCell.className = "player-icon";
+          iconCell.textContent = initial;
+          const nameCell = document.createElement("td");
+          nameCell.className = "player-name";
+          const marker = document.createElement("font");
+          marker.color = "#666666";
+          marker.textContent = "◆";
+          const status = document.createElement("span");
+          status.textContent = player.alive ? "(生存中)" : "(死亡)";
+          nameCell.append(marker, player.nickname, document.createElement("br"), status);
+          cardRow.append(iconCell, nameCell);
+          cardTable.appendChild(cardRow);
+          card.appendChild(cardTable);
+          row.appendChild(card);
           const button = document.createElement("button");
           button.textContent = (player.alive ? "" : "× ") + player.nickname;
           button.disabled = !player.alive || player.playerId === currentPlayerId || game.phase === "ended" || game.phase === "lobby";
@@ -194,6 +378,7 @@ export function renderRoom(roomId: string): string {
         });
         if (game.players.length === 0) {
           players.textContent = "尚無玩家。";
+          playerGrid.innerHTML = "";
         }
         const log = document.querySelector("#gameLog");
         log.innerHTML = "";
