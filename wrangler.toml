@@ -1,0 +1,25 @@
+name = "werewolf-cf"
+main = "src/index.ts"
+compatibility_date = "2026-05-03"
+
+[[durable_objects.bindings]]
+name = "ROOM_DO"
+class_name = "RoomDurableObject"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["RoomDurableObject"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "werewolf-cf"
+database_id = "local-dev-placeholder"
+migrations_dir = "migrations"
+
+[[r2_buckets]]
+binding = "ASSETS"
+bucket_name = "werewolf-cf-assets"
+
+[[kv_namespaces]]
+binding = "CONFIG"
+id = "local-dev-placeholder"

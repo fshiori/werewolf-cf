@@ -18,3 +18,9 @@
 
 # End of https://www.toptal.com/developers/gitignore/api/linux
 ref/*
+
+# Node / Cloudflare Workers
+node_modules/
+dist/
+.wrangler/
+.dev.vars
