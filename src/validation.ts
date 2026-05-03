@@ -89,5 +89,23 @@ export function parseClientMessage(raw: string): ClientMessage {
     return { type: "chat", text: parsed.text };
   }
 
+  if (parsed.type === "start_game") {
+    return { type: "start_game" };
+  }
+
+  if (parsed.type === "vote") {
+    if (typeof parsed.targetPlayerId !== "string") {
+      throw new Error("Invalid vote message");
+    }
+    return { type: "vote", targetPlayerId: parsed.targetPlayerId };
+  }
+
+  if (parsed.type === "night_kill") {
+    if (typeof parsed.targetPlayerId !== "string") {
+      throw new Error("Invalid night kill message");
+    }
+    return { type: "night_kill", targetPlayerId: parsed.targetPlayerId };
+  }
+
   throw new Error("Unknown message type");
 }

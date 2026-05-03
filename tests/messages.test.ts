@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { buildChatMessage, buildJoinedMessage, buildPresenceMessage } from "../src/messages";
+import { createLobbyState, startGame } from "../src/game";
+import { buildChatMessage, buildGameStateMessage, buildJoinedMessage, buildPresenceMessage, buildRoleMessage } from "../src/messages";
 
 describe("messages", () => {
   it("builds joined messages", () => {
@@ -24,6 +25,39 @@ describe("messages", () => {
       playerId: "player_1",
       nickname: "Alice",
       text: "&lt;hello&gt;"
+    });
+  });
+
+  it("builds public game state messages without roles", () => {
+    const game = startGame(
+      {
+        ...createLobbyState("room_abc"),
+        players: [
+          { playerId: "player_1", nickname: "<Wolf>", role: "villager", alive: true },
+          { playerId: "player_2", nickname: "Bob", role: "villager", alive: true },
+          { playerId: "player_3", nickname: "Carol", role: "villager", alive: true }
+        ]
+      },
+      0
+    );
+
+    expect(buildGameStateMessage(game)).toMatchObject({
+      type: "game_state",
+      phase: "day",
+      players: [
+        { playerId: "player_1", nickname: "&lt;Wolf&gt;", alive: true },
+        { playerId: "player_2", nickname: "Bob", alive: true },
+        { playerId: "player_3", nickname: "Carol", alive: true }
+      ]
+    });
+    expect(JSON.stringify(buildGameStateMessage(game))).not.toContain('"role"');
+  });
+
+  it("builds role messages with escaped wolf list", () => {
+    expect(buildRoleMessage("werewolf", [{ playerId: "player_1", nickname: "<Wolf>" }])).toEqual({
+      type: "role",
+      role: "werewolf",
+      wolves: [{ playerId: "player_1", nickname: "&lt;Wolf&gt;" }]
     });
   });
 });

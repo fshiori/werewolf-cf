@@ -40,6 +40,12 @@ describe("validation", () => {
 
   it("parses only allowed client messages", () => {
     expect(parseClientMessage('{"type":"chat","text":"hi"}')).toEqual({ type: "chat", text: "hi" });
+    expect(parseClientMessage('{"type":"start_game"}')).toEqual({ type: "start_game" });
+    expect(parseClientMessage('{"type":"vote","targetPlayerId":"player_1"}')).toEqual({ type: "vote", targetPlayerId: "player_1" });
+    expect(parseClientMessage('{"type":"night_kill","targetPlayerId":"player_2"}')).toEqual({
+      type: "night_kill",
+      targetPlayerId: "player_2"
+    });
     expect(() => parseClientMessage("{bad")).toThrow("Invalid JSON");
     expect(() => parseClientMessage('{"type":"unknown"}')).toThrow("Unknown message type");
   });

@@ -25,5 +25,6 @@ describe("render", () => {
     expect(html).toContain("new WebSocket");
     expect(html).toContain("進入房間");
     expect(html).toContain("送出");
+    expect(html).toContain("開始遊戲");
   });
 });

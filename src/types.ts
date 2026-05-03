@@ -1,4 +1,4 @@
-export type RoomStatus = "lobby";
+export type RoomStatus = "lobby" | "playing" | "ended";
 
 export interface RoomSummary {
   id: string;
@@ -12,6 +12,35 @@ export interface RoomMember {
   nickname: string;
 }
 
+export type PlayerRole = "villager" | "werewolf";
+export type GamePhase = "lobby" | "day" | "night" | "ended";
+export type GameWinner = "villagers" | "werewolves";
+
+export interface GamePlayer {
+  playerId: string;
+  nickname: string;
+  role: PlayerRole;
+  alive: boolean;
+}
+
+export interface PublicGamePlayer {
+  playerId: string;
+  nickname: string;
+  alive: boolean;
+}
+
+export interface GameState {
+  roomId: string;
+  phase: GamePhase;
+  day: number;
+  players: GamePlayer[];
+  votes: Record<string, string>;
+  nightKills: Record<string, string>;
+  winner?: GameWinner;
+  phaseEndsAt?: string;
+  log: string[];
+}
+
 export type JoinClientMessage = {
   type: "join";
   playerId: string;
@@ -23,10 +52,35 @@ export type ChatClientMessage = {
   text: string;
 };
 
-export type ClientMessage = JoinClientMessage | ChatClientMessage;
+export type StartGameClientMessage = {
+  type: "start_game";
+};
+
+export type VoteClientMessage = {
+  type: "vote";
+  targetPlayerId: string;
+};
+
+export type NightKillClientMessage = {
+  type: "night_kill";
+  targetPlayerId: string;
+};
+
+export type ClientMessage = JoinClientMessage | ChatClientMessage | StartGameClientMessage | VoteClientMessage | NightKillClientMessage;
 
 export type ServerMessage =
   | { type: "joined"; roomId: string; playerId: string; members: RoomMember[] }
   | { type: "presence"; members: RoomMember[] }
   | { type: "chat"; playerId: string; nickname: string; text: string; sentAt: string }
+  | {
+      type: "game_state";
+      phase: GamePhase;
+      day: number;
+      players: PublicGamePlayer[];
+      votes: Record<string, string>;
+      winner?: GameWinner;
+      phaseEndsAt?: string;
+      log: string[];
+    }
+  | { type: "role"; role: PlayerRole; wolves: RoomMember[] }
   | { type: "error"; message: string };
