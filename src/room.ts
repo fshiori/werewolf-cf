@@ -1,5 +1,21 @@
-import { buildChatMessage, buildErrorMessage, buildJoinedMessage, buildPresenceMessage } from "./messages";
-import type { RoomMember } from "./types";
+import {
+  advancePhaseByAlarm,
+  castDayVote,
+  castNightKill,
+  createLobbyState,
+  startGame,
+  upsertLobbyPlayer,
+  wolvesForPlayer
+} from "./game";
+import {
+  buildChatMessage,
+  buildErrorMessage,
+  buildGameStateMessage,
+  buildJoinedMessage,
+  buildPresenceMessage,
+  buildRoleMessage
+} from "./messages";
+import type { GameState, RoomMember } from "./types";
 import {
   parseClientMessage,
   validateChatText,
@@ -16,10 +32,10 @@ type ConnectionState = {
 export class RoomDurableObject {
   private readonly roomId: string;
   private readonly sockets = new Map<WebSocket, ConnectionState>();
+  private gameState?: GameState;
 
   constructor(private readonly state: DurableObjectState, private readonly env: Env) {
     this.roomId = this.state.id.name ?? "";
-    void this.env;
   }
 
   async fetch(request: Request): Promise<Response> {
@@ -37,12 +53,22 @@ export class RoomDurableObject {
 
   private handleSocket(socket: WebSocket): void {
     socket.accept();
-    socket.addEventListener("message", (event) => this.onMessage(socket, event));
+    socket.addEventListener("message", (event) => {
+      void this.onMessage(socket, event);
+    });
     socket.addEventListener("close", () => this.onClose(socket));
     socket.addEventListener("error", () => this.onClose(socket));
   }
 
-  private onMessage(socket: WebSocket, event: MessageEvent): void {
+  async alarm(): Promise<void> {
+    const game = await this.loadGameState();
+    const next = advancePhaseByAlarm(game);
+    await this.saveGameState(next);
+    await this.syncRoomStatus(next);
+    this.broadcastGameState(next);
+  }
+
+  private async onMessage(socket: WebSocket, event: MessageEvent): Promise<void> {
     try {
       if (typeof event.data !== "string") {
         throw new Error("Invalid message");
@@ -56,8 +82,11 @@ export class RoomDurableObject {
         const playerId = validatePlayerId(message.playerId);
         const nickname = validateNickname(message.nickname);
         this.sockets.set(socket, { playerId, nickname });
+        const game = upsertLobbyPlayer(await this.loadGameState(), { playerId, nickname });
+        await this.saveGameState(game);
         this.send(socket, buildJoinedMessage(this.roomId, playerId, this.members()));
         this.broadcast(buildPresenceMessage(this.members()));
+        this.broadcastGameState(game);
         return;
       }
 
@@ -66,8 +95,35 @@ export class RoomDurableObject {
         throw new Error("Join required");
       }
 
-      const text = validateChatText(message.text);
-      this.broadcast(buildChatMessage(member.playerId, member.nickname, text));
+      if (message.type === "chat") {
+        const text = validateChatText(message.text);
+        this.broadcast(buildChatMessage(member.playerId, member.nickname, text));
+        return;
+      }
+
+      if (message.type === "start_game") {
+        const next = startGame(await this.loadGameState());
+        await this.saveGameState(next);
+        await this.syncRoomStatus(next);
+        this.broadcastGameState(next);
+        this.sendRoles(next);
+        return;
+      }
+
+      if (message.type === "vote") {
+        const targetPlayerId = validatePlayerId(message.targetPlayerId);
+        const next = castDayVote(await this.loadGameState(), member.playerId, targetPlayerId);
+        await this.saveGameState(next);
+        await this.syncRoomStatus(next);
+        this.broadcastGameState(next);
+        return;
+      }
+
+      const targetPlayerId = validatePlayerId(message.targetPlayerId);
+      const next = castNightKill(await this.loadGameState(), member.playerId, targetPlayerId);
+      await this.saveGameState(next);
+      await this.syncRoomStatus(next);
+      this.broadcastGameState(next);
     } catch (error) {
       this.send(socket, buildErrorMessage(error instanceof Error ? error.message : "Unknown error"));
     }
@@ -95,6 +151,53 @@ export class RoomDurableObject {
     const encoded = JSON.stringify(message);
     for (const socket of this.sockets.keys()) {
       socket.send(encoded);
+    }
+  }
+
+  private async loadGameState(): Promise<GameState> {
+    if (this.gameState) {
+      return this.gameState;
+    }
+    this.gameState = (await this.state.storage.get<GameState>("gameState")) ?? createLobbyState(this.roomId);
+    return this.gameState;
+  }
+
+  private async saveGameState(gameState: GameState): Promise<void> {
+    this.gameState = gameState;
+    await this.state.storage.put("gameState", gameState);
+    if (gameState.phaseEndsAt) {
+      await this.state.storage.setAlarm(new Date(gameState.phaseEndsAt));
+    } else {
+      await this.state.storage.deleteAlarm();
+    }
+  }
+
+  private broadcastGameState(gameState: GameState): void {
+    this.broadcast(buildGameStateMessage(gameState));
+  }
+
+  private sendRoles(gameState: GameState): void {
+    for (const [socket, member] of this.sockets) {
+      const player = gameState.players.find((candidate) => candidate.playerId === member.playerId);
+      if (!player) {
+        continue;
+      }
+      this.send(socket, buildRoleMessage(player.role, wolvesForPlayer(gameState, player.playerId)));
+    }
+  }
+
+  private async syncRoomStatus(gameState: GameState): Promise<void> {
+    if (gameState.phase === "day" && gameState.day === 1) {
+      await this.env.DB.prepare("UPDATE rooms SET status = 'playing', updated_at = CURRENT_TIMESTAMP WHERE id = ?").bind(this.roomId).run();
+    }
+    if (gameState.phase === "ended") {
+      await this.env.DB.batch([
+        this.env.DB.prepare("UPDATE rooms SET status = 'ended', updated_at = CURRENT_TIMESTAMP WHERE id = ?").bind(this.roomId),
+        this.env.DB.prepare("INSERT INTO game_records (room_id, result_json) VALUES (?, ?)").bind(
+          this.roomId,
+          JSON.stringify({ winner: gameState.winner, day: gameState.day, players: gameState.players })
+        )
+      ]);
     }
   }
 }

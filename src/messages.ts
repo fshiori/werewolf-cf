@@ -1,4 +1,5 @@
-import type { RoomMember, ServerMessage } from "./types";
+import { publicPlayers } from "./game";
+import type { GameState, PlayerRole, RoomMember, ServerMessage } from "./types";
 import { escapeHtml } from "./validation";
 
 export function buildJoinedMessage(roomId: string, playerId: string, members: RoomMember[]): ServerMessage {
@@ -16,6 +17,27 @@ export function buildChatMessage(playerId: string, nickname: string, text: strin
     nickname: escapeHtml(nickname),
     text: escapeHtml(text),
     sentAt: new Date().toISOString()
+  };
+}
+
+export function buildGameStateMessage(state: GameState): ServerMessage {
+  return {
+    type: "game_state",
+    phase: state.phase,
+    day: state.day,
+    players: publicPlayers(state.players).map((player) => ({ ...player, nickname: escapeHtml(player.nickname) })),
+    votes: state.votes,
+    winner: state.winner,
+    phaseEndsAt: state.phaseEndsAt,
+    log: state.log.map(escapeHtml)
+  };
+}
+
+export function buildRoleMessage(role: PlayerRole, wolves: RoomMember[]): ServerMessage {
+  return {
+    type: "role",
+    role,
+    wolves: wolves.map((wolf) => ({ playerId: wolf.playerId, nickname: escapeHtml(wolf.nickname) }))
   };
 }
 

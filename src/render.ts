@@ -17,6 +17,9 @@ function page(title: string, body: string): string {
     button { background: #d8c7a6; cursor: pointer; }
     a { color: #4f3622; }
     #chatLog { height: 280px; overflow: auto; background: #fffdf6; }
+    #gameLog { height: 140px; overflow: auto; background: #fffdf6; }
+    #players button { margin: 2px 4px 2px 0; min-width: 7em; text-align: left; }
+    .dead { text-decoration: line-through; color: #7b6f65; }
     .muted { color: #6c6258; }
   </style>
 </head>
@@ -97,6 +100,21 @@ export function renderRoom(roomId: string): string {
         </td>
       </tr>
     </table>
+    <table>
+      <tr><th style="width: 220px;">遊戲</th><th>行動</th></tr>
+      <tr>
+        <td>
+          <div>階段：<span id="phase">lobby</span></div>
+          <div>身分：<span id="role" class="muted">未分配</span></div>
+          <div>勝利：<span id="winner" class="muted">未定</span></div>
+          <button id="startGame">開始遊戲</button>
+        </td>
+        <td>
+          <div id="players" class="muted">等待狀態更新</div>
+          <div id="gameLog"></div>
+        </td>
+      </tr>
+    </table>
     <script>
       const roomId = ${JSON.stringify(roomId)};
       const playerKey = "werewolf_cf_player_id";
@@ -110,6 +128,8 @@ export function renderRoom(roomId: string): string {
         div.innerHTML = line;
         document.querySelector("#chatLog").appendChild(div);
       }
+      let latestGame;
+      let role = "";
       document.querySelector("#connect").addEventListener("click", () => {
         const nickname = document.querySelector("#nickname").value;
         localStorage.setItem("werewolf_cf_nickname", nickname);
@@ -121,6 +141,13 @@ export function renderRoom(roomId: string): string {
             document.querySelector("#members").textContent = msg.members.map((m) => m.nickname).join(", ");
           } else if (msg.type === "chat") {
             append("<b>" + msg.nickname + "</b>: " + msg.text);
+          } else if (msg.type === "game_state") {
+            latestGame = msg;
+            renderGame(msg);
+          } else if (msg.type === "role") {
+            role = msg.role;
+            const wolves = msg.wolves.length ? "（狼伴：" + msg.wolves.map((wolf) => wolf.nickname).join(", ") + "）" : "";
+            document.querySelector("#role").textContent = msg.role + wolves;
           } else if (msg.type === "error") {
             append("<span class='muted'>" + msg.message + "</span>");
           }
@@ -133,6 +160,49 @@ export function renderRoom(roomId: string): string {
           input.value = "";
         }
       });
+      document.querySelector("#startGame").addEventListener("click", () => {
+        sendCommand({ type: "start_game" });
+      });
+      function sendCommand(command) {
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify(command));
+        }
+      }
+      function renderGame(game) {
+        document.querySelector("#phase").textContent = game.phase + (game.day ? " " + game.day : "");
+        document.querySelector("#winner").textContent = game.winner || "未定";
+        document.querySelector("#startGame").disabled = game.phase !== "lobby";
+        const currentPlayerId = localStorage.getItem(playerKey);
+        const players = document.querySelector("#players");
+        players.innerHTML = "";
+        game.players.forEach((player) => {
+          const button = document.createElement("button");
+          button.textContent = (player.alive ? "" : "× ") + player.nickname;
+          button.disabled = !player.alive || player.playerId === currentPlayerId || game.phase === "ended" || game.phase === "lobby";
+          if (!player.alive) {
+            button.className = "dead";
+          }
+          button.addEventListener("click", () => {
+            if (!latestGame) return;
+            if (latestGame.phase === "day") {
+              sendCommand({ type: "vote", targetPlayerId: player.playerId });
+            } else if (latestGame.phase === "night" && role === "werewolf") {
+              sendCommand({ type: "night_kill", targetPlayerId: player.playerId });
+            }
+          });
+          players.appendChild(button);
+        });
+        if (game.players.length === 0) {
+          players.textContent = "尚無玩家。";
+        }
+        const log = document.querySelector("#gameLog");
+        log.innerHTML = "";
+        game.log.slice(-20).forEach((line) => {
+          const div = document.createElement("div");
+          div.textContent = line;
+          log.appendChild(div);
+        });
+      }
     </script>
   `);
 }

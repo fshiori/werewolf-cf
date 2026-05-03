@@ -22,7 +22,7 @@ function generateRoomId(): string {
 async function listRooms(env: Env): Promise<RoomSummary[]> {
   const result = await env.DB.prepare(
     "SELECT id, name, status, created_at FROM rooms ORDER BY created_at DESC LIMIT 50"
-  ).all<{ id: string; name: string; status: "lobby"; created_at: string }>();
+  ).all<{ id: string; name: string; status: RoomSummary["status"]; created_at: string }>();
 
   return result.results.map((room) => ({
     id: room.id,

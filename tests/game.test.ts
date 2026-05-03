@@ -1,0 +1,61 @@
+import { describe, expect, it } from "vitest";
+import { castDayVote, castNightKill, createLobbyState, startGame, upsertLobbyPlayer, wolvesForPlayer } from "../src/game";
+import type { GameState } from "../src/types";
+
+function lobby(players: Array<[string, string]>): GameState {
+  return players.reduce(
+    (state, [playerId, nickname]) => upsertLobbyPlayer(state, { playerId, nickname }),
+    createLobbyState("room_abc")
+  );
+}
+
+describe("game", () => {
+  it("starts with one werewolf and public wolf partner lookup", () => {
+    const game = startGame(
+      lobby([
+        ["player_1", "Alice"],
+        ["player_2", "Bob"],
+        ["player_3", "Carol"],
+        ["player_4", "Dave"]
+      ]),
+      0,
+      () => 0
+    );
+
+    expect(game.phase).toBe("day");
+    expect(game.day).toBe(1);
+    expect(game.players.filter((player) => player.role === "werewolf")).toHaveLength(1);
+    expect(wolvesForPlayer(game, "player_1")).toEqual([{ playerId: "player_1", nickname: "Alice" }]);
+    expect(wolvesForPlayer(game, "player_2")).toEqual([]);
+  });
+
+  it("moves from completed day vote to night", () => {
+    let game = startGame(lobby([["player_1", "Alice"], ["player_2", "Bob"], ["player_3", "Carol"], ["player_4", "Dave"]]), 0, () => 0);
+
+    game = castDayVote(game, "player_1", "player_2");
+    game = castDayVote(game, "player_2", "player_3");
+    game = castDayVote(game, "player_3", "player_2");
+    game = castDayVote(game, "player_4", "player_2");
+
+    expect(game.phase).toBe("night");
+    expect(game.players.find((player) => player.playerId === "player_2")?.alive).toBe(false);
+  });
+
+  it("allows only wolves to perform night kills and detects wolf win", () => {
+    let game = startGame(lobby([["player_1", "Alice"], ["player_2", "Bob"], ["player_3", "Carol"], ["player_4", "Dave"]]), 0, () => 0);
+    game = castDayVote(game, "player_1", "player_2");
+    game = castDayVote(game, "player_2", "player_3");
+    game = castDayVote(game, "player_3", "player_2");
+    game = castDayVote(game, "player_4", "player_2");
+
+    expect(() => castNightKill(game, "player_3", "player_1")).toThrow("Only werewolves");
+    game = castNightKill(game, "player_1", "player_3", 0);
+
+    expect(game.phase).toBe("ended");
+    expect(game.winner).toBe("werewolves");
+  });
+
+  it("requires at least three players to start", () => {
+    expect(() => startGame(lobby([["player_1", "Alice"], ["player_2", "Bob"]]))).toThrow("At least 3 players");
+  });
+});
