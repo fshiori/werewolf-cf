@@ -7,6 +7,10 @@ type SentMessage = {
   message: string;
   action?: string;
   targetPlayerId?: string;
+  playerId?: string;
+  nickname?: string;
+  text?: string;
+  sentAt?: string;
   phase?: string;
   day?: number;
 };
@@ -98,6 +102,36 @@ describe("RoomDurableObject", () => {
 
       expect(messages).toEqual([{ type: "error", message: "Join required" }]);
     }
+  });
+
+  it("reports websocket validation errors without crashing", async () => {
+    const invalidPlayerMessages: SentMessage[] = [];
+    await sendRaw(
+      roomObject(),
+      fakeSocket(invalidPlayerMessages),
+      JSON.stringify({ type: "join", playerId: "bad", nickname: "Alice" })
+    );
+    expect(invalidPlayerMessages).toEqual([{ type: "error", message: "Invalid player id" }]);
+
+    const emptyNicknameMessages: SentMessage[] = [];
+    await sendRaw(
+      roomObject(),
+      fakeSocket(emptyNicknameMessages),
+      JSON.stringify({ type: "join", playerId: "player_valid", nickname: "   " })
+    );
+    expect(emptyNicknameMessages).toEqual([{ type: "error", message: "Nickname is required" }]);
+
+    const chatMessages: SentMessage[] = [];
+    const chatSocket = fakeSocket(chatMessages);
+    const chatRoom = roomObject();
+    connect(chatRoom, chatSocket, "player_valid", "Alice");
+    await sendRaw(chatRoom, chatSocket, JSON.stringify({ type: "chat", text: "x".repeat(501) }));
+    await sendRaw(chatRoom, chatSocket, JSON.stringify({ type: "chat", text: "ok" }));
+
+    expect(chatMessages).toEqual([
+      { type: "error", message: "Chat text is too long" },
+      { type: "chat", playerId: "player_valid", nickname: "Alice", text: "ok", sentAt: expect.any(String) }
+    ]);
   });
 
   it("broadcasts game state when child fox divination completes the night", async () => {
