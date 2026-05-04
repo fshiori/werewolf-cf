@@ -33,6 +33,11 @@ async function readBody(request) {
 async function startServer(overrides = {}) {
   const roomId = overrides.roomId ?? "room_smoke";
   const requests = overrides.requests ?? [];
+  const websocketMessages = overrides.websocketMessages ?? [
+    { type: "joined", roomId, playerId: "player_smoke_host" },
+    { type: "presence", members: [] },
+    { type: "game_state", phase: "lobby", day: 0 }
+  ];
   let avatarDeleted = false;
   const sockets = new Set();
   const server = createServer(async (request, response) => {
@@ -110,9 +115,9 @@ async function startServer(overrides = {}) {
     );
 
     socket.once("data", () => {
-      socket.write(textFrame(JSON.stringify({ type: "joined", roomId, playerId: "player_smoke_host" })));
-      socket.write(textFrame(JSON.stringify({ type: "presence", members: [] })));
-      socket.write(textFrame(JSON.stringify({ type: "game_state", phase: "lobby", day: 0 })));
+      for (const message of websocketMessages) {
+        socket.write(textFrame(JSON.stringify(message)));
+      }
       setTimeout(() => {
         socket.destroy();
       }, 25);
@@ -193,6 +198,34 @@ describe("production write smoke script", () => {
     expect(result.status).toBe(1);
     expect(result.stderr).toContain("after delete");
     expect(result.stderr).toContain("expected HTTP 404");
+  });
+
+  it("fails when websocket joined payload does not match the smoke room", async () => {
+    const host = await startServer({
+      websocketMessages: [
+        { type: "joined", roomId: "room_other", playerId: "player_smoke_host" },
+        { type: "presence", members: [] },
+        { type: "game_state", phase: "lobby", day: 0 }
+      ]
+    });
+    const result = await runScript([host, "--yes"]);
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("joined payload did not match");
+  });
+
+  it("fails when websocket game state payload is incomplete", async () => {
+    const host = await startServer({
+      websocketMessages: [
+        { type: "joined", roomId: "room_smoke", playerId: "player_smoke_host" },
+        { type: "presence", members: [] },
+        { type: "game_state", phase: "lobby" }
+      ]
+    });
+    const result = await runScript([host, "--yes"]);
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("game_state payload must include phase and day");
   });
 
   it("fails when room creation does not return a room id", async () => {
