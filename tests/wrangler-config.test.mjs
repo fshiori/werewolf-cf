@@ -60,7 +60,27 @@ describe("wrangler config verifier", () => {
     const result = runVerifier(wranglerConfig("local-dev-placeholder", "local-dev-placeholder"), ["--production"]);
 
     expect(result.status).toBe(1);
-    expect(result.stderr).toContain("Production config still contains local-dev-placeholder");
+    expect(result.stderr).toContain("Production D1 database_id must be set to a real resource id");
+    expect(result.stderr).toContain("Production KV id must be set to a real resource id");
+  });
+
+  it("rejects production configs with missing resource ids", () => {
+    const config = wranglerConfig("prod-d1-id", "prod-kv-id")
+      .replace('database_id = "prod-d1-id"\n', "")
+      .replace('id = "prod-kv-id"\n', "");
+    const result = runVerifier(config, ["--production"]);
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("Production D1 database_id must be set to a real resource id");
+    expect(result.stderr).toContain("Production KV id must be set to a real resource id");
+  });
+
+  it("rejects production configs with empty resource ids", () => {
+    const result = runVerifier(wranglerConfig("", ""), ["--production"]);
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("Production D1 database_id must be set to a real resource id");
+    expect(result.stderr).toContain("Production KV id must be set to a real resource id");
   });
 
   it("accepts production configs with explicit resource ids", () => {
