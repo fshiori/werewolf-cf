@@ -361,6 +361,63 @@ describe("RoomDurableObject", () => {
     expect(deadFoxMessages).toEqual([]);
   });
 
+  it("sends common chat only to living common sockets", () => {
+    const game: GameState = {
+      roomId: "room_abc",
+      phase: "night",
+      day: 1,
+      players: [
+        { playerId: "player_common_a", nickname: "Common A", role: "common", alive: true },
+        { playerId: "player_common_b", nickname: "Common B", role: "common", alive: true },
+        { playerId: "player_villager", nickname: "Villager", role: "villager", alive: true },
+        { playerId: "player_dead_common", nickname: "Dead Common", role: "common", alive: false }
+      ],
+      votes: {},
+      openVote: false,
+      commonTalkVisible: false,
+      deadRoleVisible: false,
+      wishRole: false,
+      dummyBoy: false,
+      dayMs: 180_000,
+      nightMs: 90_000,
+      selfVote: false,
+      voteStatus: false,
+      revoteCount: 0,
+      nightKills: {},
+      divinations: {},
+      guards: {},
+      catRevives: {},
+      lastWords: {},
+      log: []
+    };
+    const room = roomObject(game);
+    const commonAMessages: SentMessage[] = [];
+    const commonBMessages: SentMessage[] = [];
+    const villagerMessages: SentMessage[] = [];
+    const deadCommonMessages: SentMessage[] = [];
+    const commonASocket = fakeSocket(commonAMessages);
+    const commonBSocket = fakeSocket(commonBMessages);
+    const villagerSocket = fakeSocket(villagerMessages);
+    const deadCommonSocket = fakeSocket(deadCommonMessages);
+    connect(room, commonASocket, "player_common_a", "Common A");
+    connect(room, commonBSocket, "player_common_b", "Common B");
+    connect(room, villagerSocket, "player_villager", "Villager");
+    connect(room, deadCommonSocket, "player_dead_common", "Dead Common");
+
+    (room as unknown as { broadcastCommon(gameState: GameState, message: unknown): void }).broadcastCommon(game, {
+      type: "common_chat",
+      playerId: "player_common_a",
+      nickname: "Common A",
+      text: "secret",
+      sentAt: "2026-05-04T00:00:00.000Z"
+    });
+
+    expect(commonAMessages).toEqual([expect.objectContaining({ type: "common_chat", text: "secret" })]);
+    expect(commonBMessages).toEqual([expect.objectContaining({ type: "common_chat", text: "secret" })]);
+    expect(villagerMessages).toEqual([]);
+    expect(deadCommonMessages).toEqual([]);
+  });
+
   it("broadcasts game state when child fox divination completes the night", async () => {
     const game: GameState = {
       roomId: "room_abc",
