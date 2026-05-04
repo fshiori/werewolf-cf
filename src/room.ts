@@ -390,7 +390,10 @@ export class RoomDurableObject {
         const targetPlayerId = validatePlayerId(message.targetPlayerId);
         const result = castDivination(await this.loadGameState(), member.playerId, targetPlayerId);
         await this.saveGameState(result.state);
+        await this.syncRoomStatus(result.state);
         this.send(socket, buildDivinationResultMessage(targetPlayerId, result.targetNickname, result.result));
+        await this.broadcastGameState(result.state);
+        this.sendMediumResults(result.state);
         return;
       }
 
@@ -398,8 +401,11 @@ export class RoomDurableObject {
         const targetPlayerId = validatePlayerId(message.targetPlayerId);
         const result = castChildFoxDivination(await this.loadGameState(), member.playerId, targetPlayerId, Math.random);
         await this.saveGameState(result.state);
+        await this.syncRoomStatus(result.state);
         this.send(socket, buildChildFoxResultMessage(targetPlayerId, result.targetNickname, result.result));
         this.send(socket, buildActionAckMessage("child_fox_divine", targetPlayerId));
+        await this.broadcastGameState(result.state);
+        this.sendMediumResults(result.state);
         return;
       }
 
