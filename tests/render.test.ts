@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { renderHome, renderPlayerProfile, renderRoom, renderRules } from "../src/render";
+import { renderHome, renderPlayerProfile, renderRoom, renderRules, renderVersion } from "../src/render";
 
 describe("render", () => {
   it("renders home with room rows and escaped names", () => {
@@ -67,6 +67,7 @@ describe("render", () => {
     expect(html).toContain("/api/config");
     expect(html).toContain("設定 JSON");
     expect(html).toContain("/rules");
+    expect(html).toContain("/version");
     expect(html).toContain("roomComment");
     expect(html).toContain("maxPlayers");
     expect(html).toContain("<option value=\"22\" selected>22</option>");
@@ -280,5 +281,17 @@ describe("render", () => {
     expect(html).toContain("人狼 / 大狼");
     expect(html).toContain("Trip限定");
     expect(html).toContain("Durable Object alarm");
+  });
+
+  it("renders version page with current implementation status", () => {
+    const html = renderVersion();
+
+    expect(html).toContain("版本資訊");
+    expect(html).toContain("0.1.0");
+    expect(html).toContain("Cloudflare Workers / TypeScript");
+    expect(html).toContain("Durable Objects + WebSockets + alarms");
+    expect(html).toContain("R2 avatar assets");
+    expect(html).toContain("目前功能");
+    expect(html).toContain("docs/test-results/2026-05-03-core-game-loop.md");
   });
 });

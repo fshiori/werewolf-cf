@@ -134,7 +134,7 @@ function shell(body: string): string {
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/api/stats/leaderboard">排行榜 JSON</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/api/config">設定 JSON</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/rules">規則</a></td></tr>
-            <tr><td><small><font color="#666666">・</font></small></td><td><a href="javascript:void(0)">版本</a></td></tr>
+            <tr><td><small><font color="#666666">・</font></small></td><td><a href="/version">版本</a></td></tr>
           </table>
         </td>
         <td class="main">${body}</td>
@@ -619,6 +619,42 @@ export function renderRules(): string {
         <tr><td><strong>　公開票 / 投票顯示：</strong></td><td>控制白天投票資訊是否公開與已投票玩家顯示。</td></tr>
         <tr><td><strong>　遺言 / 幽靈視角：</strong></td><td>控制死亡訊息與死後可見資訊。</td></tr>
         <tr><td><strong>　限時時間：</strong></td><td>啟用後 Durable Object alarm 會依日夜時間自動換日。</td></tr>
+      </table>
+    </fieldset>
+  `));
+}
+
+export function renderVersion(): string {
+  return page("Version", shell(`
+    <fieldset>
+      <legend><strong>版本資訊</strong></legend>
+      <table class="form-table">
+        <tr><td><strong>　專案：</strong></td><td>Werewolf Cloudflare Port</td></tr>
+        <tr><td><strong>　應用版本：</strong></td><td>0.1.0</td></tr>
+        <tr><td><strong>　Runtime：</strong></td><td>Cloudflare Workers / TypeScript</td></tr>
+        <tr><td><strong>　Realtime：</strong></td><td>Durable Objects + WebSockets + alarms</td></tr>
+        <tr><td><strong>　Persistence：</strong></td><td>D1 game records, player stats, Trip registry</td></tr>
+        <tr><td><strong>　Storage：</strong></td><td>R2 avatar assets</td></tr>
+        <tr><td><strong>　Configuration：</strong></td><td>KV runtime config</td></tr>
+      </table>
+    </fieldset>
+    <fieldset>
+      <legend><strong>目前功能</strong></legend>
+      <table class="form-table">
+        <tr><td><strong>　房間：</strong></td><td>建立、列表、加入、即時聊天、房主開始。</td></tr>
+        <tr><td><strong>　遊戲：</strong></td><td>白天、夜晚、投票、處刑、勝負、限時自動換日。</td></tr>
+        <tr><td><strong>　角色：</strong></td><td>村民、人狼、大狼、占卜師、靈能者、狂人、獵人、共有者、妖狐、背德者、子狐、埋毒者、貓又。</td></tr>
+        <tr><td><strong>　GM：</strong></td><td>GM 進房、聊天、私語、踢人、換日、裁定、調整生死/角色/旗標。</td></tr>
+        <tr><td><strong>　Trip：</strong></td><td>登記、認領、排除、解除排除、Trip 限定房。</td></tr>
+        <tr><td><strong>　戰績：</strong></td><td>排行榜、個人頁、個人歷史、Trip 彙總。</td></tr>
+      </table>
+    </fieldset>
+    <fieldset>
+      <legend><strong>驗證清單</strong></legend>
+      <table class="form-table">
+        <tr><td><strong>　Core Game Loop：</strong></td><td>docs/test-results/2026-05-03-core-game-loop.md</td></tr>
+        <tr><td><strong>　Retro UI Port：</strong></td><td>docs/test-results/2026-05-03-retro-ui-port.md</td></tr>
+        <tr><td><strong>　自動測試：</strong></td><td>Vitest + TypeScript typecheck</td></tr>
       </table>
     </fieldset>
   `));
