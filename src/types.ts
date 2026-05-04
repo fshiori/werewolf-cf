@@ -140,6 +140,7 @@ export type ServerMessage =
   | { type: "wolf_chat"; playerId: string; nickname: string; text: string; sentAt: string }
   | { type: "divination_result"; targetPlayerId: string; targetNickname: string; result: DivinationResult }
   | { type: "medium_result"; day: number; targetPlayerId: string; targetNickname: string; result: MediumResult }
+  | { type: "action_ack"; action: "vote" | "night_kill" | "guard"; targetPlayerId: string }
   | {
       type: "game_state";
       phase: GamePhase;

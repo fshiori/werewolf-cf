@@ -16,6 +16,7 @@ import {
   wolvesForPlayer
 } from "./game";
 import {
+  buildActionAckMessage,
   buildChatMessage,
   buildDivinationResultMessage,
   buildErrorMessage,
@@ -152,6 +153,7 @@ export class RoomDurableObject {
         const next = castDayVote(await this.loadGameState(), member.playerId, targetPlayerId);
         await this.saveGameState(next);
         await this.syncRoomStatus(next);
+        this.send(socket, buildActionAckMessage("vote", targetPlayerId));
         this.broadcastGameState(next);
         return;
       }
@@ -169,6 +171,7 @@ export class RoomDurableObject {
         const next = castGuard(await this.loadGameState(), member.playerId, targetPlayerId);
         await this.saveGameState(next);
         await this.syncRoomStatus(next);
+        this.send(socket, buildActionAckMessage("guard", targetPlayerId));
         this.broadcastGameState(next);
         this.sendMediumResults(next);
         return;
@@ -178,6 +181,7 @@ export class RoomDurableObject {
       const next = castNightKill(await this.loadGameState(), member.playerId, targetPlayerId);
       await this.saveGameState(next);
       await this.syncRoomStatus(next);
+      this.send(socket, buildActionAckMessage("night_kill", targetPlayerId));
       this.broadcastGameState(next);
       this.sendMediumResults(next);
     } catch (error) {
