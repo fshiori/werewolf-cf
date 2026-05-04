@@ -256,6 +256,24 @@ async function excludeTrip(request: Request, env: Env): Promise<Response> {
   }
 }
 
+async function removeTripExclusion(request: Request, env: Env): Promise<Response> {
+  const body: unknown = await request.json().catch(() => null);
+  if (!isRecord(body) || typeof body.trip !== "string") {
+    return json({ error: "Invalid Trip exclusion removal" }, { status: 400 });
+  }
+
+  try {
+    const trip = validateTrip(body.trip);
+    const tripHash = await registeredTripHash(trip);
+    await env.DB.prepare("DELETE FROM excluded_trips WHERE trip_hash = ?")
+      .bind(tripHash)
+      .run();
+    return json({ excluded: false });
+  } catch (error) {
+    return json({ error: error instanceof Error ? error.message : "Failed to remove Trip exclusion" }, { status: 400 });
+  }
+}
+
 async function getPlayerStats(env: Env, playerIdParam: string): Promise<Response> {
   try {
     const playerId = validatePlayerId(playerIdParam);
@@ -501,6 +519,10 @@ export default {
 
     if (request.method === "POST" && url.pathname === "/api/trips/exclusions") {
       return excludeTrip(request, env);
+    }
+
+    if (request.method === "DELETE" && url.pathname === "/api/trips/exclusions") {
+      return removeTripExclusion(request, env);
     }
 
     if (request.method === "POST" && url.pathname === "/api/assets/avatar") {
