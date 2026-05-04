@@ -280,6 +280,7 @@ describe("render", () => {
     expect(html).toContain("child_fox_result");
     expect(html).toContain("child_fox_divine");
     expect(html).toContain("cat_revive");
+    expect(html).toContain('game.phase === "night" && game.day > 1 && role === "cat" && !player.alive');
     expect(html).toContain("medium_result");
     expect(html).toContain("type: \"divine\"");
     expect(html).toContain("type: \"guard\"");
