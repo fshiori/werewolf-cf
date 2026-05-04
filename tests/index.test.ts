@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import worker from "../src/index";
+import { registeredTripHash } from "../src/identity";
 
 type StoredAsset = {
   body: ReadableStream;
@@ -39,7 +40,9 @@ function envWithRooms(
   roomCapacities: Record<string, number> = {},
   deadRoleVisibleRooms: Record<string, boolean> = {},
   roomDummyNames: Record<string, string> = {},
-  roomDummyLastWords: Record<string, string> = {}
+  roomDummyLastWords: Record<string, string> = {},
+  registeredTripHashes: Set<string> = new Set(),
+  excludedTripHashes: Set<string> = new Set()
 ): Env {
   const assets = new Map<string, StoredAsset>();
   const batches: Array<Array<{ query: string; values: unknown[] }>> = [];
@@ -56,6 +59,12 @@ function envWithRooms(
               async first() {
                 if (query.includes("FROM player_stats")) {
                   return stats[String(values[0])] ?? null;
+                }
+                if (query.includes("FROM registered_trips")) {
+                  return registeredTripHashes.has(String(values[0])) ? { trip_hash: values[0] } : null;
+                }
+                if (query.includes("FROM excluded_trips")) {
+                  return excludedTripHashes.has(String(values[0])) ? { trip_hash: values[0] } : null;
                 }
                 return roomIds.includes(String(values[0])) ? { id: values[0] } : null;
               },
@@ -419,6 +428,50 @@ describe("worker routes", () => {
     expect(await response.json()).toEqual({ excluded: false });
     expect(runs[0].query).toContain("DELETE FROM excluded_trips");
     expect(String(runs[0].values[0])).toMatch(/^[0-9a-f]{64}$/);
+  });
+
+  it("claims registered Trip identities for player records", async () => {
+    const tripHash = await registeredTripHash("ab12CD");
+    const env = envWithRooms([], {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, new Set([tripHash]));
+    const response = await worker.fetch(
+      new Request("http://example.test/api/trips/claim", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ playerId: "player_claim", nickname: "Claimant", trip: "ab12CD" })
+      }),
+      env
+    );
+    const runs = (env as unknown as { runs: Array<{ query: string; values: unknown[] }> }).runs;
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ claimed: true });
+    expect(runs[0].query).toContain("registered_trip_hash");
+    expect(runs[0].values).toEqual(["player_claim", "Claimant", tripHash]);
+  });
+
+  it("rejects Trip claims for unregistered or excluded Trips", async () => {
+    const tripHash = await registeredTripHash("ab12CD");
+    const unregistered = await worker.fetch(
+      new Request("http://example.test/api/trips/claim", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ playerId: "player_claim", nickname: "Claimant", trip: "ab12CD" })
+      }),
+      envWithRooms([])
+    );
+    const excluded = await worker.fetch(
+      new Request("http://example.test/api/trips/claim", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ playerId: "player_claim", nickname: "Claimant", trip: "ab12CD" })
+      }),
+      envWithRooms([], {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, new Set([tripHash]), new Set([tripHash]))
+    );
+
+    expect(unregistered.status).toBe(400);
+    expect(await unregistered.json()).toEqual({ error: "Trip is not registered" });
+    expect(excluded.status).toBe(400);
+    expect(await excluded.json()).toEqual({ error: "Trip is excluded" });
   });
 
   it("returns 404 for formatted room ids missing from D1", async () => {

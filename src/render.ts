@@ -212,7 +212,7 @@ export function renderHome(rooms: RoomSummary[], announcement = DEFAULT_ANNOUNCE
       <table class="form-table">
         <tr>
           <td><label><strong>　Trip：</strong></label></td>
-          <td><input id="registerTrip" maxlength="32" size="28"> <button id="registerTripButton">身份登錄</button> <span id="registerTripStatus" class="muted"></span></td>
+          <td><input id="registerTrip" maxlength="32" size="28"> <button id="registerTripButton">身份登錄</button> <button id="claimTripButton">認領身份</button> <span id="registerTripStatus" class="muted"></span></td>
         </tr>
         <tr>
           <td><label><strong>　排除Trip：</strong></label></td>
@@ -375,6 +375,19 @@ export function renderHome(rooms: RoomSummary[], announcement = DEFAULT_ANNOUNCE
         });
         const data = await res.json();
         status.textContent = res.ok ? "登記完成" : data.error || "登記失敗";
+      });
+      document.querySelector("#claimTripButton").addEventListener("click", async () => {
+        const trip = document.querySelector("#registerTrip").value;
+        const nickname = document.querySelector("#nickname").value;
+        const status = document.querySelector("#registerTripStatus");
+        localStorage.setItem("werewolf_cf_trip", trip);
+        const res = await fetch("/api/trips/claim", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ playerId: localStorage.getItem(playerKey), nickname, trip })
+        });
+        const data = await res.json();
+        status.textContent = res.ok ? "認領完成" : data.error || "認領失敗";
       });
       document.querySelector("#excludeTripButton").addEventListener("click", async () => {
         const trip = document.querySelector("#excludeTrip").value;
