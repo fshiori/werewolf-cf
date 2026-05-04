@@ -40,6 +40,10 @@ export function upsertLobbyPlayer(state: GameState, member: RoomMember): GameSta
   };
 }
 
+export function canJoinRoomState(state: GameState, playerId: string): boolean {
+  return state.phase === "lobby" || state.players.some((player) => player.playerId === playerId);
+}
+
 export function startGame(state: GameState, now = Date.now(), random = Math.random): GameState {
   if (state.phase !== "lobby") {
     throw new Error("Game already started");

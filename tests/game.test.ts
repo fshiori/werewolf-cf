@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { castDayVote, castNightKill, createLobbyState, startGame, upsertLobbyPlayer, wolvesForPlayer } from "../src/game";
+import {
+  canJoinRoomState,
+  castDayVote,
+  castNightKill,
+  createLobbyState,
+  startGame,
+  upsertLobbyPlayer,
+  wolvesForPlayer
+} from "../src/game";
 import type { GameState } from "../src/types";
 
 function lobby(players: Array<[string, string]>): GameState {
@@ -57,5 +65,14 @@ describe("game", () => {
 
   it("requires at least three players to start", () => {
     expect(() => startGame(lobby([["player_1", "Alice"], ["player_2", "Bob"]]))).toThrow("At least 3 players");
+  });
+
+  it("allows lobby joins but only existing players after start", () => {
+    const waiting = lobby([["player_1", "Alice"], ["player_2", "Bob"], ["player_3", "Carol"]]);
+    const started = startGame(waiting, 0, () => 0);
+
+    expect(canJoinRoomState(waiting, "player_4")).toBe(true);
+    expect(canJoinRoomState(started, "player_1")).toBe(true);
+    expect(canJoinRoomState(started, "player_4")).toBe(false);
   });
 });
