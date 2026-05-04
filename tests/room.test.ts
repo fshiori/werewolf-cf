@@ -560,6 +560,54 @@ describe("RoomDurableObject", () => {
     expect(otherMessages).toContainEqual(expect.objectContaining({ type: "role", role: "villager" }));
   });
 
+  it("updates public life state after GM alive changes through the websocket handler", async () => {
+    const game: GameState = {
+      roomId: "room_abc",
+      phase: "day",
+      day: 1,
+      players: [
+        { playerId: "player_target", nickname: "Target", role: "villager", alive: true },
+        { playerId: "player_other", nickname: "Other", role: "villager", alive: true }
+      ],
+      votes: { player_target: "player_other", player_other: "player_target" },
+      openVote: false,
+      commonTalkVisible: false,
+      deadRoleVisible: false,
+      wishRole: false,
+      dummyBoy: false,
+      dayMs: 180_000,
+      nightMs: 90_000,
+      selfVote: false,
+      voteStatus: false,
+      revoteCount: 0,
+      nightKills: {},
+      divinations: {},
+      guards: {},
+      catRevives: {},
+      lastWords: {},
+      log: []
+    };
+    const room = roomObject(game);
+    const gmMessages: SentMessage[] = [];
+    const targetMessages: SentMessage[] = [];
+    const otherMessages: SentMessage[] = [];
+    const gmSocket = fakeSocket(gmMessages);
+    const targetSocket = fakeSocket(targetMessages);
+    const otherSocket = fakeSocket(otherMessages);
+    connect(room, gmSocket, "player_gm", "GM", true);
+    connect(room, targetSocket, "player_target", "Target");
+    connect(room, otherSocket, "player_other", "Other");
+
+    await sendRaw(room, gmSocket, JSON.stringify({ type: "gm_set_alive", targetPlayerId: "player_target", alive: false }));
+
+    for (const messages of [gmMessages, targetMessages, otherMessages]) {
+      const state = messages.find((message) => message.type === "game_state");
+      expect(state).toEqual(expect.objectContaining({ type: "game_state", phase: "day", day: 1, votes: {} }));
+      expect(state?.players).toContainEqual({ playerId: "player_target", nickname: "Target", alive: false });
+      expect(state?.players?.some((player) => "role" in player)).toBe(false);
+    }
+  });
+
   it("rejects host-only websocket commands from non-host sockets", async () => {
     const game: GameState = {
       roomId: "room_abc",
