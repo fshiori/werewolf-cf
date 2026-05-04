@@ -372,10 +372,15 @@ export function renderRoom(roomId: string): string {
           game.phase + (game.day ? " " + game.day : "") + (game.revoteCount ? " 再投票 " + game.revoteCount : "");
         document.querySelector("#winner").textContent = game.winner || "未定";
         const currentPlayerId = localStorage.getItem(playerKey);
+        const currentPlayer = game.players.find((player) => player.playerId === currentPlayerId);
+        const currentPlayerAlive = currentPlayer ? currentPlayer.alive : game.phase === "lobby";
+        const actorCanAct =
+          currentPlayerAlive &&
+          (game.phase === "day" || (game.phase === "night" && (role === "werewolf" || role === "seer")));
         const host = game.players.find((player) => player.playerId === game.hostId);
         document.querySelector("#host").textContent = host ? host.nickname : "未定";
         document.querySelector("#startGame").disabled = game.phase !== "lobby" || game.hostId !== currentPlayerId;
-        document.querySelector("#sendWolfChat").disabled = !(game.phase === "night" && role === "werewolf");
+        document.querySelector("#sendWolfChat").disabled = !(game.phase === "night" && role === "werewolf" && currentPlayerAlive);
         const players = document.querySelector("#players");
         const playerGrid = document.querySelector("#playerGrid");
         players.innerHTML = "";
@@ -415,7 +420,7 @@ export function renderRoom(roomId: string): string {
           row.appendChild(card);
           const button = document.createElement("button");
           button.textContent = (player.alive ? "" : "× ") + player.nickname;
-          button.disabled = !player.alive || player.playerId === currentPlayerId || game.phase === "ended" || game.phase === "lobby";
+          button.disabled = !actorCanAct || !player.alive || player.playerId === currentPlayerId || game.phase === "ended" || game.phase === "lobby";
           if (!player.alive) {
             button.className = "dead";
           }
