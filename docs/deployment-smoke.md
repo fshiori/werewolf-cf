@@ -98,8 +98,9 @@ Expected:
 - `/api/version` lists `ROOM_DO`, `DB`, `ASSETS`, and `CONFIG`.
 - `/api/version` capabilities include `websocket_protocol`.
 - `/api/protocol` returns `websocket.path: "/ws/room/:roomId"` and `websocket.firstClientMessage: "join"`.
+- `/api/protocol` returns `websocket.channelVariants.common_chat.publicVoicePlayerId: "common_voice"` and `publicVoiceNickname: "共有者的聲音"`.
 - `/api/config` returns `config.maintenanceMode`.
-- HTML pages return `200 OK`.
+- HTML pages return `200 OK`; `/protocol` includes `WebSocket 入口` and `common_voice`.
 
 ## WebSocket Upgrade Smoke
 
