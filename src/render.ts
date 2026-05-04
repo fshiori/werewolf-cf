@@ -258,6 +258,7 @@ export function renderRoom(roomId: string): string {
                 <div id="chatLog"></div>
                 <input id="chatText" maxlength="500" size="72">
                 <button id="sendChat">送出</button>
+                <button id="sendWolfChat" disabled>狼頻</button>
               </td>
             </tr>
           </table>
@@ -298,6 +299,8 @@ export function renderRoom(roomId: string): string {
             document.querySelector("#members").textContent = msg.members.map((m) => m.nickname).join(", ");
           } else if (msg.type === "chat") {
             append("<b>" + msg.nickname + "</b>: " + msg.text);
+          } else if (msg.type === "wolf_chat") {
+            append("<font color='#cc0000'>[狼頻]</font> <b>" + msg.nickname + "</b>: " + msg.text);
           } else if (msg.type === "game_state") {
             latestGame = msg;
             renderGame(msg);
@@ -305,6 +308,7 @@ export function renderRoom(roomId: string): string {
             role = msg.role;
             const wolves = msg.wolves.length ? "（狼伴：" + msg.wolves.map((wolf) => wolf.nickname).join(", ") + "）" : "";
             document.querySelector("#role").textContent = msg.role + wolves;
+            if (latestGame) renderGame(latestGame);
           } else if (msg.type === "error") {
             append("<span class='muted'>" + msg.message + "</span>");
           }
@@ -314,6 +318,13 @@ export function renderRoom(roomId: string): string {
         const input = document.querySelector("#chatText");
         if (ws && ws.readyState === WebSocket.OPEN) {
           ws.send(JSON.stringify({ type: "chat", text: input.value }));
+          input.value = "";
+        }
+      });
+      document.querySelector("#sendWolfChat").addEventListener("click", () => {
+        const input = document.querySelector("#chatText");
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ type: "wolf_chat", text: input.value }));
           input.value = "";
         }
       });
@@ -329,6 +340,7 @@ export function renderRoom(roomId: string): string {
         document.querySelector("#phase").textContent = game.phase + (game.day ? " " + game.day : "");
         document.querySelector("#winner").textContent = game.winner || "未定";
         document.querySelector("#startGame").disabled = game.phase !== "lobby";
+        document.querySelector("#sendWolfChat").disabled = !(game.phase === "night" && role === "werewolf");
         const currentPlayerId = localStorage.getItem(playerKey);
         const players = document.querySelector("#players");
         const playerGrid = document.querySelector("#playerGrid");

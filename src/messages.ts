@@ -20,6 +20,16 @@ export function buildChatMessage(playerId: string, nickname: string, text: strin
   };
 }
 
+export function buildWolfChatMessage(playerId: string, nickname: string, text: string): ServerMessage {
+  return {
+    type: "wolf_chat",
+    playerId,
+    nickname: escapeHtml(nickname),
+    text: escapeHtml(text),
+    sentAt: new Date().toISOString()
+  };
+}
+
 export function buildGameStateMessage(state: GameState): ServerMessage {
   return {
     type: "game_state",

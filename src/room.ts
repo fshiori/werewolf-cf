@@ -1,6 +1,7 @@
 import {
   advancePhaseByAlarm,
   canJoinRoomState,
+  canUseWerewolfChannel,
   castDayVote,
   castNightKill,
   createLobbyState,
@@ -14,7 +15,8 @@ import {
   buildGameStateMessage,
   buildJoinedMessage,
   buildPresenceMessage,
-  buildRoleMessage
+  buildRoleMessage,
+  buildWolfChatMessage
 } from "./messages";
 import type { GameState, RoomMember } from "./types";
 import {
@@ -107,6 +109,16 @@ export class RoomDurableObject {
         return;
       }
 
+      if (message.type === "wolf_chat") {
+        const game = await this.loadGameState();
+        if (!canUseWerewolfChannel(game, member.playerId)) {
+          throw new Error("Werewolf channel is only available to living werewolves at night");
+        }
+        const text = validateChatText(message.text);
+        this.broadcastWerewolf(game, buildWolfChatMessage(member.playerId, member.nickname, text));
+        return;
+      }
+
       if (message.type === "start_game") {
         const next = startGame(await this.loadGameState());
         await this.saveGameState(next);
@@ -157,6 +169,15 @@ export class RoomDurableObject {
     const encoded = JSON.stringify(message);
     for (const socket of this.sockets.keys()) {
       socket.send(encoded);
+    }
+  }
+
+  private broadcastWerewolf(gameState: GameState, message: unknown): void {
+    const encoded = JSON.stringify(message);
+    for (const [socket, member] of this.sockets) {
+      if (canUseWerewolfChannel(gameState, member.playerId)) {
+        socket.send(encoded);
+      }
     }
   }
 
