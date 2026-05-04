@@ -86,6 +86,9 @@ describe("render", () => {
     expect(html).toContain("optionBetrayer");
     expect(html).toContain("optionChildFox");
     expect(html).toContain("optionTwoFoxes");
+    expect(html).toContain("optionFoxNone");
+    expect(html).toContain('name="optionFoxVariant" type="radio"');
+    expect(html).toContain("追加なし");
     expect(html).toContain("optionCat");
     expect(html).toContain("optionLastWords");
     expect(html).toContain("optionOpenVote");
