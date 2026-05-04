@@ -1,6 +1,6 @@
 import { renderHome, renderRoom } from "./render";
 import { RoomDurableObject } from "./room";
-import type { GameRecordSummary, PlayerStats, RoomSummary } from "./types";
+import type { GameRecordSummary, PlayerStats, RoomEventSummary, RoomSummary } from "./types";
 import { isRecord, validateNickname, validatePlayerId, validateRoomId, validateRoomName } from "./validation";
 
 export { RoomDurableObject };
@@ -76,6 +76,14 @@ function parseRecordResult(value: string): unknown {
   }
 }
 
+function parseJsonOrNull(value: string): unknown {
+  try {
+    return JSON.parse(value);
+  } catch {
+    return null;
+  }
+}
+
 async function getRoomRecords(env: Env, roomIdParam: string): Promise<Response> {
   try {
     const roomId = validateRoomId(roomIdParam);
@@ -95,6 +103,32 @@ async function getRoomRecords(env: Env, roomIdParam: string): Promise<Response> 
       createdAt: record.created_at
     }));
     return json({ records });
+  } catch (error) {
+    return json({ error: error instanceof Error ? error.message : "Invalid room" }, { status: 400 });
+  }
+}
+
+async function getRoomEvents(env: Env, roomIdParam: string): Promise<Response> {
+  try {
+    const roomId = validateRoomId(roomIdParam);
+    if (!(await roomExists(env, roomId))) {
+      return json({ error: "Room not found" }, { status: 404 });
+    }
+
+    const result = await env.DB.prepare(
+      "SELECT id, room_id, player_id, event_type, payload_json, created_at FROM room_events WHERE room_id = ? ORDER BY created_at DESC LIMIT 50"
+    )
+      .bind(roomId)
+      .all<{ id: number; room_id: string; player_id: string | null; event_type: string; payload_json: string; created_at: string }>();
+    const events: RoomEventSummary[] = result.results.map((event) => ({
+      id: event.id,
+      roomId: event.room_id,
+      playerId: event.player_id ?? undefined,
+      eventType: event.event_type,
+      payload: parseJsonOrNull(event.payload_json),
+      createdAt: event.created_at
+    }));
+    return json({ events });
   } catch (error) {
     return json({ error: error instanceof Error ? error.message : "Invalid room" }, { status: 400 });
   }
@@ -203,6 +237,11 @@ export default {
     const roomRecordsMatch = url.pathname.match(/^\/api\/rooms\/([^/]+)\/records$/);
     if (request.method === "GET" && roomRecordsMatch) {
       return getRoomRecords(env, roomRecordsMatch[1]);
+    }
+
+    const roomEventsMatch = url.pathname.match(/^\/api\/rooms\/([^/]+)\/events$/);
+    if (request.method === "GET" && roomEventsMatch) {
+      return getRoomEvents(env, roomEventsMatch[1]);
     }
 
     const statsMatch = url.pathname.match(/^\/api\/players\/([^/]+)\/stats$/);

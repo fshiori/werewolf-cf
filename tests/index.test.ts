@@ -19,11 +19,21 @@ type MockGameRecord = {
   created_at: string;
 };
 
+type MockRoomEvent = {
+  id: number;
+  room_id: string;
+  player_id: string | null;
+  event_type: string;
+  payload_json: string;
+  created_at: string;
+};
+
 function envWithRooms(
   roomIds: string[],
   config: Record<string, string> = {},
   stats: Record<string, MockPlayerStats> = {},
-  records: Record<string, MockGameRecord[]> = {}
+  records: Record<string, MockGameRecord[]> = {},
+  events: Record<string, MockRoomEvent[]> = {}
 ): Env {
   const assets = new Map<string, StoredAsset>();
 
@@ -42,6 +52,9 @@ function envWithRooms(
               async all() {
                 if (query.includes("FROM game_records")) {
                   return { results: records[value] ?? [] };
+                }
+                if (query.includes("FROM room_events")) {
+                  return { results: events[value] ?? [] };
                 }
                 return { results: [] };
               },
@@ -196,6 +209,51 @@ describe("worker routes", () => {
 
   it("returns 404 for game records from missing rooms", async () => {
     const response = await worker.fetch(new Request("http://example.test/api/rooms/room_missing/records"), envWithRooms([]));
+
+    expect(response.status).toBe(404);
+    expect(await response.json()).toEqual({ error: "Room not found" });
+  });
+
+  it("returns room events for existing rooms", async () => {
+    const response = await worker.fetch(
+      new Request("http://example.test/api/rooms/room_events/events"),
+      envWithRooms(
+        ["room_events"],
+        {},
+        {},
+        {},
+        {
+          room_events: [
+            {
+              id: 7,
+              room_id: "room_events",
+              player_id: "player_owner",
+              event_type: "room_created",
+              payload_json: '{"name":"Test"}',
+              created_at: "2026-05-04 04:30:00"
+            }
+          ]
+        }
+      )
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      events: [
+        {
+          id: 7,
+          roomId: "room_events",
+          playerId: "player_owner",
+          eventType: "room_created",
+          payload: { name: "Test" },
+          createdAt: "2026-05-04 04:30:00"
+        }
+      ]
+    });
+  });
+
+  it("returns 404 for room events from missing rooms", async () => {
+    const response = await worker.fetch(new Request("http://example.test/api/rooms/room_missing/events"), envWithRooms([]));
 
     expect(response.status).toBe(404);
     expect(await response.json()).toEqual({ error: "Room not found" });
