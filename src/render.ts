@@ -134,6 +134,7 @@ function shell(body: string): string {
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/api/stats/leaderboard">排行榜 JSON</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/api/config">設定 JSON</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/api/health">狀態 JSON</a></td></tr>
+            <tr><td><small><font color="#666666">・</font></small></td><td><a href="/api/version">版本 JSON</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/rules">規則</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/version">版本</a></td></tr>
           </table>
@@ -638,6 +639,7 @@ export function renderVersion(): string {
         <tr><td><strong>　Storage：</strong></td><td>R2 avatar assets</td></tr>
         <tr><td><strong>　Configuration：</strong></td><td>KV runtime config</td></tr>
         <tr><td><strong>　Health：</strong></td><td>/api/health</td></tr>
+        <tr><td><strong>　Version API：</strong></td><td>/api/version</td></tr>
       </table>
     </fieldset>
     <fieldset>

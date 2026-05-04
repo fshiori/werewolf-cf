@@ -260,6 +260,19 @@ async function getHealth(env: Env): Promise<Response> {
   }
 }
 
+function getVersion(): Response {
+  return json({
+    version: {
+      name: "werewolf-cf",
+      appVersion: "0.1.0",
+      runtime: "Cloudflare Workers",
+      language: "TypeScript",
+      bindings: ["ROOM_DO", "DB", "ASSETS", "CONFIG"],
+      capabilities: ["rooms", "websockets", "game_loop", "trip_identity", "gm_controls", "player_stats", "avatars", "runtime_config"]
+    }
+  });
+}
+
 async function registerTrip(request: Request, env: Env): Promise<Response> {
   const body: unknown = await request.json().catch(() => null);
   if (!isRecord(body) || typeof body.trip !== "string") {
@@ -671,6 +684,10 @@ export default {
 
     if (request.method === "GET" && url.pathname === "/api/health") {
       return getHealth(env);
+    }
+
+    if (request.method === "GET" && url.pathname === "/api/version") {
+      return getVersion();
     }
 
     if (request.method === "GET" && url.pathname === "/rules") {
