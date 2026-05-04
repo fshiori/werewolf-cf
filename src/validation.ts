@@ -43,6 +43,14 @@ export function validateRoomName(value: string): string {
   return roomName;
 }
 
+export function validateRoomComment(value: string): string {
+  const comment = value.trim();
+  if (comment.length > 120) {
+    throw new Error("Room comment is too long");
+  }
+  return comment;
+}
+
 export function validateChatText(value: string): string {
   const text = value.trim();
   if (text.length === 0) {

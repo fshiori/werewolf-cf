@@ -167,7 +167,7 @@ export function renderHome(rooms: RoomSummary[], announcement = DEFAULT_ANNOUNCE
       ].filter(Boolean).join(" ");
       return `<a class="room-link" href="/room/${escapeHtml(room.id)}">
         <span class="room-line"><span class="status status-${status}">${status}</span><small>[${escapeHtml(room.id)}]</small> ${escapeHtml(room.name)}村</span>
-        <small class="room-comment">～建立時間：${escapeHtml(room.createdAt)}～ ${optionMarks}</small>
+        <small class="room-comment">${room.comment ? `${escapeHtml(room.comment)}　` : ""}～建立時間：${escapeHtml(room.createdAt)}～ ${optionMarks}</small>
       </a>`;
     }).join("");
 
@@ -210,6 +210,10 @@ export function renderHome(rooms: RoomSummary[], announcement = DEFAULT_ANNOUNCE
         <tr>
           <td><label><strong>　村子名稱：</strong></label></td>
           <td><input id="roomName" maxlength="48" size="45"> 村</td>
+        </tr>
+        <tr>
+          <td><label><strong>　村子說明：</strong></label></td>
+          <td><input id="roomComment" maxlength="120" size="50"></td>
         </tr>
         <tr>
           <td><label><strong>　限時時間：</strong></label></td>
@@ -289,6 +293,7 @@ export function renderHome(rooms: RoomSummary[], announcement = DEFAULT_ANNOUNCE
       document.querySelector("#createRoom").addEventListener("click", async () => {
         const nickname = document.querySelector("#nickname").value;
         const name = document.querySelector("#roomName").value;
+        const comment = document.querySelector("#roomComment").value;
         const poison = document.querySelector("#optionPoison").checked;
         const bigWolf = document.querySelector("#optionBigWolf").checked;
         const authority = document.querySelector("#optionAuthority").checked;
@@ -309,7 +314,7 @@ export function renderHome(rooms: RoomSummary[], announcement = DEFAULT_ANNOUNCE
         const res = await fetch("/api/rooms", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ name, playerId: localStorage.getItem(playerKey), nickname, options: { poison, bigWolf, authority, decider, lovers, betrayer, childFox, twoFoxes, cat, lastWords, openVote, realTime, dayMinutes, nightMinutes, selfVote, voteStatus } })
+          body: JSON.stringify({ name, comment, playerId: localStorage.getItem(playerKey), nickname, options: { poison, bigWolf, authority, decider, lovers, betrayer, childFox, twoFoxes, cat, lastWords, openVote, realTime, dayMinutes, nightMinutes, selfVote, voteStatus } })
         });
         const data = await res.json();
         if (!res.ok) {
