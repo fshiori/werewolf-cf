@@ -772,7 +772,7 @@ export function renderRoom(roomId: string): string {
             </tr>
             <tr>
               <td>頭像</td>
-              <td><input id="avatarFile" type="file" accept="image/*" size="28"> <button id="uploadAvatar">頭像</button> <button id="removeAvatar">刪頭像</button></td>
+              <td><input id="avatarFile" type="file" accept="image/png,image/jpeg,image/gif,image/webp" size="28"> <button id="uploadAvatar">頭像</button> <button id="removeAvatar">刪頭像</button></td>
             </tr>
           </table>
         </td>

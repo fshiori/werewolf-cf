@@ -155,6 +155,8 @@ npx wrangler kv key put maintenance_mode false --binding CONFIG --remote
 
 Only run this when production writes are acceptable.
 
+Avatar uploads accept PNG, JPEG, GIF, and WebP content types.
+
 ```bash
 printf '\x89PNG\r\n\x1a\n' > /tmp/werewolf-smoke-avatar.png
 curl -fsS -X POST "$WORKER_HOST/api/assets/avatar" \
