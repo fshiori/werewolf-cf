@@ -62,6 +62,7 @@ describe("render", () => {
     expect(html).toContain("&lt;Friendly&gt;");
     expect(html).toContain("最大30");
     expect(html).toContain("/room/room_abc");
+    expect(html).toContain("/api/rooms/room_abc");
     expect(html).toContain("/api/stats/leaderboard");
     expect(html).toContain("排行榜 JSON");
     expect(html).toContain("/api/config");
