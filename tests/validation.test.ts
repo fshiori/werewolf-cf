@@ -4,6 +4,7 @@ import {
   isRecord,
   parseClientMessage,
   validateChatText,
+  validateGameWinner,
   validateLastWordsText,
   validateNickname,
   validateOptionalLastWordsText,
@@ -59,6 +60,11 @@ describe("validation", () => {
     expect(() => validateWishRole("cat")).toThrow("Invalid wished role");
   });
 
+  it("validates game winners", () => {
+    expect(validateGameWinner("villagers")).toBe("villagers");
+    expect(() => validateGameWinner("draw")).toThrow("Invalid winner");
+  });
+
   it("validates trip codes", () => {
     expect(validateTrip(" ab12CD ")).toBe("ab12CD");
     expect(() => validateTrip("")).toThrow("Trip is required");
@@ -106,6 +112,7 @@ describe("validation", () => {
       text: "secret"
     });
     expect(parseClientMessage('{"type":"gm_advance_phase"}')).toEqual({ type: "gm_advance_phase" });
+    expect(parseClientMessage('{"type":"gm_end_game","winner":"foxes"}')).toEqual({ type: "gm_end_game", winner: "foxes" });
     expect(parseClientMessage('{"type":"set_last_words","text":"bye"}')).toEqual({ type: "set_last_words", text: "bye" });
     expect(parseClientMessage('{"type":"start_game"}')).toEqual({ type: "start_game" });
     expect(parseClientMessage('{"type":"kick_player","targetPlayerId":"player_1"}')).toEqual({

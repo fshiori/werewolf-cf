@@ -712,6 +712,22 @@ export function playerStatUpdates(state: GameState): PlayerStatUpdate[] {
   }));
 }
 
+export function forceEndGame(state: GameState, winner: GameWinner): GameState {
+  if (state.phase === "lobby") {
+    throw new Error("Cannot adjudicate a lobby game");
+  }
+  if (state.phase === "ended") {
+    throw new Error("Game already ended");
+  }
+  return endGame(
+    {
+      ...state,
+      log: [...state.log, "GM 裁定結束遊戲。"]
+    },
+    winner
+  );
+}
+
 function resolveDay(state: GameState, now = Date.now()): GameState {
   const executedId = pickTopTarget(state);
   const revoteCount = state.revoteCount ?? 0;

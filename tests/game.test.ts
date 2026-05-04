@@ -17,6 +17,7 @@ import {
   commonsForPlayer,
   createLobbyState,
   foxesForPlayer,
+  forceEndGame,
   loversForPlayer,
   mediumReadingForPlayer,
   playerStatUpdates,
@@ -1217,6 +1218,18 @@ describe("game", () => {
     expect(withoutHost.hostId).toBe("player_2");
     expect(() => removeLobbyPlayer(startGame(waiting, 0, () => 0), "player_2")).toThrow("Players can only be kicked");
     expect(() => removeLobbyPlayer(waiting, "player_missing")).toThrow("Kick target not found");
+  });
+
+  it("lets GM adjudication force a winner", () => {
+    const day = startGame(lobby([["player_1", "Alice"], ["player_2", "Bob"], ["player_3", "Carol"], ["player_4", "Dave"]]), 0, () => 0);
+    const ended = forceEndGame(day, "villagers");
+
+    expect(ended.phase).toBe("ended");
+    expect(ended.winner).toBe("villagers");
+    expect(ended.phaseEndsAt).toBeUndefined();
+    expect(ended.log).toContain("GM 裁定結束遊戲。");
+    expect(() => forceEndGame(createLobbyState("room_abc"), "villagers")).toThrow("Cannot adjudicate");
+    expect(() => forceEndGame(ended, "werewolves")).toThrow("Game already ended");
   });
 
   it("allows only living werewolves to use the night channel", () => {

@@ -16,6 +16,7 @@ import {
   castNightKill,
   commonsForPlayer,
   createLobbyState,
+  forceEndGame,
   foxesForPlayer,
   loversForPlayer,
   mediumReadingForPlayer,
@@ -282,6 +283,19 @@ export class RoomDurableObject {
         await this.broadcastGameState(next);
         this.sendMediumResults(next);
         this.sendRoles(next);
+        return;
+      }
+
+      if (message.type === "gm_end_game") {
+        if (!member.gm) {
+          throw new Error("Only the GM can adjudicate games");
+        }
+        const next = forceEndGame(await this.loadGameState(), message.winner);
+        await this.saveGameState(next);
+        await this.syncRoomStatus(next);
+        await this.persistRoomEvent(member.playerId, "gm_ended_game", { winner: message.winner, day: next.day });
+        await this.broadcastGameState(next);
+        this.sendMediumResults(next);
         return;
       }
 

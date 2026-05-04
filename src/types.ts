@@ -203,6 +203,11 @@ export type GmAdvancePhaseClientMessage = {
   type: "gm_advance_phase";
 };
 
+export type GmEndGameClientMessage = {
+  type: "gm_end_game";
+  winner: GameWinner;
+};
+
 export type StartGameClientMessage = {
   type: "start_game";
 };
@@ -258,6 +263,7 @@ export type ClientMessage =
   | GmChatClientMessage
   | GmWhisperClientMessage
   | GmAdvancePhaseClientMessage
+  | GmEndGameClientMessage
   | StartGameClientMessage
   | KickPlayerClientMessage
   | VoteClientMessage

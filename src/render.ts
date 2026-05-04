@@ -560,6 +560,13 @@ export function renderRoom(roomId: string): string {
                 <select id="gmWhisperTarget"></select>
                 <button id="sendGmWhisper" disabled>GM私語</button>
                 <button id="gmAdvancePhase" disabled>GM換日</button>
+                <select id="gmWinner">
+                  <option value="villagers">村民</option>
+                  <option value="werewolves">人狼</option>
+                  <option value="foxes">妖狐</option>
+                  <option value="lovers">戀人</option>
+                </select>
+                <button id="gmEndGame" disabled>GM裁定</button>
               </td>
             </tr>
           </table>
@@ -812,6 +819,9 @@ export function renderRoom(roomId: string): string {
       document.querySelector("#gmAdvancePhase").addEventListener("click", () => {
         sendCommand({ type: "gm_advance_phase" });
       });
+      document.querySelector("#gmEndGame").addEventListener("click", () => {
+        sendCommand({ type: "gm_end_game", winner: document.querySelector("#gmWinner").value });
+      });
       document.querySelector("#uploadAvatar").addEventListener("click", async () => {
         const fileInput = document.querySelector("#avatarFile");
         if (!fileInput.files || fileInput.files.length === 0) return;
@@ -882,6 +892,7 @@ export function renderRoom(roomId: string): string {
         document.querySelector("#sendGmChat").disabled = !isGm;
         document.querySelector("#sendGmWhisper").disabled = !isGm || game.players.length === 0;
         document.querySelector("#gmAdvancePhase").disabled = !isGm || !(game.phase === "day" || game.phase === "night");
+        document.querySelector("#gmEndGame").disabled = !isGm || !(game.phase === "day" || game.phase === "night");
         document.querySelector("#setLastWords").disabled = !(currentPlayerAlive && game.phase !== "lobby" && game.phase !== "ended");
         const players = document.querySelector("#players");
         const playerGrid = document.querySelector("#playerGrid");
