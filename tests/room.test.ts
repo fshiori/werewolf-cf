@@ -299,6 +299,68 @@ describe("RoomDurableObject", () => {
     expect(deadWolfMessages).toEqual([]);
   });
 
+  it("sends fox chat only to living fox sockets", () => {
+    const game: GameState = {
+      roomId: "room_abc",
+      phase: "night",
+      day: 1,
+      players: [
+        { playerId: "player_fox", nickname: "Fox", role: "fox", alive: true },
+        { playerId: "player_betrayer", nickname: "Betrayer", role: "betrayer", alive: true },
+        { playerId: "player_child_fox", nickname: "Child Fox", role: "child_fox", alive: true },
+        { playerId: "player_villager", nickname: "Villager", role: "villager", alive: true },
+        { playerId: "player_dead_fox", nickname: "Dead Fox", role: "fox", alive: false }
+      ],
+      votes: {},
+      openVote: false,
+      commonTalkVisible: false,
+      deadRoleVisible: false,
+      wishRole: false,
+      dummyBoy: false,
+      dayMs: 180_000,
+      nightMs: 90_000,
+      selfVote: false,
+      voteStatus: false,
+      revoteCount: 0,
+      nightKills: {},
+      divinations: {},
+      guards: {},
+      catRevives: {},
+      lastWords: {},
+      log: []
+    };
+    const room = roomObject(game);
+    const foxMessages: SentMessage[] = [];
+    const betrayerMessages: SentMessage[] = [];
+    const childFoxMessages: SentMessage[] = [];
+    const villagerMessages: SentMessage[] = [];
+    const deadFoxMessages: SentMessage[] = [];
+    const foxSocket = fakeSocket(foxMessages);
+    const betrayerSocket = fakeSocket(betrayerMessages);
+    const childFoxSocket = fakeSocket(childFoxMessages);
+    const villagerSocket = fakeSocket(villagerMessages);
+    const deadFoxSocket = fakeSocket(deadFoxMessages);
+    connect(room, foxSocket, "player_fox", "Fox");
+    connect(room, betrayerSocket, "player_betrayer", "Betrayer");
+    connect(room, childFoxSocket, "player_child_fox", "Child Fox");
+    connect(room, villagerSocket, "player_villager", "Villager");
+    connect(room, deadFoxSocket, "player_dead_fox", "Dead Fox");
+
+    (room as unknown as { broadcastFox(gameState: GameState, message: unknown): void }).broadcastFox(game, {
+      type: "fox_chat",
+      playerId: "player_fox",
+      nickname: "Fox",
+      text: "secret",
+      sentAt: "2026-05-04T00:00:00.000Z"
+    });
+
+    expect(foxMessages).toEqual([expect.objectContaining({ type: "fox_chat", text: "secret" })]);
+    expect(betrayerMessages).toEqual([]);
+    expect(childFoxMessages).toEqual([]);
+    expect(villagerMessages).toEqual([]);
+    expect(deadFoxMessages).toEqual([]);
+  });
+
   it("broadcasts game state when child fox divination completes the night", async () => {
     const game: GameState = {
       roomId: "room_abc",
