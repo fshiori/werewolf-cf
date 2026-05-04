@@ -214,6 +214,12 @@ export type GmSetAliveClientMessage = {
   alive: boolean;
 };
 
+export type GmSetRoleClientMessage = {
+  type: "gm_set_role";
+  targetPlayerId: string;
+  role: PlayerRole;
+};
+
 export type StartGameClientMessage = {
   type: "start_game";
 };
@@ -271,6 +277,7 @@ export type ClientMessage =
   | GmAdvancePhaseClientMessage
   | GmEndGameClientMessage
   | GmSetAliveClientMessage
+  | GmSetRoleClientMessage
   | StartGameClientMessage
   | KickPlayerClientMessage
   | VoteClientMessage

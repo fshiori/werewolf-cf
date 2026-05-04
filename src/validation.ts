@@ -1,4 +1,5 @@
 import type { ClientMessage } from "./types";
+import type { PlayerRole } from "./types";
 
 const ROOM_ID_RE = /^room_[A-Za-z0-9_-]{3,64}$/;
 const PLAYER_ID_RE = /^player_[A-Za-z0-9_-]{1,64}$/;
@@ -7,13 +8,19 @@ const ROOM_CAPACITIES = [8, 16, 22, 30] as const;
 const PLAYER_ROLES = [
   "villager",
   "werewolf",
+  "big_wolf",
   "seer",
   "medium",
   "madman",
   "guard",
   "common",
-  "fox"
+  "fox",
+  "poison",
+  "betrayer",
+  "child_fox",
+  "cat"
 ] as const;
+const WISH_ROLES = ["villager", "werewolf", "seer", "medium", "madman", "guard", "common", "fox"] as const;
 const GAME_WINNERS = ["villagers", "werewolves", "foxes", "lovers"] as const;
 
 export function isRecord(value: unknown): value is Record<string, unknown> {
@@ -80,18 +87,29 @@ export function validateRoomCapacity(value: unknown): number {
   return capacity;
 }
 
-export function validateWishRole(value: unknown): (typeof PLAYER_ROLES)[number] | undefined {
+export function validateWishRole(value: unknown): (typeof WISH_ROLES)[number] | undefined {
   if (value === undefined || value === null || value === "" || value === "none") {
     return undefined;
   }
   if (typeof value !== "string") {
     throw new Error("Invalid wished role");
   }
-  const wishRole = PLAYER_ROLES.find((role) => role === value);
+  const wishRole = WISH_ROLES.find((role) => role === value);
   if (!wishRole) {
     throw new Error("Invalid wished role");
   }
   return wishRole;
+}
+
+export function validatePlayerRole(value: unknown): PlayerRole {
+  if (typeof value !== "string") {
+    throw new Error("Invalid player role");
+  }
+  const role = PLAYER_ROLES.find((candidate) => candidate === value);
+  if (!role) {
+    throw new Error("Invalid player role");
+  }
+  return role;
 }
 
 export function validateGameWinner(value: unknown): (typeof GAME_WINNERS)[number] {
@@ -249,6 +267,13 @@ export function parseClientMessage(raw: string): ClientMessage {
       throw new Error("Invalid GM life control message");
     }
     return { type: "gm_set_alive", targetPlayerId: parsed.targetPlayerId, alive: parsed.alive };
+  }
+
+  if (parsed.type === "gm_set_role") {
+    if (typeof parsed.targetPlayerId !== "string") {
+      throw new Error("Invalid GM role control message");
+    }
+    return { type: "gm_set_role", targetPlayerId: parsed.targetPlayerId, role: validatePlayerRole(parsed.role) };
   }
 
   if (parsed.type === "start_game") {

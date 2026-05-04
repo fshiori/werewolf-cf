@@ -19,6 +19,7 @@ import {
   foxesForPlayer,
   forceEndGame,
   forceSetPlayerAlive,
+  forceSetPlayerRole,
   loversForPlayer,
   mediumReadingForPlayer,
   playerStatUpdates,
@@ -1245,6 +1246,16 @@ describe("game", () => {
     expect(revived.players.find((player) => player.playerId === "player_2")?.alive).toBe(true);
     expect(() => forceSetPlayerAlive(createLobbyState("room_abc"), "player_1", false)).toThrow("active games");
     expect(() => forceSetPlayerAlive(day, "player_missing", false)).toThrow("Life control target not found");
+  });
+
+  it("lets GM adjust player roles during active games", () => {
+    const day = startGame(lobby([["player_1", "Alice"], ["player_2", "Bob"], ["player_3", "Carol"], ["player_4", "Dave"]]), 0, () => 0);
+    const changed = forceSetPlayerRole(day, "player_2", "seer");
+
+    expect(changed.players.find((player) => player.playerId === "player_2")?.role).toBe("seer");
+    expect(changed.log).toContain("GM 將 Bob 的角色調整為 seer。");
+    expect(() => forceSetPlayerRole(createLobbyState("room_abc"), "player_1", "seer")).toThrow("active games");
+    expect(() => forceSetPlayerRole(day, "player_missing", "seer")).toThrow("Role control target not found");
   });
 
   it("allows only living werewolves to use the night channel", () => {

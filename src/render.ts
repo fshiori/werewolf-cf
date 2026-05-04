@@ -569,6 +569,22 @@ export function renderRoom(roomId: string): string {
                 <button id="gmEndGame" disabled>GM裁定</button>
                 <button id="gmKillPlayer" disabled>GM死亡</button>
                 <button id="gmRevivePlayer" disabled>GM復活</button>
+                <select id="gmRole">
+                  <option value="villager">村民</option>
+                  <option value="werewolf">人狼</option>
+                  <option value="big_wolf">大狼</option>
+                  <option value="seer">占卜師</option>
+                  <option value="medium">靈能者</option>
+                  <option value="madman">狂人</option>
+                  <option value="guard">獵人</option>
+                  <option value="common">共有者</option>
+                  <option value="fox">妖狐</option>
+                  <option value="poison">埋毒者</option>
+                  <option value="betrayer">背德者</option>
+                  <option value="child_fox">子狐</option>
+                  <option value="cat">貓又</option>
+                </select>
+                <button id="gmSetRole" disabled>GM改職</button>
               </td>
             </tr>
           </table>
@@ -832,6 +848,10 @@ export function renderRoom(roomId: string): string {
         const target = document.querySelector("#gmWhisperTarget").value;
         if (target) sendCommand({ type: "gm_set_alive", targetPlayerId: target, alive: true });
       });
+      document.querySelector("#gmSetRole").addEventListener("click", () => {
+        const target = document.querySelector("#gmWhisperTarget").value;
+        if (target) sendCommand({ type: "gm_set_role", targetPlayerId: target, role: document.querySelector("#gmRole").value });
+      });
       document.querySelector("#uploadAvatar").addEventListener("click", async () => {
         const fileInput = document.querySelector("#avatarFile");
         if (!fileInput.files || fileInput.files.length === 0) return;
@@ -905,6 +925,7 @@ export function renderRoom(roomId: string): string {
         document.querySelector("#gmEndGame").disabled = !isGm || !(game.phase === "day" || game.phase === "night");
         document.querySelector("#gmKillPlayer").disabled = !isGm || !(game.phase === "day" || game.phase === "night") || game.players.length === 0;
         document.querySelector("#gmRevivePlayer").disabled = !isGm || !(game.phase === "day" || game.phase === "night") || game.players.length === 0;
+        document.querySelector("#gmSetRole").disabled = !isGm || !(game.phase === "day" || game.phase === "night") || game.players.length === 0;
         document.querySelector("#setLastWords").disabled = !(currentPlayerAlive && game.phase !== "lobby" && game.phase !== "ended");
         const players = document.querySelector("#players");
         const playerGrid = document.querySelector("#playerGrid");
