@@ -478,11 +478,19 @@ export function renderHome(rooms: RoomSummary[], announcement = DEFAULT_ANNOUNCE
           }
           for (const entry of data.leaderboard) {
             const row = document.createElement("tr");
-            for (const value of [entry.rank, entry.playerId, entry.wins, entry.losses, entry.gamesPlayed]) {
+            const values = [entry.rank, entry.playerId, entry.wins, entry.losses, entry.gamesPlayed];
+            values.forEach((value, index) => {
               const cell = document.createElement("td");
-              cell.textContent = String(value);
+              if (index === 1) {
+                const link = document.createElement("a");
+                link.href = "/player/" + entry.playerId;
+                link.textContent = String(value);
+                cell.appendChild(link);
+              } else {
+                cell.textContent = String(value);
+              }
               row.append(cell);
-            }
+            });
             rows.append(row);
           }
         } catch {
@@ -490,6 +498,87 @@ export function renderHome(rooms: RoomSummary[], announcement = DEFAULT_ANNOUNCE
         }
       }
       void refreshLeaderboard();
+    </script>
+  `));
+}
+
+export function renderPlayerProfile(playerId: string): string {
+  return page(`Player ${playerId}`, shell(`
+    <fieldset>
+      <legend><strong>個人戰績</strong></legend>
+      <table class="form-table">
+        <tr>
+          <td><strong>　玩家：</strong></td>
+          <td><span id="profilePlayerId">${escapeHtml(playerId)}</span></td>
+        </tr>
+        <tr>
+          <td><strong>　頭像：</strong></td>
+          <td><img id="profileAvatar" src="/assets/avatar/${escapeHtml(playerId)}" alt="" width="42" height="42"></td>
+        </tr>
+        <tr>
+          <td><strong>　戰績：</strong></td>
+          <td><span id="profileStats" class="muted">讀取中</span></td>
+        </tr>
+      </table>
+    </fieldset>
+    <fieldset>
+      <legend><strong>最近參戰紀錄</strong></legend>
+      <div id="profileRecords" class="muted">讀取中</div>
+    </fieldset>
+    <script>
+      const playerId = ${JSON.stringify(playerId)};
+      function roleLabel(value) {
+        return {
+          villager: "村民",
+          werewolf: "人狼",
+          big_wolf: "大狼",
+          seer: "占卜師",
+          medium: "靈能者",
+          madman: "狂人",
+          guard: "獵人",
+          common: "共有者",
+          fox: "妖狐",
+          poison: "埋毒者",
+          betrayer: "背德者",
+          child_fox: "子狐",
+          cat: "貓又"
+        }[value] || value;
+      }
+      document.querySelector("#profileAvatar").addEventListener("error", (event) => {
+        event.currentTarget.remove();
+      });
+      async function refreshProfile() {
+        const statsTarget = document.querySelector("#profileStats");
+        const recordsTarget = document.querySelector("#profileRecords");
+        try {
+          const res = await fetch("/api/players/" + playerId + "/stats");
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || "stats failed");
+          statsTarget.textContent = data.stats.gamesPlayed + " 戰 " + data.stats.wins + " 勝 " + data.stats.losses + " 敗";
+        } catch {
+          statsTarget.textContent = "戰績讀取失敗。";
+        }
+        try {
+          const res = await fetch("/api/players/" + playerId + "/records");
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || "records failed");
+          if (!data.records.length) {
+            recordsTarget.textContent = "尚無紀錄。";
+            return;
+          }
+          recordsTarget.innerHTML = "";
+          data.records.forEach((record) => {
+            const div = document.createElement("div");
+            const winner = record.winner || "unknown";
+            const day = record.day || "?";
+            div.textContent = record.createdAt + "　[" + record.roomId + "] " + winner + " 勝　第 " + day + " 日　" + roleLabel(record.role);
+            recordsTarget.appendChild(div);
+          });
+        } catch {
+          recordsTarget.textContent = "紀錄讀取失敗。";
+        }
+      }
+      void refreshProfile();
     </script>
   `));
 }
@@ -1046,9 +1135,12 @@ export function renderRoom(roomId: string): string {
           const marker = document.createElement("font");
           marker.color = "#666666";
           marker.textContent = "◆";
+          const profileLink = document.createElement("a");
+          profileLink.href = "/player/" + player.playerId;
+          profileLink.textContent = player.nickname;
           const status = document.createElement("span");
           status.textContent = player.alive ? "(生存中)" : "(死亡)";
-          nameCell.append(marker, player.nickname, document.createElement("br"), status);
+          nameCell.append(marker, profileLink, document.createElement("br"), status);
           if (revealedRoles[player.playerId]) {
             const roleText = document.createElement("small");
             roleText.textContent = " [" + roleLabel(revealedRoles[player.playerId]) + "]";
