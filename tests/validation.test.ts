@@ -7,6 +7,7 @@ import {
   validateLastWordsText,
   validateNickname,
   validatePlayerId,
+  validateRoomCapacity,
   validateRoomComment,
   validateRoomId,
   validateRoomName
@@ -34,6 +35,12 @@ describe("validation", () => {
     expect(validateRoomComment("  Friendly village  ")).toBe("Friendly village");
     expect(validateRoomComment("   ")).toBe("");
     expect(() => validateRoomComment("x".repeat(121))).toThrow("Room comment is too long");
+  });
+
+  it("validates reference room capacities", () => {
+    expect(validateRoomCapacity(8)).toBe(8);
+    expect(validateRoomCapacity("22")).toBe(22);
+    expect(() => validateRoomCapacity(15)).toThrow("Invalid room capacity");
   });
 
   it("validates chat text", () => {

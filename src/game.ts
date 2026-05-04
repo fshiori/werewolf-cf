@@ -68,7 +68,7 @@ export function publicPlayers(players: GamePlayer[]): PublicGamePlayer[] {
   return players.map(({ playerId, nickname, alive }) => ({ playerId, nickname, alive }));
 }
 
-export function upsertLobbyPlayer(state: GameState, member: RoomMember): GameState {
+export function upsertLobbyPlayer(state: GameState, member: RoomMember, maxPlayers = Number.POSITIVE_INFINITY): GameState {
   if (state.phase !== "lobby") {
     return state;
   }
@@ -84,6 +84,10 @@ export function upsertLobbyPlayer(state: GameState, member: RoomMember): GameSta
     };
   }
 
+  if (state.players.length >= maxPlayers) {
+    throw new Error("Room is full");
+  }
+
   return {
     ...state,
     hostId: state.hostId ?? member.playerId,
@@ -91,8 +95,12 @@ export function upsertLobbyPlayer(state: GameState, member: RoomMember): GameSta
   };
 }
 
-export function canJoinRoomState(state: GameState, playerId: string): boolean {
-  return state.phase === "lobby" || state.players.some((player) => player.playerId === playerId);
+export function canJoinRoomState(state: GameState, playerId: string, maxPlayers = Number.POSITIVE_INFINITY): boolean {
+  const existingPlayer = state.players.some((player) => player.playerId === playerId);
+  if (state.phase !== "lobby") {
+    return existingPlayer;
+  }
+  return existingPlayer || state.players.length < maxPlayers;
 }
 
 export function isWerewolfRole(role: GamePlayer["role"]): boolean {

@@ -8,6 +8,7 @@ describe("render", () => {
         id: "room_abc",
         name: "<Test>",
         comment: "<Friendly>",
+        maxPlayers: 30,
         status: "lobby",
         createdAt: "2026-05-03 12:00:00",
         options: {
@@ -40,10 +41,13 @@ describe("render", () => {
     expect(html).toContain("限時 5/2");
     expect(html).toContain("&lt;Test&gt;");
     expect(html).toContain("&lt;Friendly&gt;");
+    expect(html).toContain("最大30");
     expect(html).toContain("/room/room_abc");
     expect(html).toContain("/api/stats/leaderboard");
     expect(html).toContain("排行榜 JSON");
     expect(html).toContain("roomComment");
+    expect(html).toContain("maxPlayers");
+    expect(html).toContain("<option value=\"22\" selected>22</option>");
     expect(html).toContain("optionPoison");
     expect(html).toContain("optionBigWolf");
     expect(html).toContain("optionAuthority");
@@ -73,7 +77,7 @@ describe("render", () => {
     expect(html).toContain("白天公開目前投票目標");
     expect(html).toContain("允許玩家白天投票給自己");
     expect(html).toContain("已投票玩家以特殊底色顯示");
-    expect(html).toContain("JSON.stringify({ name, comment, playerId:");
+    expect(html).toContain("JSON.stringify({ name, comment, maxPlayers, playerId:");
     expect(html).toContain("options: { poison, bigWolf, authority, decider, lovers, betrayer, childFox, twoFoxes, cat, lastWords, openVote, realTime, dayMinutes, nightMinutes, selfVote, voteStatus }");
     expect(html).toContain("埋毒");
     expect(html).toContain("大狼");

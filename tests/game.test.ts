@@ -1001,6 +1001,14 @@ describe("game", () => {
     expect(canJoinRoomState(started, "player_4")).toBe(false);
   });
 
+  it("blocks new lobby joins when the room is full", () => {
+    const waiting = lobby([["player_1", "Alice"], ["player_2", "Bob"]]);
+
+    expect(canJoinRoomState(waiting, "player_1", 2)).toBe(true);
+    expect(canJoinRoomState(waiting, "player_3", 2)).toBe(false);
+    expect(() => upsertLobbyPlayer(waiting, { playerId: "player_3", nickname: "Carol" }, 2)).toThrow("Room is full");
+  });
+
   it("allows only living werewolves to use the night channel", () => {
     const day = startGame(lobby([["player_1", "Alice"], ["player_2", "Bob"], ["player_3", "Carol"], ["player_4", "Dave"]]), 0, () => 0);
     const night = castDayVote(

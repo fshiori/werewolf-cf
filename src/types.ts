@@ -4,6 +4,7 @@ export interface RoomSummary {
   id: string;
   name: string;
   comment: string;
+  maxPlayers: number;
   status: RoomStatus;
   createdAt: string;
   options: RoomOptions;
