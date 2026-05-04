@@ -7,6 +7,7 @@ describe("render", () => {
       {
         id: "room_abc",
         name: "<Test>",
+        comment: "<Friendly>",
         status: "lobby",
         createdAt: "2026-05-03 12:00:00",
         options: {
@@ -35,11 +36,14 @@ describe("render", () => {
     expect(html).toContain("遊戲列表");
     expect(html).toContain("戰績排行榜");
     expect(html).toContain("建立村子");
+    expect(html).toContain("村子說明");
     expect(html).toContain("限時 5/2");
     expect(html).toContain("&lt;Test&gt;");
+    expect(html).toContain("&lt;Friendly&gt;");
     expect(html).toContain("/room/room_abc");
     expect(html).toContain("/api/stats/leaderboard");
     expect(html).toContain("排行榜 JSON");
+    expect(html).toContain("roomComment");
     expect(html).toContain("optionPoison");
     expect(html).toContain("optionBigWolf");
     expect(html).toContain("optionAuthority");
@@ -69,6 +73,7 @@ describe("render", () => {
     expect(html).toContain("白天公開目前投票目標");
     expect(html).toContain("允許玩家白天投票給自己");
     expect(html).toContain("已投票玩家以特殊底色顯示");
+    expect(html).toContain("JSON.stringify({ name, comment, playerId:");
     expect(html).toContain("options: { poison, bigWolf, authority, decider, lovers, betrayer, childFox, twoFoxes, cat, lastWords, openVote, realTime, dayMinutes, nightMinutes, selfVote, voteStatus }");
     expect(html).toContain("埋毒");
     expect(html).toContain("大狼");

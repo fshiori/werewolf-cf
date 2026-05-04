@@ -7,6 +7,7 @@ import {
   validateLastWordsText,
   validateNickname,
   validatePlayerId,
+  validateRoomComment,
   validateRoomId,
   validateRoomName
 } from "../src/validation";
@@ -27,6 +28,12 @@ describe("validation", () => {
     expect(validateRoomName("  Test Room  ")).toBe("Test Room");
     expect(() => validateNickname("x".repeat(33))).toThrow("Nickname is too long");
     expect(() => validateRoomName("")).toThrow("Room name is required");
+  });
+
+  it("normalizes optional room comments", () => {
+    expect(validateRoomComment("  Friendly village  ")).toBe("Friendly village");
+    expect(validateRoomComment("   ")).toBe("");
+    expect(() => validateRoomComment("x".repeat(121))).toThrow("Room comment is too long");
   });
 
   it("validates chat text", () => {

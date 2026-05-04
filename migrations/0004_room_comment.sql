@@ -1,0 +1,1 @@
+ALTER TABLE rooms ADD COLUMN room_comment TEXT NOT NULL DEFAULT '';

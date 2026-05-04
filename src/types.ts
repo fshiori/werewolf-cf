@@ -3,6 +3,7 @@ export type RoomStatus = "lobby" | "playing" | "ended";
 export interface RoomSummary {
   id: string;
   name: string;
+  comment: string;
   status: RoomStatus;
   createdAt: string;
   options: RoomOptions;

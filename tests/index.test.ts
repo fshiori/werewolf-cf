@@ -34,7 +34,8 @@ function envWithRooms(
   stats: Record<string, MockPlayerStats> = {},
   records: Record<string, MockGameRecord[]> = {},
   events: Record<string, MockRoomEvent[]> = {},
-  roomOptionRoles: Record<string, string> = {}
+  roomOptionRoles: Record<string, string> = {},
+  roomComments: Record<string, string> = {}
 ): Env {
   const assets = new Map<string, StoredAsset>();
   const batches: Array<Array<{ query: string; values: unknown[] }>> = [];
@@ -80,6 +81,7 @@ function envWithRooms(
                 results: roomIds.map((id) => ({
                   id,
                   name: id.replace(/^room_/, ""),
+                  room_comment: roomComments[id] ?? "",
                   status: "lobby",
                   created_at: "2026-05-04 04:00:00",
                   option_role: roomOptionRoles[id] ?? ""
@@ -145,7 +147,15 @@ describe("worker routes", () => {
   it("returns room options in room listings", async () => {
     const response = await worker.fetch(
       new Request("http://example.test/api/rooms"),
-      envWithRooms(["room_plain", "room_poison"], {}, {}, {}, {}, { room_poison: "poison wfbig authority decide lovers betr fosi foxs cat will open_vote real_time:5:2 votedme votedisplay" })
+      envWithRooms(
+        ["room_plain", "room_poison"],
+        {},
+        {},
+        {},
+        {},
+        { room_poison: "poison wfbig authority decide lovers betr fosi foxs cat will open_vote real_time:5:2 votedme votedisplay" },
+        { room_poison: "<test comment>" }
+      )
     );
 
     expect(response.status).toBe(200);
@@ -154,6 +164,7 @@ describe("worker routes", () => {
         {
           id: "room_plain",
           name: "plain",
+          comment: "",
           status: "lobby",
           createdAt: "2026-05-04 04:00:00",
           options: {
@@ -178,6 +189,7 @@ describe("worker routes", () => {
         {
           id: "room_poison",
           name: "poison",
+          comment: "<test comment>",
           status: "lobby",
           createdAt: "2026-05-04 04:00:00",
           options: {
@@ -211,6 +223,7 @@ describe("worker routes", () => {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           name: "Option Test",
+          comment: "Beginners welcome",
           playerId: "player_owner",
           nickname: "Owner",
           options: {
@@ -241,9 +254,12 @@ describe("worker routes", () => {
 
     expect(response.status).toBe(200);
     expect(roomInsert?.query).toContain("option_role");
+    expect(roomInsert?.query).toContain("room_comment");
+    expect(roomInsert?.values).toContain("Beginners welcome");
     expect(roomInsert?.values.at(-1)).toBe("poison wfbig authority decide lovers betr fosi foxs cat will open_vote real_time:5:2 votedme votedisplay");
     expect(JSON.parse(String(eventInsert?.values.at(-1)))).toEqual({
       name: "Option Test",
+      comment: "Beginners welcome",
       options: {
         poison: true,
         bigWolf: true,
