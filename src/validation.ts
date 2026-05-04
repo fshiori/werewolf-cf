@@ -14,6 +14,7 @@ const PLAYER_ROLES = [
   "common",
   "fox"
 ] as const;
+const GAME_WINNERS = ["villagers", "werewolves", "foxes", "lovers"] as const;
 
 export function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -91,6 +92,17 @@ export function validateWishRole(value: unknown): (typeof PLAYER_ROLES)[number] 
     throw new Error("Invalid wished role");
   }
   return wishRole;
+}
+
+export function validateGameWinner(value: unknown): (typeof GAME_WINNERS)[number] {
+  if (typeof value !== "string") {
+    throw new Error("Invalid winner");
+  }
+  const winner = GAME_WINNERS.find((candidate) => candidate === value);
+  if (!winner) {
+    throw new Error("Invalid winner");
+  }
+  return winner;
 }
 
 export function validateTrip(value: string): string {
@@ -226,6 +238,10 @@ export function parseClientMessage(raw: string): ClientMessage {
 
   if (parsed.type === "gm_advance_phase") {
     return { type: "gm_advance_phase" };
+  }
+
+  if (parsed.type === "gm_end_game") {
+    return { type: "gm_end_game", winner: validateGameWinner(parsed.winner) };
   }
 
   if (parsed.type === "start_game") {
