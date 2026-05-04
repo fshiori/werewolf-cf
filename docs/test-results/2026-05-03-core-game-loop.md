@@ -16,12 +16,13 @@ Latest automated rerun:
 
 - Date: 2026-05-04
 - `npm test`
-  - Output: `9 passed (9)` test files
-  - Output: `209 passed (209)` tests
+  - Output: `10 passed (10)` test files
+  - Output: `213 passed (213)` tests
   - Files:
     - `tests/d1-schema.test.mjs`
     - `tests/game.test.ts`
     - `tests/index.test.ts`
+    - `tests/production-write-smoke.test.mjs`
     - `tests/production-smoke.test.mjs`
     - `tests/validation.test.ts`
     - `tests/messages.test.ts`

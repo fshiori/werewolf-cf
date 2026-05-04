@@ -12,6 +12,7 @@
     "check:d1-schema": "node scripts/check-d1-schema.mjs",
     "check:deploy": "npm test && npm run typecheck && npm run check:whitespace && npm run check:wrangler -- --production",
     "smoke:production": "node scripts/smoke-production-readonly.mjs",
+    "smoke:production:write": "node scripts/smoke-production-write.mjs",
     "predeploy": "npm run check:deploy",
     "deploy": "wrangler deploy"
   },

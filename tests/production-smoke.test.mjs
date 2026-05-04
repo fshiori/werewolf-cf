@@ -26,10 +26,10 @@ function responseFor(path) {
     };
   }
   if (path === "/api/protocol") {
-    return { contentType: "application/json", body: JSON.stringify({ path: "/ws/room/:roomId", firstClientMessage: "join" }) };
+    return { contentType: "application/json", body: JSON.stringify({ websocket: { path: "/ws/room/:roomId", firstClientMessage: "join" } }) };
   }
   if (path === "/api/config") {
-    return { contentType: "application/json", body: JSON.stringify({ maintenanceMode: false }) };
+    return { contentType: "application/json", body: JSON.stringify({ config: { maintenanceMode: false } }) };
   }
   if (path === "/api/rooms") {
     return { contentType: "application/json", body: JSON.stringify({ rooms: [] }) };

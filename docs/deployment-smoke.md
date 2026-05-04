@@ -106,6 +106,14 @@ Expected:
 Create a short-lived smoke room only when production writes are acceptable:
 
 ```bash
+npm run smoke:production:write -- "$WORKER_HOST" --yes
+```
+
+The automated write smoke creates a temporary room, verifies `GET /api/rooms/:roomId`, confirms the WebSocket `join` path returns `joined`, `presence`, and `game_state`, then uploads, reads, and deletes an R2 avatar.
+
+Or run the equivalent manual checks:
+
+```bash
 ROOM_ID="$(curl -fsS -X POST "$WORKER_HOST/api/rooms" \
   -H "content-type: application/json" \
   --data '{"name":"Smoke","comment":"deployment smoke","maxPlayers":8,"playerId":"player_smoke_host","nickname":"SmokeHost","options":{"realTime":true,"dayMinutes":1,"nightMinutes":1}}' \
@@ -171,7 +179,7 @@ npx wrangler kv key put maintenance_mode false --binding CONFIG --remote
 
 Only run this when production writes are acceptable.
 
-Avatar uploads accept PNG, JPEG, GIF, and WebP content types up to 512 KiB.
+The automated write smoke above covers the PNG upload/read/delete path. Use these manual commands when you need to inspect the R2 path separately. Avatar uploads accept PNG, JPEG, GIF, and WebP content types up to 512 KiB.
 
 ```bash
 printf '\x89PNG\r\n\x1a\n' > /tmp/werewolf-smoke-avatar.png

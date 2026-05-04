@@ -49,6 +49,16 @@ curl -i http://127.0.0.1:8787/api/protocol
 curl -i http://127.0.0.1:8787/
 ```
 
+Run production smoke checks after deployment:
+
+```bash
+export WORKER_HOST="https://<worker-host>"
+npm run smoke:production -- "$WORKER_HOST"
+npm run smoke:production:write -- "$WORKER_HOST" --yes
+```
+
+The write smoke creates temporary room/player/avatar data, so run it only when production writes are acceptable.
+
 ## Cloudflare Bindings
 
 The Worker expects these bindings from `wrangler.toml`:
@@ -173,4 +183,4 @@ curl -i https://<worker-host>/api/config
 
 `/api/health` should return HTTP 200 with `ok: true`. `/api/version` should return the expected `appVersion` and bindings list. If `maintenance_mode` is set to `true` in KV, new room creation is blocked with HTTP 503 while existing rooms and read APIs remain available.
 
-Use `docs/deployment-smoke.md` for the full production checklist, including remote D1 verification, WebSocket upgrade smoke, maintenance mode, and optional R2 avatar checks.
+Use `docs/deployment-smoke.md` for the full production checklist, including remote D1 verification, automated read-only/write smoke checks, maintenance mode, and optional manual R2 avatar checks.
