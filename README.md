@@ -51,6 +51,37 @@ The Worker expects these bindings from `wrangler.toml`:
 - `ASSETS`: R2 bucket for uploaded avatar assets.
 - `CONFIG`: KV namespace for runtime configuration such as `home_announcement` and `maintenance_mode`.
 
+## HTTP API
+
+Runtime and public metadata:
+
+- `GET /api/health`: Worker, D1, KV, Durable Object, and R2 binding health.
+- `GET /api/version`: Application version, runtime, bindings, and capability metadata.
+- `GET /api/config`: Public runtime config summary.
+
+Rooms and records:
+
+- `GET /api/rooms`: List recent rooms.
+- `POST /api/rooms`: Create a room unless `maintenance_mode=true`.
+- `GET /api/rooms/:roomId/records`: Recent game records for a room.
+- `GET /api/rooms/:roomId/events`: Recent room audit events.
+
+Players and stats:
+
+- `GET /api/stats/leaderboard`: Aggregated leaderboard.
+- `GET /api/players/:playerId/stats`: Player stats, aggregated by claimed Trip when present.
+- `GET /api/players/:playerId/records`: Player game history, aggregated by claimed Trip when present.
+
+Trip and avatar management:
+
+- `POST /api/trips`: Register a Trip identity.
+- `POST /api/trips/claim`: Claim a registered Trip for a local player identity.
+- `POST /api/trips/exclusions`: Exclude a Trip from Trip-limited rooms.
+- `DELETE /api/trips/exclusions`: Remove a Trip exclusion.
+- `POST /api/assets/avatar`: Upload an image avatar to R2.
+- `DELETE /api/assets/avatar`: Remove the current player's avatar from R2.
+- `GET /assets/avatar/:playerId`: Read a player's avatar.
+
 ## Deployment
 
 Run the same checks used for local development:
