@@ -748,6 +748,47 @@ describe("RoomDurableObject", () => {
     expect(otherMessages).toContainEqual(expect.objectContaining({ type: "role", role: "villager" }));
   });
 
+  it("rejects GM phase advancement outside active games through the websocket handler", async () => {
+    const baseGame: GameState = {
+      roomId: "room_abc",
+      phase: "lobby",
+      day: 0,
+      players: [
+        { playerId: "player_wolf", nickname: "Wolf", role: "werewolf", alive: true },
+        { playerId: "player_target", nickname: "Target", role: "villager", alive: true },
+        { playerId: "player_other", nickname: "Other", role: "villager", alive: true }
+      ],
+      votes: {},
+      openVote: false,
+      commonTalkVisible: false,
+      deadRoleVisible: false,
+      wishRole: false,
+      dummyBoy: false,
+      dayMs: 180_000,
+      nightMs: 90_000,
+      selfVote: false,
+      voteStatus: false,
+      revoteCount: 0,
+      nightKills: {},
+      divinations: {},
+      guards: {},
+      catRevives: {},
+      lastWords: {},
+      log: []
+    };
+
+    for (const game of [baseGame, { ...baseGame, phase: "ended" as const, winner: "villagers" as const }]) {
+      const room = roomObject(game);
+      const messages: SentMessage[] = [];
+      const socket = fakeSocket(messages);
+      connect(room, socket, "player_gm", "GM", true);
+
+      await sendRaw(room, socket, JSON.stringify({ type: "gm_advance_phase" }));
+
+      expect(messages).toEqual([{ type: "error", message: "Only active day or night phases can be advanced" }]);
+    }
+  });
+
   it("adjudicates active games through the GM websocket handler", async () => {
     const game: GameState = {
       roomId: "room_abc",
