@@ -31,6 +31,7 @@ const smokeId = process.env.WRITE_SMOKE_ID ?? `smoke_${Date.now()}_${Math.random
 const hostPlayerId = `player_${smokeId}_host`;
 const avatarPlayerId = `player_${smokeId}_avatar`;
 const failures = [];
+let avatarUploaded = false;
 
 function urlFor(path) {
   return new URL(path, baseUrl).toString();
@@ -156,6 +157,7 @@ async function verifyAvatarRoundTrip() {
   if (uploadBody?.key !== `avatars/${avatarPlayerId}`) {
     throw new Error("POST /api/assets/avatar: expected avatar key");
   }
+  avatarUploaded = true;
   console.log("ok POST /api/assets/avatar");
 
   const download = await fetch(urlFor(`/assets/avatar/${avatarPlayerId}`));
@@ -168,16 +170,21 @@ async function verifyAvatarRoundTrip() {
   }
   console.log("ok GET /assets/avatar/:playerId");
 
+  await removeSmokeAvatar("DELETE /api/assets/avatar");
+}
+
+async function removeSmokeAvatar(label) {
   const remove = await fetch(urlFor("/api/assets/avatar"), {
     method: "DELETE",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ playerId: avatarPlayerId })
   });
-  const removeBody = await expectJson(remove, "DELETE /api/assets/avatar");
+  const removeBody = await expectJson(remove, label);
   if (removeBody?.removed !== true) {
-    throw new Error("DELETE /api/assets/avatar: expected removed true");
+    throw new Error(`${label}: expected removed true`);
   }
-  console.log("ok DELETE /api/assets/avatar");
+  avatarUploaded = false;
+  console.log(`ok ${label}`);
 }
 
 try {
@@ -187,6 +194,14 @@ try {
   await verifyAvatarRoundTrip();
 } catch (error) {
   failures.push(error instanceof Error ? error.message : String(error));
+}
+
+if (avatarUploaded) {
+  try {
+    await removeSmokeAvatar("cleanup DELETE /api/assets/avatar");
+  } catch (error) {
+    failures.push(error instanceof Error ? error.message : String(error));
+  }
 }
 
 if (failures.length > 0) {
