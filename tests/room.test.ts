@@ -451,6 +451,57 @@ describe("RoomDurableObject", () => {
     }
   });
 
+  it("rejects GM control websocket commands with missing targets", async () => {
+    const game: GameState = {
+      roomId: "room_abc",
+      phase: "day",
+      day: 1,
+      players: [{ playerId: "player_target", nickname: "Target", role: "villager", alive: true }],
+      votes: {},
+      openVote: false,
+      commonTalkVisible: false,
+      deadRoleVisible: false,
+      wishRole: false,
+      dummyBoy: false,
+      dayMs: 180_000,
+      nightMs: 90_000,
+      selfVote: false,
+      voteStatus: false,
+      revoteCount: 0,
+      nightKills: {},
+      divinations: {},
+      guards: {},
+      catRevives: {},
+      lastWords: {},
+      log: []
+    };
+    const cases = [
+      {
+        command: { type: "gm_set_alive", targetPlayerId: "player_missing", alive: false },
+        message: "Life control target not found"
+      },
+      {
+        command: { type: "gm_set_role", targetPlayerId: "player_missing", role: "seer" },
+        message: "Role control target not found"
+      },
+      {
+        command: { type: "gm_set_flag", targetPlayerId: "player_missing", flag: "lover", enabled: true },
+        message: "Flag control target not found"
+      }
+    ];
+
+    for (const testCase of cases) {
+      const room = roomObject(game);
+      const messages: SentMessage[] = [];
+      const socket = fakeSocket(messages);
+      connect(room, socket, "player_gm", "GM", true);
+
+      await sendRaw(room, socket, JSON.stringify(testCase.command));
+
+      expect(messages).toEqual([{ type: "error", message: testCase.message }]);
+    }
+  });
+
   it("rejects host-only websocket commands from non-host sockets", async () => {
     const game: GameState = {
       roomId: "room_abc",
