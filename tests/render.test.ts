@@ -150,6 +150,7 @@ describe("render", () => {
     expect(html).toContain("尚無戰績。");
     expect(html).toContain('link.href = "/player/" + entry.playerId;');
     expect(html).toContain(".room-link > a");
+    expect(html).toContain(".room-comment { display: block; text-align: right; margin-left: 100px; color: #333333; overflow-wrap: anywhere; word-break: break-word; }");
     expect(html).toContain("建立房間");
   });
 
@@ -173,6 +174,9 @@ describe("render", () => {
     expect(html).toContain("[room_abc]");
     expect(html).toContain("new WebSocket");
     expect(html).toContain("進入房間");
+    expect(html).toContain(".player-card { width: 148px; border: 1px solid #b0b0b0; background: #fafafa; table-layout: fixed; }");
+    expect(html).toContain(".player-name { padding-left: 5px; max-width: 96px; overflow-wrap: anywhere; word-break: break-word; }");
+    expect(html).toContain("#chatLog div, #gameLog div { border-top: 1px dashed silver; padding: 2px 4px; overflow-wrap: anywhere; word-break: break-word; }");
     expect(html).toContain("werewolf_cf_trip");
     expect(html).toContain("Trip");
     expect(html).toContain("avatarFile");

@@ -41,7 +41,7 @@ function page(title: string, body: string): string {
     .room-link { color: #cc3300; display: block; margin-bottom: 8px; }
     .room-link > a { color: #cc3300; }
     .room-line { font-size: 16px; }
-    .room-comment { display: block; text-align: right; margin-left: 100px; color: #333333; }
+    .room-comment { display: block; text-align: right; margin-left: 100px; color: #333333; overflow-wrap: anywhere; word-break: break-word; }
     .status {
       display: inline-block;
       min-width: 58px;
@@ -86,7 +86,7 @@ function page(title: string, body: string): string {
     }
     .panel td { padding: 6px; vertical-align: top; }
     .player-grid { border-spacing: 5px; border-collapse: separate; font-size: 10pt; }
-    .player-card { width: 148px; border: 1px solid #b0b0b0; background: #fafafa; }
+    .player-card { width: 148px; border: 1px solid #b0b0b0; background: #fafafa; table-layout: fixed; }
     .player-card.voted { background: #d0ffff; }
     .player-icon {
       width: 42px;
@@ -98,7 +98,7 @@ function page(title: string, body: string): string {
       color: #333366;
     }
     .player-icon img { width: 42px; height: 42px; object-fit: cover; display: block; }
-    .player-name { padding-left: 5px; }
+    .player-name { padding-left: 5px; max-width: 96px; overflow-wrap: anywhere; word-break: break-word; }
     .dead { background: #303030; color: #dddddd; text-decoration: line-through; }
     #chatLog {
       height: 280px;
@@ -107,7 +107,7 @@ function page(title: string, body: string): string {
       font-size: 12pt;
       font-family: "PMingLiU", "Noto Serif TC", serif;
     }
-    #chatLog div, #gameLog div { border-top: 1px dashed silver; padding: 2px 4px; }
+    #chatLog div, #gameLog div { border-top: 1px dashed silver; padding: 2px 4px; overflow-wrap: anywhere; word-break: break-word; }
     #gameLog { max-height: 140px; overflow: auto; background: #ffffff; }
     #players button { margin: 2px 4px 2px 0; min-width: 7em; text-align: left; }
     .muted { color: #666666; }
