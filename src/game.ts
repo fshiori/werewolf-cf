@@ -779,7 +779,7 @@ export function forceSetPlayerFlag(state: GameState, targetPlayerId: string, fla
 function resolveDay(state: GameState, now = Date.now()): GameState {
   const executedId = pickTopTarget(state);
   const revoteCount = state.revoteCount ?? 0;
-  if (!executedId && Object.keys(state.votes).length > 0 && revoteCount < MAX_REVOTES) {
+  if (!executedId && Object.keys(state.votes ?? {}).length > 0 && revoteCount < MAX_REVOTES) {
     return {
       ...state,
       votes: {},
@@ -818,7 +818,7 @@ function resolveDay(state: GameState, now = Date.now()): GameState {
 }
 
 function resolveNight(state: GameState, now = Date.now(), random = Math.random): GameState {
-  const killedId = state.dummyBoy && state.day === 0 ? DUMMY_PLAYER_ID : pickTopActionTarget(state.nightKills);
+  const killedId = state.dummyBoy && state.day === 0 ? DUMMY_PLAYER_ID : pickTopActionTarget(state.nightKills ?? {});
   const protectedIds = new Set(Object.values(state.guards ?? {}));
   const protectedKill = killedId ? protectedIds.has(killedId) : false;
   const attacked = killedId ? state.players.find((player) => player.playerId === killedId) : undefined;
@@ -991,7 +991,7 @@ function pickCatRevival(state: GameState, players: GamePlayer[], random: () => n
 
 function areNightActionsComplete(state: GameState): boolean {
   return (
-    Object.keys(state.nightKills).length >= livingWerewolves(state).length &&
+    Object.keys(state.nightKills ?? {}).length >= livingWerewolves(state).length &&
     Object.keys(state.guards ?? {}).length >= livingGuards(state).length
   );
 }
@@ -1008,9 +1008,9 @@ function clearActionsForDeadPlayers(state: GameState): GameState {
   const livingIds = new Set(livingPlayers(state).map((player) => player.playerId));
   return {
     ...state,
-    votes: keepLivingActorActions(state.votes, livingIds),
-    nightKills: keepLivingActorActions(state.nightKills, livingIds),
-    divinations: keepLivingActorActions(state.divinations, livingIds),
+    votes: keepLivingActorActions(state.votes ?? {}, livingIds),
+    nightKills: keepLivingActorActions(state.nightKills ?? {}, livingIds),
+    divinations: keepLivingActorActions(state.divinations ?? {}, livingIds),
     guards: keepLivingActorActions(state.guards ?? {}, livingIds),
     catRevives: keepLivingActorActions(state.catRevives ?? {}, livingIds)
   };
@@ -1022,7 +1022,7 @@ function keepLivingActorActions(actions: Record<string, string>, livingIds: Set<
 
 function pickTopTarget(state: GameState): string | undefined {
   const counts = new Map<string, number>();
-  for (const [voterId, targetId] of Object.entries(state.votes)) {
+  for (const [voterId, targetId] of Object.entries(state.votes ?? {})) {
     const voter = state.players.find((player) => player.playerId === voterId);
     counts.set(targetId, (counts.get(targetId) ?? 0) + (voter?.authority ? 2 : 1));
   }
@@ -1047,7 +1047,7 @@ function pickTopTarget(state: GameState): string | undefined {
       .map(([targetId]) => targetId)
   );
   const decider = state.players.find((player) => player.alive && player.decider);
-  const deciderTarget = decider ? state.votes[decider.playerId] : undefined;
+  const deciderTarget = decider ? (state.votes ?? {})[decider.playerId] : undefined;
   return deciderTarget && tiedTargets.has(deciderTarget) ? deciderTarget : undefined;
 }
 

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  advancePhaseByAlarm,
   canJoinRoomState,
   canStartGame,
   canUseCommonChannel,
@@ -933,6 +934,32 @@ describe("game", () => {
     game = castNightKill(game, "player_1", "player_3", 0);
 
     expect(game.votes).toEqual({});
+  });
+
+  it("treats missing legacy action maps as empty during alarm advancement", () => {
+    const players: GameState["players"] = [
+      { playerId: "player_1", nickname: "Alice", role: "werewolf", alive: true },
+      { playerId: "player_2", nickname: "Bob", role: "villager", alive: true },
+      { playerId: "player_3", nickname: "Carol", role: "villager", alive: true }
+    ];
+    const { votes: _dayVotes, nightKills: _dayNightKills, divinations: _dayDivinations, ...legacyDayValue } = activeState("day", players);
+    const legacyDay = legacyDayValue as GameState;
+
+    const nextNight = advancePhaseByAlarm(legacyDay);
+
+    expect(nextNight.phase).toBe("night");
+    expect(nextNight.votes).toEqual({});
+    expect(nextNight.nightKills).toEqual({});
+    expect(nextNight.divinations).toEqual({});
+
+    const { nightKills: _nightKills, divinations: _nightDivinations, ...legacyNightValue } = activeState("night", players);
+    const legacyNight = legacyNightValue as GameState;
+
+    const nextDay = advancePhaseByAlarm(legacyNight);
+
+    expect(nextDay.phase).toBe("day");
+    expect(nextDay.nightKills).toEqual({});
+    expect(nextDay.divinations).toEqual({});
   });
 
   it("allows only wolves to perform night kills and detects wolf win", () => {
