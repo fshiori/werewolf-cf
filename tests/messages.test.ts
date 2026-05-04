@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { createLobbyState, startGame } from "../src/game";
 import {
+  buildActionAckMessage,
   buildChatMessage,
   buildDivinationResultMessage,
   buildGameStateMessage,
@@ -69,6 +70,14 @@ describe("messages", () => {
       targetPlayerId: "player_1",
       targetNickname: "&lt;Victim&gt;",
       result: "human"
+    });
+  });
+
+  it("builds action acknowledgement messages", () => {
+    expect(buildActionAckMessage("guard", "player_1")).toEqual({
+      type: "action_ack",
+      action: "guard",
+      targetPlayerId: "player_1"
     });
   });
 

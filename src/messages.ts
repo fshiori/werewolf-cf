@@ -76,6 +76,10 @@ export function buildMediumResultMessage(reading: MediumReading): ServerMessage 
   };
 }
 
+export function buildActionAckMessage(action: "vote" | "night_kill" | "guard", targetPlayerId: string): ServerMessage {
+  return { type: "action_ack", action, targetPlayerId };
+}
+
 export function buildErrorMessage(message: string): ServerMessage {
   return { type: "error", message };
 }
