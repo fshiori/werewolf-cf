@@ -97,8 +97,8 @@ Expected:
 - `/api/health` returns `ok: true`.
 - `/api/version` lists `ROOM_DO`, `DB`, `ASSETS`, and `CONFIG`.
 - `/api/version` capabilities include `websocket_protocol`.
-- `/api/protocol` returns `path: "/ws/room/:roomId"` and `firstClientMessage: "join"`.
-- `/api/config` returns `maintenanceMode`.
+- `/api/protocol` returns `websocket.path: "/ws/room/:roomId"` and `websocket.firstClientMessage: "join"`.
+- `/api/config` returns `config.maintenanceMode`.
 - HTML pages return `200 OK`.
 
 ## WebSocket Upgrade Smoke
