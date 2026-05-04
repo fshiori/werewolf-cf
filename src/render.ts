@@ -1318,7 +1318,7 @@ export function renderRoom(roomId: string): string {
           row.appendChild(card);
           const button = document.createElement("button");
           button.textContent = canManageLobby && player.playerId !== currentPlayerId ? "踢 " + player.nickname : (player.alive ? "" : "× ") + player.nickname;
-          const catReviveTarget = game.phase === "night" && role === "cat" && !player.alive;
+          const catReviveTarget = game.phase === "night" && game.day > 1 && role === "cat" && !player.alive;
           button.disabled =
             (!actorCanAct && !(canManageLobby && player.playerId !== currentPlayerId)) ||
             (game.phase === "night" && role === "cat" && !catReviveTarget) ||
