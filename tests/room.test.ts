@@ -242,6 +242,63 @@ describe("RoomDurableObject", () => {
     }
   });
 
+  it("sends wolf chat only to living werewolf sockets", () => {
+    const game: GameState = {
+      roomId: "room_abc",
+      phase: "night",
+      day: 1,
+      players: [
+        { playerId: "player_wolf", nickname: "Wolf", role: "werewolf", alive: true },
+        { playerId: "player_big_wolf", nickname: "Big Wolf", role: "big_wolf", alive: true },
+        { playerId: "player_villager", nickname: "Villager", role: "villager", alive: true },
+        { playerId: "player_dead_wolf", nickname: "Dead Wolf", role: "werewolf", alive: false }
+      ],
+      votes: {},
+      openVote: false,
+      commonTalkVisible: false,
+      deadRoleVisible: false,
+      wishRole: false,
+      dummyBoy: false,
+      dayMs: 180_000,
+      nightMs: 90_000,
+      selfVote: false,
+      voteStatus: false,
+      revoteCount: 0,
+      nightKills: {},
+      divinations: {},
+      guards: {},
+      catRevives: {},
+      lastWords: {},
+      log: []
+    };
+    const room = roomObject(game);
+    const wolfMessages: SentMessage[] = [];
+    const bigWolfMessages: SentMessage[] = [];
+    const villagerMessages: SentMessage[] = [];
+    const deadWolfMessages: SentMessage[] = [];
+    const wolfSocket = fakeSocket(wolfMessages);
+    const bigWolfSocket = fakeSocket(bigWolfMessages);
+    const villagerSocket = fakeSocket(villagerMessages);
+    const deadWolfSocket = fakeSocket(deadWolfMessages);
+    connect(room, wolfSocket, "player_wolf", "Wolf");
+    connect(room, bigWolfSocket, "player_big_wolf", "Big Wolf");
+    connect(room, villagerSocket, "player_villager", "Villager");
+    connect(room, deadWolfSocket, "player_dead_wolf", "Dead Wolf");
+
+    (room as unknown as { broadcastWerewolf(gameState: GameState, message: unknown): void }).broadcastWerewolf(game, {
+      type: "wolf_chat",
+      playerId: "player_wolf",
+      nickname: "Wolf",
+      text: "secret",
+      sentAt: "2026-05-04T00:00:00.000Z"
+    });
+
+    expect(wolfMessages).toEqual([expect.objectContaining({ type: "wolf_chat", text: "secret" })]);
+    expect(bigWolfMessages).toEqual([expect.objectContaining({ type: "wolf_chat", text: "secret" })]);
+    expect(villagerMessages).toEqual([]);
+    expect(deadWolfMessages).toEqual([]);
+  });
+
   it("broadcasts game state when child fox divination completes the night", async () => {
     const game: GameState = {
       roomId: "room_abc",
