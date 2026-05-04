@@ -62,6 +62,7 @@ Runtime and public metadata:
 Rooms and records:
 
 - `GET /api/rooms`: List recent rooms.
+- `GET /api/rooms/:roomId`: Room summary and option metadata.
 - `POST /api/rooms`: Create a room unless `maintenance_mode=true`.
 - `GET /api/rooms/:roomId/records`: Recent game records for a room.
 - `GET /api/rooms/:roomId/events`: Recent room audit events.
