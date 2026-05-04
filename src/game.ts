@@ -534,11 +534,12 @@ export function castDivination(
       }
     : state;
   const clearedState = clearActionsForDeadPlayers(nextState);
+  const actionState = {
+    ...clearedState,
+    divinations: { ...clearedState.divinations, [actorId]: targetId }
+  };
   return {
-    state: {
-      ...clearedState,
-      divinations: { ...clearedState.divinations, [actorId]: targetId }
-    },
+    state: areNightActionsComplete(actionState) ? resolveNight(actionState) : actionState,
     targetNickname: target.nickname,
     result: divinationResultForSeer(target.role, random)
   };
@@ -571,7 +572,7 @@ export function castChildFoxDivination(
     ...state,
     divinations: { ...divinations, [actorId]: targetId }
   };
-  return { state: nextState, targetNickname: target.nickname, result };
+  return { state: areNightActionsComplete(nextState) ? resolveNight(nextState) : nextState, targetNickname: target.nickname, result };
 }
 
 export function castGuard(state: GameState, actorId: string, targetId: string, now = Date.now()): GameState {
@@ -975,7 +976,28 @@ function lastWordsForNewDeaths(before: GamePlayer[], after: GamePlayer[], lastWo
 }
 
 function livingGuards(state: GameState): GamePlayer[] {
+  if (state.day === 0) {
+    return [];
+  }
   return livingPlayers(state).filter((player) => player.role === "guard");
+}
+
+function livingDiviners(state: GameState): GamePlayer[] {
+  if (state.day === 0) {
+    return [];
+  }
+  return livingPlayers(state).filter((player) => player.role === "seer" || player.role === "child_fox");
+}
+
+function livingCatsWithReviveTargets(state: GameState): GamePlayer[] {
+  if (state.day <= 1) {
+    return [];
+  }
+  const deadPlayerIds = new Set(state.players.filter((player) => !player.alive).map((player) => player.playerId));
+  if (deadPlayerIds.size === 0) {
+    return [];
+  }
+  return livingPlayers(state).filter((player) => player.role === "cat" && Array.from(deadPlayerIds).some((deadId) => deadId !== player.playerId));
 }
 
 function pickCatRevival(state: GameState, players: GamePlayer[], random: () => number): GamePlayer | undefined {
@@ -991,9 +1013,15 @@ function pickCatRevival(state: GameState, players: GamePlayer[], random: () => n
 
 function areNightActionsComplete(state: GameState): boolean {
   return (
-    Object.keys(state.nightKills ?? {}).length >= livingWerewolves(state).length &&
-    Object.keys(state.guards ?? {}).length >= livingGuards(state).length
+    haveAllActions(livingWerewolves(state), state.nightKills ?? {}) &&
+    haveAllActions(livingGuards(state), state.guards ?? {}) &&
+    haveAllActions(livingDiviners(state), state.divinations ?? {}) &&
+    haveAllActions(livingCatsWithReviveTargets(state), state.catRevives ?? {})
   );
+}
+
+function haveAllActions(players: GamePlayer[], actions: Record<string, string>): boolean {
+  return players.every((player) => Boolean(actions[player.playerId]));
 }
 
 function assertLivingPlayer(state: GameState, playerId: string): GamePlayer {

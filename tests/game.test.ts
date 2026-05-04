@@ -154,6 +154,10 @@ describe("game", () => {
       game = castDayVote(game, player.playerId, player.playerId === "player_7" ? "player_6" : "player_7");
     }
 
+    const divination = castDivination(game, "player_2", "player_1");
+    game = divination.state;
+    expect(game.phase).toBe("night");
+
     game = castNightKill(game, "player_1", "player_2", 0);
     expect(game.phase).toBe("night");
 
@@ -889,6 +893,34 @@ describe("game", () => {
     expect(game.log).toContain("Alice 的遺言：It was the wolf");
   });
 
+  it("waits for living diviners and cats with revive targets before resolving night", () => {
+    let game = activeState("night", [
+      { playerId: "player_1", nickname: "Wolf", role: "werewolf", alive: true },
+      { playerId: "player_2", nickname: "Seer", role: "seer", alive: true },
+      { playerId: "player_3", nickname: "Child Fox", role: "child_fox", alive: true },
+      { playerId: "player_4", nickname: "Cat", role: "cat", alive: true },
+      { playerId: "player_5", nickname: "Dead", role: "villager", alive: false },
+      { playerId: "player_6", nickname: "Villager", role: "villager", alive: true }
+    ]);
+    game = { ...game, day: 2 };
+
+    game = castNightKill(game, "player_1", "player_6", 0);
+    expect(game.phase).toBe("night");
+
+    const seer = castDivination(game, "player_2", "player_1");
+    game = seer.state;
+    expect(game.phase).toBe("night");
+
+    const childFox = castChildFoxDivination(game, "player_3", "player_1", () => 0.9);
+    game = childFox.state;
+    expect(game.phase).toBe("night");
+
+    game = castCatRevive(game, "player_4", "player_5", 0, () => 0.95);
+    expect(game.phase).toBe("day");
+    expect(game.players.find((player) => player.playerId === "player_5")?.alive).toBe(true);
+    expect(game.players.find((player) => player.playerId === "player_6")?.alive).toBe(false);
+  });
+
   it("runs one revote after a tied day vote before moving to night", () => {
     let game = startGame(lobby([["player_1", "Alice"], ["player_2", "Bob"], ["player_3", "Carol"], ["player_4", "Dave"]]), 0, () => 0);
 
@@ -1133,7 +1165,8 @@ describe("game", () => {
     expect(canUseWerewolfChannel(game, "player_1")).toBe(true);
     expect(castDivination(game, "player_2", "player_1", () => 0.95).result).toBe("werewolf");
 
-    const killed = castNightKill(game, "player_1", "player_3", 0);
+    const divined = castDivination(game, "player_2", "player_1", () => 0.95);
+    const killed = castNightKill(divined.state, "player_1", "player_3", 0);
 
     expect(killed.players.find((player) => player.playerId === "player_3")?.alive).toBe(false);
   });
@@ -1427,6 +1460,7 @@ describe("game", () => {
     expect(game.phase).toBe("night");
     expect(mediumReadingForPlayer(game, "player_3")).toBeUndefined();
 
+    game = castDivination(game, "player_2", "player_1").state;
     game = castNightKill(game, "player_1", "player_5", 0);
 
     expect(game.phase).toBe("day");
