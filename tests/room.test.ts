@@ -551,6 +551,51 @@ describe("RoomDurableObject", () => {
     }
   });
 
+  it("rejects kick websocket commands with invalid targets", async () => {
+    const game: GameState = {
+      roomId: "room_abc",
+      phase: "lobby",
+      day: 0,
+      hostId: "player_host",
+      players: [
+        { playerId: "player_host", nickname: "Host", role: "villager", alive: true },
+        { playerId: "player_target", nickname: "Target", role: "villager", alive: true }
+      ],
+      votes: {},
+      openVote: false,
+      commonTalkVisible: false,
+      deadRoleVisible: false,
+      wishRole: false,
+      dummyBoy: false,
+      dayMs: 180_000,
+      nightMs: 90_000,
+      selfVote: false,
+      voteStatus: false,
+      revoteCount: 0,
+      nightKills: {},
+      divinations: {},
+      guards: {},
+      catRevives: {},
+      lastWords: {},
+      log: []
+    };
+    const cases = [
+      { targetPlayerId: "player_host", message: "Cannot kick yourself" },
+      { targetPlayerId: "player_missing", message: "Kick target not found" }
+    ];
+
+    for (const testCase of cases) {
+      const room = roomObject(game);
+      const messages: SentMessage[] = [];
+      const socket = fakeSocket(messages);
+      connect(room, socket, "player_host", "Host");
+
+      await sendRaw(room, socket, JSON.stringify({ type: "kick_player", targetPlayerId: testCase.targetPlayerId }));
+
+      expect(messages).toEqual([{ type: "error", message: testCase.message }]);
+    }
+  });
+
   it("rejects last words websocket commands when the room option is disabled", async () => {
     const game: GameState = {
       roomId: "room_abc",
