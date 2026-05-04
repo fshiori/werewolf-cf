@@ -113,6 +113,18 @@ export interface GameRecordSummary {
   createdAt: string;
 }
 
+export interface PlayerGameRecordSummary {
+  id: number;
+  roomId: string;
+  winner?: GameWinner;
+  day?: number;
+  playerId: string;
+  nickname: string;
+  role: PlayerRole;
+  alive: boolean;
+  createdAt: string;
+}
+
 export interface RoomEventSummary {
   id: number;
   roomId: string;
