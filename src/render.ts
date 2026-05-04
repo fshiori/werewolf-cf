@@ -156,7 +156,8 @@ export function renderHome(rooms: RoomSummary[], announcement = DEFAULT_ANNOUNCE
         room.options.decider ? `<span class="option-mark">決定</span>` : "",
         room.options.lovers ? `<span class="option-mark">戀人</span>` : "",
         room.options.betrayer ? `<span class="option-mark">背德</span>` : "",
-        room.options.childFox ? `<span class="option-mark">子狐</span>` : ""
+        room.options.childFox ? `<span class="option-mark">子狐</span>` : "",
+        room.options.twoFoxes ? `<span class="option-mark">雙狐</span>` : ""
       ].filter(Boolean).join(" ");
       return `<a class="room-link" href="/room/${escapeHtml(room.id)}">
         <span class="room-line"><span class="status status-${status}">${status}</span><small>[${escapeHtml(room.id)}]</small> ${escapeHtml(room.name)}村</span>
@@ -237,6 +238,10 @@ export function renderHome(rooms: RoomSummary[], announcement = DEFAULT_ANNOUNCE
           <td><label><input id="optionChildFox" type="checkbox"> <small>子狐登場，可於夜晚占卜但可能失敗</small></label></td>
         </tr>
         <tr>
+          <td><label><strong>　20人以上兩隻妖狐：</strong></label></td>
+          <td><label><input id="optionTwoFoxes" type="checkbox"> <small>第二隻妖狐登場</small></label></td>
+        </tr>
+        <tr>
           <td></td>
           <td><button id="createRoom">建立房間</button></td>
         </tr>
@@ -259,11 +264,12 @@ export function renderHome(rooms: RoomSummary[], announcement = DEFAULT_ANNOUNCE
         const lovers = document.querySelector("#optionLovers").checked;
         const betrayer = document.querySelector("#optionBetrayer").checked;
         const childFox = document.querySelector("#optionChildFox").checked;
+        const twoFoxes = document.querySelector("#optionTwoFoxes").checked;
         localStorage.setItem("werewolf_cf_nickname", nickname);
         const res = await fetch("/api/rooms", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ name, playerId: localStorage.getItem(playerKey), nickname, options: { poison, bigWolf, authority, decider, lovers, betrayer, childFox } })
+          body: JSON.stringify({ name, playerId: localStorage.getItem(playerKey), nickname, options: { poison, bigWolf, authority, decider, lovers, betrayer, childFox, twoFoxes } })
         });
         const data = await res.json();
         if (!res.ok) {

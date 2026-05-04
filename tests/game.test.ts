@@ -189,7 +189,8 @@ describe("game", () => {
       decider: false,
       lovers: false,
       betrayer: false,
-      childFox: false
+      childFox: false,
+      twoFoxes: false
     });
 
     expect(normal.players.filter((player) => player.role === "poison")).toHaveLength(0);
@@ -209,7 +210,8 @@ describe("game", () => {
       decider: false,
       lovers: false,
       betrayer: false,
-      childFox: false
+      childFox: false,
+      twoFoxes: false
     });
 
     expect(game.players.filter((player) => player.role === "big_wolf")).toHaveLength(1);
@@ -229,7 +231,8 @@ describe("game", () => {
       decider: true,
       lovers: false,
       betrayer: false,
-      childFox: false
+      childFox: false,
+      twoFoxes: false
     });
 
     expect(game.players.find((player) => player.authority)?.playerId).toBe("player_1");
@@ -277,7 +280,8 @@ describe("game", () => {
       decider: false,
       lovers: true,
       betrayer: false,
-      childFox: false
+      childFox: false,
+      twoFoxes: false
     });
 
     expect(game.players.filter((player) => player.lover)).toEqual([
@@ -299,7 +303,8 @@ describe("game", () => {
       decider: false,
       lovers: false,
       betrayer: true,
-      childFox: false
+      childFox: false,
+      twoFoxes: false
     });
 
     expect(game.players.filter((player) => player.role === "betrayer")).toEqual([
@@ -318,13 +323,36 @@ describe("game", () => {
       decider: false,
       lovers: false,
       betrayer: false,
-      childFox: true
+      childFox: true,
+      twoFoxes: false
     });
 
     expect(game.players.filter((player) => player.role === "child_fox")).toEqual([
       expect.objectContaining({ playerId: "player_1", role: "child_fox" })
     ]);
     expect(foxesForPlayer(game, "player_1")).toEqual([{ playerId: "player_11", nickname: "Player 11" }]);
+  });
+
+  it("applies the two foxes room option in twenty-player games", () => {
+    const game = startGame(numberedLobby(20), 0, () => 0, {
+      poison: false,
+      bigWolf: false,
+      authority: false,
+      decider: false,
+      lovers: false,
+      betrayer: false,
+      childFox: false,
+      twoFoxes: true
+    });
+
+    expect(game.players.filter((player) => player.role === "fox")).toEqual([
+      expect.objectContaining({ playerId: "player_1", role: "fox" }),
+      expect.objectContaining({ playerId: "player_11", role: "fox" })
+    ]);
+    expect(foxesForPlayer(game, "player_1")).toEqual([
+      { playerId: "player_1", nickname: "Player 1" },
+      { playerId: "player_11", nickname: "Player 11" }
+    ]);
   });
 
   it("lets child foxes divine at night with possible failure", () => {

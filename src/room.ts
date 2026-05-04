@@ -356,7 +356,8 @@ export class RoomDurableObject {
       decider: roles.has("decide"),
       lovers: roles.has("lovers"),
       betrayer: roles.has("betr"),
-      childFox: roles.has("fosi")
+      childFox: roles.has("fosi"),
+      twoFoxes: roles.has("foxs")
     };
   }
 }

@@ -50,7 +50,8 @@ function parseRoomOptions(optionRole: string): RoomOptions {
     decider: roles.has("decide"),
     lovers: roles.has("lovers"),
     betrayer: roles.has("betr"),
-    childFox: roles.has("fosi")
+    childFox: roles.has("fosi"),
+    twoFoxes: roles.has("foxs")
   };
 }
 
@@ -62,13 +63,23 @@ function serializeRoomOptions(options: RoomOptions): string {
     options.decider ? "decide" : "",
     options.lovers ? "lovers" : "",
     options.betrayer ? "betr" : "",
-    options.childFox ? "fosi" : ""
+    options.childFox ? "fosi" : "",
+    options.twoFoxes ? "foxs" : ""
   ].filter(Boolean).join(" ");
 }
 
 function readRoomOptions(value: unknown): RoomOptions {
   if (!isRecord(value)) {
-    return { poison: false, bigWolf: false, authority: false, decider: false, lovers: false, betrayer: false, childFox: false };
+    return {
+      poison: false,
+      bigWolf: false,
+      authority: false,
+      decider: false,
+      lovers: false,
+      betrayer: false,
+      childFox: false,
+      twoFoxes: false
+    };
   }
   return {
     poison: value.poison === true,
@@ -77,7 +88,8 @@ function readRoomOptions(value: unknown): RoomOptions {
     decider: value.decider === true,
     lovers: value.lovers === true,
     betrayer: value.betrayer === true,
-    childFox: value.childFox === true
+    childFox: value.childFox === true,
+    twoFoxes: value.twoFoxes === true
   };
 }
 
