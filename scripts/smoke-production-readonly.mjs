@@ -74,7 +74,7 @@ const checks = [
   },
   { path: "/", kind: "html", expectedText: "汝等是人是狼？" },
   { path: "/rules", kind: "html", expectedText: "規則" },
-  { path: "/protocol", kind: "html", expectedText: "WebSocket 入口" },
+  { path: "/protocol", kind: "html", expectedText: ["WebSocket 入口", "common_voice"] },
   { path: "/version", kind: "html", expectedText: "版本資訊" }
 ];
 
@@ -112,8 +112,10 @@ for (const check of checks) {
         failures.push(`${check.path}: empty HTML response`);
         continue;
       }
-      if (check.expectedText && !text.includes(check.expectedText)) {
-        failures.push(`${check.path}: expected HTML text ${check.expectedText}`);
+      const expectedTexts = Array.isArray(check.expectedText) ? check.expectedText : [check.expectedText].filter(Boolean);
+      const missingText = expectedTexts.find((expectedText) => !text.includes(expectedText));
+      if (missingText) {
+        failures.push(`${check.path}: expected HTML text ${missingText}`);
         continue;
       }
     }
