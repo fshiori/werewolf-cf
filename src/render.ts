@@ -216,7 +216,7 @@ export function renderHome(rooms: RoomSummary[], announcement = DEFAULT_ANNOUNCE
         </tr>
         <tr>
           <td><label><strong>　排除Trip：</strong></label></td>
-          <td><input id="excludeTrip" maxlength="32" size="12"> <input id="excludeTripReason" maxlength="120" size="28"> <button id="excludeTripButton">排除紀錄</button> <span id="excludeTripStatus" class="muted"></span></td>
+          <td><input id="excludeTrip" maxlength="32" size="12"> <input id="excludeTripReason" maxlength="120" size="28"> <button id="excludeTripButton">排除紀錄</button> <button id="removeTripExclusionButton">解除排除</button> <span id="excludeTripStatus" class="muted"></span></td>
         </tr>
       </table>
     </fieldset>
@@ -387,6 +387,17 @@ export function renderHome(rooms: RoomSummary[], announcement = DEFAULT_ANNOUNCE
         });
         const data = await res.json();
         status.textContent = res.ok ? "排除完成" : data.error || "排除失敗";
+      });
+      document.querySelector("#removeTripExclusionButton").addEventListener("click", async () => {
+        const trip = document.querySelector("#excludeTrip").value;
+        const status = document.querySelector("#excludeTripStatus");
+        const res = await fetch("/api/trips/exclusions", {
+          method: "DELETE",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ trip })
+        });
+        const data = await res.json();
+        status.textContent = res.ok ? "解除完成" : data.error || "解除失敗";
       });
       document.querySelector("#createRoom").addEventListener("click", async () => {
         const nickname = document.querySelector("#nickname").value;

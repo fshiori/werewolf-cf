@@ -48,6 +48,8 @@ describe("render", () => {
     expect(html).toContain("Trip登記");
     expect(html).toContain("registerTripButton");
     expect(html).toContain("excludeTripButton");
+    expect(html).toContain("removeTripExclusionButton");
+    expect(html).toContain("解除排除");
     expect(html).toContain("/api/trips");
     expect(html).toContain("/api/trips/exclusions");
     expect(html).toContain("建立村子");
