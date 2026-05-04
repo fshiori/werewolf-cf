@@ -115,6 +115,7 @@ describe("messages", () => {
       wolves: [{ playerId: "player_1", nickname: "&lt;Wolf&gt;" }],
       commons: [],
       lovers: [],
+      foxes: [],
       authority: false
     });
   });
@@ -126,17 +127,19 @@ describe("messages", () => {
       wolves: [],
       commons: [{ playerId: "player_2", nickname: "&lt;Shared&gt;" }],
       lovers: [],
+      foxes: [],
       authority: false
     });
   });
 
   it("builds role messages with authority flag", () => {
-    expect(buildRoleMessage("villager", [], [], [], true)).toEqual({
+    expect(buildRoleMessage("villager", [], [], [], [], true)).toEqual({
       type: "role",
       role: "villager",
       wolves: [],
       commons: [],
       lovers: [],
+      foxes: [],
       authority: true
     });
   });
@@ -148,6 +151,19 @@ describe("messages", () => {
       wolves: [],
       commons: [],
       lovers: [{ playerId: "player_2", nickname: "&lt;Love&gt;" }],
+      foxes: [],
+      authority: false
+    });
+  });
+
+  it("builds role messages with escaped fox list", () => {
+    expect(buildRoleMessage("betrayer", [], [], [], [{ playerId: "player_2", nickname: "<Fox>" }])).toEqual({
+      type: "role",
+      role: "betrayer",
+      wolves: [],
+      commons: [],
+      lovers: [],
+      foxes: [{ playerId: "player_2", nickname: "&lt;Fox&gt;" }],
       authority: false
     });
   });
