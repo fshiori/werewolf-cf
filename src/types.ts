@@ -23,6 +23,7 @@ export interface RoomOptions {
   lastWords: boolean;
   openVote: boolean;
   commonTalkVisible: boolean;
+  deadRoleVisible: boolean;
   realTime: boolean;
   dayMinutes: number;
   nightMinutes: number;
@@ -119,6 +120,7 @@ export interface GameState {
   votes: Record<string, string>;
   openVote: boolean;
   commonTalkVisible: boolean;
+  deadRoleVisible: boolean;
   dayMs: number;
   nightMs: number;
   selfVote: boolean;
@@ -236,6 +238,7 @@ export type ServerMessage =
   | { type: "common_chat"; playerId: string; nickname: string; text: string; sentAt: string }
   | { type: "lovers_chat"; playerId: string; nickname: string; text: string; sentAt: string }
   | { type: "dead_chat"; playerId: string; nickname: string; text: string; sentAt: string }
+  | { type: "revealed_roles"; roles: Record<string, PlayerRole> }
   | { type: "divination_result"; targetPlayerId: string; targetNickname: string; result: DivinationResult }
   | { type: "child_fox_result"; targetPlayerId: string; targetNickname: string; result: ChildFoxDivinationResult }
   | { type: "medium_result"; day: number; targetPlayerId: string; targetNickname: string; result: MediumResult }
