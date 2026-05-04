@@ -165,6 +165,7 @@ export function renderHome(rooms: RoomSummary[], announcement = DEFAULT_ANNOUNCE
         room.options.commonTalkVisible ? `<span class="option-mark">共有聲</span>` : "",
         room.options.deadRoleVisible ? `<span class="option-mark">靈視</span>` : "",
         room.options.wishRole ? `<span class="option-mark">希望</span>` : "",
+        room.options.dummyBoy ? `<span class="option-mark">替身</span>` : "",
         room.options.selfVote ? `<span class="option-mark">自投</span>` : "",
         room.options.voteStatus ? `<span class="option-mark">投票済</span>` : ""
       ].filter(Boolean).join(" ");
@@ -298,6 +299,10 @@ export function renderHome(rooms: RoomSummary[], announcement = DEFAULT_ANNOUNCE
           <td><label><input id="optionWishRole" type="checkbox"> <small>允許加入時選擇希望角色</small></label></td>
         </tr>
         <tr>
+          <td><label><strong>　替身君：</strong></label></td>
+          <td><label><input id="optionDummyBoy" type="checkbox"> <small>加入替身君並從第一夜開始</small></label></td>
+        </tr>
+        <tr>
           <td><label><strong>　啟用白天自投功能：</strong></label></td>
           <td><label><input id="optionSelfVote" type="checkbox"> <small>允許玩家白天投票給自己</small></label></td>
         </tr>
@@ -337,6 +342,7 @@ export function renderHome(rooms: RoomSummary[], announcement = DEFAULT_ANNOUNCE
         const commonTalkVisible = document.querySelector("#optionCommonTalkVisible").checked;
         const deadRoleVisible = document.querySelector("#optionDeadRoleVisible").checked;
         const wishRole = document.querySelector("#optionWishRole").checked;
+        const dummyBoy = document.querySelector("#optionDummyBoy").checked;
         const realTime = document.querySelector("#optionRealTime").checked;
         const dayMinutes = Number(document.querySelector("#optionDayMinutes").value);
         const nightMinutes = Number(document.querySelector("#optionNightMinutes").value);
@@ -346,7 +352,7 @@ export function renderHome(rooms: RoomSummary[], announcement = DEFAULT_ANNOUNCE
         const res = await fetch("/api/rooms", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ name, comment, maxPlayers, playerId: localStorage.getItem(playerKey), nickname, options: { poison, bigWolf, authority, decider, lovers, betrayer, childFox, twoFoxes, cat, lastWords, openVote, commonTalkVisible, deadRoleVisible, wishRole, realTime, dayMinutes, nightMinutes, selfVote, voteStatus } })
+          body: JSON.stringify({ name, comment, maxPlayers, playerId: localStorage.getItem(playerKey), nickname, options: { poison, bigWolf, authority, decider, lovers, betrayer, childFox, twoFoxes, cat, lastWords, openVote, commonTalkVisible, deadRoleVisible, wishRole, dummyBoy, realTime, dayMinutes, nightMinutes, selfVote, voteStatus } })
         });
         const data = await res.json();
         if (!res.ok) {

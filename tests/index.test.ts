@@ -157,7 +157,7 @@ describe("worker routes", () => {
         {},
         {},
         {},
-        { room_poison: "poison wfbig authority decide lovers betr fosi foxs cat will open_vote comoutl wish_role real_time:5:2 votedme votedisplay" },
+        { room_poison: "poison wfbig authority decide lovers betr fosi foxs cat will open_vote comoutl wish_role dummy_boy real_time:5:2 votedme votedisplay" },
         { room_poison: "<test comment>" },
         { room_poison: 30 },
         { room_poison: true }
@@ -189,6 +189,7 @@ describe("worker routes", () => {
             commonTalkVisible: false,
             deadRoleVisible: false,
             wishRole: false,
+            dummyBoy: false,
             realTime: false,
             dayMinutes: 3,
             nightMinutes: 1.5,
@@ -218,6 +219,7 @@ describe("worker routes", () => {
             commonTalkVisible: true,
             deadRoleVisible: true,
             wishRole: true,
+            dummyBoy: true,
             realTime: true,
             dayMinutes: 5,
             nightMinutes: 2,
@@ -256,6 +258,7 @@ describe("worker routes", () => {
             commonTalkVisible: true,
             deadRoleVisible: true,
             wishRole: true,
+            dummyBoy: true,
             realTime: true,
             dayMinutes: 5,
             nightMinutes: 2,
@@ -278,7 +281,7 @@ describe("worker routes", () => {
     expect(roomInsert?.values).toContain("Beginners welcome");
     expect(roomInsert?.values).toContain(16);
     expect(roomInsert?.values).toContain(1);
-    expect(roomInsert?.values.at(-1)).toBe("poison wfbig authority decide lovers betr fosi foxs cat will open_vote comoutl wish_role real_time:5:2 votedme votedisplay");
+    expect(roomInsert?.values.at(-1)).toBe("poison wfbig authority decide lovers betr fosi foxs cat will open_vote comoutl wish_role dummy_boy real_time:5:2 votedme votedisplay");
     expect(JSON.parse(String(eventInsert?.values.at(-1)))).toEqual({
       name: "Option Test",
       comment: "Beginners welcome",
@@ -298,6 +301,7 @@ describe("worker routes", () => {
         commonTalkVisible: true,
         deadRoleVisible: true,
         wishRole: true,
+        dummyBoy: true,
         realTime: true,
         dayMinutes: 5,
         nightMinutes: 2,

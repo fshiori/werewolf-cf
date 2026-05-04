@@ -25,6 +25,7 @@ export interface RoomOptions {
   commonTalkVisible: boolean;
   deadRoleVisible: boolean;
   wishRole: boolean;
+  dummyBoy: boolean;
   realTime: boolean;
   dayMinutes: number;
   nightMinutes: number;
@@ -124,6 +125,7 @@ export interface GameState {
   commonTalkVisible: boolean;
   deadRoleVisible: boolean;
   wishRole: boolean;
+  dummyBoy: boolean;
   dayMs: number;
   nightMs: number;
   selfVote: boolean;

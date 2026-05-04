@@ -511,6 +511,7 @@ export class RoomDurableObject {
       commonTalkVisible: roles.has("comoutl"),
       deadRoleVisible: row?.dellook === 1,
       wishRole: roles.has("wish_role"),
+      dummyBoy: roles.has("dummy_boy"),
       realTime: Boolean(realTimeToken),
       dayMinutes: readMinutes(dayMinutes, DEFAULT_DAY_MINUTES),
       nightMinutes: readMinutes(nightMinutes, DEFAULT_NIGHT_MINUTES),

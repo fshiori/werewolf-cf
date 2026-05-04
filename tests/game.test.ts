@@ -49,6 +49,7 @@ function activeState(phase: "day" | "night", players: GameState["players"]): Gam
     commonTalkVisible: false,
     deadRoleVisible: false,
     wishRole: false,
+    dummyBoy: false,
     dayMs: 180_000,
     nightMs: 90_000,
     selfVote: false,
@@ -213,6 +214,7 @@ describe("game", () => {
       commonTalkVisible: false,
       deadRoleVisible: false,
       wishRole: false,
+      dummyBoy: false,
       realTime: false,
       dayMinutes: 3,
       nightMinutes: 1.5,
@@ -245,6 +247,7 @@ describe("game", () => {
       commonTalkVisible: false,
       deadRoleVisible: false,
       wishRole: false,
+      dummyBoy: false,
       realTime: false,
       dayMinutes: 3,
       nightMinutes: 1.5,
@@ -277,6 +280,7 @@ describe("game", () => {
       commonTalkVisible: false,
       deadRoleVisible: false,
       wishRole: false,
+      dummyBoy: false,
       realTime: false,
       dayMinutes: 3,
       nightMinutes: 1.5,
@@ -338,6 +342,7 @@ describe("game", () => {
       commonTalkVisible: false,
       deadRoleVisible: false,
       wishRole: false,
+      dummyBoy: false,
       realTime: false,
       dayMinutes: 3,
       nightMinutes: 1.5,
@@ -372,6 +377,7 @@ describe("game", () => {
       commonTalkVisible: false,
       deadRoleVisible: false,
       wishRole: false,
+      dummyBoy: false,
       realTime: false,
       dayMinutes: 3,
       nightMinutes: 1.5,
@@ -403,6 +409,7 @@ describe("game", () => {
       commonTalkVisible: false,
       deadRoleVisible: false,
       wishRole: false,
+      dummyBoy: false,
       realTime: false,
       dayMinutes: 3,
       nightMinutes: 1.5,
@@ -432,6 +439,7 @@ describe("game", () => {
       commonTalkVisible: false,
       deadRoleVisible: false,
       wishRole: false,
+      dummyBoy: false,
       realTime: false,
       dayMinutes: 3,
       nightMinutes: 1.5,
@@ -465,6 +473,7 @@ describe("game", () => {
       commonTalkVisible: false,
       deadRoleVisible: false,
       wishRole: false,
+      dummyBoy: false,
       realTime: false,
       dayMinutes: 3,
       nightMinutes: 1.5,
@@ -501,6 +510,7 @@ describe("game", () => {
         commonTalkVisible: false,
         deadRoleVisible: false,
         wishRole: false,
+        dummyBoy: false,
         realTime: true,
         dayMinutes: 2,
         nightMinutes: 1,
@@ -538,6 +548,7 @@ describe("game", () => {
         commonTalkVisible: true,
         deadRoleVisible: false,
         wishRole: false,
+        dummyBoy: false,
         realTime: false,
         dayMinutes: 3,
         nightMinutes: 1.5,
@@ -584,6 +595,7 @@ describe("game", () => {
         commonTalkVisible: false,
         deadRoleVisible: false,
         wishRole: true,
+        dummyBoy: false,
         realTime: false,
         dayMinutes: 3,
         nightMinutes: 1.5,
@@ -595,6 +607,56 @@ describe("game", () => {
     expect(game.players.find((player) => player.playerId === "player_1")?.role).toBe("seer");
     expect(game.players.find((player) => player.playerId === "player_2")?.role).toBe("werewolf");
     expect(game.players.find((player) => player.playerId === "player_4")?.role).not.toBe("seer");
+  });
+
+  it("starts dummy boy rooms on the first night and forces the dummy target", () => {
+    let game = startGame(
+      lobby([
+        ["player_1", "Alice"],
+        ["player_2", "Bob"],
+        ["player_3", "Carol"]
+      ]),
+      0,
+      () => 0,
+      {
+        poison: false,
+        bigWolf: false,
+        authority: false,
+        decider: false,
+        lovers: false,
+        betrayer: false,
+        childFox: false,
+        twoFoxes: false,
+        cat: false,
+        lastWords: false,
+        openVote: false,
+        commonTalkVisible: false,
+        deadRoleVisible: false,
+        wishRole: false,
+        dummyBoy: true,
+        realTime: false,
+        dayMinutes: 3,
+        nightMinutes: 1.5,
+        selfVote: false,
+        voteStatus: false
+      }
+    );
+    const wolf = game.players.find((player) => player.role === "werewolf");
+    const dummy = game.players.find((player) => player.playerId === "player_dummy_boy");
+    const nonDummy = game.players.find((player) => player.alive && player.playerId !== wolf?.playerId && player.playerId !== dummy?.playerId);
+
+    expect(game.phase).toBe("night");
+    expect(game.day).toBe(0);
+    expect(dummy).toMatchObject({ nickname: "替身君", alive: true });
+    expect(dummy?.role).not.toBe("werewolf");
+    expect(dummy?.role).not.toBe("fox");
+    expect(() => castNightKill(game, wolf?.playerId ?? "", nonDummy?.playerId ?? "")).toThrow("dummy boy");
+
+    game = castNightKill(game, wolf?.playerId ?? "", "player_dummy_boy", 0);
+
+    expect(game.phase).toBe("day");
+    expect(game.day).toBe(1);
+    expect(game.players.find((player) => player.playerId === "player_dummy_boy")?.alive).toBe(false);
   });
 
   it("uses default phase timers when real time is disabled", () => {
@@ -621,6 +683,7 @@ describe("game", () => {
         commonTalkVisible: false,
         deadRoleVisible: false,
         wishRole: false,
+        dummyBoy: false,
         realTime: false,
         dayMinutes: 9,
         nightMinutes: 9,
