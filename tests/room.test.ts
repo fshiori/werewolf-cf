@@ -5,6 +5,7 @@ import type { GameState } from "../src/types";
 type SentMessage = {
   type: string;
   message: string;
+  members?: Array<{ playerId: string; nickname: string; gm?: boolean }>;
   action?: string;
   targetPlayerId?: string;
   playerId?: string;
@@ -16,6 +17,11 @@ type SentMessage = {
   role?: string;
   wolves?: Array<{ playerId: string; nickname: string }>;
   players?: Array<{ playerId: string; nickname: string; alive: boolean; role?: string }>;
+};
+
+type CloseEvent = {
+  code: number;
+  reason: string;
 };
 
 function roomObject(gameState?: GameState): RoomDurableObject {
@@ -58,10 +64,13 @@ function roomObject(gameState?: GameState): RoomDurableObject {
   );
 }
 
-function fakeSocket(messages: SentMessage[]): WebSocket {
+function fakeSocket(messages: SentMessage[], closes: CloseEvent[] = []): WebSocket {
   return {
     send(data: string) {
       messages.push(JSON.parse(data) as SentMessage);
+    },
+    close(code?: number, reason?: string) {
+      closes.push({ code: code ?? 1005, reason: reason ?? "" });
     }
   } as WebSocket;
 }
@@ -594,6 +603,72 @@ describe("RoomDurableObject", () => {
 
       expect(messages).toEqual([{ type: "error", message: testCase.message }]);
     }
+  });
+
+  it("kicks lobby players through the websocket handler", async () => {
+    const game: GameState = {
+      roomId: "room_abc",
+      phase: "lobby",
+      day: 0,
+      hostId: "player_host",
+      players: [
+        { playerId: "player_host", nickname: "Host", role: "villager", alive: true },
+        { playerId: "player_target", nickname: "Target", role: "villager", alive: true },
+        { playerId: "player_other", nickname: "Other", role: "villager", alive: true }
+      ],
+      votes: {},
+      openVote: false,
+      commonTalkVisible: false,
+      deadRoleVisible: false,
+      wishRole: false,
+      dummyBoy: false,
+      dayMs: 180_000,
+      nightMs: 90_000,
+      selfVote: false,
+      voteStatus: false,
+      revoteCount: 0,
+      nightKills: {},
+      divinations: {},
+      guards: {},
+      catRevives: {},
+      lastWords: {},
+      log: []
+    };
+    const room = roomObject(game);
+    const hostMessages: SentMessage[] = [];
+    const targetMessages: SentMessage[] = [];
+    const otherMessages: SentMessage[] = [];
+    const targetCloses: CloseEvent[] = [];
+    const hostSocket = fakeSocket(hostMessages);
+    const targetSocket = fakeSocket(targetMessages, targetCloses);
+    const otherSocket = fakeSocket(otherMessages);
+    connect(room, hostSocket, "player_host", "Host");
+    connect(room, targetSocket, "player_target", "Target");
+    connect(room, otherSocket, "player_other", "Other");
+
+    await sendRaw(room, hostSocket, JSON.stringify({ type: "kick_player", targetPlayerId: "player_target" }));
+
+    expect(targetMessages).toEqual([{ type: "error", message: "You were kicked from the room" }]);
+    expect(targetCloses).toEqual([{ code: 1000, reason: "You were kicked from the room" }]);
+    expect(hostMessages).toContainEqual(expect.objectContaining({ type: "action_ack", action: "kick_player", targetPlayerId: "player_target" }));
+    expect(hostMessages).toContainEqual(
+      expect.objectContaining({
+        type: "presence",
+        members: [
+          { playerId: "player_host", nickname: "Host" },
+          { playerId: "player_other", nickname: "Other" }
+        ]
+      })
+    );
+    expect(otherMessages).toContainEqual(
+      expect.objectContaining({
+        type: "presence",
+        members: [
+          { playerId: "player_host", nickname: "Host" },
+          { playerId: "player_other", nickname: "Other" }
+        ]
+      })
+    );
   });
 
   it("rejects last words websocket commands when the room option is disabled", async () => {
