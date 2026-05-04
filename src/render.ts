@@ -287,6 +287,14 @@ export function renderRoom(roomId: string): string {
           </table>
         </td>
       </tr>
+      <tr>
+        <td>
+          <table class="panel">
+            <tr><th>最近對局</th></tr>
+            <tr><td><div id="records" class="muted">讀取中</div></td></tr>
+          </table>
+        </td>
+      </tr>
     </table>
     <script>
       const roomId = ${JSON.stringify(roomId)};
@@ -313,9 +321,32 @@ export function renderRoom(roomId: string): string {
           target.textContent = "未取得";
         }
       }
+      async function refreshRecords() {
+        const target = document.querySelector("#records");
+        try {
+          const res = await fetch("/api/rooms/" + roomId + "/records");
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || "records failed");
+          if (!data.records.length) {
+            target.textContent = "尚無紀錄。";
+            return;
+          }
+          target.innerHTML = "";
+          data.records.slice(0, 5).forEach((record) => {
+            const div = document.createElement("div");
+            const winner = record.result && record.result.winner ? record.result.winner : "unknown";
+            const day = record.result && record.result.day ? record.result.day : "?";
+            div.textContent = record.createdAt + "　" + winner + " 勝　第 " + day + " 日";
+            target.appendChild(div);
+          });
+        } catch {
+          target.textContent = "紀錄讀取失敗。";
+        }
+      }
       let latestGame;
       let role = "";
       void refreshStats();
+      void refreshRecords();
       document.querySelector("#connect").addEventListener("click", () => {
         const nickname = document.querySelector("#nickname").value;
         localStorage.setItem("werewolf_cf_nickname", nickname);
@@ -339,6 +370,7 @@ export function renderRoom(roomId: string): string {
           } else if (msg.type === "game_state") {
             latestGame = msg;
             renderGame(msg);
+            if (msg.phase === "ended") void refreshRecords();
           } else if (msg.type === "role") {
             role = msg.role;
             const wolves = msg.wolves.length ? "（狼伴：" + msg.wolves.map((wolf) => wolf.nickname).join(", ") + "）" : "";
