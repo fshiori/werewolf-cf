@@ -33,6 +33,7 @@ async function readBody(request) {
 async function startServer(overrides = {}) {
   const roomId = overrides.roomId ?? "room_smoke";
   const requests = overrides.requests ?? [];
+  let avatarDeleted = false;
   const sockets = new Set();
   const server = createServer(async (request, response) => {
     const path = request.url?.split("?")[0] ?? "/";
@@ -65,6 +66,11 @@ async function startServer(overrides = {}) {
     }
 
     if (request.method === "GET" && path.startsWith("/assets/avatar/")) {
+      if (avatarDeleted) {
+        response.writeHead(404, { "content-type": "text/plain" });
+        response.end("not found");
+        return;
+      }
       response.writeHead(200, { "content-type": "image/png" });
       response.end(pngBytes);
       return;
@@ -72,6 +78,7 @@ async function startServer(overrides = {}) {
 
     if (request.method === "DELETE" && path === "/api/assets/avatar") {
       await readBody(request);
+      avatarDeleted = true;
       response.writeHead(200, { "content-type": "application/json" });
       response.end(JSON.stringify({ removed: true }));
       return;
@@ -167,7 +174,25 @@ describe("production write smoke script", () => {
     expect(result.stdout).toContain("ok POST /api/rooms room_smoke");
     expect(result.stdout).toContain("ok WebSocket join");
     expect(result.stdout).toContain("ok DELETE /api/assets/avatar");
+    expect(result.stdout).toContain("ok GET /assets/avatar/:playerId after delete");
     expect(result.stdout).toContain("Production write smoke passed");
+  });
+
+  it("fails when avatar remains readable after delete", async () => {
+    const host = await startServer({
+      "/api/assets/avatar": async (request) => {
+        await readBody(request);
+        if (request.method === "POST") {
+          return { body: JSON.stringify({ key: "avatars/player_smoke_avatar" }) };
+        }
+        return { body: JSON.stringify({ removed: true }) };
+      }
+    });
+    const result = await runScript([host, "--yes"]);
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("after delete");
+    expect(result.stderr).toContain("expected HTTP 404");
   });
 
   it("fails when room creation does not return a room id", async () => {
