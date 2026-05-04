@@ -139,7 +139,9 @@ function shell(body: string): string {
   `;
 }
 
-export function renderHome(rooms: RoomSummary[]): string {
+const DEFAULT_ANNOUNCEMENT = "目前支援建立村子、即時聊天、白天投票、夜晚行動與自動換日。";
+
+export function renderHome(rooms: RoomSummary[], announcement = DEFAULT_ANNOUNCEMENT): string {
   const roomRows = rooms.length === 0
     ? `<div class="muted">目前沒有村子。</div>`
     : rooms.map((room) => {
@@ -155,7 +157,7 @@ export function renderHome(rooms: RoomSummary[]): string {
       <legend><strong>伺服器公告</strong></legend>
       <div style="line-height:135%;margin:12px 20px 18px;">
         <strong>Cloudflare Workers / D1 / Durable Objects 移植進行中。</strong><br>
-        <span class="muted">目前支援建立村子、即時聊天、白天投票、夜晚行動與自動換日。</span>
+        <span class="muted">${escapeHtml(announcement)}</span>
       </div>
     </fieldset>
     <fieldset>

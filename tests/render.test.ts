@@ -21,6 +21,13 @@ describe("render", () => {
     expect(html).toContain("建立房間");
   });
 
+  it("renders escaped runtime announcements", () => {
+    const html = renderHome([], `<b>Maintenance</b>`);
+
+    expect(html).toContain("&lt;b&gt;Maintenance&lt;/b&gt;");
+    expect(html).not.toContain("<b>Maintenance</b>");
+  });
+
   it("renders room page with websocket client script", () => {
     const html = renderRoom("room_abc");
 

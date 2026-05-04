@@ -37,6 +37,11 @@ async function roomExists(env: Env, roomId: string): Promise<boolean> {
   return result !== null;
 }
 
+async function getHomeAnnouncement(env: Env): Promise<string | undefined> {
+  const announcement = await env.CONFIG.get("home_announcement");
+  return announcement?.trim() || undefined;
+}
+
 async function createRoom(request: Request, env: Env): Promise<Response> {
   const body: unknown = await request.json().catch(() => null);
   if (!isRecord(body) || typeof body.name !== "string" || typeof body.playerId !== "string" || typeof body.nickname !== "string") {
@@ -85,7 +90,7 @@ export default {
     const url = new URL(request.url);
 
     if (request.method === "GET" && url.pathname === "/") {
-      return html(renderHome(await listRooms(env)));
+      return html(renderHome(await listRooms(env), await getHomeAnnouncement(env)));
     }
 
     if (request.method === "GET" && url.pathname === "/api/rooms") {
