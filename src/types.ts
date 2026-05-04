@@ -12,9 +12,10 @@ export interface RoomMember {
   nickname: string;
 }
 
-export type PlayerRole = "villager" | "werewolf";
+export type PlayerRole = "villager" | "werewolf" | "seer";
 export type GamePhase = "lobby" | "day" | "night" | "ended";
 export type GameWinner = "villagers" | "werewolves";
+export type DivinationResult = "human" | "werewolf";
 
 export interface GamePlayer {
   playerId: string;
@@ -37,6 +38,7 @@ export interface GameState {
   players: GamePlayer[];
   votes: Record<string, string>;
   nightKills: Record<string, string>;
+  divinations: Record<string, string>;
   winner?: GameWinner;
   phaseEndsAt?: string;
   log: string[];
@@ -72,19 +74,26 @@ export type NightKillClientMessage = {
   targetPlayerId: string;
 };
 
+export type DivineClientMessage = {
+  type: "divine";
+  targetPlayerId: string;
+};
+
 export type ClientMessage =
   | JoinClientMessage
   | ChatClientMessage
   | WolfChatClientMessage
   | StartGameClientMessage
   | VoteClientMessage
-  | NightKillClientMessage;
+  | NightKillClientMessage
+  | DivineClientMessage;
 
 export type ServerMessage =
   | { type: "joined"; roomId: string; playerId: string; members: RoomMember[] }
   | { type: "presence"; members: RoomMember[] }
   | { type: "chat"; playerId: string; nickname: string; text: string; sentAt: string }
   | { type: "wolf_chat"; playerId: string; nickname: string; text: string; sentAt: string }
+  | { type: "divination_result"; targetPlayerId: string; targetNickname: string; result: DivinationResult }
   | {
       type: "game_state";
       phase: GamePhase;

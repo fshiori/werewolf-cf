@@ -1,5 +1,5 @@
 import { publicPlayers } from "./game";
-import type { GameState, PlayerRole, RoomMember, ServerMessage } from "./types";
+import type { DivinationResult, GameState, PlayerRole, RoomMember, ServerMessage } from "./types";
 import { escapeHtml } from "./validation";
 
 export function buildJoinedMessage(roomId: string, playerId: string, members: RoomMember[]): ServerMessage {
@@ -49,6 +49,19 @@ export function buildRoleMessage(role: PlayerRole, wolves: RoomMember[]): Server
     type: "role",
     role,
     wolves: wolves.map((wolf) => ({ playerId: wolf.playerId, nickname: escapeHtml(wolf.nickname) }))
+  };
+}
+
+export function buildDivinationResultMessage(
+  targetPlayerId: string,
+  targetNickname: string,
+  result: DivinationResult
+): ServerMessage {
+  return {
+    type: "divination_result",
+    targetPlayerId,
+    targetNickname: escapeHtml(targetNickname),
+    result
   };
 }
 

@@ -4,6 +4,7 @@ import {
   canStartGame,
   canUseWerewolfChannel,
   castDayVote,
+  castDivination,
   castNightKill,
   createLobbyState,
   startGame,
@@ -12,6 +13,7 @@ import {
 } from "./game";
 import {
   buildChatMessage,
+  buildDivinationResultMessage,
   buildErrorMessage,
   buildGameStateMessage,
   buildJoinedMessage,
@@ -140,6 +142,14 @@ export class RoomDurableObject {
         await this.saveGameState(next);
         await this.syncRoomStatus(next);
         this.broadcastGameState(next);
+        return;
+      }
+
+      if (message.type === "divine") {
+        const targetPlayerId = validatePlayerId(message.targetPlayerId);
+        const result = castDivination(await this.loadGameState(), member.playerId, targetPlayerId);
+        await this.saveGameState(result.state);
+        this.send(socket, buildDivinationResultMessage(targetPlayerId, result.targetNickname, result.result));
         return;
       }
 

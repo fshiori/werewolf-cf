@@ -1,4 +1,4 @@
-import type { GamePlayer, GameState, GameWinner, PublicGamePlayer, RoomMember } from "./types";
+import type { DivinationResult, GamePlayer, GameState, GameWinner, PublicGamePlayer, RoomMember } from "./types";
 
 export const DAY_MS = 180_000;
 export const NIGHT_MS = 90_000;
@@ -11,6 +11,7 @@ export function createLobbyState(roomId: string): GameState {
     players: [],
     votes: {},
     nightKills: {},
+    divinations: {},
     log: ["等待玩家加入。"]
   };
 }
@@ -71,11 +72,16 @@ export function startGame(state: GameState, now = Date.now(), random = Math.rand
   const wolfIds = new Set(
     Array.from({ length: wolfCount }, (_, offset) => state.players[(firstWolfIndex + offset) % state.players.length].playerId)
   );
-  const players = state.players.map((player) => ({
-    ...player,
-    role: wolfIds.has(player.playerId) ? ("werewolf" as const) : ("villager" as const),
-    alive: true
-  }));
+  const seerId = state.players.find((player) => !wolfIds.has(player.playerId))?.playerId;
+  const players = state.players.map((player) => {
+    let role: GamePlayer["role"] = "villager";
+    if (wolfIds.has(player.playerId)) {
+      role = "werewolf";
+    } else if (state.players.length >= 4 && player.playerId === seerId) {
+      role = "seer";
+    }
+    return { ...player, role, alive: true };
+  });
 
   return {
     ...state,
@@ -84,6 +90,7 @@ export function startGame(state: GameState, now = Date.now(), random = Math.rand
     players,
     votes: {},
     nightKills: {},
+    divinations: {},
     phaseEndsAt: new Date(now + DAY_MS).toISOString(),
     log: [...state.log, "遊戲開始。", "第 1 日白天開始。"]
   };
@@ -123,6 +130,33 @@ export function castNightKill(state: GameState, actorId: string, targetId: strin
   return next;
 }
 
+export function castDivination(
+  state: GameState,
+  actorId: string,
+  targetId: string
+): { state: GameState; targetNickname: string; result: DivinationResult } {
+  if (state.phase !== "night") {
+    throw new Error("Divination is only available at night");
+  }
+  const actor = assertLivingPlayer(state, actorId);
+  if (actor.role !== "seer") {
+    throw new Error("Only seers can divine players");
+  }
+  const divinations = state.divinations ?? {};
+  if (divinations[actorId]) {
+    throw new Error("Divination is already used tonight");
+  }
+  if (actorId === targetId) {
+    throw new Error("Seers cannot divine themselves");
+  }
+  const target = assertLivingPlayer(state, targetId);
+  return {
+    state: { ...state, divinations: { ...divinations, [actorId]: targetId } },
+    targetNickname: target.nickname,
+    result: target.role === "werewolf" ? "werewolf" : "human"
+  };
+}
+
 export function advancePhaseByAlarm(state: GameState, now = Date.now()): GameState {
   if (state.phase === "day") {
     return resolveDay(state, now);
@@ -160,7 +194,7 @@ function resolveNight(state: GameState, now = Date.now()): GameState {
     : state.players;
   const killed = killedId ? state.players.find((player) => player.playerId === killedId) : undefined;
   const log = [...state.log, killed ? `${killed.nickname} 在夜晚死亡。` : "夜晚平安過去。"];
-  return withWinOrNextDay({ ...state, players, nightKills: {}, log }, now);
+  return withWinOrNextDay({ ...state, players, nightKills: {}, divinations: {}, log }, now);
 }
 
 function withWinOrNextNight(state: GameState, now: number): GameState {
@@ -199,6 +233,7 @@ function endGame(state: GameState, winner: GameWinner): GameState {
     phaseEndsAt: undefined,
     votes: {},
     nightKills: {},
+    divinations: {},
     log: [...state.log, winner === "villagers" ? "村民勝利。" : "狼人勝利。"]
   };
 }

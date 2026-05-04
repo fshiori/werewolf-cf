@@ -114,5 +114,12 @@ export function parseClientMessage(raw: string): ClientMessage {
     return { type: "night_kill", targetPlayerId: parsed.targetPlayerId };
   }
 
+  if (parsed.type === "divine") {
+    if (typeof parsed.targetPlayerId !== "string") {
+      throw new Error("Invalid divine message");
+    }
+    return { type: "divine", targetPlayerId: parsed.targetPlayerId };
+  }
+
   throw new Error("Unknown message type");
 }

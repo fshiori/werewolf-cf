@@ -4,6 +4,7 @@ import {
   canStartGame,
   canUseWerewolfChannel,
   castDayVote,
+  castDivination,
   castNightKill,
   createLobbyState,
   startGame,
@@ -35,6 +36,7 @@ describe("game", () => {
     expect(game.phase).toBe("day");
     expect(game.day).toBe(1);
     expect(game.players.filter((player) => player.role === "werewolf")).toHaveLength(1);
+    expect(game.players.filter((player) => player.role === "seer")).toHaveLength(1);
     expect(wolvesForPlayer(game, "player_1")).toEqual([{ playerId: "player_1", nickname: "Alice" }]);
     expect(wolvesForPlayer(game, "player_2")).toEqual([]);
   });
@@ -99,5 +101,21 @@ describe("game", () => {
     expect(canUseWerewolfChannel(night, "player_1")).toBe(true);
     expect(canUseWerewolfChannel(night, "player_3")).toBe(false);
     expect(canUseWerewolfChannel(night, "player_2")).toBe(false);
+  });
+
+  it("allows living seers to divine one player per night", () => {
+    let game = startGame(lobby([["player_1", "Alice"], ["player_2", "Bob"], ["player_3", "Carol"], ["player_4", "Dave"]]), 0, () => 0);
+    game = castDayVote(game, "player_1", "player_4");
+    game = castDayVote(game, "player_2", "player_4");
+    game = castDayVote(game, "player_3", "player_4");
+    game = castDayVote(game, "player_4", "player_3");
+
+    const divination = castDivination(game, "player_2", "player_1");
+
+    expect(divination.result).toBe("werewolf");
+    expect(divination.targetNickname).toBe("Alice");
+    expect(divination.state.divinations).toEqual({ player_2: "player_1" });
+    expect(() => castDivination(divination.state, "player_2", "player_3")).toThrow("already used");
+    expect(() => castDivination(game, "player_3", "player_1")).toThrow("Only seers");
   });
 });
