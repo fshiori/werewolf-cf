@@ -93,6 +93,9 @@ export function startGame(state: GameState, now = Date.now(), random = Math.rand
   );
   const seerId = state.players.find((player) => !wolfIds.has(player.playerId))?.playerId;
   const mediumId = state.players.find((player) => !wolfIds.has(player.playerId) && player.playerId !== seerId)?.playerId;
+  const madmanId = state.players.find(
+    (player) => !wolfIds.has(player.playerId) && player.playerId !== seerId && player.playerId !== mediumId
+  )?.playerId;
   const players = state.players.map((player) => {
     let role: GamePlayer["role"] = "villager";
     if (wolfIds.has(player.playerId)) {
@@ -101,6 +104,8 @@ export function startGame(state: GameState, now = Date.now(), random = Math.rand
       role = "seer";
     } else if (state.players.length >= 5 && player.playerId === mediumId) {
       role = "medium";
+    } else if (state.players.length >= 6 && player.playerId === madmanId) {
+      role = "madman";
     }
     return { ...player, role, alive: true };
   });
@@ -215,7 +220,7 @@ export function playerStatUpdates(state: GameState): PlayerStatUpdate[] {
   }
   return state.players.map((player) => ({
     playerId: player.playerId,
-    won: player.role === "werewolf" ? state.winner === "werewolves" : state.winner === "villagers"
+    won: player.role === "werewolf" || player.role === "madman" ? state.winner === "werewolves" : state.winner === "villagers"
   }));
 }
 
