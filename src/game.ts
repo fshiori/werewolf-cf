@@ -16,6 +16,7 @@ export const NIGHT_MS = 90_000;
 export const DEFAULT_DAY_MINUTES = DAY_MS / 60_000;
 export const DEFAULT_NIGHT_MINUTES = NIGHT_MS / 60_000;
 export const MAX_REVOTES = 1;
+const DUMMY_PLAYER_ID = "player_dummy_boy";
 const REFERENCE_ROLE_DECKS: Record<number, GamePlayer["role"][]> = {
   8: ["villager", "villager", "villager", "villager", "villager", "werewolf", "werewolf", "seer"],
   9: ["villager", "villager", "villager", "villager", "villager", "werewolf", "werewolf", "seer", "medium"],
@@ -53,6 +54,7 @@ export function createLobbyState(roomId: string): GameState {
     commonTalkVisible: false,
     deadRoleVisible: false,
     wishRole: false,
+    dummyBoy: false,
     dayMs: DAY_MS,
     nightMs: NIGHT_MS,
     selfVote: false,
@@ -169,6 +171,7 @@ export function startGame(
     commonTalkVisible: false,
     deadRoleVisible: false,
     wishRole: false,
+    dummyBoy: false,
     realTime: false,
     dayMinutes: DEFAULT_DAY_MINUTES,
     nightMinutes: DEFAULT_NIGHT_MINUTES,
@@ -183,12 +186,13 @@ export function startGame(
     throw new Error("At least 3 players are required");
   }
 
-  const referenceRoleDeck = REFERENCE_ROLE_DECKS[state.players.length];
+  const lobbyPlayers = options.dummyBoy ? appendDummyPlayer(state.players) : state.players;
+  const referenceRoleDeck = REFERENCE_ROLE_DECKS[lobbyPlayers.length];
   if (referenceRoleDeck) {
     return startGameWithPlayers(
       state,
       applyRoomOptions(
-        assignRolesFromDeck(state.players, referenceRoleDeck, options),
+        ensureDummyRoleSafe(assignRolesFromDeck(lobbyPlayers, referenceRoleDeck, options)),
         options
       ),
       now,
@@ -196,23 +200,23 @@ export function startGame(
     );
   }
 
-  const wolfCount = Math.max(1, Math.floor(state.players.length / 4));
-  const firstWolfIndex = Math.floor(random() * state.players.length);
+  const wolfCount = Math.max(1, Math.floor(lobbyPlayers.length / 4));
+  const firstWolfIndex = Math.floor(random() * lobbyPlayers.length);
   const wolfIds = new Set(
-    Array.from({ length: wolfCount }, (_, offset) => state.players[(firstWolfIndex + offset) % state.players.length].playerId)
+    Array.from({ length: wolfCount }, (_, offset) => lobbyPlayers[(firstWolfIndex + offset) % lobbyPlayers.length].playerId)
   );
-  const seerId = state.players.find((player) => !wolfIds.has(player.playerId))?.playerId;
-  const mediumId = state.players.find((player) => !wolfIds.has(player.playerId) && player.playerId !== seerId)?.playerId;
-  const madmanId = state.players.find(
+  const seerId = lobbyPlayers.find((player) => !wolfIds.has(player.playerId))?.playerId;
+  const mediumId = lobbyPlayers.find((player) => !wolfIds.has(player.playerId) && player.playerId !== seerId)?.playerId;
+  const madmanId = lobbyPlayers.find(
     (player) => !wolfIds.has(player.playerId) && player.playerId !== seerId && player.playerId !== mediumId
   )?.playerId;
-  const guardId = state.players.find(
+  const guardId = lobbyPlayers.find(
     (player) =>
       !wolfIds.has(player.playerId) && player.playerId !== seerId && player.playerId !== mediumId && player.playerId !== madmanId
   )?.playerId;
   const commonIds = new Set(
-    state.players.length >= 13
-      ? state.players
+    lobbyPlayers.length >= 13
+      ? lobbyPlayers
           .filter(
             (player) =>
               !wolfIds.has(player.playerId) &&
@@ -225,8 +229,8 @@ export function startGame(
           .map((player) => player.playerId)
       : []
   );
-  const foxId = state.players.length >= 15
-    ? state.players.find(
+  const foxId = lobbyPlayers.length >= 15
+    ? lobbyPlayers.find(
         (player) =>
           !wolfIds.has(player.playerId) &&
           player.playerId !== seerId &&
@@ -236,17 +240,17 @@ export function startGame(
           !commonIds.has(player.playerId)
       )?.playerId
     : undefined;
-  const roleDeck = state.players.map((player) => {
+  const roleDeck = lobbyPlayers.map((player) => {
     let role: GamePlayer["role"] = "villager";
     if (wolfIds.has(player.playerId)) {
       role = "werewolf";
-    } else if (state.players.length >= 4 && player.playerId === seerId) {
+    } else if (lobbyPlayers.length >= 4 && player.playerId === seerId) {
       role = "seer";
-    } else if (state.players.length >= 5 && player.playerId === mediumId) {
+    } else if (lobbyPlayers.length >= 5 && player.playerId === mediumId) {
       role = "medium";
-    } else if (state.players.length >= 6 && player.playerId === madmanId) {
+    } else if (lobbyPlayers.length >= 6 && player.playerId === madmanId) {
       role = "madman";
-    } else if (state.players.length >= 7 && player.playerId === guardId) {
+    } else if (lobbyPlayers.length >= 7 && player.playerId === guardId) {
       role = "guard";
     } else if (commonIds.has(player.playerId)) {
       role = "common";
@@ -255,9 +259,36 @@ export function startGame(
     }
     return role;
   });
-  const players = assignRolesFromDeck(state.players, roleDeck, options);
+  const players = ensureDummyRoleSafe(assignRolesFromDeck(lobbyPlayers, roleDeck, options));
 
   return startGameWithPlayers(state, applyRoomOptions(players, options), now, options);
+}
+
+function appendDummyPlayer(players: GamePlayer[]): GamePlayer[] {
+  if (players.some((player) => player.playerId === DUMMY_PLAYER_ID)) {
+    return players;
+  }
+  return [...players, { playerId: DUMMY_PLAYER_ID, nickname: "替身君", role: "villager", alive: true }];
+}
+
+function ensureDummyRoleSafe(players: GamePlayer[]): GamePlayer[] {
+  const dummy = players.find((player) => player.playerId === DUMMY_PLAYER_ID);
+  if (!dummy || (!isWerewolfRole(dummy.role) && dummy.role !== "fox" && dummy.role !== "poison" && dummy.role !== "cat")) {
+    return players;
+  }
+  const swapTarget = players.find((player) => player.playerId !== DUMMY_PLAYER_ID && player.role === "villager");
+  if (!swapTarget) {
+    return players.map((player) => (player.playerId === DUMMY_PLAYER_ID ? { ...player, role: "villager" } : player));
+  }
+  return players.map((player) => {
+    if (player.playerId === DUMMY_PLAYER_ID) {
+      return { ...player, role: "villager" };
+    }
+    if (player.playerId === swapTarget.playerId) {
+      return { ...player, role: dummy.role };
+    }
+    return player;
+  });
 }
 
 function assignRolesFromDeck(players: GamePlayer[], roleDeck: GamePlayer["role"][], options: RoomOptions): GamePlayer[] {
@@ -362,14 +393,15 @@ function applyRoomOptions(players: GamePlayer[], options: RoomOptions): GamePlay
 function startGameWithPlayers(state: GameState, players: GamePlayer[], now: number, options: RoomOptions): GameState {
   return {
     ...state,
-    phase: "day",
-    day: 1,
+    phase: options.dummyBoy ? "night" : "day",
+    day: options.dummyBoy ? 0 : 1,
     players,
     votes: {},
     openVote: options.openVote,
     commonTalkVisible: options.commonTalkVisible,
     deadRoleVisible: options.deadRoleVisible,
     wishRole: options.wishRole,
+    dummyBoy: options.dummyBoy,
     dayMs: roomOptionDayMs(options),
     nightMs: roomOptionNightMs(options),
     selfVote: options.selfVote,
@@ -381,8 +413,8 @@ function startGameWithPlayers(state: GameState, players: GamePlayer[], now: numb
     catRevives: {},
     lastWords: state.lastWords ?? {},
     mediumReading: undefined,
-    phaseEndsAt: new Date(now + roomOptionDayMs(options)).toISOString(),
-    log: [...state.log, "遊戲開始。", "第 1 日白天開始。"]
+    phaseEndsAt: new Date(now + (options.dummyBoy ? roomOptionNightMs(options) : roomOptionDayMs(options))).toISOString(),
+    log: [...state.log, "遊戲開始。", options.dummyBoy ? "替身君的第一夜開始。" : "第 1 日白天開始。"]
   };
 }
 
@@ -428,6 +460,9 @@ export function castNightKill(state: GameState, actorId: string, targetId: strin
   const target = assertLivingPlayer(state, targetId);
   if (isWerewolfRole(target.role)) {
     throw new Error("Werewolves cannot target each other");
+  }
+  if (state.dummyBoy && state.day === 0 && target.playerId !== DUMMY_PLAYER_ID) {
+    throw new Error("Werewolves must target the dummy boy on the first night");
   }
 
   const next = { ...state, nightKills: { ...state.nightKills, [actorId]: targetId } };
@@ -690,7 +725,7 @@ function resolveDay(state: GameState, now = Date.now()): GameState {
 }
 
 function resolveNight(state: GameState, now = Date.now(), random = Math.random): GameState {
-  const killedId = pickTopActionTarget(state.nightKills);
+  const killedId = state.dummyBoy && state.day === 0 ? DUMMY_PLAYER_ID : pickTopActionTarget(state.nightKills);
   const protectedIds = new Set(Object.values(state.guards ?? {}));
   const protectedKill = killedId ? protectedIds.has(killedId) : false;
   const attacked = killedId ? state.players.find((player) => player.playerId === killedId) : undefined;
