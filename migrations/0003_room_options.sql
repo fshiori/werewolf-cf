@@ -1,0 +1,1 @@
+ALTER TABLE rooms ADD COLUMN option_role TEXT NOT NULL DEFAULT '';

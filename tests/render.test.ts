@@ -8,7 +8,8 @@ describe("render", () => {
         id: "room_abc",
         name: "<Test>",
         status: "lobby",
-        createdAt: "2026-05-03 12:00:00"
+        createdAt: "2026-05-03 12:00:00",
+        options: { poison: true }
       }
     ]);
 
@@ -21,6 +22,10 @@ describe("render", () => {
     expect(html).toContain("/room/room_abc");
     expect(html).toContain("/api/stats/leaderboard");
     expect(html).toContain("排行榜 JSON");
+    expect(html).toContain("optionPoison");
+    expect(html).toContain("20人以上埋毒者選項");
+    expect(html).toContain("options: { poison }");
+    expect(html).toContain("埋毒");
     expect(html).toContain("leaderboardRows");
     expect(html).toContain("尚無戰績。");
     expect(html).toContain("cell.textContent = String(value);");

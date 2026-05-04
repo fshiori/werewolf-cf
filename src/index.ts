@@ -1,6 +1,6 @@
 import { renderHome, renderRoom } from "./render";
 import { RoomDurableObject } from "./room";
-import type { GameRecordSummary, LeaderboardEntry, PlayerStats, RoomEventSummary, RoomSummary } from "./types";
+import type { GameRecordSummary, LeaderboardEntry, PlayerStats, RoomEventSummary, RoomOptions, RoomSummary } from "./types";
 import { isRecord, validateNickname, validatePlayerId, validateRoomId, validateRoomName } from "./validation";
 
 export { RoomDurableObject };
@@ -29,15 +29,32 @@ function isFileLike(value: unknown): value is File {
 
 async function listRooms(env: Env): Promise<RoomSummary[]> {
   const result = await env.DB.prepare(
-    "SELECT id, name, status, created_at FROM rooms ORDER BY created_at DESC LIMIT 50"
-  ).all<{ id: string; name: string; status: RoomSummary["status"]; created_at: string }>();
+    "SELECT id, name, status, created_at, option_role FROM rooms ORDER BY created_at DESC LIMIT 50"
+  ).all<{ id: string; name: string; status: RoomSummary["status"]; created_at: string; option_role?: string }>();
 
   return result.results.map((room) => ({
     id: room.id,
     name: room.name,
     status: room.status,
-    createdAt: room.created_at
+    createdAt: room.created_at,
+    options: parseRoomOptions(room.option_role ?? "")
   }));
+}
+
+function parseRoomOptions(optionRole: string): RoomOptions {
+  const roles = new Set(optionRole.split(/\s+/).filter(Boolean));
+  return { poison: roles.has("poison") };
+}
+
+function serializeRoomOptions(options: RoomOptions): string {
+  return [options.poison ? "poison" : ""].filter(Boolean).join(" ");
+}
+
+function readRoomOptions(value: unknown): RoomOptions {
+  if (!isRecord(value)) {
+    return { poison: false };
+  }
+  return { poison: value.poison === true };
 }
 
 async function roomExists(env: Env, roomId: string): Promise<boolean> {
@@ -159,16 +176,18 @@ async function createRoom(request: Request, env: Env): Promise<Response> {
     const name = validateRoomName(body.name);
     const playerId = validatePlayerId(body.playerId);
     const nickname = validateNickname(body.nickname);
+    const options = readRoomOptions(body.options);
+    const optionRole = serializeRoomOptions(options);
 
     await env.DB.batch([
       env.DB.prepare(
         "INSERT INTO players (id, nickname, last_seen_at) VALUES (?, ?, CURRENT_TIMESTAMP) ON CONFLICT(id) DO UPDATE SET nickname = excluded.nickname, last_seen_at = CURRENT_TIMESTAMP"
       ).bind(playerId, nickname),
-      env.DB.prepare("INSERT INTO rooms (id, name, status) VALUES (?, ?, 'lobby')").bind(roomId, name),
+      env.DB.prepare("INSERT INTO rooms (id, name, status, option_role) VALUES (?, ?, 'lobby', ?)").bind(roomId, name, optionRole),
       env.DB.prepare("INSERT INTO room_events (room_id, player_id, event_type, payload_json) VALUES (?, ?, 'room_created', ?)").bind(
         roomId,
         playerId,
-        JSON.stringify({ name })
+        JSON.stringify({ name, options })
       )
     ]);
 
