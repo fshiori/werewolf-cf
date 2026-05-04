@@ -19,6 +19,7 @@ import {
   loversForPlayer,
   mediumReadingForPlayer,
   playerStatUpdates,
+  setLastWords,
   startGame,
   upsertLobbyPlayer,
   wolvesForPlayer
@@ -33,6 +34,7 @@ import {
   buildFoxChatMessage,
   buildGameStateMessage,
   buildJoinedMessage,
+  buildLastWordsAckMessage,
   buildLoversChatMessage,
   buildMediumResultMessage,
   buildPresenceMessage,
@@ -43,6 +45,7 @@ import type { GameState, RoomMember, RoomOptions } from "./types";
 import {
   parseClientMessage,
   validateChatText,
+  validateLastWordsText,
   validateNickname,
   validatePlayerId,
   validateRoomId
@@ -187,6 +190,17 @@ export class RoomDurableObject {
         await this.persistRoomEvent(member.playerId, "game_started", { day: next.day, players: next.players.length });
         this.broadcastGameState(next);
         this.sendRoles(next);
+        return;
+      }
+
+      if (message.type === "set_last_words") {
+        if (!(await this.loadRoomOptions()).lastWords) {
+          throw new Error("Last words are not enabled in this room");
+        }
+        const text = validateLastWordsText(message.text);
+        const next = setLastWords(await this.loadGameState(), member.playerId, text);
+        await this.saveGameState(next);
+        this.send(socket, buildLastWordsAckMessage());
         return;
       }
 
@@ -433,7 +447,8 @@ export class RoomDurableObject {
       betrayer: roles.has("betr"),
       childFox: roles.has("fosi"),
       twoFoxes: roles.has("foxs"),
-      cat: roles.has("cat")
+      cat: roles.has("cat"),
+      lastWords: roles.has("will")
     };
   }
 }

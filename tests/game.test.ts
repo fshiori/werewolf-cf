@@ -19,6 +19,7 @@ import {
   loversForPlayer,
   mediumReadingForPlayer,
   playerStatUpdates,
+  setLastWords,
   startGame,
   upsertLobbyPlayer,
   wolvesForPlayer
@@ -48,6 +49,7 @@ function activeState(phase: "day" | "night", players: GameState["players"]): Gam
     divinations: {},
     guards: {},
     catRevives: {},
+    lastWords: {},
     log: []
   };
 }
@@ -196,7 +198,8 @@ describe("game", () => {
       betrayer: false,
       childFox: false,
       twoFoxes: false,
-      cat: false
+      cat: false,
+      lastWords: false
     });
 
     expect(normal.players.filter((player) => player.role === "poison")).toHaveLength(0);
@@ -218,7 +221,8 @@ describe("game", () => {
       betrayer: false,
       childFox: false,
       twoFoxes: false,
-      cat: false
+      cat: false,
+      lastWords: false
     });
 
     expect(game.players.filter((player) => player.role === "big_wolf")).toHaveLength(1);
@@ -240,7 +244,8 @@ describe("game", () => {
       betrayer: false,
       childFox: false,
       twoFoxes: false,
-      cat: false
+      cat: false,
+      lastWords: false
     });
 
     expect(game.players.find((player) => player.authority)?.playerId).toBe("player_1");
@@ -290,7 +295,8 @@ describe("game", () => {
       betrayer: false,
       childFox: false,
       twoFoxes: false,
-      cat: false
+      cat: false,
+      lastWords: false
     });
 
     expect(game.players.filter((player) => player.lover)).toEqual([
@@ -314,7 +320,8 @@ describe("game", () => {
       betrayer: true,
       childFox: false,
       twoFoxes: false,
-      cat: false
+      cat: false,
+      lastWords: false
     });
 
     expect(game.players.filter((player) => player.role === "betrayer")).toEqual([
@@ -335,7 +342,8 @@ describe("game", () => {
       betrayer: false,
       childFox: true,
       twoFoxes: false,
-      cat: false
+      cat: false,
+      lastWords: false
     });
 
     expect(game.players.filter((player) => player.role === "child_fox")).toEqual([
@@ -354,7 +362,8 @@ describe("game", () => {
       betrayer: false,
       childFox: false,
       twoFoxes: true,
-      cat: false
+      cat: false,
+      lastWords: false
     });
 
     expect(game.players.filter((player) => player.role === "fox")).toEqual([
@@ -377,7 +386,8 @@ describe("game", () => {
       betrayer: false,
       childFox: false,
       twoFoxes: false,
-      cat: true
+      cat: true,
+      lastWords: false
     });
 
     expect(game.players.filter((player) => player.role === "cat")).toEqual([
@@ -460,6 +470,51 @@ describe("game", () => {
 
     expect(game.phase).toBe("night");
     expect(game.players.find((player) => player.playerId === "player_2")?.alive).toBe(false);
+  });
+
+  it("stores last words only for living players during active phases", () => {
+    const day = activeState("day", [
+      { playerId: "player_1", nickname: "Alice", role: "villager", alive: true },
+      { playerId: "player_2", nickname: "Wolf", role: "werewolf", alive: true },
+      { playerId: "player_3", nickname: "Dead", role: "villager", alive: false }
+    ]);
+
+    expect(setLastWords(day, "player_1", "Remember me").lastWords).toEqual({ player_1: "Remember me" });
+    expect(() => setLastWords(createLobbyState("room_abc"), "player_1", "soon")).toThrow("active games");
+    expect(() => setLastWords({ ...day, phase: "ended", winner: "villagers" }, "player_1", "soon")).toThrow("active games");
+    expect(() => setLastWords(day, "player_3", "too late")).toThrow("Living player is required");
+  });
+
+  it("reveals last words after day executions", () => {
+    let game = activeState("day", [
+      { playerId: "player_1", nickname: "Alice", role: "villager", alive: true },
+      { playerId: "player_2", nickname: "Bob", role: "villager", alive: true },
+      { playerId: "player_3", nickname: "Carol", role: "villager", alive: true },
+      { playerId: "player_4", nickname: "Wolf", role: "werewolf", alive: true }
+    ]);
+
+    game = setLastWords(game, "player_2", "Trust Alice");
+    game = castDayVote(game, "player_1", "player_2");
+    game = castDayVote(game, "player_2", "player_4");
+    game = castDayVote(game, "player_3", "player_2");
+    game = castDayVote(game, "player_4", "player_2");
+
+    expect(game.players.find((player) => player.playerId === "player_2")?.alive).toBe(false);
+    expect(game.log).toContain("Bob 的遺言：Trust Alice");
+  });
+
+  it("reveals last words after night deaths", () => {
+    let game = activeState("night", [
+      { playerId: "player_1", nickname: "Wolf", role: "werewolf", alive: true },
+      { playerId: "player_2", nickname: "Alice", role: "villager", alive: true },
+      { playerId: "player_3", nickname: "Bob", role: "villager", alive: true }
+    ]);
+
+    game = setLastWords(game, "player_2", "It was the wolf");
+    game = castNightKill(game, "player_1", "player_2", 0);
+
+    expect(game.players.find((player) => player.playerId === "player_2")?.alive).toBe(false);
+    expect(game.log).toContain("Alice 的遺言：It was the wolf");
   });
 
   it("runs one revote after a tied day vote before moving to night", () => {
@@ -569,6 +624,21 @@ describe("game", () => {
     expect(divination.result).toBe("human");
     expect(divination.state.players.find((player) => player.playerId === "player_3")?.alive).toBe(false);
     expect(divination.state.log.at(-1)).toBe("Fox 被占卜後死亡。");
+  });
+
+  it("reveals last words after fox divination deaths", () => {
+    let game = activeState("night", [
+      { playerId: "player_1", nickname: "Wolf", role: "werewolf", alive: true },
+      { playerId: "player_2", nickname: "Seer", role: "seer", alive: true },
+      { playerId: "player_3", nickname: "Fox", role: "fox", alive: true },
+      { playerId: "player_4", nickname: "Villager", role: "villager", alive: true }
+    ]);
+
+    game = setLastWords(game, "player_3", "You found me");
+    const divination = castDivination(game, "player_2", "player_3");
+
+    expect(divination.state.players.find((player) => player.playerId === "player_3")?.alive).toBe(false);
+    expect(divination.state.log).toContain("Fox 的遺言：You found me");
   });
 
   it("poisons another living player when a poison player is executed", () => {

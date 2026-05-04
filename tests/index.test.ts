@@ -145,7 +145,7 @@ describe("worker routes", () => {
   it("returns room options in room listings", async () => {
     const response = await worker.fetch(
       new Request("http://example.test/api/rooms"),
-      envWithRooms(["room_plain", "room_poison"], {}, {}, {}, {}, { room_poison: "poison wfbig authority decide lovers betr fosi foxs cat" })
+      envWithRooms(["room_plain", "room_poison"], {}, {}, {}, {}, { room_poison: "poison wfbig authority decide lovers betr fosi foxs cat will" })
     );
 
     expect(response.status).toBe(200);
@@ -165,7 +165,8 @@ describe("worker routes", () => {
             betrayer: false,
             childFox: false,
             twoFoxes: false,
-            cat: false
+            cat: false,
+            lastWords: false
           }
         },
         {
@@ -182,7 +183,8 @@ describe("worker routes", () => {
             betrayer: true,
             childFox: true,
             twoFoxes: true,
-            cat: true
+            cat: true,
+            lastWords: true
           }
         }
       ]
@@ -208,7 +210,8 @@ describe("worker routes", () => {
             betrayer: true,
             childFox: true,
             twoFoxes: true,
-            cat: true
+            cat: true,
+            lastWords: true
           }
         })
       }),
@@ -220,10 +223,21 @@ describe("worker routes", () => {
 
     expect(response.status).toBe(200);
     expect(roomInsert?.query).toContain("option_role");
-    expect(roomInsert?.values.at(-1)).toBe("poison wfbig authority decide lovers betr fosi foxs cat");
+    expect(roomInsert?.values.at(-1)).toBe("poison wfbig authority decide lovers betr fosi foxs cat will");
     expect(JSON.parse(String(eventInsert?.values.at(-1)))).toEqual({
       name: "Option Test",
-      options: { poison: true, bigWolf: true, authority: true, decider: true, lovers: true, betrayer: true, childFox: true, twoFoxes: true, cat: true }
+      options: {
+        poison: true,
+        bigWolf: true,
+        authority: true,
+        decider: true,
+        lovers: true,
+        betrayer: true,
+        childFox: true,
+        twoFoxes: true,
+        cat: true,
+        lastWords: true
+      }
     });
   });
 
