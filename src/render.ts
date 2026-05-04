@@ -222,6 +222,10 @@ export function renderRoom(roomId: string): string {
               <td>勝利：<span id="winner" class="muted">未定</span>　<a href="/">首頁</a></td>
             </tr>
             <tr>
+              <td>房主</td>
+              <td><span id="host" class="muted">未定</span></td>
+            </tr>
+            <tr>
               <td>玩家暱稱</td>
               <td><input id="nickname" maxlength="32" size="28"> <button id="connect">進入房間</button> <button id="startGame">開始遊戲</button></td>
             </tr>
@@ -339,9 +343,11 @@ export function renderRoom(roomId: string): string {
       function renderGame(game) {
         document.querySelector("#phase").textContent = game.phase + (game.day ? " " + game.day : "");
         document.querySelector("#winner").textContent = game.winner || "未定";
-        document.querySelector("#startGame").disabled = game.phase !== "lobby";
-        document.querySelector("#sendWolfChat").disabled = !(game.phase === "night" && role === "werewolf");
         const currentPlayerId = localStorage.getItem(playerKey);
+        const host = game.players.find((player) => player.playerId === game.hostId);
+        document.querySelector("#host").textContent = host ? host.nickname : "未定";
+        document.querySelector("#startGame").disabled = game.phase !== "lobby" || game.hostId !== currentPlayerId;
+        document.querySelector("#sendWolfChat").disabled = !(game.phase === "night" && role === "werewolf");
         const players = document.querySelector("#players");
         const playerGrid = document.querySelector("#playerGrid");
         players.innerHTML = "";

@@ -33,6 +33,7 @@ export interface GameState {
   roomId: string;
   phase: GamePhase;
   day: number;
+  hostId?: string;
   players: GamePlayer[];
   votes: Record<string, string>;
   nightKills: Record<string, string>;
@@ -88,6 +89,7 @@ export type ServerMessage =
       type: "game_state";
       phase: GamePhase;
       day: number;
+      hostId?: string;
       players: PublicGamePlayer[];
       votes: Record<string, string>;
       winner?: GameWinner;

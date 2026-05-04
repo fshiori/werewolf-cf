@@ -1,6 +1,7 @@
 import {
   advancePhaseByAlarm,
   canJoinRoomState,
+  canStartGame,
   canUseWerewolfChannel,
   castDayVote,
   castNightKill,
@@ -120,7 +121,11 @@ export class RoomDurableObject {
       }
 
       if (message.type === "start_game") {
-        const next = startGame(await this.loadGameState());
+        const loadedGame = await this.loadGameState();
+        if (!canStartGame(loadedGame, member.playerId)) {
+          throw new Error("Only the room host can start the game");
+        }
+        const next = startGame(loadedGame);
         await this.saveGameState(next);
         await this.syncRoomStatus(next);
         this.broadcastGameState(next);
