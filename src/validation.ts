@@ -121,5 +121,12 @@ export function parseClientMessage(raw: string): ClientMessage {
     return { type: "divine", targetPlayerId: parsed.targetPlayerId };
   }
 
+  if (parsed.type === "guard") {
+    if (typeof parsed.targetPlayerId !== "string") {
+      throw new Error("Invalid guard message");
+    }
+    return { type: "guard", targetPlayerId: parsed.targetPlayerId };
+  }
+
   throw new Error("Unknown message type");
 }

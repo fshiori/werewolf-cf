@@ -394,7 +394,7 @@ export function renderRoom(roomId: string): string {
         const currentPlayerAlive = currentPlayer ? currentPlayer.alive : game.phase === "lobby";
         const actorCanAct =
           currentPlayerAlive &&
-          (game.phase === "day" || (game.phase === "night" && (role === "werewolf" || role === "seer")));
+          (game.phase === "day" || (game.phase === "night" && (role === "werewolf" || role === "seer" || role === "guard")));
         const host = game.players.find((player) => player.playerId === game.hostId);
         document.querySelector("#host").textContent = host ? host.nickname : "未定";
         document.querySelector("#startGame").disabled = game.phase !== "lobby" || game.hostId !== currentPlayerId;
@@ -450,6 +450,8 @@ export function renderRoom(roomId: string): string {
               sendCommand({ type: "night_kill", targetPlayerId: player.playerId });
             } else if (latestGame.phase === "night" && role === "seer") {
               sendCommand({ type: "divine", targetPlayerId: player.playerId });
+            } else if (latestGame.phase === "night" && role === "guard") {
+              sendCommand({ type: "guard", targetPlayerId: player.playerId });
             }
           });
           players.appendChild(button);
