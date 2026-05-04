@@ -33,10 +33,14 @@ const checks = [
     path: "/api/version",
     kind: "json",
     validate(value) {
-      return ["ROOM_DO", "DB", "ASSETS", "CONFIG"].every((binding) => value?.version?.bindings?.includes(binding))
+      return value?.version?.name === "werewolf-cf"
+        && value?.version?.appVersion === "0.1.0"
+        && value?.version?.runtime === "Cloudflare Workers"
+        && value?.version?.language === "TypeScript"
+        && ["ROOM_DO", "DB", "ASSETS", "CONFIG"].every((binding) => value?.version?.bindings?.includes(binding))
         && value?.version?.capabilities?.includes("websocket_protocol");
     },
-    expected: "bindings ROOM_DO/DB/ASSETS/CONFIG and websocket_protocol capability"
+    expected: "werewolf-cf version metadata, bindings ROOM_DO/DB/ASSETS/CONFIG, and websocket_protocol capability"
   },
   {
     path: "/api/protocol",

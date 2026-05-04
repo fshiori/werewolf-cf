@@ -15,6 +15,10 @@ function responseFor(path) {
       contentType: "application/json",
       body: JSON.stringify({
         version: {
+          name: "werewolf-cf",
+          appVersion: "0.1.0",
+          runtime: "Cloudflare Workers",
+          language: "TypeScript",
           bindings: ["ROOM_DO", "DB", "ASSETS", "CONFIG"],
           capabilities: ["websocket_protocol"]
         }
@@ -107,6 +111,29 @@ describe("production read-only smoke script", () => {
 
     expect(result.status).toBe(1);
     expect(result.stderr).toContain("/api/version");
+  });
+
+  it("fails when version metadata identifies the wrong app", async () => {
+    const host = await startServer({
+      "/api/version": {
+        contentType: "application/json",
+        body: JSON.stringify({
+          version: {
+            name: "other-worker",
+            appVersion: "0.1.0",
+            runtime: "Cloudflare Workers",
+            language: "TypeScript",
+            bindings: ["ROOM_DO", "DB", "ASSETS", "CONFIG"],
+            capabilities: ["websocket_protocol"]
+          }
+        })
+      }
+    });
+    const result = await runScript([host]);
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("/api/version");
+    expect(result.stderr).toContain("werewolf-cf version metadata");
   });
 
   it("fails when an HTML page does not contain the expected page text", async () => {
