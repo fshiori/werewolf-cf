@@ -134,6 +134,9 @@ export class RoomDurableObject {
         if (roomOptions.tripRequired && trip && !(await this.isRegisteredTrip(trip))) {
           throw new Error("Trip must be registered before joining this room");
         }
+        if (roomOptions.tripRequired && trip && (await this.isExcludedTrip(trip))) {
+          throw new Error("Trip is excluded from joining this room");
+        }
         const tripHash = trip ? await tripHashForRoom(this.roomId, trip) : undefined;
         const isGm = roomOptions.gmEnabled === true && Boolean(tripHash) && tripHash === roomOptions.gmTripHash;
         if (isGm) {
@@ -597,6 +600,14 @@ export class RoomDurableObject {
   private async isRegisteredTrip(trip: string): Promise<boolean> {
     const tripHash = await registeredTripHash(trip);
     const row = await this.env.DB.prepare("SELECT trip_hash FROM registered_trips WHERE trip_hash = ? LIMIT 1")
+      .bind(tripHash)
+      .first<{ trip_hash: string }>();
+    return row !== null;
+  }
+
+  private async isExcludedTrip(trip: string): Promise<boolean> {
+    const tripHash = await registeredTripHash(trip);
+    const row = await this.env.DB.prepare("SELECT trip_hash FROM excluded_trips WHERE trip_hash = ? LIMIT 1")
       .bind(tripHash)
       .first<{ trip_hash: string }>();
     return row !== null;

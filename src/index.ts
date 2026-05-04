@@ -12,7 +12,8 @@ import {
   validateRoomComment,
   validateRoomId,
   validateRoomName,
-  validateTrip
+  validateTrip,
+  validateTripExclusionReason
 } from "./validation";
 
 export { RoomDurableObject };
@@ -233,6 +234,25 @@ async function registerTrip(request: Request, env: Env): Promise<Response> {
     return json({ registered: true });
   } catch (error) {
     return json({ error: error instanceof Error ? error.message : "Failed to register Trip" }, { status: 400 });
+  }
+}
+
+async function excludeTrip(request: Request, env: Env): Promise<Response> {
+  const body: unknown = await request.json().catch(() => null);
+  if (!isRecord(body) || typeof body.trip !== "string") {
+    return json({ error: "Invalid Trip exclusion" }, { status: 400 });
+  }
+
+  try {
+    const trip = validateTrip(body.trip);
+    const reason = validateTripExclusionReason(typeof body.reason === "string" ? body.reason : "");
+    const tripHash = await registeredTripHash(trip);
+    await env.DB.prepare("INSERT INTO excluded_trips (trip_hash, reason) VALUES (?, ?) ON CONFLICT(trip_hash) DO UPDATE SET reason = excluded.reason")
+      .bind(tripHash, reason)
+      .run();
+    return json({ excluded: true });
+  } catch (error) {
+    return json({ error: error instanceof Error ? error.message : "Failed to exclude Trip" }, { status: 400 });
   }
 }
 
@@ -477,6 +497,10 @@ export default {
 
     if (request.method === "POST" && url.pathname === "/api/trips") {
       return registerTrip(request, env);
+    }
+
+    if (request.method === "POST" && url.pathname === "/api/trips/exclusions") {
+      return excludeTrip(request, env);
     }
 
     if (request.method === "POST" && url.pathname === "/api/assets/avatar") {
