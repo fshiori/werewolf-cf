@@ -161,7 +161,7 @@ describe("worker routes", () => {
         {},
         {},
         {},
-        { room_poison: "poison wfbig authority decide lovers betr fosi foxs cat will open_vote comoutl wish_role istrip dummy_boy cust_dummy real_time:5:2 votedme votedisplay" },
+        { room_poison: "poison wfbig authority decide lovers betr fosi foxs cat will open_vote comoutl wish_role istrip as_gm dummy_boy cust_dummy real_time:5:2 votedme votedisplay" },
         { room_poison: "<test comment>" },
         { room_poison: 30 },
         { room_poison: true },
@@ -196,6 +196,7 @@ describe("worker routes", () => {
             deadRoleVisible: false,
             wishRole: false,
             tripRequired: false,
+            gmEnabled: false,
             dummyBoy: false,
             customDummy: false,
             dummyName: "替身君",
@@ -230,6 +231,7 @@ describe("worker routes", () => {
             deadRoleVisible: true,
             wishRole: true,
             tripRequired: true,
+            gmEnabled: true,
             dummyBoy: true,
             customDummy: true,
             dummyName: "Custom Dummy",
@@ -273,6 +275,8 @@ describe("worker routes", () => {
             deadRoleVisible: true,
             wishRole: true,
             tripRequired: true,
+            gmEnabled: true,
+            gmTrip: "gm1234",
             dummyBoy: true,
             customDummy: true,
             dummyName: "Custom Dummy",
@@ -301,9 +305,11 @@ describe("worker routes", () => {
     expect(roomInsert?.values).toContain(1);
     expect(roomInsert?.query).toContain("dummy_name");
     expect(roomInsert?.query).toContain("dummy_last_words");
+    expect(roomInsert?.query).toContain("gm_trip_hash");
     expect(roomInsert?.values).toContain("Custom Dummy");
     expect(roomInsert?.values).toContain("Remember the dummy");
-    expect(roomInsert?.values.at(-1)).toBe("poison wfbig authority decide lovers betr fosi foxs cat will open_vote comoutl wish_role istrip dummy_boy cust_dummy real_time:5:2 votedme votedisplay");
+    expect(String(roomInsert?.values.at(-2))).toMatch(/^[0-9a-f]{64}$/);
+    expect(roomInsert?.values.at(-1)).toBe("poison wfbig authority decide lovers betr fosi foxs cat will open_vote comoutl wish_role istrip as_gm dummy_boy cust_dummy real_time:5:2 votedme votedisplay");
     expect(JSON.parse(String(eventInsert?.values.at(-1)))).toEqual({
       name: "Option Test",
       comment: "Beginners welcome",
@@ -324,6 +330,7 @@ describe("worker routes", () => {
         deadRoleVisible: true,
         wishRole: true,
         tripRequired: true,
+        gmEnabled: true,
         dummyBoy: true,
         customDummy: true,
         dummyName: "Custom Dummy",
@@ -335,6 +342,25 @@ describe("worker routes", () => {
         voteStatus: true
       }
     });
+  });
+
+  it("rejects GM rooms without a GM Trip", async () => {
+    const response = await worker.fetch(
+      new Request("http://example.test/api/rooms", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          name: "GM Test",
+          playerId: "player_owner",
+          nickname: "Owner",
+          options: { gmEnabled: true }
+        })
+      }),
+      envWithRooms([])
+    );
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({ error: "GM Trip is required" });
   });
 
   it("returns 404 for formatted room ids missing from D1", async () => {

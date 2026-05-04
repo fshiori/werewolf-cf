@@ -30,9 +30,9 @@ describe("messages", () => {
   });
 
   it("builds presence messages", () => {
-    expect(buildPresenceMessage([{ playerId: "player_1", nickname: "Alice" }])).toEqual({
+    expect(buildPresenceMessage([{ playerId: "player_1", nickname: "Alice" }, { playerId: "player_gm", nickname: "GM", gm: true }])).toEqual({
       type: "presence",
-      members: [{ playerId: "player_1", nickname: "Alice" }]
+      members: [{ playerId: "player_1", nickname: "Alice" }, { playerId: "player_gm", nickname: "GM", gm: true }]
     });
   });
 

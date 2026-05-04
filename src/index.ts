@@ -1,6 +1,7 @@
 import { renderHome, renderRoom } from "./render";
 import { RoomDurableObject } from "./room";
 import { DEFAULT_DAY_MINUTES, DEFAULT_NIGHT_MINUTES } from "./game";
+import { tripHashForRoom } from "./identity";
 import type { GameRecordSummary, LeaderboardEntry, PlayerStats, RoomEventSummary, RoomOptions, RoomSummary } from "./types";
 import {
   isRecord,
@@ -10,7 +11,8 @@ import {
   validateRoomCapacity,
   validateRoomComment,
   validateRoomId,
-  validateRoomName
+  validateRoomName,
+  validateTrip
 } from "./validation";
 
 export { RoomDurableObject };
@@ -90,6 +92,7 @@ function parseRoomOptions(optionRole: string): RoomOptions {
     deadRoleVisible: false,
     wishRole: roles.has("wish_role"),
     tripRequired: roles.has("istrip"),
+    gmEnabled: roles.has("as_gm"),
     dummyBoy: roles.has("dummy_boy"),
     customDummy: roles.has("cust_dummy"),
     dummyName: "替身君",
@@ -118,6 +121,7 @@ function serializeRoomOptions(options: RoomOptions): string {
     options.commonTalkVisible ? "comoutl" : "",
     options.wishRole ? "wish_role" : "",
     options.tripRequired ? "istrip" : "",
+    options.gmEnabled ? "as_gm" : "",
     options.dummyBoy ? "dummy_boy" : "",
     options.customDummy ? "cust_dummy" : "",
     options.realTime ? `real_time:${formatMinutes(options.dayMinutes)}:${formatMinutes(options.nightMinutes)}` : "",
@@ -144,6 +148,7 @@ function readRoomOptions(value: unknown): RoomOptions {
       deadRoleVisible: false,
       wishRole: false,
       tripRequired: false,
+      gmEnabled: false,
       dummyBoy: false,
       customDummy: false,
       dummyName: "替身君",
@@ -171,6 +176,7 @@ function readRoomOptions(value: unknown): RoomOptions {
     deadRoleVisible: value.deadRoleVisible === true,
     wishRole: value.wishRole === true,
     tripRequired: value.tripRequired === true,
+    gmEnabled: value.gmEnabled === true,
     dummyBoy: value.dummyBoy === true,
     customDummy: value.customDummy === true,
     dummyName: typeof value.dummyName === "string" ? validateNickname(value.dummyName) : "替身君",
@@ -181,6 +187,16 @@ function readRoomOptions(value: unknown): RoomOptions {
     selfVote: value.selfVote === true,
     voteStatus: value.voteStatus === true
   };
+}
+
+function readGmTrip(optionsValue: unknown, gmEnabled: boolean): string | undefined {
+  if (!gmEnabled) {
+    return undefined;
+  }
+  if (!isRecord(optionsValue) || typeof optionsValue.gmTrip !== "string") {
+    throw new Error("GM Trip is required");
+  }
+  return validateTrip(optionsValue.gmTrip);
 }
 
 function readMinutes(value: unknown, fallback: number): number {
@@ -314,6 +330,8 @@ async function createRoom(request: Request, env: Env): Promise<Response> {
     const playerId = validatePlayerId(body.playerId);
     const nickname = validateNickname(body.nickname);
     const options = readRoomOptions(body.options);
+    const gmTrip = readGmTrip(body.options, options.gmEnabled === true);
+    const gmTripHash = gmTrip ? await tripHashForRoom(roomId, gmTrip) : null;
     const optionRole = serializeRoomOptions(options);
 
     await env.DB.batch([
@@ -321,7 +339,7 @@ async function createRoom(request: Request, env: Env): Promise<Response> {
         "INSERT INTO players (id, nickname, last_seen_at) VALUES (?, ?, CURRENT_TIMESTAMP) ON CONFLICT(id) DO UPDATE SET nickname = excluded.nickname, last_seen_at = CURRENT_TIMESTAMP"
       ).bind(playerId, nickname),
       env.DB.prepare(
-        "INSERT INTO rooms (id, name, room_comment, max_user, dellook, dummy_name, dummy_last_words, status, option_role) VALUES (?, ?, ?, ?, ?, ?, ?, 'lobby', ?)"
+        "INSERT INTO rooms (id, name, room_comment, max_user, dellook, dummy_name, dummy_last_words, gm_trip_hash, status, option_role) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'lobby', ?)"
       ).bind(
         roomId,
         name,
@@ -330,6 +348,7 @@ async function createRoom(request: Request, env: Env): Promise<Response> {
         options.deadRoleVisible ? 1 : 0,
         options.customDummy ? options.dummyName : "替身君",
         options.customDummy ? options.dummyLastWords : "",
+        gmTripHash,
         optionRole
       ),
       env.DB.prepare("INSERT INTO room_events (room_id, player_id, event_type, payload_json) VALUES (?, ?, 'room_created', ?)").bind(
