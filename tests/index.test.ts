@@ -886,6 +886,13 @@ describe("worker routes", () => {
           "error"
         ],
         privateChannels: ["wolf_chat", "fox_chat", "common_chat", "lovers_chat", "dead_chat", "gm_chat", "gm_whisper"],
+        channelVariants: {
+          common_chat: {
+            publicVoicePlayerId: "common_voice",
+            publicVoiceNickname: "共有者的聲音",
+            description: "When commonTalkVisible is enabled, living non-common players and dead common partners receive an anonymous common_chat voice."
+          }
+        },
         enforcedBy: "RoomDurableObject"
       }
     });
