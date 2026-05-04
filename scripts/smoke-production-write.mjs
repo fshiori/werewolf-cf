@@ -121,6 +121,15 @@ async function verifyWebSocket(roomId) {
         if (typeof message.type === "string") {
           seenTypes.add(message.type);
         }
+        if (message.type === "joined" && (message.roomId !== roomId || message.playerId !== hostPlayerId)) {
+          throw new Error("WebSocket join smoke: joined payload did not match smoke room/player");
+        }
+        if (message.type === "presence" && !Array.isArray(message.members)) {
+          throw new Error("WebSocket join smoke: presence payload must include members");
+        }
+        if (message.type === "game_state" && (typeof message.phase !== "string" || typeof message.day !== "number")) {
+          throw new Error("WebSocket join smoke: game_state payload must include phase and day");
+        }
         if ([...requiredTypes].every((type) => seenTypes.has(type))) {
           clearTimeout(timeout);
           ws.close();
