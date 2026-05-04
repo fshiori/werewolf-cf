@@ -171,6 +171,7 @@ async function verifyAvatarRoundTrip() {
   console.log("ok GET /assets/avatar/:playerId");
 
   await removeSmokeAvatar("DELETE /api/assets/avatar");
+  await verifySmokeAvatarRemoved();
 }
 
 async function removeSmokeAvatar(label) {
@@ -185,6 +186,14 @@ async function removeSmokeAvatar(label) {
   }
   avatarUploaded = false;
   console.log(`ok ${label}`);
+}
+
+async function verifySmokeAvatarRemoved() {
+  const response = await fetch(urlFor(`/assets/avatar/${avatarPlayerId}`));
+  if (response.status !== 404) {
+    throw new Error(`GET /assets/avatar/:playerId after delete: expected HTTP 404, got HTTP ${response.status}`);
+  }
+  console.log("ok GET /assets/avatar/:playerId after delete");
 }
 
 try {
