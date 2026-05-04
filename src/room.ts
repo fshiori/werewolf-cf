@@ -27,6 +27,7 @@ import {
   DEFAULT_DAY_MINUTES,
   DEFAULT_NIGHT_MINUTES
 } from "./game";
+import { tripHashForRoom } from "./identity";
 import {
   buildActionAckMessage,
   buildChatMessage,
@@ -61,16 +62,8 @@ type ConnectionState = {
   playerId: string;
   nickname: string;
   tripHash?: string;
+  gm?: boolean;
 };
-
-function bytesToHex(bytes: Uint8Array): string {
-  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
-}
-
-async function tripHashForRoom(roomId: string, trip: string): Promise<string> {
-  const data = new TextEncoder().encode(`${roomId}:${trip}`);
-  return bytesToHex(new Uint8Array(await crypto.subtle.digest("SHA-256", data)));
-}
 
 export class RoomDurableObject {
   private readonly roomId: string;
@@ -135,6 +128,15 @@ export class RoomDurableObject {
           throw new Error("Trip is required for this room");
         }
         const tripHash = message.trip ? await tripHashForRoom(this.roomId, validateTrip(message.trip)) : undefined;
+        const isGm = roomOptions.gmEnabled === true && Boolean(tripHash) && tripHash === roomOptions.gmTripHash;
+        if (isGm) {
+          this.sockets.set(socket, { playerId, nickname, tripHash, gm: true });
+          await this.persistJoin(playerId, nickname, tripHash, true);
+          this.send(socket, buildJoinedMessage(this.roomId, playerId, this.members()));
+          this.broadcast(buildPresenceMessage(this.members()));
+          await this.broadcastGameState(loadedGame);
+          return;
+        }
         const game = upsertLobbyPlayer(
           loadedGame,
           { playerId, nickname, tripHash, wishRole: roomOptions.wishRole ? message.wishRole : undefined },
@@ -157,7 +159,7 @@ export class RoomDurableObject {
       }
 
       if (message.type === "chat") {
-        if (!canUsePublicChat(await this.loadGameState(), member.playerId)) {
+        if (!member.gm && !canUsePublicChat(await this.loadGameState(), member.playerId)) {
           throw new Error("Only living players can chat during the game");
         }
         const text = validateChatText(message.text);
@@ -220,7 +222,7 @@ export class RoomDurableObject {
 
       if (message.type === "start_game") {
         const loadedGame = await this.loadGameState();
-        if (!canStartGame(loadedGame, member.playerId)) {
+        if (!member.gm && !canStartGame(loadedGame, member.playerId)) {
           throw new Error("Only the room host can start the game");
         }
         const next = startGame(loadedGame, Date.now(), Math.random, await this.loadRoomOptions());
@@ -314,7 +316,8 @@ export class RoomDurableObject {
   private members(): RoomMember[] {
     return Array.from(this.sockets.values()).map((member) => ({
       playerId: member.playerId,
-      nickname: member.nickname
+      nickname: member.nickname,
+      gm: member.gm === true || undefined
     }));
   }
 
@@ -485,15 +488,16 @@ export class RoomDurableObject {
     }
   }
 
-  private async persistJoin(playerId: string, nickname: string, tripHash?: string): Promise<void> {
+  private async persistJoin(playerId: string, nickname: string, tripHash?: string, gm = false): Promise<void> {
     await this.env.DB.batch([
       this.env.DB.prepare(
         "INSERT INTO players (id, nickname, trip_hash, last_seen_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP) ON CONFLICT(id) DO UPDATE SET nickname = excluded.nickname, trip_hash = COALESCE(excluded.trip_hash, players.trip_hash), last_seen_at = CURRENT_TIMESTAMP"
       ).bind(playerId, nickname, tripHash ?? null),
-      this.env.DB.prepare("INSERT INTO room_events (room_id, player_id, event_type, payload_json) VALUES (?, ?, 'player_joined', ?)").bind(
+      this.env.DB.prepare("INSERT INTO room_events (room_id, player_id, event_type, payload_json) VALUES (?, ?, ?, ?)").bind(
         this.roomId,
         playerId,
-        JSON.stringify({ trip: Boolean(tripHash) })
+        gm ? "gm_joined" : "player_joined",
+        JSON.stringify({ trip: Boolean(tripHash), gm })
       )
     ]);
   }
@@ -505,9 +509,9 @@ export class RoomDurableObject {
   }
 
   private async loadRoomOptions(): Promise<RoomOptions> {
-    const row = await this.env.DB.prepare("SELECT option_role, dellook, dummy_name, dummy_last_words FROM rooms WHERE id = ? LIMIT 1")
+    const row = await this.env.DB.prepare("SELECT option_role, dellook, dummy_name, dummy_last_words, gm_trip_hash FROM rooms WHERE id = ? LIMIT 1")
       .bind(this.roomId)
-      .first<{ option_role: string; dellook?: number | null; dummy_name?: string | null; dummy_last_words?: string | null }>();
+      .first<{ option_role: string; dellook?: number | null; dummy_name?: string | null; dummy_last_words?: string | null; gm_trip_hash?: string | null }>();
     const tokens = (row?.option_role ?? "").split(/\s+/).filter(Boolean);
     const roles = new Set(tokens);
     const realTimeToken = tokens.find((token) => token.startsWith("real_time:"));
@@ -528,6 +532,8 @@ export class RoomDurableObject {
       deadRoleVisible: row?.dellook === 1,
       wishRole: roles.has("wish_role"),
       tripRequired: roles.has("istrip"),
+      gmEnabled: roles.has("as_gm"),
+      gmTripHash: row?.gm_trip_hash ?? undefined,
       dummyBoy: roles.has("dummy_boy"),
       customDummy: roles.has("cust_dummy"),
       dummyName: row?.dummy_name ?? "替身君",

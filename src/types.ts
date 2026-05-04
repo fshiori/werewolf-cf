@@ -26,6 +26,8 @@ export interface RoomOptions {
   deadRoleVisible: boolean;
   wishRole: boolean;
   tripRequired?: boolean;
+  gmEnabled?: boolean;
+  gmTripHash?: string;
   dummyBoy: boolean;
   customDummy: boolean;
   dummyName: string;
@@ -40,6 +42,7 @@ export interface RoomOptions {
 export interface RoomMember {
   playerId: string;
   nickname: string;
+  gm?: boolean;
 }
 
 export type PlayerRole =

@@ -166,6 +166,7 @@ export function renderHome(rooms: RoomSummary[], announcement = DEFAULT_ANNOUNCE
         room.options.deadRoleVisible ? `<span class="option-mark">靈視</span>` : "",
         room.options.wishRole ? `<span class="option-mark">希望</span>` : "",
         room.options.tripRequired ? `<span class="option-mark">Trip限定</span>` : "",
+        room.options.gmEnabled ? `<span class="option-mark">GM制</span>` : "",
         room.options.dummyBoy ? `<span class="option-mark">替身</span>` : "",
         room.options.customDummy ? `<span class="option-mark">自訂替身</span>` : "",
         room.options.selfVote ? `<span class="option-mark">自投</span>` : "",
@@ -305,6 +306,14 @@ export function renderHome(rooms: RoomSummary[], announcement = DEFAULT_ANNOUNCE
           <td><label><input id="optionTripRequired" type="checkbox"> <small>沒有英數 Trip 身分碼將無法登錄成村民</small></label></td>
         </tr>
         <tr>
+          <td><label><strong>　啟用GM系統：</strong></label></td>
+          <td><label><input id="optionGmEnabled" type="checkbox"> <small>指定 Trip 進房後成為 GM，不加入角色分配</small></label></td>
+        </tr>
+        <tr>
+          <td><label><strong>　GM Trip：</strong></label></td>
+          <td><input id="gmTrip" maxlength="32" size="10"></td>
+        </tr>
+        <tr>
           <td><label><strong>　替身君：</strong></label></td>
           <td><label><input id="optionDummyBoy" type="checkbox"> <small>加入替身君並從第一夜開始</small></label></td>
         </tr>
@@ -361,6 +370,8 @@ export function renderHome(rooms: RoomSummary[], announcement = DEFAULT_ANNOUNCE
         const deadRoleVisible = document.querySelector("#optionDeadRoleVisible").checked;
         const wishRole = document.querySelector("#optionWishRole").checked;
         const tripRequired = document.querySelector("#optionTripRequired").checked;
+        const gmEnabled = document.querySelector("#optionGmEnabled").checked;
+        const gmTrip = document.querySelector("#gmTrip").value;
         const dummyBoy = document.querySelector("#optionDummyBoy").checked;
         const customDummy = document.querySelector("#optionCustomDummy").checked;
         const dummyName = document.querySelector("#dummyName").value;
@@ -374,7 +385,7 @@ export function renderHome(rooms: RoomSummary[], announcement = DEFAULT_ANNOUNCE
         const res = await fetch("/api/rooms", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ name, comment, maxPlayers, playerId: localStorage.getItem(playerKey), nickname, options: { poison, bigWolf, authority, decider, lovers, betrayer, childFox, twoFoxes, cat, lastWords, openVote, commonTalkVisible, deadRoleVisible, wishRole, tripRequired, dummyBoy, customDummy, dummyName, dummyLastWords, realTime, dayMinutes, nightMinutes, selfVote, voteStatus } })
+          body: JSON.stringify({ name, comment, maxPlayers, playerId: localStorage.getItem(playerKey), nickname, options: { poison, bigWolf, authority, decider, lovers, betrayer, childFox, twoFoxes, cat, lastWords, openVote, commonTalkVisible, deadRoleVisible, wishRole, tripRequired, gmEnabled, gmTrip, dummyBoy, customDummy, dummyName, dummyLastWords, realTime, dayMinutes, nightMinutes, selfVote, voteStatus } })
         });
         const data = await res.json();
         if (!res.ok) {
@@ -626,7 +637,7 @@ export function renderRoom(roomId: string): string {
         ws.addEventListener("message", (event) => {
           const msg = JSON.parse(event.data);
           if (msg.type === "presence") {
-            document.querySelector("#members").textContent = msg.members.map((m) => m.nickname).join(", ");
+            document.querySelector("#members").textContent = msg.members.map((m) => m.gm ? m.nickname + " [GM]" : m.nickname).join(", ");
           } else if (msg.type === "chat") {
             append("<b>" + msg.nickname + "</b>: " + msg.text);
           } else if (msg.type === "wolf_chat") {
