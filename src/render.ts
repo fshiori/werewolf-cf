@@ -148,9 +148,13 @@ export function renderHome(rooms: RoomSummary[], announcement = DEFAULT_ANNOUNCE
     ? `<div class="muted">目前沒有村子。</div>`
     : rooms.map((room) => {
       const status = escapeHtml(room.status);
+      const optionMarks = [
+        `<span class="option-mark">即時</span>`,
+        room.options.poison ? `<span class="option-mark">埋毒</span>` : ""
+      ].filter(Boolean).join(" ");
       return `<a class="room-link" href="/room/${escapeHtml(room.id)}">
         <span class="room-line"><span class="status status-${status}">${status}</span><small>[${escapeHtml(room.id)}]</small> ${escapeHtml(room.name)}村</span>
-        <small class="room-comment">～建立時間：${escapeHtml(room.createdAt)}～ <span class="option-mark">即時</span></small>
+        <small class="room-comment">～建立時間：${escapeHtml(room.createdAt)}～ ${optionMarks}</small>
       </a>`;
     }).join("");
 
@@ -199,6 +203,10 @@ export function renderHome(rooms: RoomSummary[], announcement = DEFAULT_ANNOUNCE
           <td><small>日：3 分　夜：1.5 分　<span class="option-mark">固定</span></small></td>
         </tr>
         <tr>
+          <td><label><strong>　20人以上埋毒者選項：</strong></label></td>
+          <td><label><input id="optionPoison" type="checkbox"> <small>埋毒者登場</small></label></td>
+        </tr>
+        <tr>
           <td></td>
           <td><button id="createRoom">建立房間</button></td>
         </tr>
@@ -214,11 +222,12 @@ export function renderHome(rooms: RoomSummary[], announcement = DEFAULT_ANNOUNCE
       document.querySelector("#createRoom").addEventListener("click", async () => {
         const nickname = document.querySelector("#nickname").value;
         const name = document.querySelector("#roomName").value;
+        const poison = document.querySelector("#optionPoison").checked;
         localStorage.setItem("werewolf_cf_nickname", nickname);
         const res = await fetch("/api/rooms", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ name, playerId: localStorage.getItem(playerKey), nickname })
+          body: JSON.stringify({ name, playerId: localStorage.getItem(playerKey), nickname, options: { poison } })
         });
         const data = await res.json();
         if (!res.ok) {

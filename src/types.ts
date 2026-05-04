@@ -5,6 +5,11 @@ export interface RoomSummary {
   name: string;
   status: RoomStatus;
   createdAt: string;
+  options: RoomOptions;
+}
+
+export interface RoomOptions {
+  poison: boolean;
 }
 
 export interface RoomMember {

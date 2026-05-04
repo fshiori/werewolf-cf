@@ -33,28 +33,32 @@ function envWithRooms(
   config: Record<string, string> = {},
   stats: Record<string, MockPlayerStats> = {},
   records: Record<string, MockGameRecord[]> = {},
-  events: Record<string, MockRoomEvent[]> = {}
+  events: Record<string, MockRoomEvent[]> = {},
+  roomOptionRoles: Record<string, string> = {}
 ): Env {
   const assets = new Map<string, StoredAsset>();
+  const batches: Array<Array<{ query: string; values: unknown[] }>> = [];
 
-  return {
+  const env = {
     DB: {
       prepare(query: string) {
         return {
-          bind(value: string) {
+          bind(...values: string[]) {
             return {
+              query,
+              values,
               async first() {
                 if (query.includes("FROM player_stats")) {
-                  return stats[value] ?? null;
+                  return stats[values[0]] ?? null;
                 }
-                return roomIds.includes(value) ? { id: value } : null;
+                return roomIds.includes(values[0]) ? { id: values[0] } : null;
               },
               async all() {
                 if (query.includes("FROM game_records")) {
-                  return { results: records[value] ?? [] };
+                  return { results: records[values[0]] ?? [] };
                 }
                 if (query.includes("FROM room_events")) {
-                  return { results: events[value] ?? [] };
+                  return { results: events[values[0]] ?? [] };
                 }
                 return { results: [] };
               },
@@ -71,11 +75,23 @@ function envWithRooms(
                   .sort((a, b) => b.wins - a.wins || b.games_played - a.games_played || a.player_id.localeCompare(b.player_id))
               };
             }
+            if (query.includes("FROM rooms")) {
+              return {
+                results: roomIds.map((id) => ({
+                  id,
+                  name: id.replace(/^room_/, ""),
+                  status: "lobby",
+                  created_at: "2026-05-04 04:00:00",
+                  option_role: roomOptionRoles[id] ?? ""
+                }))
+              };
+            }
             return { results: [] };
           }
         };
       },
-      async batch() {
+      async batch(statements: Array<{ query: string; values: unknown[] }>) {
+        batches.push(statements);
         return [];
       }
     },
@@ -121,9 +137,66 @@ function envWithRooms(
       }
     } as unknown as KVNamespace
   } as unknown as Env;
+  (env as unknown as { batches: Array<Array<{ query: string; values: unknown[] }>> }).batches = batches;
+  return env;
 }
 
 describe("worker routes", () => {
+  it("returns room options in room listings", async () => {
+    const response = await worker.fetch(
+      new Request("http://example.test/api/rooms"),
+      envWithRooms(["room_plain", "room_poison"], {}, {}, {}, {}, { room_poison: "poison" })
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      rooms: [
+        {
+          id: "room_plain",
+          name: "plain",
+          status: "lobby",
+          createdAt: "2026-05-04 04:00:00",
+          options: { poison: false }
+        },
+        {
+          id: "room_poison",
+          name: "poison",
+          status: "lobby",
+          createdAt: "2026-05-04 04:00:00",
+          options: { poison: true }
+        }
+      ]
+    });
+  });
+
+  it("stores selected room options when creating rooms", async () => {
+    const env = envWithRooms([]);
+    const response = await worker.fetch(
+      new Request("http://example.test/api/rooms", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          name: "Option Test",
+          playerId: "player_owner",
+          nickname: "Owner",
+          options: { poison: true }
+        })
+      }),
+      env
+    );
+    const batches = (env as unknown as { batches: Array<Array<{ query: string; values: unknown[] }>> }).batches;
+    const roomInsert = batches[0].find((statement) => statement.query.includes("INSERT INTO rooms"));
+    const eventInsert = batches[0].find((statement) => statement.query.includes("room_created"));
+
+    expect(response.status).toBe(200);
+    expect(roomInsert?.query).toContain("option_role");
+    expect(roomInsert?.values.at(-1)).toBe("poison");
+    expect(JSON.parse(String(eventInsert?.values.at(-1)))).toEqual({
+      name: "Option Test",
+      options: { poison: true }
+    });
+  });
+
   it("returns 404 for formatted room ids missing from D1", async () => {
     const response = await worker.fetch(new Request("http://example.test/room/room_missing"), envWithRooms([]));
 
