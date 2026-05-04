@@ -13,6 +13,8 @@ type SentMessage = {
   sentAt?: string;
   phase?: string;
   day?: number;
+  role?: string;
+  wolves?: Array<{ playerId: string; nickname: string }>;
 };
 
 function roomObject(gameState?: GameState): RoomDurableObject {
@@ -131,6 +133,60 @@ describe("RoomDurableObject", () => {
     expect(chatMessages).toEqual([
       { type: "error", message: "Chat text is too long" },
       { type: "chat", playerId: "player_valid", nickname: "Alice", text: "ok", sentAt: expect.any(String) }
+    ]);
+  });
+
+  it("sends only each socket's own role message", () => {
+    const game: GameState = {
+      roomId: "room_abc",
+      phase: "night",
+      day: 1,
+      players: [
+        { playerId: "player_wolf", nickname: "Wolf", role: "werewolf", alive: true },
+        { playerId: "player_villager", nickname: "Villager", role: "villager", alive: true },
+        { playerId: "player_seer", nickname: "Seer", role: "seer", alive: true }
+      ],
+      votes: {},
+      openVote: false,
+      commonTalkVisible: false,
+      deadRoleVisible: false,
+      wishRole: false,
+      dummyBoy: false,
+      dayMs: 180_000,
+      nightMs: 90_000,
+      selfVote: false,
+      voteStatus: false,
+      revoteCount: 0,
+      nightKills: {},
+      divinations: {},
+      guards: {},
+      catRevives: {},
+      lastWords: {},
+      log: []
+    };
+    const room = roomObject(game);
+    const wolfMessages: SentMessage[] = [];
+    const villagerMessages: SentMessage[] = [];
+    const wolfSocket = fakeSocket(wolfMessages);
+    const villagerSocket = fakeSocket(villagerMessages);
+    connect(room, wolfSocket, "player_wolf", "Wolf");
+    connect(room, villagerSocket, "player_villager", "Villager");
+
+    (room as unknown as { sendRoles(gameState: GameState): void }).sendRoles(game);
+
+    expect(wolfMessages).toEqual([
+      expect.objectContaining({
+        type: "role",
+        role: "werewolf",
+        wolves: [{ playerId: "player_wolf", nickname: "Wolf" }]
+      })
+    ]);
+    expect(villagerMessages).toEqual([
+      expect.objectContaining({
+        type: "role",
+        role: "villager",
+        wolves: []
+      })
     ]);
   });
 
