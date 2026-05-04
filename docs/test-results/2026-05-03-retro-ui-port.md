@@ -12,6 +12,28 @@ Manual multi-browser visual clicking was not repeated for this result file. The 
 
 ## Automated Verification
 
+Latest automated rerun:
+
+- Date: 2026-05-04
+- `npm test`
+  - Output: `5 passed (5)` test files
+  - Output: `150 passed (150)` tests
+  - Files:
+    - `tests/game.test.ts`
+    - `tests/index.test.ts`
+    - `tests/validation.test.ts`
+    - `tests/messages.test.ts`
+    - `tests/render.test.ts`
+  - Result: passed
+- `npm run typecheck`
+  - Output: no TypeScript errors
+  - Result: passed
+- `git diff --check`
+  - Output: no whitespace errors
+  - Result: passed
+
+Original checklist run:
+
 - `node --version`
   - Output: `v25.9.0`
   - Checklist expectation: `>=22.0.0`
