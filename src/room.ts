@@ -469,7 +469,8 @@ export class RoomDurableObject {
       childFox: roles.has("fosi"),
       twoFoxes: roles.has("foxs"),
       cat: roles.has("cat"),
-      lastWords: roles.has("will")
+      lastWords: roles.has("will"),
+      openVote: roles.has("open_vote")
     };
   }
 }

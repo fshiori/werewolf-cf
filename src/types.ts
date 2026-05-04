@@ -19,6 +19,7 @@ export interface RoomOptions {
   twoFoxes: boolean;
   cat: boolean;
   lastWords: boolean;
+  openVote: boolean;
 }
 
 export interface RoomMember {
@@ -108,6 +109,7 @@ export interface GameState {
   hostId?: string;
   players: GamePlayer[];
   votes: Record<string, string>;
+  openVote: boolean;
   revoteCount: number;
   nightKills: Record<string, string>;
   divinations: Record<string, string>;

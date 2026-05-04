@@ -145,7 +145,7 @@ describe("worker routes", () => {
   it("returns room options in room listings", async () => {
     const response = await worker.fetch(
       new Request("http://example.test/api/rooms"),
-      envWithRooms(["room_plain", "room_poison"], {}, {}, {}, {}, { room_poison: "poison wfbig authority decide lovers betr fosi foxs cat will" })
+      envWithRooms(["room_plain", "room_poison"], {}, {}, {}, {}, { room_poison: "poison wfbig authority decide lovers betr fosi foxs cat will open_vote" })
     );
 
     expect(response.status).toBe(200);
@@ -166,7 +166,8 @@ describe("worker routes", () => {
             childFox: false,
             twoFoxes: false,
             cat: false,
-            lastWords: false
+            lastWords: false,
+            openVote: false
           }
         },
         {
@@ -184,7 +185,8 @@ describe("worker routes", () => {
             childFox: true,
             twoFoxes: true,
             cat: true,
-            lastWords: true
+            lastWords: true,
+            openVote: true
           }
         }
       ]
@@ -211,7 +213,8 @@ describe("worker routes", () => {
             childFox: true,
             twoFoxes: true,
             cat: true,
-            lastWords: true
+            lastWords: true,
+            openVote: true
           }
         })
       }),
@@ -223,7 +226,7 @@ describe("worker routes", () => {
 
     expect(response.status).toBe(200);
     expect(roomInsert?.query).toContain("option_role");
-    expect(roomInsert?.values.at(-1)).toBe("poison wfbig authority decide lovers betr fosi foxs cat will");
+    expect(roomInsert?.values.at(-1)).toBe("poison wfbig authority decide lovers betr fosi foxs cat will open_vote");
     expect(JSON.parse(String(eventInsert?.values.at(-1)))).toEqual({
       name: "Option Test",
       options: {
@@ -236,7 +239,8 @@ describe("worker routes", () => {
         childFox: true,
         twoFoxes: true,
         cat: true,
-        lastWords: true
+        lastWords: true,
+        openVote: true
       }
     });
   });

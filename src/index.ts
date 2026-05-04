@@ -53,7 +53,8 @@ function parseRoomOptions(optionRole: string): RoomOptions {
     childFox: roles.has("fosi"),
     twoFoxes: roles.has("foxs"),
     cat: roles.has("cat"),
-    lastWords: roles.has("will")
+    lastWords: roles.has("will"),
+    openVote: roles.has("open_vote")
   };
 }
 
@@ -68,7 +69,8 @@ function serializeRoomOptions(options: RoomOptions): string {
     options.childFox ? "fosi" : "",
     options.twoFoxes ? "foxs" : "",
     options.cat ? "cat" : "",
-    options.lastWords ? "will" : ""
+    options.lastWords ? "will" : "",
+    options.openVote ? "open_vote" : ""
   ].filter(Boolean).join(" ");
 }
 
@@ -84,7 +86,8 @@ function readRoomOptions(value: unknown): RoomOptions {
       childFox: false,
       twoFoxes: false,
       cat: false,
-      lastWords: false
+      lastWords: false,
+      openVote: false
     };
   }
   return {
@@ -97,7 +100,8 @@ function readRoomOptions(value: unknown): RoomOptions {
     childFox: value.childFox === true,
     twoFoxes: value.twoFoxes === true,
     cat: value.cat === true,
-    lastWords: value.lastWords === true
+    lastWords: value.lastWords === true,
+    openVote: value.openVote === true
   };
 }
 

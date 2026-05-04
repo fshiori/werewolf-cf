@@ -47,6 +47,7 @@ export function createLobbyState(roomId: string): GameState {
     day: 0,
     players: [],
     votes: {},
+    openVote: false,
     revoteCount: 0,
     nightKills: {},
     divinations: {},
@@ -146,7 +147,8 @@ export function startGame(
     childFox: false,
     twoFoxes: false,
     cat: false,
-    lastWords: false
+    lastWords: false,
+    openVote: false
   }
 ): GameState {
   if (state.phase !== "lobby") {
@@ -164,7 +166,8 @@ export function startGame(
         state.players.map((player, index) => ({ ...player, role: referenceRoleDeck[index], alive: true })),
         options
       ),
-      now
+      now,
+      options
     );
   }
 
@@ -228,7 +231,7 @@ export function startGame(
     return { ...player, role, alive: true };
   });
 
-  return startGameWithPlayers(state, applyRoomOptions(players, options), now);
+  return startGameWithPlayers(state, applyRoomOptions(players, options), now, options);
 }
 
 function applyRoomOptions(players: GamePlayer[], options: RoomOptions): GamePlayer[] {
@@ -306,13 +309,14 @@ function applyRoomOptions(players: GamePlayer[], options: RoomOptions): GamePlay
   });
 }
 
-function startGameWithPlayers(state: GameState, players: GamePlayer[], now: number): GameState {
+function startGameWithPlayers(state: GameState, players: GamePlayer[], now: number, options: RoomOptions): GameState {
   return {
     ...state,
     phase: "day",
     day: 1,
     players,
     votes: {},
+    openVote: options.openVote,
     revoteCount: 0,
     nightKills: {},
     divinations: {},
