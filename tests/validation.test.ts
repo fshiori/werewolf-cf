@@ -100,6 +100,10 @@ describe("validation", () => {
     });
     expect(parseClientMessage('{"type":"set_last_words","text":"bye"}')).toEqual({ type: "set_last_words", text: "bye" });
     expect(parseClientMessage('{"type":"start_game"}')).toEqual({ type: "start_game" });
+    expect(parseClientMessage('{"type":"kick_player","targetPlayerId":"player_1"}')).toEqual({
+      type: "kick_player",
+      targetPlayerId: "player_1"
+    });
     expect(parseClientMessage('{"type":"vote","targetPlayerId":"player_1"}')).toEqual({ type: "vote", targetPlayerId: "player_1" });
     expect(parseClientMessage('{"type":"night_kill","targetPlayerId":"player_2"}')).toEqual({
       type: "night_kill",

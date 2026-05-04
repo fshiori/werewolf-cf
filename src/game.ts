@@ -161,6 +161,21 @@ export function canStartGame(state: GameState, playerId: string): boolean {
   return (state.hostId ?? state.players[0]?.playerId) === playerId;
 }
 
+export function removeLobbyPlayer(state: GameState, targetPlayerId: string): GameState {
+  if (state.phase !== "lobby") {
+    throw new Error("Players can only be kicked before the game starts");
+  }
+  const nextPlayers = state.players.filter((player) => player.playerId !== targetPlayerId);
+  if (nextPlayers.length === state.players.length) {
+    throw new Error("Kick target not found");
+  }
+  return {
+    ...state,
+    hostId: state.hostId === targetPlayerId ? nextPlayers[0]?.playerId : state.hostId,
+    players: nextPlayers
+  };
+}
+
 export function startGame(
   state: GameState,
   now = Date.now(),

@@ -829,6 +829,7 @@ export function renderRoom(roomId: string): string {
           currentPlayerAlive &&
           (game.phase === "day" || (game.phase === "night" && (isWolfRole(role) || role === "seer" || role === "guard" || role === "child_fox" || role === "cat")));
         const host = game.players.find((player) => player.playerId === game.hostId);
+        const canManageLobby = game.phase === "lobby" && (game.hostId === currentPlayerId || isGm);
         document.querySelector("#host").textContent = host ? host.nickname : "未定";
         document.querySelector("#startGame").disabled = game.phase !== "lobby" || (game.hostId !== currentPlayerId && !isGm);
         document.querySelector("#sendWolfChat").disabled = !(game.phase === "night" && isWolfRole(role) && currentPlayerAlive);
@@ -902,21 +903,22 @@ export function renderRoom(roomId: string): string {
           card.appendChild(cardTable);
           row.appendChild(card);
           const button = document.createElement("button");
-          button.textContent = (player.alive ? "" : "× ") + player.nickname;
+          button.textContent = canManageLobby && player.playerId !== currentPlayerId ? "踢 " + player.nickname : (player.alive ? "" : "× ") + player.nickname;
           const catReviveTarget = game.phase === "night" && role === "cat" && !player.alive;
           button.disabled =
-            !actorCanAct ||
+            (!actorCanAct && !(canManageLobby && player.playerId !== currentPlayerId)) ||
             (game.phase === "night" && role === "cat" && !catReviveTarget) ||
             (!player.alive && !catReviveTarget) ||
             player.playerId === currentPlayerId ||
-            game.phase === "ended" ||
-            game.phase === "lobby";
+            game.phase === "ended";
           if (!player.alive) {
             button.className = "dead";
           }
           button.addEventListener("click", () => {
             if (!latestGame) return;
-            if (latestGame.phase === "day") {
+            if (latestGame.phase === "lobby") {
+              sendCommand({ type: "kick_player", targetPlayerId: player.playerId });
+            } else if (latestGame.phase === "day") {
               sendCommand({ type: "vote", targetPlayerId: player.playerId });
             } else if (latestGame.phase === "night" && isWolfRole(role)) {
               sendCommand({ type: "night_kill", targetPlayerId: player.playerId });

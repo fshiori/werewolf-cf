@@ -203,6 +203,11 @@ export type StartGameClientMessage = {
   type: "start_game";
 };
 
+export type KickPlayerClientMessage = {
+  type: "kick_player";
+  targetPlayerId: string;
+};
+
 export type VoteClientMessage = {
   type: "vote";
   targetPlayerId: string;
@@ -249,6 +254,7 @@ export type ClientMessage =
   | GmChatClientMessage
   | GmWhisperClientMessage
   | StartGameClientMessage
+  | KickPlayerClientMessage
   | VoteClientMessage
   | NightKillClientMessage
   | DivineClientMessage
@@ -273,7 +279,7 @@ export type ServerMessage =
   | { type: "child_fox_result"; targetPlayerId: string; targetNickname: string; result: ChildFoxDivinationResult }
   | { type: "medium_result"; day: number; targetPlayerId: string; targetNickname: string; result: MediumResult }
   | { type: "last_words_ack" }
-  | { type: "action_ack"; action: "vote" | "night_kill" | "guard" | "child_fox_divine" | "cat_revive"; targetPlayerId: string }
+  | { type: "action_ack"; action: "vote" | "night_kill" | "guard" | "child_fox_divine" | "cat_revive" | "kick_player"; targetPlayerId: string }
   | {
       type: "game_state";
       phase: GamePhase;

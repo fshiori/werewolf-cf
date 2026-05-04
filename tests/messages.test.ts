@@ -150,6 +150,11 @@ describe("messages", () => {
       action: "guard",
       targetPlayerId: "player_1"
     });
+    expect(buildActionAckMessage("kick_player", "player_2")).toEqual({
+      type: "action_ack",
+      action: "kick_player",
+      targetPlayerId: "player_2"
+    });
   });
 
   it("builds last words acknowledgement messages", () => {

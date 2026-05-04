@@ -20,6 +20,7 @@ import {
   loversForPlayer,
   mediumReadingForPlayer,
   playerStatUpdates,
+  removeLobbyPlayer,
   setLastWords,
   startGame,
   upsertLobbyPlayer,
@@ -1203,6 +1204,19 @@ describe("game", () => {
     expect(() => upsertLobbyPlayer(renamed, { playerId: "player_2", nickname: "Bob", tripHash: "trip_a" })).toThrow(
       "Trip already joined this room"
     );
+  });
+
+  it("removes lobby players and reassigns host", () => {
+    const waiting = lobby([["player_1", "Alice"], ["player_2", "Bob"], ["player_3", "Carol"]]);
+    const withoutGuest = removeLobbyPlayer(waiting, "player_3");
+    const withoutHost = removeLobbyPlayer(withoutGuest, "player_1");
+
+    expect(withoutGuest.players.map((player) => player.playerId)).toEqual(["player_1", "player_2"]);
+    expect(withoutGuest.hostId).toBe("player_1");
+    expect(withoutHost.players.map((player) => player.playerId)).toEqual(["player_2"]);
+    expect(withoutHost.hostId).toBe("player_2");
+    expect(() => removeLobbyPlayer(startGame(waiting, 0, () => 0), "player_2")).toThrow("Players can only be kicked");
+    expect(() => removeLobbyPlayer(waiting, "player_missing")).toThrow("Kick target not found");
   });
 
   it("allows only living werewolves to use the night channel", () => {
