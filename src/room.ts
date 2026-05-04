@@ -2,6 +2,7 @@ import {
   advancePhaseByAlarm,
   canJoinRoomState,
   canStartGame,
+  canUsePublicChat,
   canUseWerewolfChannel,
   castDayVote,
   castDivination,
@@ -112,6 +113,9 @@ export class RoomDurableObject {
       }
 
       if (message.type === "chat") {
+        if (!canUsePublicChat(await this.loadGameState(), member.playerId)) {
+          throw new Error("Only living players can chat during the game");
+        }
         const text = validateChatText(message.text);
         this.broadcast(buildChatMessage(member.playerId, member.nickname, text));
         return;
