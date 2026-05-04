@@ -16,14 +16,15 @@ Latest automated rerun:
 
 - Date: 2026-05-04
 - `npm test`
-  - Output: `5 passed (5)` test files
-  - Output: `154 passed (154)` tests
+  - Output: `6 passed (6)` test files
+  - Output: `155 passed (155)` tests
   - Files:
     - `tests/game.test.ts`
     - `tests/index.test.ts`
     - `tests/validation.test.ts`
     - `tests/messages.test.ts`
     - `tests/render.test.ts`
+    - `tests/room.test.ts`
   - Result: passed
 - `npm run typecheck`
   - Output: no TypeScript errors
