@@ -17,6 +17,7 @@ type SentMessage = {
   role?: string;
   wolves?: Array<{ playerId: string; nickname: string }>;
   lovers?: Array<{ playerId: string; nickname: string }>;
+  roles?: Record<string, string>;
   players?: Array<{ playerId: string; nickname: string; alive: boolean; role?: string }>;
 };
 
@@ -729,6 +730,68 @@ describe("RoomDurableObject", () => {
     expect(wolfMessages).toContainEqual(expect.objectContaining({ type: "role", role: "werewolf" }));
     expect(targetMessages).toContainEqual(expect.objectContaining({ type: "role", role: "villager" }));
     expect(otherMessages).toContainEqual(expect.objectContaining({ type: "role", role: "villager" }));
+  });
+
+  it("adjudicates active games through the GM websocket handler", async () => {
+    const game: GameState = {
+      roomId: "room_abc",
+      phase: "night",
+      day: 2,
+      players: [
+        { playerId: "player_wolf", nickname: "Wolf", role: "werewolf", alive: true },
+        { playerId: "player_villager", nickname: "Villager", role: "villager", alive: true },
+        { playerId: "player_seer", nickname: "Seer", role: "seer", alive: false }
+      ],
+      votes: {},
+      openVote: false,
+      commonTalkVisible: false,
+      deadRoleVisible: false,
+      wishRole: false,
+      dummyBoy: false,
+      dayMs: 180_000,
+      nightMs: 90_000,
+      selfVote: false,
+      voteStatus: false,
+      revoteCount: 0,
+      nightKills: {},
+      divinations: {},
+      guards: {},
+      catRevives: {},
+      lastWords: {},
+      log: []
+    };
+    const room = roomObject(game);
+    const gmMessages: SentMessage[] = [];
+    const wolfMessages: SentMessage[] = [];
+    const villagerMessages: SentMessage[] = [];
+    const seerMessages: SentMessage[] = [];
+    const gmSocket = fakeSocket(gmMessages);
+    const wolfSocket = fakeSocket(wolfMessages);
+    const villagerSocket = fakeSocket(villagerMessages);
+    const seerSocket = fakeSocket(seerMessages);
+    connect(room, gmSocket, "player_gm", "GM", true);
+    connect(room, wolfSocket, "player_wolf", "Wolf");
+    connect(room, villagerSocket, "player_villager", "Villager");
+    connect(room, seerSocket, "player_seer", "Seer");
+
+    await sendRaw(room, gmSocket, JSON.stringify({ type: "gm_end_game", winner: "villagers" }));
+
+    for (const messages of [gmMessages, wolfMessages, villagerMessages, seerMessages]) {
+      const state = messages.find((message) => message.type === "game_state");
+      expect(state).toEqual(expect.objectContaining({ type: "game_state", phase: "ended", day: 2, winner: "villagers" }));
+      expect(state?.players?.some((player) => "role" in player)).toBe(false);
+      expect(messages).toContainEqual(
+        expect.objectContaining({
+          type: "revealed_roles",
+          roles: {
+            player_wolf: "werewolf",
+            player_villager: "villager",
+            player_seer: "seer"
+          }
+        })
+      );
+    }
+    expect(gmMessages.some((message) => message.type === "role")).toBe(false);
   });
 
   it("rejects host-only websocket commands from non-host sockets", async () => {
