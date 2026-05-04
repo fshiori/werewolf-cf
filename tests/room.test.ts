@@ -164,4 +164,42 @@ describe("RoomDurableObject", () => {
     expect(messages).toContainEqual(expect.objectContaining({ type: "divination_result", targetPlayerId: "player_wolf" }));
     expect(messages).toContainEqual(expect.objectContaining({ type: "game_state", phase: "day", day: 2 }));
   });
+
+  it("rejects villager night kills through the websocket handler", async () => {
+    const game: GameState = {
+      roomId: "room_abc",
+      phase: "night",
+      day: 1,
+      players: [
+        { playerId: "player_wolf", nickname: "Wolf", role: "werewolf", alive: true },
+        { playerId: "player_villager", nickname: "Villager", role: "villager", alive: true },
+        { playerId: "player_target", nickname: "Target", role: "villager", alive: true }
+      ],
+      votes: {},
+      openVote: false,
+      commonTalkVisible: false,
+      deadRoleVisible: false,
+      wishRole: false,
+      dummyBoy: false,
+      dayMs: 180_000,
+      nightMs: 90_000,
+      selfVote: false,
+      voteStatus: false,
+      revoteCount: 0,
+      nightKills: {},
+      divinations: {},
+      guards: {},
+      catRevives: {},
+      lastWords: {},
+      log: []
+    };
+    const room = roomObject(game);
+    const messages: SentMessage[] = [];
+    const socket = fakeSocket(messages);
+    connect(room, socket, "player_villager", "Villager");
+
+    await sendRaw(room, socket, JSON.stringify({ type: "night_kill", targetPlayerId: "player_target" }));
+
+    expect(messages).toEqual([{ type: "error", message: "Only werewolves can perform night kills" }]);
+  });
 });
