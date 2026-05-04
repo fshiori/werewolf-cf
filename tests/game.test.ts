@@ -72,6 +72,29 @@ describe("game", () => {
     expect(game.players.find((player) => player.playerId === "player_2")?.alive).toBe(false);
   });
 
+  it("clears pending actions owned by players who die", () => {
+    let game = startGame(lobby([["player_1", "Alice"], ["player_2", "Bob"], ["player_3", "Carol"], ["player_4", "Dave"]]), 0, () => 0);
+    game = {
+      ...game,
+      nightKills: { player_2: "player_3" },
+      divinations: { player_2: "player_1" }
+    };
+
+    game = castDayVote(game, "player_1", "player_2");
+    game = castDayVote(game, "player_2", "player_3");
+    game = castDayVote(game, "player_3", "player_2");
+    game = castDayVote(game, "player_4", "player_2");
+
+    expect(game.phase).toBe("night");
+    expect(game.nightKills).toEqual({});
+    expect(game.divinations).toEqual({});
+
+    game = { ...game, votes: { player_3: "player_1" } };
+    game = castNightKill(game, "player_1", "player_3", 0);
+
+    expect(game.votes).toEqual({});
+  });
+
   it("allows only wolves to perform night kills and detects wolf win", () => {
     let game = startGame(lobby([["player_1", "Alice"], ["player_2", "Bob"], ["player_3", "Carol"], ["player_4", "Dave"]]), 0, () => 0);
     game = castDayVote(game, "player_1", "player_2");
