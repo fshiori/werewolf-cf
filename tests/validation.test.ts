@@ -6,6 +6,7 @@ import {
   validateChatText,
   validateLastWordsText,
   validateNickname,
+  validateOptionalLastWordsText,
   validatePlayerId,
   validateRoomCapacity,
   validateRoomComment,
@@ -58,7 +59,9 @@ describe("validation", () => {
 
   it("validates last words text", () => {
     expect(validateLastWordsText(" final words ")).toBe("final words");
+    expect(validateOptionalLastWordsText("   ")).toBe("");
     expect(() => validateLastWordsText("")).toThrow("Last words are required");
+    expect(() => validateOptionalLastWordsText("x".repeat(501))).toThrow("Last words are too long");
     expect(() => validateLastWordsText("x".repeat(501))).toThrow("Last words are too long");
   });
 

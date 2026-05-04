@@ -106,6 +106,14 @@ export function validateLastWordsText(value: string): string {
   return text;
 }
 
+export function validateOptionalLastWordsText(value: string): string {
+  const text = value.trim();
+  if (text.length > 500) {
+    throw new Error("Last words are too long");
+  }
+  return text;
+}
+
 export function escapeHtml(value: string): string {
   return value
     .replaceAll("&", "&amp;")

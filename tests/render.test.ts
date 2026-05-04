@@ -27,6 +27,9 @@ describe("render", () => {
           deadRoleVisible: true,
           wishRole: true,
           dummyBoy: true,
+          customDummy: true,
+          dummyName: "Custom Dummy",
+          dummyLastWords: "Remember the dummy",
           realTime: true,
           dayMinutes: 5,
           nightMinutes: 2,
@@ -67,6 +70,9 @@ describe("render", () => {
     expect(html).toContain("optionDeadRoleVisible");
     expect(html).toContain("optionWishRole");
     expect(html).toContain("optionDummyBoy");
+    expect(html).toContain("optionCustomDummy");
+    expect(html).toContain("dummyName");
+    expect(html).toContain("dummyLastWords");
     expect(html).toContain("optionRealTime");
     expect(html).toContain("optionDayMinutes");
     expect(html).toContain("optionNightMinutes");
@@ -87,10 +93,11 @@ describe("render", () => {
     expect(html).toContain("允許幽靈觀看角色");
     expect(html).toContain("允許加入時選擇希望角色");
     expect(html).toContain("加入替身君並從第一夜開始");
+    expect(html).toContain("自訂替身君名稱及遺言");
     expect(html).toContain("允許玩家白天投票給自己");
     expect(html).toContain("已投票玩家以特殊底色顯示");
     expect(html).toContain("JSON.stringify({ name, comment, maxPlayers, playerId:");
-    expect(html).toContain("options: { poison, bigWolf, authority, decider, lovers, betrayer, childFox, twoFoxes, cat, lastWords, openVote, commonTalkVisible, deadRoleVisible, wishRole, dummyBoy, realTime, dayMinutes, nightMinutes, selfVote, voteStatus }");
+    expect(html).toContain("options: { poison, bigWolf, authority, decider, lovers, betrayer, childFox, twoFoxes, cat, lastWords, openVote, commonTalkVisible, deadRoleVisible, wishRole, dummyBoy, customDummy, dummyName, dummyLastWords, realTime, dayMinutes, nightMinutes, selfVote, voteStatus }");
     expect(html).toContain("埋毒");
     expect(html).toContain("大狼");
     expect(html).toContain("背德");
@@ -103,6 +110,7 @@ describe("render", () => {
     expect(html).toContain("靈視");
     expect(html).toContain("希望");
     expect(html).toContain("替身");
+    expect(html).toContain("自訂替身");
     expect(html).toContain("自投");
     expect(html).toContain("投票済");
     expect(html).toContain("leaderboardRows");

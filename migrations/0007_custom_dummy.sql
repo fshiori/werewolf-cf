@@ -1,0 +1,2 @@
+ALTER TABLE rooms ADD COLUMN dummy_name TEXT NOT NULL DEFAULT '替身君';
+ALTER TABLE rooms ADD COLUMN dummy_last_words TEXT NOT NULL DEFAULT '';

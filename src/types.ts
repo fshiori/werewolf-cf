@@ -26,6 +26,9 @@ export interface RoomOptions {
   deadRoleVisible: boolean;
   wishRole: boolean;
   dummyBoy: boolean;
+  customDummy: boolean;
+  dummyName: string;
+  dummyLastWords: string;
   realTime: boolean;
   dayMinutes: number;
   nightMinutes: number;

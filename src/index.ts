@@ -2,7 +2,16 @@ import { renderHome, renderRoom } from "./render";
 import { RoomDurableObject } from "./room";
 import { DEFAULT_DAY_MINUTES, DEFAULT_NIGHT_MINUTES } from "./game";
 import type { GameRecordSummary, LeaderboardEntry, PlayerStats, RoomEventSummary, RoomOptions, RoomSummary } from "./types";
-import { isRecord, validateNickname, validatePlayerId, validateRoomCapacity, validateRoomComment, validateRoomId, validateRoomName } from "./validation";
+import {
+  isRecord,
+  validateNickname,
+  validateOptionalLastWordsText,
+  validatePlayerId,
+  validateRoomCapacity,
+  validateRoomComment,
+  validateRoomId,
+  validateRoomName
+} from "./validation";
 
 export { RoomDurableObject };
 
@@ -30,8 +39,19 @@ function isFileLike(value: unknown): value is File {
 
 async function listRooms(env: Env): Promise<RoomSummary[]> {
   const result = await env.DB.prepare(
-    "SELECT id, name, room_comment, max_user, dellook, status, created_at, option_role FROM rooms ORDER BY created_at DESC LIMIT 50"
-  ).all<{ id: string; name: string; room_comment?: string | null; max_user?: number | null; dellook?: number | null; status: RoomSummary["status"]; created_at: string; option_role?: string }>();
+    "SELECT id, name, room_comment, max_user, dellook, dummy_name, dummy_last_words, status, created_at, option_role FROM rooms ORDER BY created_at DESC LIMIT 50"
+  ).all<{
+    id: string;
+    name: string;
+    room_comment?: string | null;
+    max_user?: number | null;
+    dellook?: number | null;
+    dummy_name?: string | null;
+    dummy_last_words?: string | null;
+    status: RoomSummary["status"];
+    created_at: string;
+    option_role?: string;
+  }>();
 
   return result.results.map((room) => ({
     id: room.id,
@@ -40,7 +60,12 @@ async function listRooms(env: Env): Promise<RoomSummary[]> {
     maxPlayers: room.max_user ?? 22,
     status: room.status,
     createdAt: room.created_at,
-    options: { ...parseRoomOptions(room.option_role ?? ""), deadRoleVisible: room.dellook === 1 }
+    options: {
+      ...parseRoomOptions(room.option_role ?? ""),
+      deadRoleVisible: room.dellook === 1,
+      dummyName: room.dummy_name ?? "替身君",
+      dummyLastWords: room.dummy_last_words ?? ""
+    }
   }));
 }
 
@@ -65,6 +90,9 @@ function parseRoomOptions(optionRole: string): RoomOptions {
     deadRoleVisible: false,
     wishRole: roles.has("wish_role"),
     dummyBoy: roles.has("dummy_boy"),
+    customDummy: roles.has("cust_dummy"),
+    dummyName: "替身君",
+    dummyLastWords: "",
     realTime: Boolean(realTimeToken),
     dayMinutes: readMinutes(dayMinutes, DEFAULT_DAY_MINUTES),
     nightMinutes: readMinutes(nightMinutes, DEFAULT_NIGHT_MINUTES),
@@ -89,6 +117,7 @@ function serializeRoomOptions(options: RoomOptions): string {
     options.commonTalkVisible ? "comoutl" : "",
     options.wishRole ? "wish_role" : "",
     options.dummyBoy ? "dummy_boy" : "",
+    options.customDummy ? "cust_dummy" : "",
     options.realTime ? `real_time:${formatMinutes(options.dayMinutes)}:${formatMinutes(options.nightMinutes)}` : "",
     options.selfVote ? "votedme" : "",
     options.voteStatus ? "votedisplay" : ""
@@ -113,6 +142,9 @@ function readRoomOptions(value: unknown): RoomOptions {
       deadRoleVisible: false,
       wishRole: false,
       dummyBoy: false,
+      customDummy: false,
+      dummyName: "替身君",
+      dummyLastWords: "",
       realTime: false,
       dayMinutes: DEFAULT_DAY_MINUTES,
       nightMinutes: DEFAULT_NIGHT_MINUTES,
@@ -136,6 +168,9 @@ function readRoomOptions(value: unknown): RoomOptions {
     deadRoleVisible: value.deadRoleVisible === true,
     wishRole: value.wishRole === true,
     dummyBoy: value.dummyBoy === true,
+    customDummy: value.customDummy === true,
+    dummyName: typeof value.dummyName === "string" ? validateNickname(value.dummyName) : "替身君",
+    dummyLastWords: typeof value.dummyLastWords === "string" ? validateOptionalLastWordsText(value.dummyLastWords) : "",
     realTime: value.realTime === true,
     dayMinutes: readMinutes(value.dayMinutes, DEFAULT_DAY_MINUTES),
     nightMinutes: readMinutes(value.nightMinutes, DEFAULT_NIGHT_MINUTES),
@@ -281,7 +316,18 @@ async function createRoom(request: Request, env: Env): Promise<Response> {
       env.DB.prepare(
         "INSERT INTO players (id, nickname, last_seen_at) VALUES (?, ?, CURRENT_TIMESTAMP) ON CONFLICT(id) DO UPDATE SET nickname = excluded.nickname, last_seen_at = CURRENT_TIMESTAMP"
       ).bind(playerId, nickname),
-      env.DB.prepare("INSERT INTO rooms (id, name, room_comment, max_user, dellook, status, option_role) VALUES (?, ?, ?, ?, ?, 'lobby', ?)").bind(roomId, name, comment, maxPlayers, options.deadRoleVisible ? 1 : 0, optionRole),
+      env.DB.prepare(
+        "INSERT INTO rooms (id, name, room_comment, max_user, dellook, dummy_name, dummy_last_words, status, option_role) VALUES (?, ?, ?, ?, ?, ?, ?, 'lobby', ?)"
+      ).bind(
+        roomId,
+        name,
+        comment,
+        maxPlayers,
+        options.deadRoleVisible ? 1 : 0,
+        options.customDummy ? options.dummyName : "替身君",
+        options.customDummy ? options.dummyLastWords : "",
+        optionRole
+      ),
       env.DB.prepare("INSERT INTO room_events (room_id, player_id, event_type, payload_json) VALUES (?, ?, 'room_created', ?)").bind(
         roomId,
         playerId,

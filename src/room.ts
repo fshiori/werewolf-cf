@@ -489,9 +489,9 @@ export class RoomDurableObject {
   }
 
   private async loadRoomOptions(): Promise<RoomOptions> {
-    const row = await this.env.DB.prepare("SELECT option_role, dellook FROM rooms WHERE id = ? LIMIT 1")
+    const row = await this.env.DB.prepare("SELECT option_role, dellook, dummy_name, dummy_last_words FROM rooms WHERE id = ? LIMIT 1")
       .bind(this.roomId)
-      .first<{ option_role: string; dellook?: number | null }>();
+      .first<{ option_role: string; dellook?: number | null; dummy_name?: string | null; dummy_last_words?: string | null }>();
     const tokens = (row?.option_role ?? "").split(/\s+/).filter(Boolean);
     const roles = new Set(tokens);
     const realTimeToken = tokens.find((token) => token.startsWith("real_time:"));
@@ -512,6 +512,9 @@ export class RoomDurableObject {
       deadRoleVisible: row?.dellook === 1,
       wishRole: roles.has("wish_role"),
       dummyBoy: roles.has("dummy_boy"),
+      customDummy: roles.has("cust_dummy"),
+      dummyName: row?.dummy_name ?? "替身君",
+      dummyLastWords: row?.dummy_last_words ?? "",
       realTime: Boolean(realTimeToken),
       dayMinutes: readMinutes(dayMinutes, DEFAULT_DAY_MINUTES),
       nightMinutes: readMinutes(nightMinutes, DEFAULT_NIGHT_MINUTES),

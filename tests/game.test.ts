@@ -215,6 +215,9 @@ describe("game", () => {
       deadRoleVisible: false,
       wishRole: false,
       dummyBoy: false,
+      customDummy: false,
+      dummyName: "替身君",
+      dummyLastWords: "",
       realTime: false,
       dayMinutes: 3,
       nightMinutes: 1.5,
@@ -248,6 +251,9 @@ describe("game", () => {
       deadRoleVisible: false,
       wishRole: false,
       dummyBoy: false,
+      customDummy: false,
+      dummyName: "替身君",
+      dummyLastWords: "",
       realTime: false,
       dayMinutes: 3,
       nightMinutes: 1.5,
@@ -281,6 +287,9 @@ describe("game", () => {
       deadRoleVisible: false,
       wishRole: false,
       dummyBoy: false,
+      customDummy: false,
+      dummyName: "替身君",
+      dummyLastWords: "",
       realTime: false,
       dayMinutes: 3,
       nightMinutes: 1.5,
@@ -343,6 +352,9 @@ describe("game", () => {
       deadRoleVisible: false,
       wishRole: false,
       dummyBoy: false,
+      customDummy: false,
+      dummyName: "替身君",
+      dummyLastWords: "",
       realTime: false,
       dayMinutes: 3,
       nightMinutes: 1.5,
@@ -378,6 +390,9 @@ describe("game", () => {
       deadRoleVisible: false,
       wishRole: false,
       dummyBoy: false,
+      customDummy: false,
+      dummyName: "替身君",
+      dummyLastWords: "",
       realTime: false,
       dayMinutes: 3,
       nightMinutes: 1.5,
@@ -410,6 +425,9 @@ describe("game", () => {
       deadRoleVisible: false,
       wishRole: false,
       dummyBoy: false,
+      customDummy: false,
+      dummyName: "替身君",
+      dummyLastWords: "",
       realTime: false,
       dayMinutes: 3,
       nightMinutes: 1.5,
@@ -440,6 +458,9 @@ describe("game", () => {
       deadRoleVisible: false,
       wishRole: false,
       dummyBoy: false,
+      customDummy: false,
+      dummyName: "替身君",
+      dummyLastWords: "",
       realTime: false,
       dayMinutes: 3,
       nightMinutes: 1.5,
@@ -474,6 +495,9 @@ describe("game", () => {
       deadRoleVisible: false,
       wishRole: false,
       dummyBoy: false,
+      customDummy: false,
+      dummyName: "替身君",
+      dummyLastWords: "",
       realTime: false,
       dayMinutes: 3,
       nightMinutes: 1.5,
@@ -511,6 +535,9 @@ describe("game", () => {
         deadRoleVisible: false,
         wishRole: false,
         dummyBoy: false,
+        customDummy: true,
+        dummyName: "Custom Dummy",
+        dummyLastWords: "Remember the dummy",
         realTime: true,
         dayMinutes: 2,
         nightMinutes: 1,
@@ -549,6 +576,9 @@ describe("game", () => {
         deadRoleVisible: false,
         wishRole: false,
         dummyBoy: false,
+        customDummy: false,
+        dummyName: "替身君",
+        dummyLastWords: "",
         realTime: false,
         dayMinutes: 3,
         nightMinutes: 1.5,
@@ -596,6 +626,9 @@ describe("game", () => {
         deadRoleVisible: false,
         wishRole: true,
         dummyBoy: false,
+        customDummy: false,
+        dummyName: "替身君",
+        dummyLastWords: "",
         realTime: false,
         dayMinutes: 3,
         nightMinutes: 1.5,
@@ -634,6 +667,9 @@ describe("game", () => {
         deadRoleVisible: false,
         wishRole: false,
         dummyBoy: true,
+        customDummy: true,
+        dummyName: "Custom Dummy",
+        dummyLastWords: "Remember the dummy",
         realTime: false,
         dayMinutes: 3,
         nightMinutes: 1.5,
@@ -647,7 +683,7 @@ describe("game", () => {
 
     expect(game.phase).toBe("night");
     expect(game.day).toBe(0);
-    expect(dummy).toMatchObject({ nickname: "替身君", alive: true });
+    expect(dummy).toMatchObject({ nickname: "Custom Dummy", alive: true });
     expect(dummy?.role).not.toBe("werewolf");
     expect(dummy?.role).not.toBe("fox");
     expect(() => castNightKill(game, wolf?.playerId ?? "", nonDummy?.playerId ?? "")).toThrow("dummy boy");
@@ -657,6 +693,7 @@ describe("game", () => {
     expect(game.phase).toBe("day");
     expect(game.day).toBe(1);
     expect(game.players.find((player) => player.playerId === "player_dummy_boy")?.alive).toBe(false);
+    expect(game.log).toContain("Custom Dummy 的遺言：Remember the dummy");
   });
 
   it("uses default phase timers when real time is disabled", () => {
@@ -684,6 +721,9 @@ describe("game", () => {
         deadRoleVisible: false,
         wishRole: false,
         dummyBoy: false,
+        customDummy: false,
+        dummyName: "替身君",
+        dummyLastWords: "",
         realTime: false,
         dayMinutes: 9,
         nightMinutes: 9,
