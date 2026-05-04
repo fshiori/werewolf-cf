@@ -140,16 +140,31 @@ describe("game", () => {
     expect(() => castGuard(game, "player_2", "player_3")).toThrow("Guarding is only available at night");
   });
 
+  it("uses the reference role deck in eight-player games", () => {
+    const game = startGame(numberedLobby(8), 0, () => 0);
+
+    expect(game.players.map((player) => player.role)).toEqual([
+      "villager",
+      "villager",
+      "villager",
+      "villager",
+      "villager",
+      "werewolf",
+      "werewolf",
+      "seer"
+    ]);
+  });
+
   it("adds common partners in thirteen-player games", () => {
     const game = startGame(numberedLobby(13), 0, () => 0);
 
     expect(game.players.filter((player) => player.role === "common")).toEqual([
-      expect.objectContaining({ playerId: "player_8", role: "common" }),
-      expect.objectContaining({ playerId: "player_9", role: "common" })
+      expect.objectContaining({ playerId: "player_12", role: "common" }),
+      expect.objectContaining({ playerId: "player_13", role: "common" })
     ]);
-    expect(commonsForPlayer(game, "player_8")).toEqual([
-      { playerId: "player_8", nickname: "Player 8" },
-      { playerId: "player_9", nickname: "Player 9" }
+    expect(commonsForPlayer(game, "player_12")).toEqual([
+      { playerId: "player_12", nickname: "Player 12" },
+      { playerId: "player_13", nickname: "Player 13" }
     ]);
     expect(commonsForPlayer(game, "player_10")).toEqual([]);
   });
@@ -158,7 +173,7 @@ describe("game", () => {
     const game = startGame(numberedLobby(15), 0, () => 0);
 
     expect(game.players.filter((player) => player.role === "fox")).toEqual([
-      expect.objectContaining({ playerId: "player_10", role: "fox" })
+      expect.objectContaining({ playerId: "player_15", role: "fox" })
     ]);
   });
 
