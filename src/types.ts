@@ -12,9 +12,9 @@ export interface RoomMember {
   nickname: string;
 }
 
-export type PlayerRole = "villager" | "werewolf" | "seer" | "medium" | "madman" | "guard" | "common";
+export type PlayerRole = "villager" | "werewolf" | "seer" | "medium" | "madman" | "guard" | "common" | "fox";
 export type GamePhase = "lobby" | "day" | "night" | "ended";
-export type GameWinner = "villagers" | "werewolves";
+export type GameWinner = "villagers" | "werewolves" | "foxes";
 export type DivinationResult = "human" | "werewolf";
 export type MediumResult = "human" | "werewolf";
 
