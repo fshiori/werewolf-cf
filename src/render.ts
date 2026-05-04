@@ -39,6 +39,7 @@ function page(title: string, body: string): string {
     .menu-box th { background: #ccffcc; padding: 5px; }
     .menu-list td { padding: 2px 3px; }
     .room-link { color: #cc3300; display: block; margin-bottom: 8px; }
+    .room-link > a { color: #cc3300; }
     .room-line { font-size: 16px; }
     .room-comment { display: block; text-align: right; margin-left: 100px; color: #333333; }
     .status {

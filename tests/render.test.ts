@@ -144,6 +144,7 @@ describe("render", () => {
     expect(html).toContain("leaderboardRows");
     expect(html).toContain("尚無戰績。");
     expect(html).toContain('link.href = "/player/" + entry.playerId;');
+    expect(html).toContain(".room-link > a");
     expect(html).toContain("建立房間");
   });
 
