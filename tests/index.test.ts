@@ -666,6 +666,22 @@ describe("worker routes", () => {
     });
   });
 
+  it("returns version metadata for smoke checks", async () => {
+    const response = await worker.fetch(new Request("http://example.test/api/version"), envWithRooms([]));
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      version: {
+        name: "werewolf-cf",
+        appVersion: "0.1.0",
+        runtime: "Cloudflare Workers",
+        language: "TypeScript",
+        bindings: ["ROOM_DO", "DB", "ASSETS", "CONFIG"],
+        capabilities: ["rooms", "websockets", "game_loop", "trip_identity", "gm_controls", "player_stats", "avatars", "runtime_config"]
+      }
+    });
+  });
+
   it("returns player stats from D1", async () => {
     const response = await worker.fetch(
       new Request("http://example.test/api/players/player_stats/stats"),
