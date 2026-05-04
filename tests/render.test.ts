@@ -23,7 +23,8 @@ describe("render", () => {
           openVote: true,
           realTime: true,
           dayMinutes: 5,
-          nightMinutes: 2
+          nightMinutes: 2,
+          selfVote: true
         }
       }
     ]);
@@ -52,6 +53,7 @@ describe("render", () => {
     expect(html).toContain("optionRealTime");
     expect(html).toContain("optionDayMinutes");
     expect(html).toContain("optionNightMinutes");
+    expect(html).toContain("optionSelfVote");
     expect(html).toContain("20人以上埋毒者選項");
     expect(html).toContain("20人以上時大狼出場");
     expect(html).toContain("16人以上權力者出場");
@@ -63,7 +65,8 @@ describe("render", () => {
     expect(html).toContain("20人以上貓又登場");
     expect(html).toContain("生存中可留下死亡時公開的遺言");
     expect(html).toContain("白天公開目前投票目標");
-    expect(html).toContain("options: { poison, bigWolf, authority, decider, lovers, betrayer, childFox, twoFoxes, cat, lastWords, openVote, realTime, dayMinutes, nightMinutes }");
+    expect(html).toContain("允許玩家白天投票給自己");
+    expect(html).toContain("options: { poison, bigWolf, authority, decider, lovers, betrayer, childFox, twoFoxes, cat, lastWords, openVote, realTime, dayMinutes, nightMinutes, selfVote }");
     expect(html).toContain("埋毒");
     expect(html).toContain("大狼");
     expect(html).toContain("背德");
@@ -72,6 +75,7 @@ describe("render", () => {
     expect(html).toContain("貓又");
     expect(html).toContain("遺言");
     expect(html).toContain("公開票");
+    expect(html).toContain("自投");
     expect(html).toContain("leaderboardRows");
     expect(html).toContain("尚無戰績。");
     expect(html).toContain("cell.textContent = String(value);");

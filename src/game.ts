@@ -52,6 +52,7 @@ export function createLobbyState(roomId: string): GameState {
     openVote: false,
     dayMs: DAY_MS,
     nightMs: NIGHT_MS,
+    selfVote: false,
     revoteCount: 0,
     nightKills: {},
     divinations: {},
@@ -155,7 +156,8 @@ export function startGame(
     openVote: false,
     realTime: false,
     dayMinutes: DEFAULT_DAY_MINUTES,
-    nightMinutes: DEFAULT_NIGHT_MINUTES
+    nightMinutes: DEFAULT_NIGHT_MINUTES,
+    selfVote: false
   }
 ): GameState {
   if (state.phase !== "lobby") {
@@ -326,6 +328,7 @@ function startGameWithPlayers(state: GameState, players: GamePlayer[], now: numb
     openVote: options.openVote,
     dayMs: roomOptionDayMs(options),
     nightMs: roomOptionNightMs(options),
+    selfVote: options.selfVote,
     revoteCount: 0,
     nightKills: {},
     divinations: {},
@@ -358,6 +361,9 @@ export function castDayVote(state: GameState, voterId: string, targetId: string)
   }
   assertLivingPlayer(state, voterId);
   assertLivingPlayer(state, targetId);
+  if (voterId === targetId && !state.selfVote) {
+    throw new Error("Self votes are not enabled in this room");
+  }
 
   const next = { ...state, votes: { ...state.votes, [voterId]: targetId } };
   if (Object.keys(next.votes).length >= livingPlayers(next).length) {

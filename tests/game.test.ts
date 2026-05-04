@@ -48,6 +48,7 @@ function activeState(phase: "day" | "night", players: GameState["players"]): Gam
     openVote: false,
     dayMs: 180_000,
     nightMs: 90_000,
+    selfVote: false,
     revoteCount: 0,
     nightKills: {},
     divinations: {},
@@ -114,7 +115,7 @@ describe("game", () => {
     expect(wolvesForPlayer(game, "player_4")).toEqual([]);
 
     for (const player of game.players) {
-      game = castDayVote(game, player.playerId, "player_6");
+      game = castDayVote(game, player.playerId, player.playerId === "player_6" ? "player_5" : "player_6");
     }
 
     const divination = castDivination(game, "player_2", "player_4");
@@ -139,7 +140,7 @@ describe("game", () => {
     expect(game.players.find((player) => player.playerId === "player_5")?.role).toBe("guard");
 
     for (const player of game.players) {
-      game = castDayVote(game, player.playerId, "player_7");
+      game = castDayVote(game, player.playerId, player.playerId === "player_7" ? "player_6" : "player_7");
     }
 
     game = castNightKill(game, "player_1", "player_2", 0);
@@ -207,7 +208,8 @@ describe("game", () => {
       openVote: false,
       realTime: false,
       dayMinutes: 3,
-      nightMinutes: 1.5
+      nightMinutes: 1.5,
+      selfVote: false
     });
 
     expect(normal.players.filter((player) => player.role === "poison")).toHaveLength(0);
@@ -234,7 +236,8 @@ describe("game", () => {
       openVote: false,
       realTime: false,
       dayMinutes: 3,
-      nightMinutes: 1.5
+      nightMinutes: 1.5,
+      selfVote: false
     });
 
     expect(game.players.filter((player) => player.role === "big_wolf")).toHaveLength(1);
@@ -261,7 +264,8 @@ describe("game", () => {
       openVote: false,
       realTime: false,
       dayMinutes: 3,
-      nightMinutes: 1.5
+      nightMinutes: 1.5,
+      selfVote: false
     });
 
     expect(game.players.find((player) => player.authority)?.playerId).toBe("player_1");
@@ -291,6 +295,7 @@ describe("game", () => {
       { playerId: "player_3", nickname: "Carol", role: "villager", alive: true },
       { playerId: "player_4", nickname: "Dave", role: "werewolf", alive: true }
     ]);
+    game = { ...game, selfVote: true };
 
     game = castDayVote(game, "player_1", "player_3");
     game = castDayVote(game, "player_2", "player_3");
@@ -316,7 +321,8 @@ describe("game", () => {
       openVote: false,
       realTime: false,
       dayMinutes: 3,
-      nightMinutes: 1.5
+      nightMinutes: 1.5,
+      selfVote: false
     });
 
     expect(game.players.filter((player) => player.lover)).toEqual([
@@ -345,7 +351,8 @@ describe("game", () => {
       openVote: false,
       realTime: false,
       dayMinutes: 3,
-      nightMinutes: 1.5
+      nightMinutes: 1.5,
+      selfVote: false
     });
 
     expect(game.players.filter((player) => player.role === "betrayer")).toEqual([
@@ -371,7 +378,8 @@ describe("game", () => {
       openVote: false,
       realTime: false,
       dayMinutes: 3,
-      nightMinutes: 1.5
+      nightMinutes: 1.5,
+      selfVote: false
     });
 
     expect(game.players.filter((player) => player.role === "child_fox")).toEqual([
@@ -395,7 +403,8 @@ describe("game", () => {
       openVote: false,
       realTime: false,
       dayMinutes: 3,
-      nightMinutes: 1.5
+      nightMinutes: 1.5,
+      selfVote: false
     });
 
     expect(game.players.filter((player) => player.role === "fox")).toEqual([
@@ -423,7 +432,8 @@ describe("game", () => {
       openVote: false,
       realTime: false,
       dayMinutes: 3,
-      nightMinutes: 1.5
+      nightMinutes: 1.5,
+      selfVote: false
     });
 
     expect(game.players.filter((player) => player.role === "cat")).toEqual([
@@ -454,13 +464,45 @@ describe("game", () => {
         openVote: true,
         realTime: true,
         dayMinutes: 2,
-        nightMinutes: 1
+        nightMinutes: 1,
+        selfVote: false
       }
     );
 
     expect(game.openVote).toBe(true);
     expect(game.dayMs).toBe(120_000);
     expect(game.nightMs).toBe(60_000);
+  });
+
+  it("stores the self vote room option in started games", () => {
+    const game = startGame(
+      lobby([
+        ["player_1", "Alice"],
+        ["player_2", "Bob"],
+        ["player_3", "Carol"]
+      ]),
+      0,
+      () => 0,
+      {
+        poison: false,
+        bigWolf: false,
+        authority: false,
+        decider: false,
+        lovers: false,
+        betrayer: false,
+        childFox: false,
+        twoFoxes: false,
+        cat: false,
+        lastWords: false,
+        openVote: false,
+        realTime: false,
+        dayMinutes: 3,
+        nightMinutes: 1.5,
+        selfVote: true
+      }
+    );
+
+    expect(game.selfVote).toBe(true);
   });
 
   it("uses default phase timers when real time is disabled", () => {
@@ -486,7 +528,8 @@ describe("game", () => {
         openVote: false,
         realTime: false,
         dayMinutes: 9,
-        nightMinutes: 9
+        nightMinutes: 9,
+        selfVote: false
       }
     );
 
@@ -534,7 +577,7 @@ describe("game", () => {
     ]);
 
     game = castDayVote(game, "player_1", "player_2");
-    game = castDayVote(game, "player_2", "player_2");
+    game = castDayVote(game, "player_2", "player_1");
     game = castDayVote(game, "player_3", "player_2");
     game = castDayVote(game, "player_4", "player_2");
 
@@ -549,7 +592,7 @@ describe("game", () => {
       { playerId: "player_3", nickname: "Wolf", role: "werewolf", alive: true }
     ]);
 
-    game = castDayVote(game, "player_1", "player_1");
+    game = castDayVote(game, "player_1", "player_2");
     game = castDayVote(game, "player_2", "player_1");
     game = castDayVote(game, "player_3", "player_1");
 
@@ -583,6 +626,17 @@ describe("game", () => {
 
     expect(game.phase).toBe("night");
     expect(game.players.find((player) => player.playerId === "player_2")?.alive).toBe(false);
+  });
+
+  it("allows self votes only when the room option is enabled", () => {
+    const game = activeState("day", [
+      { playerId: "player_1", nickname: "Alice", role: "villager", alive: true },
+      { playerId: "player_2", nickname: "Bob", role: "villager", alive: true },
+      { playerId: "player_3", nickname: "Wolf", role: "werewolf", alive: true }
+    ]);
+
+    expect(() => castDayVote(game, "player_1", "player_1")).toThrow("Self votes are not enabled");
+    expect(castDayVote({ ...game, selfVote: true }, "player_1", "player_1").votes).toEqual({ player_1: "player_1" });
   });
 
   it("stores last words only for living players during active phases", () => {
@@ -698,7 +752,7 @@ describe("game", () => {
       { playerId: "player_3", nickname: "Villager", role: "villager", alive: true }
     ]);
 
-    game = castDayVote(game, "player_1", "player_1");
+    game = castDayVote(game, "player_1", "player_2");
     game = castDayVote(game, "player_2", "player_1");
     game = castDayVote(game, "player_3", "player_1");
 
@@ -761,7 +815,7 @@ describe("game", () => {
       { playerId: "player_3", nickname: "Villager", role: "villager", alive: true }
     ]);
 
-    game = castDayVote(game, "player_1", "player_1");
+    game = castDayVote(game, "player_1", "player_2");
     game = castDayVote(game, "player_2", "player_1");
     game = castDayVote(game, "player_3", "player_1");
 
@@ -795,7 +849,7 @@ describe("game", () => {
       { playerId: "player_3", nickname: "Villager", role: "villager", alive: true }
     ]);
 
-    game = castDayVote(game, "player_1", "player_1");
+    game = castDayVote(game, "player_1", "player_2");
     game = castDayVote(game, "player_2", "player_1");
     game = castDayVote(game, "player_3", "player_1");
 
