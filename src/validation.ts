@@ -1,5 +1,5 @@
 import type { ClientMessage } from "./types";
-import type { PlayerRole } from "./types";
+import type { PlayerFlag, PlayerRole } from "./types";
 
 const ROOM_ID_RE = /^room_[A-Za-z0-9_-]{3,64}$/;
 const PLAYER_ID_RE = /^player_[A-Za-z0-9_-]{1,64}$/;
@@ -22,6 +22,7 @@ const PLAYER_ROLES = [
 ] as const;
 const WISH_ROLES = ["villager", "werewolf", "seer", "medium", "madman", "guard", "common", "fox"] as const;
 const GAME_WINNERS = ["villagers", "werewolves", "foxes", "lovers"] as const;
+const PLAYER_FLAGS = ["authority", "decider", "lover"] as const;
 
 export function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -110,6 +111,17 @@ export function validatePlayerRole(value: unknown): PlayerRole {
     throw new Error("Invalid player role");
   }
   return role;
+}
+
+export function validatePlayerFlag(value: unknown): PlayerFlag {
+  if (typeof value !== "string") {
+    throw new Error("Invalid player flag");
+  }
+  const flag = PLAYER_FLAGS.find((candidate) => candidate === value);
+  if (!flag) {
+    throw new Error("Invalid player flag");
+  }
+  return flag;
 }
 
 export function validateGameWinner(value: unknown): (typeof GAME_WINNERS)[number] {
@@ -274,6 +286,13 @@ export function parseClientMessage(raw: string): ClientMessage {
       throw new Error("Invalid GM role control message");
     }
     return { type: "gm_set_role", targetPlayerId: parsed.targetPlayerId, role: validatePlayerRole(parsed.role) };
+  }
+
+  if (parsed.type === "gm_set_flag") {
+    if (typeof parsed.targetPlayerId !== "string" || typeof parsed.enabled !== "boolean") {
+      throw new Error("Invalid GM flag control message");
+    }
+    return { type: "gm_set_flag", targetPlayerId: parsed.targetPlayerId, flag: validatePlayerFlag(parsed.flag), enabled: parsed.enabled };
   }
 
   if (parsed.type === "start_game") {

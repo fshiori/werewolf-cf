@@ -5,6 +5,7 @@ import type {
   GameWinner,
   ChildFoxDivinationResult,
   MediumReading,
+  PlayerFlag,
   PlayerStatUpdate,
   PublicGamePlayer,
   RoomMember,
@@ -758,6 +759,21 @@ export function forceSetPlayerRole(state: GameState, targetPlayerId: string, rol
     players: state.players.map((player) => (player.playerId === targetPlayerId ? { ...player, role } : player)),
     log: [...state.log, `GM 將 ${target.nickname} 的角色調整為 ${role}。`]
   });
+}
+
+export function forceSetPlayerFlag(state: GameState, targetPlayerId: string, flag: PlayerFlag, enabled: boolean): GameState {
+  if (state.phase === "lobby" || state.phase === "ended") {
+    throw new Error("Can only adjust player flags during active games");
+  }
+  const target = state.players.find((player) => player.playerId === targetPlayerId);
+  if (!target) {
+    throw new Error("Flag control target not found");
+  }
+  return {
+    ...state,
+    players: state.players.map((player) => (player.playerId === targetPlayerId ? { ...player, [flag]: enabled || undefined } : player)),
+    log: [...state.log, `GM 將 ${target.nickname} 的 ${flag} 調整為${enabled ? "啟用" : "停用"}。`]
+  };
 }
 
 function resolveDay(state: GameState, now = Date.now()): GameState {
