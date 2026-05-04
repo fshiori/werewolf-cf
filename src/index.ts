@@ -40,6 +40,10 @@ function isFileLike(value: unknown): value is File {
   return typeof value === "object" && value !== null && "stream" in value && "size" in value && "type" in value;
 }
 
+function isAllowedAvatarContentType(value: string): boolean {
+  return ["image/png", "image/jpeg", "image/gif", "image/webp"].includes(value);
+}
+
 async function listRooms(env: Env): Promise<RoomSummary[]> {
   const result = await env.DB.prepare(
     "SELECT id, name, room_comment, max_user, dellook, dummy_name, dummy_last_words, status, created_at, option_role FROM rooms ORDER BY created_at DESC LIMIT 50"
@@ -712,8 +716,8 @@ async function uploadAvatar(request: Request, env: Env): Promise<Response> {
 
   try {
     const playerId = validatePlayerId(playerIdValue);
-    if (!avatarValue.type.startsWith("image/")) {
-      return json({ error: "Avatar must be an image" }, { status: 400 });
+    if (!isAllowedAvatarContentType(avatarValue.type)) {
+      return json({ error: "Avatar must be a PNG, JPEG, GIF, or WebP image" }, { status: 400 });
     }
     if (avatarValue.size > 512 * 1024) {
       return json({ error: "Avatar is too large" }, { status: 400 });
