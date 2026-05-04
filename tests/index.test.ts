@@ -557,6 +557,15 @@ describe("worker routes", () => {
     expect(body).toContain("村子選項");
   });
 
+  it("renders version page", async () => {
+    const response = await worker.fetch(new Request("http://example.test/version"), envWithRooms([]));
+
+    expect(response.status).toBe(200);
+    const body = await response.text();
+    expect(body).toContain("版本資訊");
+    expect(body).toContain("目前功能");
+  });
+
   it("rejects malformed player profile ids", async () => {
     const response = await worker.fetch(new Request("http://example.test/player/not-valid!"), envWithRooms([]));
 
