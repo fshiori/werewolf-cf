@@ -96,6 +96,11 @@ export function canUseWerewolfChannel(state: GameState, playerId: string): boole
   return state.phase === "night" && player?.alive === true && isWerewolfRole(player.role);
 }
 
+export function canUseFoxChannel(state: GameState, playerId: string): boolean {
+  const player = state.players.find((candidate) => candidate.playerId === playerId);
+  return state.phase === "night" && player?.alive === true && player.role === "fox";
+}
+
 export function canUsePublicChat(state: GameState, playerId: string): boolean {
   if (state.phase === "lobby" || state.phase === "ended") {
     return true;

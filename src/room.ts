@@ -2,6 +2,7 @@ import {
   advancePhaseByAlarm,
   canJoinRoomState,
   canStartGame,
+  canUseFoxChannel,
   canUsePublicChat,
   canUseWerewolfChannel,
   castCatRevive,
@@ -26,6 +27,7 @@ import {
   buildChildFoxResultMessage,
   buildDivinationResultMessage,
   buildErrorMessage,
+  buildFoxChatMessage,
   buildGameStateMessage,
   buildJoinedMessage,
   buildMediumResultMessage,
@@ -140,6 +142,16 @@ export class RoomDurableObject {
         return;
       }
 
+      if (message.type === "fox_chat") {
+        const game = await this.loadGameState();
+        if (!canUseFoxChannel(game, member.playerId)) {
+          throw new Error("Fox channel is only available to living foxes at night");
+        }
+        const text = validateChatText(message.text);
+        this.broadcastFox(game, buildFoxChatMessage(member.playerId, member.nickname, text));
+        return;
+      }
+
       if (message.type === "start_game") {
         const loadedGame = await this.loadGameState();
         if (!canStartGame(loadedGame, member.playerId)) {
@@ -244,6 +256,15 @@ export class RoomDurableObject {
     const encoded = JSON.stringify(message);
     for (const [socket, member] of this.sockets) {
       if (canUseWerewolfChannel(gameState, member.playerId)) {
+        socket.send(encoded);
+      }
+    }
+  }
+
+  private broadcastFox(gameState: GameState, message: unknown): void {
+    const encoded = JSON.stringify(message);
+    for (const [socket, member] of this.sockets) {
+      if (canUseFoxChannel(gameState, member.playerId)) {
         socket.send(encoded);
       }
     }

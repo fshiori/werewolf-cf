@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   canJoinRoomState,
   canStartGame,
+  canUseFoxChannel,
   canUsePublicChat,
   canUseWerewolfChannel,
   castChildFoxDivination,
@@ -760,6 +761,23 @@ describe("game", () => {
     expect(canUseWerewolfChannel(night, "player_1")).toBe(true);
     expect(canUseWerewolfChannel(night, "player_3")).toBe(false);
     expect(canUseWerewolfChannel(night, "player_2")).toBe(false);
+  });
+
+  it("allows only living foxes to use the fox channel at night", () => {
+    const night = activeState("night", [
+      { playerId: "player_1", nickname: "Fox", role: "fox", alive: true },
+      { playerId: "player_2", nickname: "Child Fox", role: "child_fox", alive: true },
+      { playerId: "player_3", nickname: "Betrayer", role: "betrayer", alive: true },
+      { playerId: "player_4", nickname: "Villager", role: "villager", alive: true },
+      { playerId: "player_5", nickname: "Dead Fox", role: "fox", alive: false }
+    ]);
+
+    expect(canUseFoxChannel(night, "player_1")).toBe(true);
+    expect(canUseFoxChannel(night, "player_2")).toBe(false);
+    expect(canUseFoxChannel(night, "player_3")).toBe(false);
+    expect(canUseFoxChannel(night, "player_4")).toBe(false);
+    expect(canUseFoxChannel(night, "player_5")).toBe(false);
+    expect(canUseFoxChannel({ ...night, phase: "day" }, "player_1")).toBe(false);
   });
 
   it("allows public chat in lobby and after end but restricts dead players during active phases", () => {

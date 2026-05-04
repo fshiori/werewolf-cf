@@ -71,6 +71,7 @@ describe("render", () => {
     expect(html).toContain("/assets/avatar/");
     expect(html).toContain("送出");
     expect(html).toContain("狼頻");
+    expect(html).toContain("狐頻");
     expect(html).toContain("開始遊戲");
     expect(html).toContain("房主");
     expect(html).toContain("戰績");
@@ -108,6 +109,7 @@ describe("render", () => {
     expect(html).toContain("玩家列表");
     expect(html).toContain("能力發動 / 投票");
     expect(html).toContain("wolf_chat");
+    expect(html).toContain("fox_chat");
     expect(html).toContain("action_ack");
     expect(html).toContain("divination_result");
     expect(html).toContain("child_fox_result");
