@@ -212,7 +212,7 @@ function resolveDay(state: GameState, now = Date.now()): GameState {
       }
     : undefined;
   const log = [...state.log, executed ? `${executed.nickname} 被投票處決。` : "白天沒有共識，無人被處決。"];
-  return withWinOrNextNight({ ...state, players, votes: {}, mediumReading, log }, now);
+  return withWinOrNextNight({ ...clearActionsForDeadPlayers({ ...state, players }), votes: {}, mediumReading, log }, now);
 }
 
 function resolveNight(state: GameState, now = Date.now()): GameState {
@@ -222,7 +222,7 @@ function resolveNight(state: GameState, now = Date.now()): GameState {
     : state.players;
   const killed = killedId ? state.players.find((player) => player.playerId === killedId) : undefined;
   const log = [...state.log, killed ? `${killed.nickname} 在夜晚死亡。` : "夜晚平安過去。"];
-  return withWinOrNextDay({ ...state, players, nightKills: {}, divinations: {}, log }, now);
+  return withWinOrNextDay({ ...clearActionsForDeadPlayers({ ...state, players }), nightKills: {}, divinations: {}, log }, now);
 }
 
 function withWinOrNextNight(state: GameState, now: number): GameState {
@@ -293,6 +293,20 @@ function assertLivingPlayer(state: GameState, playerId: string): GamePlayer {
     throw new Error("Living player is required");
   }
   return player;
+}
+
+function clearActionsForDeadPlayers(state: GameState): GameState {
+  const livingIds = new Set(livingPlayers(state).map((player) => player.playerId));
+  return {
+    ...state,
+    votes: keepLivingActorActions(state.votes, livingIds),
+    nightKills: keepLivingActorActions(state.nightKills, livingIds),
+    divinations: keepLivingActorActions(state.divinations, livingIds)
+  };
+}
+
+function keepLivingActorActions(actions: Record<string, string>, livingIds: Set<string>): Record<string, string> {
+  return Object.fromEntries(Object.entries(actions).filter(([actorId]) => livingIds.has(actorId)));
 }
 
 function pickTopTarget(votes: Record<string, string>): string | undefined {
