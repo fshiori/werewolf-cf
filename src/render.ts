@@ -149,7 +149,7 @@ export function renderHome(rooms: RoomSummary[], announcement = DEFAULT_ANNOUNCE
     : rooms.map((room) => {
       const status = escapeHtml(room.status);
       const optionMarks = [
-        `<span class="option-mark">即時</span>`,
+        room.options.realTime ? `<span class="option-mark">限時 ${escapeHtml(String(room.options.dayMinutes))}/${escapeHtml(String(room.options.nightMinutes))}</span>` : `<span class="option-mark">即時</span>`,
         room.options.poison ? `<span class="option-mark">埋毒</span>` : "",
         room.options.bigWolf ? `<span class="option-mark">大狼</span>` : "",
         room.options.authority ? `<span class="option-mark">權力</span>` : "",
@@ -210,7 +210,13 @@ export function renderHome(rooms: RoomSummary[], announcement = DEFAULT_ANNOUNCE
         </tr>
         <tr>
           <td><label><strong>　限時時間：</strong></label></td>
-          <td><small>日：3 分　夜：1.5 分　<span class="option-mark">固定</span></small></td>
+          <td>
+            <label><input id="optionRealTime" type="checkbox"> <small>日：</small></label>
+            <input id="optionDayMinutes" type="number" min="1" max="99" step="0.5" value="3" size="4">
+            <small>分　夜：</small>
+            <input id="optionNightMinutes" type="number" min="1" max="99" step="0.5" value="1.5" size="4">
+            <small>分</small>
+          </td>
         </tr>
         <tr>
           <td><label><strong>　20人以上埋毒者選項：</strong></label></td>
@@ -283,11 +289,14 @@ export function renderHome(rooms: RoomSummary[], announcement = DEFAULT_ANNOUNCE
         const cat = document.querySelector("#optionCat").checked;
         const lastWords = document.querySelector("#optionLastWords").checked;
         const openVote = document.querySelector("#optionOpenVote").checked;
+        const realTime = document.querySelector("#optionRealTime").checked;
+        const dayMinutes = Number(document.querySelector("#optionDayMinutes").value);
+        const nightMinutes = Number(document.querySelector("#optionNightMinutes").value);
         localStorage.setItem("werewolf_cf_nickname", nickname);
         const res = await fetch("/api/rooms", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ name, playerId: localStorage.getItem(playerKey), nickname, options: { poison, bigWolf, authority, decider, lovers, betrayer, childFox, twoFoxes, cat, lastWords, openVote } })
+          body: JSON.stringify({ name, playerId: localStorage.getItem(playerKey), nickname, options: { poison, bigWolf, authority, decider, lovers, betrayer, childFox, twoFoxes, cat, lastWords, openVote, realTime, dayMinutes, nightMinutes } })
         });
         const data = await res.json();
         if (!res.ok) {

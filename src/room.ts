@@ -23,7 +23,9 @@ import {
   setLastWords,
   startGame,
   upsertLobbyPlayer,
-  wolvesForPlayer
+  wolvesForPlayer,
+  DEFAULT_DAY_MINUTES,
+  DEFAULT_NIGHT_MINUTES
 } from "./game";
 import {
   buildActionAckMessage,
@@ -458,7 +460,10 @@ export class RoomDurableObject {
     const row = await this.env.DB.prepare("SELECT option_role FROM rooms WHERE id = ? LIMIT 1")
       .bind(this.roomId)
       .first<{ option_role: string }>();
-    const roles = new Set((row?.option_role ?? "").split(/\s+/).filter(Boolean));
+    const tokens = (row?.option_role ?? "").split(/\s+/).filter(Boolean);
+    const roles = new Set(tokens);
+    const realTimeToken = tokens.find((token) => token.startsWith("real_time:"));
+    const [, dayMinutes, nightMinutes] = realTimeToken?.split(":") ?? [];
     return {
       poison: roles.has("poison"),
       bigWolf: roles.has("wfbig"),
@@ -470,7 +475,15 @@ export class RoomDurableObject {
       twoFoxes: roles.has("foxs"),
       cat: roles.has("cat"),
       lastWords: roles.has("will"),
-      openVote: roles.has("open_vote")
+      openVote: roles.has("open_vote"),
+      realTime: Boolean(realTimeToken),
+      dayMinutes: readMinutes(dayMinutes, DEFAULT_DAY_MINUTES),
+      nightMinutes: readMinutes(nightMinutes, DEFAULT_NIGHT_MINUTES)
     };
   }
+}
+
+function readMinutes(value: unknown, fallback: number): number {
+  const minutes = typeof value === "number" ? value : typeof value === "string" ? Number(value) : Number.NaN;
+  return Number.isFinite(minutes) && minutes >= 1 && minutes <= 99 ? minutes : fallback;
 }

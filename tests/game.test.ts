@@ -46,6 +46,8 @@ function activeState(phase: "day" | "night", players: GameState["players"]): Gam
     players,
     votes: {},
     openVote: false,
+    dayMs: 180_000,
+    nightMs: 90_000,
     revoteCount: 0,
     nightKills: {},
     divinations: {},
@@ -202,7 +204,10 @@ describe("game", () => {
       twoFoxes: false,
       cat: false,
       lastWords: false,
-      openVote: false
+      openVote: false,
+      realTime: false,
+      dayMinutes: 3,
+      nightMinutes: 1.5
     });
 
     expect(normal.players.filter((player) => player.role === "poison")).toHaveLength(0);
@@ -226,7 +231,10 @@ describe("game", () => {
       twoFoxes: false,
       cat: false,
       lastWords: false,
-      openVote: false
+      openVote: false,
+      realTime: false,
+      dayMinutes: 3,
+      nightMinutes: 1.5
     });
 
     expect(game.players.filter((player) => player.role === "big_wolf")).toHaveLength(1);
@@ -250,7 +258,10 @@ describe("game", () => {
       twoFoxes: false,
       cat: false,
       lastWords: false,
-      openVote: false
+      openVote: false,
+      realTime: false,
+      dayMinutes: 3,
+      nightMinutes: 1.5
     });
 
     expect(game.players.find((player) => player.authority)?.playerId).toBe("player_1");
@@ -302,7 +313,10 @@ describe("game", () => {
       twoFoxes: false,
       cat: false,
       lastWords: false,
-      openVote: false
+      openVote: false,
+      realTime: false,
+      dayMinutes: 3,
+      nightMinutes: 1.5
     });
 
     expect(game.players.filter((player) => player.lover)).toEqual([
@@ -328,7 +342,10 @@ describe("game", () => {
       twoFoxes: false,
       cat: false,
       lastWords: false,
-      openVote: false
+      openVote: false,
+      realTime: false,
+      dayMinutes: 3,
+      nightMinutes: 1.5
     });
 
     expect(game.players.filter((player) => player.role === "betrayer")).toEqual([
@@ -351,7 +368,10 @@ describe("game", () => {
       twoFoxes: false,
       cat: false,
       lastWords: false,
-      openVote: false
+      openVote: false,
+      realTime: false,
+      dayMinutes: 3,
+      nightMinutes: 1.5
     });
 
     expect(game.players.filter((player) => player.role === "child_fox")).toEqual([
@@ -372,7 +392,10 @@ describe("game", () => {
       twoFoxes: true,
       cat: false,
       lastWords: false,
-      openVote: false
+      openVote: false,
+      realTime: false,
+      dayMinutes: 3,
+      nightMinutes: 1.5
     });
 
     expect(game.players.filter((player) => player.role === "fox")).toEqual([
@@ -397,7 +420,10 @@ describe("game", () => {
       twoFoxes: false,
       cat: true,
       lastWords: false,
-      openVote: false
+      openVote: false,
+      realTime: false,
+      dayMinutes: 3,
+      nightMinutes: 1.5
     });
 
     expect(game.players.filter((player) => player.role === "cat")).toEqual([
@@ -425,11 +451,47 @@ describe("game", () => {
         twoFoxes: false,
         cat: false,
         lastWords: false,
-        openVote: true
+        openVote: true,
+        realTime: true,
+        dayMinutes: 2,
+        nightMinutes: 1
       }
     );
 
     expect(game.openVote).toBe(true);
+    expect(game.dayMs).toBe(120_000);
+    expect(game.nightMs).toBe(60_000);
+  });
+
+  it("uses default phase timers when real time is disabled", () => {
+    const game = startGame(
+      lobby([
+        ["player_1", "Alice"],
+        ["player_2", "Bob"],
+        ["player_3", "Carol"]
+      ]),
+      0,
+      () => 0,
+      {
+        poison: false,
+        bigWolf: false,
+        authority: false,
+        decider: false,
+        lovers: false,
+        betrayer: false,
+        childFox: false,
+        twoFoxes: false,
+        cat: false,
+        lastWords: false,
+        openVote: false,
+        realTime: false,
+        dayMinutes: 9,
+        nightMinutes: 9
+      }
+    );
+
+    expect(game.dayMs).toBe(180_000);
+    expect(game.nightMs).toBe(90_000);
   });
 
   it("lets child foxes divine at night with possible failure", () => {

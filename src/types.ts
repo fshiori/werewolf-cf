@@ -20,6 +20,9 @@ export interface RoomOptions {
   cat: boolean;
   lastWords: boolean;
   openVote: boolean;
+  realTime: boolean;
+  dayMinutes: number;
+  nightMinutes: number;
 }
 
 export interface RoomMember {
@@ -110,6 +113,8 @@ export interface GameState {
   players: GamePlayer[];
   votes: Record<string, string>;
   openVote: boolean;
+  dayMs: number;
+  nightMs: number;
   revoteCount: number;
   nightKills: Record<string, string>;
   divinations: Record<string, string>;

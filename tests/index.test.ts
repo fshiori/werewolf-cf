@@ -145,7 +145,7 @@ describe("worker routes", () => {
   it("returns room options in room listings", async () => {
     const response = await worker.fetch(
       new Request("http://example.test/api/rooms"),
-      envWithRooms(["room_plain", "room_poison"], {}, {}, {}, {}, { room_poison: "poison wfbig authority decide lovers betr fosi foxs cat will open_vote" })
+      envWithRooms(["room_plain", "room_poison"], {}, {}, {}, {}, { room_poison: "poison wfbig authority decide lovers betr fosi foxs cat will open_vote real_time:5:2" })
     );
 
     expect(response.status).toBe(200);
@@ -167,7 +167,10 @@ describe("worker routes", () => {
             twoFoxes: false,
             cat: false,
             lastWords: false,
-            openVote: false
+            openVote: false,
+            realTime: false,
+            dayMinutes: 3,
+            nightMinutes: 1.5
           }
         },
         {
@@ -186,7 +189,10 @@ describe("worker routes", () => {
             twoFoxes: true,
             cat: true,
             lastWords: true,
-            openVote: true
+            openVote: true,
+            realTime: true,
+            dayMinutes: 5,
+            nightMinutes: 2
           }
         }
       ]
@@ -214,7 +220,10 @@ describe("worker routes", () => {
             twoFoxes: true,
             cat: true,
             lastWords: true,
-            openVote: true
+            openVote: true,
+            realTime: true,
+            dayMinutes: 5,
+            nightMinutes: 2
           }
         })
       }),
@@ -226,7 +235,7 @@ describe("worker routes", () => {
 
     expect(response.status).toBe(200);
     expect(roomInsert?.query).toContain("option_role");
-    expect(roomInsert?.values.at(-1)).toBe("poison wfbig authority decide lovers betr fosi foxs cat will open_vote");
+    expect(roomInsert?.values.at(-1)).toBe("poison wfbig authority decide lovers betr fosi foxs cat will open_vote real_time:5:2");
     expect(JSON.parse(String(eventInsert?.values.at(-1)))).toEqual({
       name: "Option Test",
       options: {
@@ -240,7 +249,10 @@ describe("worker routes", () => {
         twoFoxes: true,
         cat: true,
         lastWords: true,
-        openVote: true
+        openVote: true,
+        realTime: true,
+        dayMinutes: 5,
+        nightMinutes: 2
       }
     });
   });
