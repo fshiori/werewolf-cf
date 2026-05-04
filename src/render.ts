@@ -175,10 +175,11 @@ export function renderHome(rooms: RoomSummary[], announcement = DEFAULT_ANNOUNCE
         room.options.selfVote ? `<span class="option-mark">自投</span>` : "",
         room.options.voteStatus ? `<span class="option-mark">投票済</span>` : ""
       ].filter(Boolean).join(" ");
-      return `<a class="room-link" href="/room/${escapeHtml(room.id)}">
-        <span class="room-line"><span class="status status-${status}">${status}</span><small>[${escapeHtml(room.id)}]</small> ${escapeHtml(room.name)}村</span>
+      return `<div class="room-link">
+        <a href="/room/${escapeHtml(room.id)}"><span class="room-line"><span class="status status-${status}">${status}</span><small>[${escapeHtml(room.id)}]</small> ${escapeHtml(room.name)}村</span></a>
+        <small> <a href="/api/rooms/${escapeHtml(room.id)}">JSON</a></small>
         <small class="room-comment">${room.comment ? `～${escapeHtml(room.comment)}～ ` : ""}<span class="option-mark">最大${escapeHtml(String(room.maxPlayers))}</span> ～建立時間：${escapeHtml(room.createdAt)}～ ${optionMarks}</small>
-      </a>`;
+      </div>`;
     }).join("");
 
   return page("Werewolf CF", shell(`
