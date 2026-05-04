@@ -541,6 +541,20 @@ describe("worker routes", () => {
     expect(await response.text()).toContain("[room_exists]");
   });
 
+  it("renders player profile pages", async () => {
+    const response = await worker.fetch(new Request("http://example.test/player/player_profile"), envWithRooms([]));
+
+    expect(response.status).toBe(200);
+    expect(await response.text()).toContain("player_profile");
+  });
+
+  it("rejects malformed player profile ids", async () => {
+    const response = await worker.fetch(new Request("http://example.test/player/not-valid!"), envWithRooms([]));
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({ error: "Invalid player id" });
+  });
+
   it("renders home announcements from KV config", async () => {
     const response = await worker.fetch(
       new Request("http://example.test/"),

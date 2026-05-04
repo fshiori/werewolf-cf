@@ -1,4 +1,4 @@
-import { renderHome, renderRoom } from "./render";
+import { renderHome, renderPlayerProfile, renderRoom } from "./render";
 import { RoomDurableObject } from "./room";
 import { DEFAULT_DAY_MINUTES, DEFAULT_NIGHT_MINUTES } from "./game";
 import { registeredTripHash, tripHashForRoom } from "./identity";
@@ -678,6 +678,15 @@ export default {
         return html(renderRoom(roomId));
       } catch (error) {
         return json({ error: error instanceof Error ? error.message : "Invalid room" }, { status: 400 });
+      }
+    }
+
+    const playerMatch = url.pathname.match(/^\/player\/([^/]+)$/);
+    if (request.method === "GET" && playerMatch) {
+      try {
+        return html(renderPlayerProfile(validatePlayerId(playerMatch[1])));
+      } catch (error) {
+        return json({ error: error instanceof Error ? error.message : "Invalid player" }, { status: 400 });
       }
     }
 

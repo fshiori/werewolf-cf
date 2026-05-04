@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { renderHome, renderRoom } from "../src/render";
+import { renderHome, renderPlayerProfile, renderRoom } from "../src/render";
 
 describe("render", () => {
   it("renders home with room rows and escaped names", () => {
@@ -134,7 +134,7 @@ describe("render", () => {
     expect(html).toContain("投票済");
     expect(html).toContain("leaderboardRows");
     expect(html).toContain("尚無戰績。");
-    expect(html).toContain("cell.textContent = String(value);");
+    expect(html).toContain('link.href = "/player/" + entry.playerId;');
     expect(html).toContain("建立房間");
   });
 
@@ -156,6 +156,7 @@ describe("render", () => {
     expect(html).toContain("avatarFile");
     expect(html).toContain("/api/assets/avatar");
     expect(html).toContain("/assets/avatar/");
+    expect(html).toContain('profileLink.href = "/player/" + player.playerId;');
     expect(html).toContain("送出");
     expect(html).toContain("狼頻");
     expect(html).toContain("狐頻");
@@ -245,5 +246,17 @@ describe("render", () => {
     expect(html).toContain("medium_result");
     expect(html).toContain("type: \"divine\"");
     expect(html).toContain("type: \"guard\"");
+  });
+
+  it("renders player profile page with stats and records fetches", () => {
+    const html = renderPlayerProfile("player_abc");
+
+    expect(html).toContain("個人戰績");
+    expect(html).toContain("player_abc");
+    expect(html).toContain("/assets/avatar/player_abc");
+    expect(html).toContain("/api/players/\" + playerId + \"/stats");
+    expect(html).toContain("/api/players/\" + playerId + \"/records");
+    expect(html).toContain("最近參戰紀錄");
+    expect(html).toContain("function roleLabel(value)");
   });
 });
