@@ -404,6 +404,7 @@ export function renderRoom(roomId: string): string {
             latestGame = msg;
             renderGame(msg);
             if (msg.phase === "ended") {
+              void refreshStats();
               void refreshRecords();
               void refreshEvents();
             }
