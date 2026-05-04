@@ -278,6 +278,9 @@ export class RoomDurableObject {
       await this.env.DB.prepare("UPDATE rooms SET status = 'playing', updated_at = CURRENT_TIMESTAMP WHERE id = ?").bind(this.roomId).run();
     }
     if (gameState.phase === "ended") {
+      if (await this.state.storage.get<boolean>("gameFinalized")) {
+        return;
+      }
       const statStatements = playerStatUpdates(gameState).map((stat) =>
         this.env.DB.prepare(
           "INSERT INTO player_stats (player_id, games_played, wins, losses, updated_at) VALUES (?, 1, ?, ?, CURRENT_TIMESTAMP) ON CONFLICT(player_id) DO UPDATE SET games_played = games_played + 1, wins = wins + excluded.wins, losses = losses + excluded.losses, updated_at = CURRENT_TIMESTAMP"
@@ -295,6 +298,7 @@ export class RoomDurableObject {
         ),
         ...statStatements
       ]);
+      await this.state.storage.put("gameFinalized", true);
     }
   }
 
