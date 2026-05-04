@@ -18,7 +18,8 @@ import {
   buildPresenceMessage,
   buildRevealedRolesMessage,
   buildRoleMessage,
-  buildWolfChatMessage
+  buildWolfChatMessage,
+  buildErrorMessage
 } from "../src/messages";
 
 describe("messages", () => {
@@ -159,6 +160,10 @@ describe("messages", () => {
 
   it("builds last words acknowledgement messages", () => {
     expect(buildLastWordsAckMessage()).toEqual({ type: "last_words_ack" });
+  });
+
+  it("builds escaped error messages", () => {
+    expect(buildErrorMessage("<bad>")).toEqual({ type: "error", message: "&lt;bad&gt;" });
   });
 
   it("builds public game state messages without roles", () => {
