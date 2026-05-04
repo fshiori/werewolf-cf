@@ -37,7 +37,9 @@ function envWithRooms(
   roomOptionRoles: Record<string, string> = {},
   roomComments: Record<string, string> = {},
   roomCapacities: Record<string, number> = {},
-  deadRoleVisibleRooms: Record<string, boolean> = {}
+  deadRoleVisibleRooms: Record<string, boolean> = {},
+  roomDummyNames: Record<string, string> = {},
+  roomDummyLastWords: Record<string, string> = {}
 ): Env {
   const assets = new Map<string, StoredAsset>();
   const batches: Array<Array<{ query: string; values: unknown[] }>> = [];
@@ -86,6 +88,8 @@ function envWithRooms(
                   room_comment: roomComments[id] ?? "",
                   max_user: roomCapacities[id] ?? 22,
                   dellook: deadRoleVisibleRooms[id] ? 1 : 0,
+                  dummy_name: roomDummyNames[id] ?? "替身君",
+                  dummy_last_words: roomDummyLastWords[id] ?? "",
                   status: "lobby",
                   created_at: "2026-05-04 04:00:00",
                   option_role: roomOptionRoles[id] ?? ""
@@ -157,10 +161,12 @@ describe("worker routes", () => {
         {},
         {},
         {},
-        { room_poison: "poison wfbig authority decide lovers betr fosi foxs cat will open_vote comoutl wish_role dummy_boy real_time:5:2 votedme votedisplay" },
+        { room_poison: "poison wfbig authority decide lovers betr fosi foxs cat will open_vote comoutl wish_role dummy_boy cust_dummy real_time:5:2 votedme votedisplay" },
         { room_poison: "<test comment>" },
         { room_poison: 30 },
-        { room_poison: true }
+        { room_poison: true },
+        { room_poison: "Custom Dummy" },
+        { room_poison: "Remember the dummy" }
       )
     );
 
@@ -190,6 +196,9 @@ describe("worker routes", () => {
             deadRoleVisible: false,
             wishRole: false,
             dummyBoy: false,
+            customDummy: false,
+            dummyName: "替身君",
+            dummyLastWords: "",
             realTime: false,
             dayMinutes: 3,
             nightMinutes: 1.5,
@@ -220,6 +229,9 @@ describe("worker routes", () => {
             deadRoleVisible: true,
             wishRole: true,
             dummyBoy: true,
+            customDummy: true,
+            dummyName: "Custom Dummy",
+            dummyLastWords: "Remember the dummy",
             realTime: true,
             dayMinutes: 5,
             nightMinutes: 2,
@@ -259,6 +271,9 @@ describe("worker routes", () => {
             deadRoleVisible: true,
             wishRole: true,
             dummyBoy: true,
+            customDummy: true,
+            dummyName: "Custom Dummy",
+            dummyLastWords: "Remember the dummy",
             realTime: true,
             dayMinutes: 5,
             nightMinutes: 2,
@@ -281,7 +296,11 @@ describe("worker routes", () => {
     expect(roomInsert?.values).toContain("Beginners welcome");
     expect(roomInsert?.values).toContain(16);
     expect(roomInsert?.values).toContain(1);
-    expect(roomInsert?.values.at(-1)).toBe("poison wfbig authority decide lovers betr fosi foxs cat will open_vote comoutl wish_role dummy_boy real_time:5:2 votedme votedisplay");
+    expect(roomInsert?.query).toContain("dummy_name");
+    expect(roomInsert?.query).toContain("dummy_last_words");
+    expect(roomInsert?.values).toContain("Custom Dummy");
+    expect(roomInsert?.values).toContain("Remember the dummy");
+    expect(roomInsert?.values.at(-1)).toBe("poison wfbig authority decide lovers betr fosi foxs cat will open_vote comoutl wish_role dummy_boy cust_dummy real_time:5:2 votedme votedisplay");
     expect(JSON.parse(String(eventInsert?.values.at(-1)))).toEqual({
       name: "Option Test",
       comment: "Beginners welcome",
@@ -302,6 +321,9 @@ describe("worker routes", () => {
         deadRoleVisible: true,
         wishRole: true,
         dummyBoy: true,
+        customDummy: true,
+        dummyName: "Custom Dummy",
+        dummyLastWords: "Remember the dummy",
         realTime: true,
         dayMinutes: 5,
         nightMinutes: 2,

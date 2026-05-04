@@ -172,6 +172,9 @@ export function startGame(
     deadRoleVisible: false,
     wishRole: false,
     dummyBoy: false,
+    customDummy: false,
+    dummyName: "替身君",
+    dummyLastWords: "",
     realTime: false,
     dayMinutes: DEFAULT_DAY_MINUTES,
     nightMinutes: DEFAULT_NIGHT_MINUTES,
@@ -186,7 +189,7 @@ export function startGame(
     throw new Error("At least 3 players are required");
   }
 
-  const lobbyPlayers = options.dummyBoy ? appendDummyPlayer(state.players) : state.players;
+  const lobbyPlayers = options.dummyBoy ? appendDummyPlayer(state.players, options) : state.players;
   const referenceRoleDeck = REFERENCE_ROLE_DECKS[lobbyPlayers.length];
   if (referenceRoleDeck) {
     return startGameWithPlayers(
@@ -264,11 +267,11 @@ export function startGame(
   return startGameWithPlayers(state, applyRoomOptions(players, options), now, options);
 }
 
-function appendDummyPlayer(players: GamePlayer[]): GamePlayer[] {
+function appendDummyPlayer(players: GamePlayer[], options: RoomOptions): GamePlayer[] {
   if (players.some((player) => player.playerId === DUMMY_PLAYER_ID)) {
     return players;
   }
-  return [...players, { playerId: DUMMY_PLAYER_ID, nickname: "替身君", role: "villager", alive: true }];
+  return [...players, { playerId: DUMMY_PLAYER_ID, nickname: options.customDummy ? options.dummyName : "替身君", role: "villager", alive: true }];
 }
 
 function ensureDummyRoleSafe(players: GamePlayer[]): GamePlayer[] {
@@ -411,7 +414,9 @@ function startGameWithPlayers(state: GameState, players: GamePlayer[], now: numb
     divinations: {},
     guards: {},
     catRevives: {},
-    lastWords: state.lastWords ?? {},
+    lastWords: options.dummyBoy && options.customDummy && options.dummyLastWords
+      ? { ...(state.lastWords ?? {}), [DUMMY_PLAYER_ID]: options.dummyLastWords }
+      : state.lastWords ?? {},
     mediumReading: undefined,
     phaseEndsAt: new Date(now + (options.dummyBoy ? roomOptionNightMs(options) : roomOptionDayMs(options))).toISOString(),
     log: [...state.log, "遊戲開始。", options.dummyBoy ? "替身君的第一夜開始。" : "第 1 日白天開始。"]
