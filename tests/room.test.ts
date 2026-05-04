@@ -238,8 +238,46 @@ describe("RoomDurableObject", () => {
         binds: ["room_abc"]
       })
     );
+    expect(puts).toContainEqual({ key: "roomPlayingSynced", value: true });
     expect(hostMessages).toContainEqual(expect.objectContaining({ type: "game_state", phase: "day", day: 1 }));
     expect(wolfMessages).toContainEqual(expect.objectContaining({ type: "game_state", phase: "day", day: 1 }));
+  });
+
+  it("syncs the active room status to D1 only once", async () => {
+    const game: GameState = {
+      roomId: "room_abc",
+      phase: "day",
+      day: 1,
+      players: [
+        { playerId: "player_host", nickname: "Host", role: "villager", alive: true },
+        { playerId: "player_wolf", nickname: "Wolf", role: "werewolf", alive: true }
+      ],
+      votes: {},
+      openVote: false,
+      commonTalkVisible: false,
+      deadRoleVisible: false,
+      wishRole: false,
+      dummyBoy: false,
+      dayMs: 180_000,
+      nightMs: 90_000,
+      selfVote: false,
+      voteStatus: false,
+      revoteCount: 0,
+      nightKills: {},
+      divinations: {},
+      guards: {},
+      catRevives: {},
+      lastWords: {},
+      phaseEndsAt: "2026-05-04T00:00:00.000Z",
+      log: []
+    };
+    const { room, puts, dbRuns } = observableRoomObject(game);
+
+    await (room as unknown as { syncRoomStatus(gameState: GameState): Promise<void> }).syncRoomStatus(game);
+    await (room as unknown as { syncRoomStatus(gameState: GameState): Promise<void> }).syncRoomStatus(game);
+
+    expect(dbRuns.filter((run) => run.query.includes("UPDATE rooms SET status = 'playing'"))).toHaveLength(1);
+    expect(puts).toContainEqual({ key: "roomPlayingSynced", value: true });
   });
 
   it("persists final game records and player stats exactly once when a GM ends a game", async () => {
@@ -1401,7 +1439,7 @@ describe("RoomDurableObject", () => {
       lastWords: {},
       log: []
     };
-    const { room, stored, dbRuns } = observableRoomObject(game, { option_role: "dummy_boy" });
+    const { room, stored, puts, dbRuns } = observableRoomObject(game, { option_role: "dummy_boy" });
     const hostMessages: SentMessage[] = [];
     const hostSocket = fakeSocket(hostMessages);
     connect(room, hostSocket, "player_host", "Host");
@@ -1416,6 +1454,7 @@ describe("RoomDurableObject", () => {
         binds: ["room_abc"]
       })
     );
+    expect(puts).toContainEqual({ key: "roomPlayingSynced", value: true });
   });
 
   it("lets GM sockets start games without receiving player roles", async () => {
