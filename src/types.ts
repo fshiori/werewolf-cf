@@ -45,6 +45,7 @@ export interface GameState {
   hostId?: string;
   players: GamePlayer[];
   votes: Record<string, string>;
+  revoteCount: number;
   nightKills: Record<string, string>;
   divinations: Record<string, string>;
   mediumReading?: MediumReading;
@@ -109,6 +110,7 @@ export type ServerMessage =
       phase: GamePhase;
       day: number;
       hostId?: string;
+      revoteCount: number;
       players: PublicGamePlayer[];
       votes: Record<string, string>;
       winner?: GameWinner;

@@ -368,7 +368,8 @@ export function renderRoom(roomId: string): string {
         }
       }
       function renderGame(game) {
-        document.querySelector("#phase").textContent = game.phase + (game.day ? " " + game.day : "");
+        document.querySelector("#phase").textContent =
+          game.phase + (game.day ? " " + game.day : "") + (game.revoteCount ? " 再投票 " + game.revoteCount : "");
         document.querySelector("#winner").textContent = game.winner || "未定";
         const currentPlayerId = localStorage.getItem(playerKey);
         const host = game.players.find((player) => player.playerId === game.hostId);

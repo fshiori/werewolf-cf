@@ -89,6 +89,7 @@ describe("messages", () => {
       type: "game_state",
       phase: "day",
       hostId: undefined,
+      revoteCount: 0,
       players: [
         { playerId: "player_1", nickname: "&lt;Wolf&gt;", alive: true },
         { playerId: "player_2", nickname: "Bob", alive: true },

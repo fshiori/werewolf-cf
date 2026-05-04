@@ -2,6 +2,7 @@ import type { DivinationResult, GamePlayer, GameState, GameWinner, MediumReading
 
 export const DAY_MS = 180_000;
 export const NIGHT_MS = 90_000;
+export const MAX_REVOTES = 1;
 
 export function createLobbyState(roomId: string): GameState {
   return {
@@ -10,6 +11,7 @@ export function createLobbyState(roomId: string): GameState {
     day: 0,
     players: [],
     votes: {},
+    revoteCount: 0,
     nightKills: {},
     divinations: {},
     log: ["等待玩家加入。"]
@@ -100,6 +102,7 @@ export function startGame(state: GameState, now = Date.now(), random = Math.rand
     day: 1,
     players,
     votes: {},
+    revoteCount: 0,
     nightKills: {},
     divinations: {},
     mediumReading: undefined,
@@ -199,6 +202,17 @@ export function mediumReadingForPlayer(state: GameState, playerId: string): Medi
 
 function resolveDay(state: GameState, now = Date.now()): GameState {
   const executedId = pickTopTarget(state.votes);
+  const revoteCount = state.revoteCount ?? 0;
+  if (!executedId && Object.keys(state.votes).length > 0 && revoteCount < MAX_REVOTES) {
+    return {
+      ...state,
+      votes: {},
+      revoteCount: revoteCount + 1,
+      phaseEndsAt: new Date(now + DAY_MS).toISOString(),
+      log: [...state.log, "投票結果平手，重新投票。"]
+    };
+  }
+
   const players = executedId
     ? state.players.map((player) => (player.playerId === executedId ? { ...player, alive: false } : player))
     : state.players;
@@ -212,7 +226,7 @@ function resolveDay(state: GameState, now = Date.now()): GameState {
       }
     : undefined;
   const log = [...state.log, executed ? `${executed.nickname} 被投票處決。` : "白天沒有共識，無人被處決。"];
-  return withWinOrNextNight({ ...clearActionsForDeadPlayers({ ...state, players }), votes: {}, mediumReading, log }, now);
+  return withWinOrNextNight({ ...clearActionsForDeadPlayers({ ...state, players }), votes: {}, revoteCount: 0, mediumReading, log }, now);
 }
 
 function resolveNight(state: GameState, now = Date.now()): GameState {
@@ -248,6 +262,7 @@ function withWinOrNextDay(state: GameState, now: number): GameState {
     ...state,
     phase: "day",
     day,
+    revoteCount: 0,
     phaseEndsAt: new Date(now + DAY_MS).toISOString(),
     log: [...state.log, `第 ${day} 日白天開始。`]
   };
@@ -260,6 +275,7 @@ function endGame(state: GameState, winner: GameWinner): GameState {
     winner,
     phaseEndsAt: undefined,
     votes: {},
+    revoteCount: 0,
     nightKills: {},
     divinations: {},
     mediumReading: undefined,
