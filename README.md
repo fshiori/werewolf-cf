@@ -145,10 +145,8 @@ Private channel delivery is enforced inside the Durable Object. Werewolf, fox, c
 Run the same checks used for local development:
 
 ```bash
-npm test
-npm run typecheck
+npm run check:deploy
 git diff --check
-npm run check:wrangler -- --production
 ```
 
 Apply remote D1 migrations before deploying code that depends on new columns or tables:
@@ -163,7 +161,7 @@ Deploy:
 npm run deploy
 ```
 
-`npm run deploy` runs `npm run check:wrangler -- --production` first and fails while production resource IDs still use `local-dev-placeholder`.
+`npm run deploy` runs `npm run check:deploy` first and fails while production resource IDs still use `local-dev-placeholder`.
 
 After deploy, smoke check the production Worker:
 
