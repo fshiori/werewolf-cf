@@ -88,6 +88,7 @@ describe("render", () => {
     expect(html).toContain("狐頻");
     expect(html).toContain("共有頻");
     expect(html).toContain("戀頻");
+    expect(html).toContain("靈界");
     expect(html).toContain("開始遊戲");
     expect(html).toContain("房主");
     expect(html).toContain("戰績");
@@ -102,6 +103,7 @@ describe("render", () => {
     expect(html).toContain("game.hostId !== currentPlayerId");
     expect(html).toContain("game.revoteCount");
     expect(html).toContain("currentPlayerAlive");
+    expect(html).toContain("currentPlayerDead");
     expect(html).toContain("actorCanAct");
     expect(html).toContain("function roleLabel(value)");
     expect(html).toContain('werewolf: "人狼"');
@@ -128,6 +130,8 @@ describe("render", () => {
     expect(html).toContain("fox_chat");
     expect(html).toContain("common_chat");
     expect(html).toContain("lovers_chat");
+    expect(html).toContain("dead_chat");
+    expect(html).toContain("sendDeadChat");
     expect(html).toContain("lastWordsText");
     expect(html).toContain("setLastWords");
     expect(html).toContain("set_last_words");

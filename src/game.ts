@@ -112,6 +112,11 @@ export function canUseLoversChannel(state: GameState, playerId: string): boolean
   return state.phase === "night" && player?.alive === true && player.lover === true;
 }
 
+export function canUseDeadChannel(state: GameState, playerId: string): boolean {
+  const player = state.players.find((candidate) => candidate.playerId === playerId);
+  return (state.phase === "day" || state.phase === "night") && player?.alive === false;
+}
+
 export function canUsePublicChat(state: GameState, playerId: string): boolean {
   if (state.phase === "lobby" || state.phase === "ended") {
     return true;

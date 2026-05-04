@@ -151,6 +151,11 @@ export type LoversChatClientMessage = {
   text: string;
 };
 
+export type DeadChatClientMessage = {
+  type: "dead_chat";
+  text: string;
+};
+
 export type StartGameClientMessage = {
   type: "start_game";
 };
@@ -197,6 +202,7 @@ export type ClientMessage =
   | FoxChatClientMessage
   | CommonChatClientMessage
   | LoversChatClientMessage
+  | DeadChatClientMessage
   | StartGameClientMessage
   | VoteClientMessage
   | NightKillClientMessage
@@ -214,6 +220,7 @@ export type ServerMessage =
   | { type: "fox_chat"; playerId: string; nickname: string; text: string; sentAt: string }
   | { type: "common_chat"; playerId: string; nickname: string; text: string; sentAt: string }
   | { type: "lovers_chat"; playerId: string; nickname: string; text: string; sentAt: string }
+  | { type: "dead_chat"; playerId: string; nickname: string; text: string; sentAt: string }
   | { type: "divination_result"; targetPlayerId: string; targetNickname: string; result: DivinationResult }
   | { type: "child_fox_result"; targetPlayerId: string; targetNickname: string; result: ChildFoxDivinationResult }
   | { type: "medium_result"; day: number; targetPlayerId: string; targetNickname: string; result: MediumResult }
