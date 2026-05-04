@@ -38,6 +38,7 @@ Smoke check the local Worker:
 
 ```bash
 curl -i http://127.0.0.1:8787/api/health
+curl -i http://127.0.0.1:8787/api/version
 curl -i http://127.0.0.1:8787/
 ```
 
@@ -76,7 +77,8 @@ After deploy, smoke check the production Worker:
 
 ```bash
 curl -i https://<worker-host>/api/health
+curl -i https://<worker-host>/api/version
 curl -i https://<worker-host>/api/config
 ```
 
-`/api/health` should return HTTP 200 with `ok: true`. If `maintenance_mode` is set to `true` in KV, new room creation is blocked with HTTP 503 while existing rooms and read APIs remain available.
+`/api/health` should return HTTP 200 with `ok: true`. `/api/version` should return the expected `appVersion` and bindings list. If `maintenance_mode` is set to `true` in KV, new room creation is blocked with HTTP 503 while existing rooms and read APIs remain available.
