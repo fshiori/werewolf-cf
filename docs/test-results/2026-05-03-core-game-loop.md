@@ -17,7 +17,7 @@ Latest automated rerun:
 - Date: 2026-05-04
 - `npm test`
   - Output: `5 passed (5)` test files
-  - Output: `150 passed (150)` tests
+  - Output: `151 passed (151)` tests
   - Files:
     - `tests/game.test.ts`
     - `tests/index.test.ts`
