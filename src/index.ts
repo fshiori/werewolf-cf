@@ -2,7 +2,7 @@ import { renderHome, renderRoom } from "./render";
 import { RoomDurableObject } from "./room";
 import { DEFAULT_DAY_MINUTES, DEFAULT_NIGHT_MINUTES } from "./game";
 import { registeredTripHash, tripHashForRoom } from "./identity";
-import type { GameRecordSummary, LeaderboardEntry, PlayerStats, RoomEventSummary, RoomOptions, RoomSummary } from "./types";
+import type { GamePlayer, GameRecordSummary, GameWinner, LeaderboardEntry, PlayerGameRecordSummary, PlayerStats, RoomEventSummary, RoomOptions, RoomSummary } from "./types";
 import {
   isRecord,
   validateNickname,
@@ -359,11 +359,91 @@ function parseRecordResult(value: string): unknown {
   }
 }
 
+function readRecordWinner(value: unknown): GameWinner | undefined {
+  if (!isRecord(value)) {
+    return undefined;
+  }
+  return value.winner === "villagers" || value.winner === "werewolves" || value.winner === "foxes" || value.winner === "lovers"
+    ? value.winner
+    : undefined;
+}
+
+function readRecordDay(value: unknown): number | undefined {
+  if (!isRecord(value) || typeof value.day !== "number" || !Number.isFinite(value.day)) {
+    return undefined;
+  }
+  return value.day;
+}
+
+function readRecordPlayers(value: unknown): GamePlayer[] {
+  if (!isRecord(value) || !Array.isArray(value.players)) {
+    return [];
+  }
+  return value.players.filter((player): player is GamePlayer =>
+    isRecord(player) &&
+    typeof player.playerId === "string" &&
+    typeof player.nickname === "string" &&
+    typeof player.role === "string" &&
+    typeof player.alive === "boolean"
+  );
+}
+
 function parseJsonOrNull(value: string): unknown {
   try {
     return JSON.parse(value);
   } catch {
     return null;
+  }
+}
+
+async function playerIdsForHistory(env: Env, playerId: string): Promise<string[]> {
+  const identity = await env.DB.prepare("SELECT registered_trip_hash FROM players WHERE id = ? LIMIT 1")
+    .bind(playerId)
+    .first<{ registered_trip_hash: string | null }>();
+  if (!identity?.registered_trip_hash) {
+    return [playerId];
+  }
+
+  const result = await env.DB.prepare("SELECT id FROM players WHERE registered_trip_hash = ? ORDER BY id LIMIT 50")
+    .bind(identity.registered_trip_hash)
+    .all<{ id: string }>();
+  const ids = result.results.map((row) => row.id);
+  return ids.includes(playerId) ? ids : [playerId, ...ids];
+}
+
+async function getPlayerRecords(env: Env, playerIdParam: string): Promise<Response> {
+  try {
+    const playerId = validatePlayerId(playerIdParam);
+    const playerIds = await playerIdsForHistory(env, playerId);
+    const predicates = playerIds.map(() => "result_json LIKE ?").join(" OR ");
+    const patterns = playerIds.map((id) => `%"playerId":"${id}"%`);
+    const result = await env.DB.prepare(
+      `SELECT id, room_id, result_json, created_at FROM game_records WHERE ${predicates} ORDER BY created_at DESC LIMIT 20`
+    )
+      .bind(...patterns)
+      .all<{ id: number; room_id: string; result_json: string; created_at: string }>();
+    const records: PlayerGameRecordSummary[] = result.results.flatMap((record) => {
+      const parsed = parseRecordResult(record.result_json);
+      const players = readRecordPlayers(parsed);
+      const player = players.find((candidate) => playerIds.includes(candidate.playerId));
+      if (!player) {
+        return [];
+      }
+      return [{
+        id: record.id,
+        roomId: record.room_id,
+        winner: readRecordWinner(parsed),
+        day: readRecordDay(parsed),
+        playerId: player.playerId,
+        nickname: player.nickname,
+        role: player.role,
+        alive: player.alive,
+        createdAt: record.created_at
+      }];
+    });
+    return json({ records });
+  } catch (error) {
+    return json({ error: error instanceof Error ? error.message : "Invalid player records" }, { status: 400 });
   }
 }
 
@@ -552,6 +632,11 @@ export default {
     const statsMatch = url.pathname.match(/^\/api\/players\/([^/]+)\/stats$/);
     if (request.method === "GET" && statsMatch) {
       return getPlayerStats(env, statsMatch[1]);
+    }
+
+    const playerRecordsMatch = url.pathname.match(/^\/api\/players\/([^/]+)\/records$/);
+    if (request.method === "GET" && playerRecordsMatch) {
+      return getPlayerRecords(env, playerRecordsMatch[1]);
     }
 
     if (request.method === "POST" && url.pathname === "/api/rooms") {

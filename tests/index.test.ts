@@ -82,6 +82,28 @@ function envWithRooms(
                 return roomIds.includes(String(values[0])) ? { id: values[0] } : null;
               },
               async all() {
+                if (query.includes("FROM players") && query.includes("registered_trip_hash")) {
+                  return {
+                    results: Object.entries(playerRegisteredTripHashes)
+                      .filter(([, tripHash]) => tripHash === String(values[0]))
+                      .map(([id]) => ({ id }))
+                      .sort((a, b) => a.id.localeCompare(b.id))
+                  };
+                }
+                if (query.includes("FROM game_records") && query.includes("result_json LIKE")) {
+                  const allRecords = Object.values(records).flat();
+                  return {
+                    results: allRecords
+                      .filter((record) =>
+                        values.some((pattern) => {
+                          const playerId = String(pattern).match(/"playerId":"([^"]+)"/)?.[1];
+                          return playerId ? record.result_json.includes(`"playerId":"${playerId}"`) : false;
+                        })
+                      )
+                      .sort((a, b) => b.created_at.localeCompare(a.created_at))
+                      .slice(0, 20)
+                  };
+                }
                 if (query.includes("FROM game_records")) {
                   return { results: records[String(values[0])] ?? [] };
                 }
@@ -691,6 +713,77 @@ describe("worker routes", () => {
           roomId: "room_records",
           result: { winner: "villagers", day: 3 },
           createdAt: "2026-05-04 04:00:00"
+        }
+      ]
+    });
+  });
+
+  it("returns player record history across claimed Trip identities", async () => {
+    const response = await worker.fetch(
+      new Request("http://example.test/api/players/player_current/records"),
+      envWithRooms(
+        ["room_old", "room_new"],
+        {},
+        {},
+        {
+          room_old: [
+            {
+              id: 1,
+              room_id: "room_old",
+              result_json: '{"winner":"villagers","day":2,"players":[{"playerId":"player_old","nickname":"Old Name","role":"villager","alive":true}]}',
+              created_at: "2026-05-04 03:00:00"
+            }
+          ],
+          room_new: [
+            {
+              id: 2,
+              room_id: "room_new",
+              result_json: '{"winner":"werewolves","day":4,"players":[{"playerId":"player_current","nickname":"Current","role":"werewolf","alive":true},{"playerId":"player_other","nickname":"Other","role":"villager","alive":false}]}',
+              created_at: "2026-05-04 05:00:00"
+            }
+          ]
+        },
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        new Set(),
+        new Set(),
+        {
+          player_current: "trip_hash_a",
+          player_old: "trip_hash_a",
+          player_other: "trip_hash_b"
+        }
+      )
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      records: [
+        {
+          id: 2,
+          roomId: "room_new",
+          winner: "werewolves",
+          day: 4,
+          playerId: "player_current",
+          nickname: "Current",
+          role: "werewolf",
+          alive: true,
+          createdAt: "2026-05-04 05:00:00"
+        },
+        {
+          id: 1,
+          roomId: "room_old",
+          winner: "villagers",
+          day: 2,
+          playerId: "player_old",
+          nickname: "Old Name",
+          role: "villager",
+          alive: true,
+          createdAt: "2026-05-04 03:00:00"
         }
       ]
     });

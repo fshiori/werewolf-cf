@@ -640,6 +640,14 @@ export function renderRoom(roomId: string): string {
       <tr>
         <td>
           <table class="panel">
+            <tr><th>個人紀錄</th></tr>
+            <tr><td><div id="playerRecords" class="muted">讀取中</div></td></tr>
+          </table>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <table class="panel">
             <tr><th>事件</th></tr>
             <tr><td><div id="events" class="muted">讀取中</div></td></tr>
           </table>
@@ -694,6 +702,29 @@ export function renderRoom(roomId: string): string {
           target.textContent = "紀錄讀取失敗。";
         }
       }
+      async function refreshPlayerRecords() {
+        const playerId = localStorage.getItem(playerKey);
+        const target = document.querySelector("#playerRecords");
+        try {
+          const res = await fetch("/api/players/" + playerId + "/records");
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || "player records failed");
+          if (!data.records.length) {
+            target.textContent = "尚無紀錄。";
+            return;
+          }
+          target.innerHTML = "";
+          data.records.slice(0, 5).forEach((record) => {
+            const div = document.createElement("div");
+            const winner = record.winner || "unknown";
+            const day = record.day || "?";
+            div.textContent = record.createdAt + "　[" + record.roomId + "] " + winner + " 勝　第 " + day + " 日　" + roleLabel(record.role);
+            target.appendChild(div);
+          });
+        } catch {
+          target.textContent = "個人紀錄讀取失敗。";
+        }
+      }
       async function refreshEvents() {
         const target = document.querySelector("#events");
         try {
@@ -722,6 +753,7 @@ export function renderRoom(roomId: string): string {
       let revealedRoles = {};
       void refreshStats();
       void refreshRecords();
+      void refreshPlayerRecords();
       void refreshEvents();
       document.querySelector("#connect").addEventListener("click", () => {
         const nickname = document.querySelector("#nickname").value;
@@ -782,6 +814,7 @@ export function renderRoom(roomId: string): string {
             if (msg.phase === "ended") {
               void refreshStats();
               void refreshRecords();
+              void refreshPlayerRecords();
               void refreshEvents();
             }
           } else if (msg.type === "role") {

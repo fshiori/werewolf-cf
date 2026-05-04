@@ -185,8 +185,11 @@ describe("render", () => {
     expect(html).toContain("/stats");
     expect(html).toContain("void refreshStats();");
     expect(html).toContain("最近對局");
+    expect(html).toContain("個人紀錄");
     expect(html).toContain("/api/rooms/");
     expect(html).toContain("/records");
+    expect(html).toContain("playerRecords");
+    expect(html).toContain("/api/players/\" + playerId + \"/records");
     expect(html).toContain("事件");
     expect(html).toContain("/events");
     expect(html).toContain("game.hostId !== currentPlayerId");
