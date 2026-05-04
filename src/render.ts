@@ -674,7 +674,13 @@ export function renderRoom(roomId: string): string {
             <tr><th colspan="2">[${escapeHtml(roomId)}] 汝等是人是狼？</th></tr>
             <tr>
               <td style="width: 180px;">階段：<span id="phase">lobby</span></td>
-              <td>勝利：<span id="winner" class="muted">未定</span>　<a href="/">首頁</a></td>
+              <td>
+                勝利：<span id="winner" class="muted">未定</span>
+                　<a href="/">首頁</a>
+                　<a href="/api/rooms/${escapeHtml(roomId)}">房間JSON</a>
+                　<a href="/api/rooms/${escapeHtml(roomId)}/records">對局JSON</a>
+                　<a href="/api/rooms/${escapeHtml(roomId)}/events">事件JSON</a>
+              </td>
             </tr>
             <tr>
               <td>房主</td>
