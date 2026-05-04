@@ -475,6 +475,58 @@ describe("RoomDurableObject", () => {
     expect(deadLoverMessages).toEqual([]);
   });
 
+  it("sends dead chat only to dead player sockets during active games", () => {
+    const game: GameState = {
+      roomId: "room_abc",
+      phase: "night",
+      day: 1,
+      players: [
+        { playerId: "player_alive", nickname: "Alive", role: "villager", alive: true },
+        { playerId: "player_dead", nickname: "Dead", role: "villager", alive: false },
+        { playerId: "player_dead_wolf", nickname: "Dead Wolf", role: "werewolf", alive: false }
+      ],
+      votes: {},
+      openVote: false,
+      commonTalkVisible: false,
+      deadRoleVisible: false,
+      wishRole: false,
+      dummyBoy: false,
+      dayMs: 180_000,
+      nightMs: 90_000,
+      selfVote: false,
+      voteStatus: false,
+      revoteCount: 0,
+      nightKills: {},
+      divinations: {},
+      guards: {},
+      catRevives: {},
+      lastWords: {},
+      log: []
+    };
+    const room = roomObject(game);
+    const aliveMessages: SentMessage[] = [];
+    const deadMessages: SentMessage[] = [];
+    const deadWolfMessages: SentMessage[] = [];
+    const aliveSocket = fakeSocket(aliveMessages);
+    const deadSocket = fakeSocket(deadMessages);
+    const deadWolfSocket = fakeSocket(deadWolfMessages);
+    connect(room, aliveSocket, "player_alive", "Alive");
+    connect(room, deadSocket, "player_dead", "Dead");
+    connect(room, deadWolfSocket, "player_dead_wolf", "Dead Wolf");
+
+    (room as unknown as { broadcastDead(gameState: GameState, message: unknown): void }).broadcastDead(game, {
+      type: "dead_chat",
+      playerId: "player_dead",
+      nickname: "Dead",
+      text: "secret",
+      sentAt: "2026-05-04T00:00:00.000Z"
+    });
+
+    expect(aliveMessages).toEqual([]);
+    expect(deadMessages).toEqual([expect.objectContaining({ type: "dead_chat", text: "secret" })]);
+    expect(deadWolfMessages).toEqual([expect.objectContaining({ type: "dead_chat", text: "secret" })]);
+  });
+
   it("broadcasts game state when child fox divination completes the night", async () => {
     const game: GameState = {
       roomId: "room_abc",
