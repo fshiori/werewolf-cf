@@ -96,6 +96,13 @@ export function parseClientMessage(raw: string): ClientMessage {
     return { type: "wolf_chat", text: parsed.text };
   }
 
+  if (parsed.type === "fox_chat") {
+    if (typeof parsed.text !== "string") {
+      throw new Error("Invalid fox chat message");
+    }
+    return { type: "fox_chat", text: parsed.text };
+  }
+
   if (parsed.type === "start_game") {
     return { type: "start_game" };
   }

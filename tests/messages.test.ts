@@ -5,6 +5,7 @@ import {
   buildChatMessage,
   buildChildFoxResultMessage,
   buildDivinationResultMessage,
+  buildFoxChatMessage,
   buildGameStateMessage,
   buildJoinedMessage,
   buildMediumResultMessage,
@@ -44,6 +45,15 @@ describe("messages", () => {
       type: "wolf_chat",
       playerId: "player_1",
       nickname: "&lt;Wolf&gt;",
+      text: "&lt;secret&gt;"
+    });
+  });
+
+  it("builds escaped fox chat messages", () => {
+    expect(buildFoxChatMessage("player_1", "<Fox>", "<secret>")).toMatchObject({
+      type: "fox_chat",
+      playerId: "player_1",
+      nickname: "&lt;Fox&gt;",
       text: "&lt;secret&gt;"
     });
   });

@@ -134,6 +134,11 @@ export type WolfChatClientMessage = {
   text: string;
 };
 
+export type FoxChatClientMessage = {
+  type: "fox_chat";
+  text: string;
+};
+
 export type StartGameClientMessage = {
   type: "start_game";
 };
@@ -172,6 +177,7 @@ export type ClientMessage =
   | JoinClientMessage
   | ChatClientMessage
   | WolfChatClientMessage
+  | FoxChatClientMessage
   | StartGameClientMessage
   | VoteClientMessage
   | NightKillClientMessage
@@ -185,6 +191,7 @@ export type ServerMessage =
   | { type: "presence"; members: RoomMember[] }
   | { type: "chat"; playerId: string; nickname: string; text: string; sentAt: string }
   | { type: "wolf_chat"; playerId: string; nickname: string; text: string; sentAt: string }
+  | { type: "fox_chat"; playerId: string; nickname: string; text: string; sentAt: string }
   | { type: "divination_result"; targetPlayerId: string; targetNickname: string; result: DivinationResult }
   | { type: "child_fox_result"; targetPlayerId: string; targetNickname: string; result: ChildFoxDivinationResult }
   | { type: "medium_result"; day: number; targetPlayerId: string; targetNickname: string; result: MediumResult }
