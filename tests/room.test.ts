@@ -999,6 +999,73 @@ describe("RoomDurableObject", () => {
     }
   });
 
+  it("rejects invalid start game websocket states", async () => {
+    const lobbyWithTooFewPlayers: GameState = {
+      roomId: "room_abc",
+      phase: "lobby",
+      day: 0,
+      hostId: "player_host",
+      players: [
+        { playerId: "player_host", nickname: "Host", role: "villager", alive: true },
+        { playerId: "player_guest", nickname: "Guest", role: "villager", alive: true }
+      ],
+      votes: {},
+      openVote: false,
+      commonTalkVisible: false,
+      deadRoleVisible: false,
+      wishRole: false,
+      dummyBoy: false,
+      dayMs: 180_000,
+      nightMs: 90_000,
+      selfVote: false,
+      voteStatus: false,
+      revoteCount: 0,
+      nightKills: {},
+      divinations: {},
+      guards: {},
+      catRevives: {},
+      lastWords: {},
+      log: []
+    };
+    const activeGame: GameState = {
+      ...lobbyWithTooFewPlayers,
+      phase: "day",
+      day: 1,
+      players: [
+        { playerId: "player_host", nickname: "Host", role: "villager", alive: true },
+        { playerId: "player_guest", nickname: "Guest", role: "villager", alive: true },
+        { playerId: "player_wolf", nickname: "Wolf", role: "werewolf", alive: true }
+      ]
+    };
+    const cases = [
+      {
+        game: lobbyWithTooFewPlayers,
+        playerId: "player_host",
+        nickname: "Host",
+        gm: false,
+        message: "At least 3 players are required"
+      },
+      {
+        game: activeGame,
+        playerId: "player_gm",
+        nickname: "GM",
+        gm: true,
+        message: "Game already started"
+      }
+    ];
+
+    for (const testCase of cases) {
+      const room = roomObject(testCase.game);
+      const messages: SentMessage[] = [];
+      const socket = fakeSocket(messages);
+      connect(room, socket, testCase.playerId, testCase.nickname, testCase.gm);
+
+      await sendRaw(room, socket, JSON.stringify({ type: "start_game" }));
+
+      expect(messages).toEqual([{ type: "error", message: testCase.message }]);
+    }
+  });
+
   it("starts games through the websocket handler and sends private roles", async () => {
     const game: GameState = {
       roomId: "room_abc",
