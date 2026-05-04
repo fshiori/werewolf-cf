@@ -176,6 +176,7 @@ describe("render", () => {
     expect(html).toContain("werewolf_cf_trip");
     expect(html).toContain("Trip");
     expect(html).toContain("avatarFile");
+    expect(html).toContain("image/png,image/jpeg,image/gif,image/webp");
     expect(html).toContain("/api/assets/avatar");
     expect(html).toContain("removeAvatar");
     expect(html).toContain("刪頭像");

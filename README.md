@@ -81,7 +81,7 @@ Trip and avatar management:
 - `POST /api/trips/claim`: Claim a registered Trip for a local player identity.
 - `POST /api/trips/exclusions`: Exclude a Trip from Trip-limited rooms.
 - `DELETE /api/trips/exclusions`: Remove a Trip exclusion.
-- `POST /api/assets/avatar`: Upload an image avatar to R2.
+- `POST /api/assets/avatar`: Upload a PNG, JPEG, GIF, or WebP avatar to R2.
 - `DELETE /api/assets/avatar`: Remove the current player's avatar from R2.
 - `GET /assets/avatar/:playerId`: Read a player's avatar.
 
