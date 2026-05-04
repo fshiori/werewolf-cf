@@ -163,6 +163,8 @@ Deploy:
 npm run deploy
 ```
 
+`npm run deploy` runs `npm run check:wrangler -- --production` first and fails while production resource IDs still use `local-dev-placeholder`.
+
 After deploy, smoke check the production Worker:
 
 ```bash
