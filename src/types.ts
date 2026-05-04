@@ -188,6 +188,17 @@ export type DeadChatClientMessage = {
   text: string;
 };
 
+export type GmChatClientMessage = {
+  type: "gm_chat";
+  text: string;
+};
+
+export type GmWhisperClientMessage = {
+  type: "gm_whisper";
+  targetPlayerId: string;
+  text: string;
+};
+
 export type StartGameClientMessage = {
   type: "start_game";
 };
@@ -235,6 +246,8 @@ export type ClientMessage =
   | CommonChatClientMessage
   | LoversChatClientMessage
   | DeadChatClientMessage
+  | GmChatClientMessage
+  | GmWhisperClientMessage
   | StartGameClientMessage
   | VoteClientMessage
   | NightKillClientMessage
@@ -253,6 +266,8 @@ export type ServerMessage =
   | { type: "common_chat"; playerId: string; nickname: string; text: string; sentAt: string }
   | { type: "lovers_chat"; playerId: string; nickname: string; text: string; sentAt: string }
   | { type: "dead_chat"; playerId: string; nickname: string; text: string; sentAt: string }
+  | { type: "gm_chat"; playerId: string; nickname: string; text: string; sentAt: string }
+  | { type: "gm_whisper"; playerId: string; nickname: string; targetPlayerId: string; targetNickname: string; text: string; sentAt: string }
   | { type: "revealed_roles"; roles: Record<string, PlayerRole> }
   | { type: "divination_result"; targetPlayerId: string; targetNickname: string; result: DivinationResult }
   | { type: "child_fox_result"; targetPlayerId: string; targetNickname: string; result: ChildFoxDivinationResult }

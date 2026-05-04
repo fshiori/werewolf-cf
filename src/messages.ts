@@ -77,6 +77,28 @@ export function buildRevealedRolesMessage(state: GameState): ServerMessage {
   };
 }
 
+export function buildGmChatMessage(playerId: string, nickname: string, text: string): ServerMessage {
+  return {
+    type: "gm_chat",
+    playerId,
+    nickname: escapeHtml(nickname),
+    text: escapeHtml(text),
+    sentAt: new Date().toISOString()
+  };
+}
+
+export function buildGmWhisperMessage(playerId: string, nickname: string, target: RoomMember, text: string): ServerMessage {
+  return {
+    type: "gm_whisper",
+    playerId,
+    nickname: escapeHtml(nickname),
+    targetPlayerId: target.playerId,
+    targetNickname: escapeHtml(target.nickname),
+    text: escapeHtml(text),
+    sentAt: new Date().toISOString()
+  };
+}
+
 export function buildGameStateMessage(state: GameState): ServerMessage {
   return {
     type: "game_state",

@@ -202,6 +202,20 @@ export function parseClientMessage(raw: string): ClientMessage {
     return { type: "dead_chat", text: parsed.text };
   }
 
+  if (parsed.type === "gm_chat") {
+    if (typeof parsed.text !== "string") {
+      throw new Error("Invalid GM chat message");
+    }
+    return { type: "gm_chat", text: parsed.text };
+  }
+
+  if (parsed.type === "gm_whisper") {
+    if (typeof parsed.targetPlayerId !== "string" || typeof parsed.text !== "string") {
+      throw new Error("Invalid GM whisper message");
+    }
+    return { type: "gm_whisper", targetPlayerId: parsed.targetPlayerId, text: parsed.text };
+  }
+
   if (parsed.type === "start_game") {
     return { type: "start_game" };
   }

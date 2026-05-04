@@ -152,6 +152,10 @@ describe("render", () => {
     expect(html).toContain("共有頻");
     expect(html).toContain("戀頻");
     expect(html).toContain("靈界");
+    expect(html).toContain("GM私語");
+    expect(html).toContain("gmWhisperTarget");
+    expect(html).toContain("gm_chat");
+    expect(html).toContain("gm_whisper");
     expect(html).toContain("開始遊戲");
     expect(html).toContain("房主");
     expect(html).toContain("戰績");
