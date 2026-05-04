@@ -44,6 +44,7 @@ describe("render", () => {
     expect(html).toContain("戰績");
     expect(html).toContain("/api/players/");
     expect(html).toContain("/stats");
+    expect(html).toContain("void refreshStats();");
     expect(html).toContain("最近對局");
     expect(html).toContain("/api/rooms/");
     expect(html).toContain("/records");
