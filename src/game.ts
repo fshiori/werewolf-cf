@@ -116,6 +116,17 @@ export function startGame(state: GameState, now = Date.now(), random = Math.rand
           .map((player) => player.playerId)
       : []
   );
+  const foxId = state.players.length >= 15
+    ? state.players.find(
+        (player) =>
+          !wolfIds.has(player.playerId) &&
+          player.playerId !== seerId &&
+          player.playerId !== mediumId &&
+          player.playerId !== madmanId &&
+          player.playerId !== guardId &&
+          !commonIds.has(player.playerId)
+      )?.playerId
+    : undefined;
   const players = state.players.map((player) => {
     let role: GamePlayer["role"] = "villager";
     if (wolfIds.has(player.playerId)) {
@@ -130,6 +141,8 @@ export function startGame(state: GameState, now = Date.now(), random = Math.rand
       role = "guard";
     } else if (commonIds.has(player.playerId)) {
       role = "common";
+    } else if (player.playerId === foxId) {
+      role = "fox";
     }
     return { ...player, role, alive: true };
   });
@@ -204,8 +217,19 @@ export function castDivination(
     throw new Error("Seers cannot divine themselves");
   }
   const target = assertLivingPlayer(state, targetId);
+  const nextState = target.role === "fox"
+    ? {
+        ...state,
+        players: state.players.map((player) => (player.playerId === targetId ? { ...player, alive: false } : player)),
+        log: [...state.log, `${target.nickname} 被占卜後死亡。`]
+      }
+    : state;
+  const clearedState = clearActionsForDeadPlayers(nextState);
   return {
-    state: { ...state, divinations: { ...divinations, [actorId]: targetId } },
+    state: {
+      ...clearedState,
+      divinations: { ...clearedState.divinations, [actorId]: targetId }
+    },
     targetNickname: target.nickname,
     result: target.role === "werewolf" ? "werewolf" : "human"
   };
@@ -275,7 +299,12 @@ export function playerStatUpdates(state: GameState): PlayerStatUpdate[] {
   }
   return state.players.map((player) => ({
     playerId: player.playerId,
-    won: player.role === "werewolf" || player.role === "madman" ? state.winner === "werewolves" : state.winner === "villagers"
+    won:
+      player.role === "fox"
+        ? state.winner === "foxes"
+        : player.role === "werewolf" || player.role === "madman"
+          ? state.winner === "werewolves"
+          : state.winner === "villagers"
   }));
 }
 
@@ -312,11 +341,16 @@ function resolveNight(state: GameState, now = Date.now()): GameState {
   const killedId = pickTopTarget(state.nightKills);
   const protectedIds = new Set(Object.values(state.guards ?? {}));
   const protectedKill = killedId ? protectedIds.has(killedId) : false;
-  const players = killedId && !protectedKill
+  const attacked = killedId ? state.players.find((player) => player.playerId === killedId) : undefined;
+  const foxAttack = attacked?.role === "fox";
+  const players = killedId && !protectedKill && !foxAttack
     ? state.players.map((player) => (player.playerId === killedId ? { ...player, alive: false } : player))
     : state.players;
-  const killed = killedId && !protectedKill ? state.players.find((player) => player.playerId === killedId) : undefined;
-  const log = [...state.log, killed ? `${killed.nickname} 在夜晚死亡。` : "夜晚平安過去。"];
+  const killed = killedId && !protectedKill && !foxAttack ? attacked : undefined;
+  const log = [
+    ...state.log,
+    killed ? `${killed.nickname} 在夜晚死亡。` : foxAttack ? "妖狐被襲擊但沒有死亡。" : "夜晚平安過去。"
+  ];
   return withWinOrNextDay({ ...clearActionsForDeadPlayers({ ...state, players }), nightKills: {}, divinations: {}, guards: {}, log }, now);
 }
 
@@ -361,18 +395,19 @@ function endGame(state: GameState, winner: GameWinner): GameState {
     divinations: {},
     guards: {},
     mediumReading: undefined,
-    log: [...state.log, winner === "villagers" ? "村民勝利。" : "狼人勝利。"]
+    log: [...state.log, winner === "villagers" ? "村民勝利。" : winner === "werewolves" ? "狼人勝利。" : "妖狐勝利。"]
   };
 }
 
 function getWinner(state: GameState): GameWinner | undefined {
   const wolves = livingWerewolves(state).length;
-  const villagers = livingPlayers(state).filter((player) => player.role !== "werewolf").length;
+  const foxes = livingFoxes(state).length;
+  const villagers = livingPlayers(state).filter((player) => player.role !== "werewolf" && player.role !== "fox").length;
   if (wolves === 0) {
-    return "villagers";
+    return foxes > 0 ? "foxes" : "villagers";
   }
   if (wolves >= villagers) {
-    return "werewolves";
+    return foxes > 0 ? "foxes" : "werewolves";
   }
   return undefined;
 }
@@ -383,6 +418,10 @@ function livingPlayers(state: GameState): GamePlayer[] {
 
 function livingWerewolves(state: GameState): GamePlayer[] {
   return livingPlayers(state).filter((player) => player.role === "werewolf");
+}
+
+function livingFoxes(state: GameState): GamePlayer[] {
+  return livingPlayers(state).filter((player) => player.role === "fox");
 }
 
 function livingGuards(state: GameState): GamePlayer[] {

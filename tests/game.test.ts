@@ -29,6 +29,21 @@ function numberedLobby(count: number): GameState {
   return lobby(Array.from({ length: count }, (_, index) => [`player_${index + 1}`, `Player ${index + 1}`]));
 }
 
+function activeState(phase: "day" | "night", players: GameState["players"]): GameState {
+  return {
+    roomId: "room_abc",
+    phase,
+    day: 1,
+    players,
+    votes: {},
+    revoteCount: 0,
+    nightKills: {},
+    divinations: {},
+    guards: {},
+    log: []
+  };
+}
+
 describe("game", () => {
   it("starts with one werewolf and public wolf partner lookup", () => {
     const game = startGame(
@@ -139,6 +154,14 @@ describe("game", () => {
     expect(commonsForPlayer(game, "player_10")).toEqual([]);
   });
 
+  it("adds a fox in fifteen-player games", () => {
+    const game = startGame(numberedLobby(15), 0, () => 0);
+
+    expect(game.players.filter((player) => player.role === "fox")).toEqual([
+      expect.objectContaining({ playerId: "player_10", role: "fox" })
+    ]);
+  });
+
   it("moves from completed day vote to night", () => {
     let game = startGame(lobby([["player_1", "Alice"], ["player_2", "Bob"], ["player_3", "Carol"], ["player_4", "Dave"]]), 0, () => 0);
 
@@ -212,6 +235,54 @@ describe("game", () => {
     expect(game.winner).toBe("werewolves");
   });
 
+  it("gives foxes the win when a normal win condition happens while a fox is alive", () => {
+    let game = activeState("day", [
+      { playerId: "player_1", nickname: "Wolf", role: "werewolf", alive: true },
+      { playerId: "player_2", nickname: "Fox", role: "fox", alive: true },
+      { playerId: "player_3", nickname: "Villager", role: "villager", alive: true }
+    ]);
+
+    game = castDayVote(game, "player_1", "player_1");
+    game = castDayVote(game, "player_2", "player_1");
+    game = castDayVote(game, "player_3", "player_1");
+
+    expect(game.phase).toBe("ended");
+    expect(game.winner).toBe("foxes");
+    expect(game.log.at(-1)).toBe("妖狐勝利。");
+  });
+
+  it("keeps foxes alive after wolf attacks", () => {
+    const game = castNightKill(
+      activeState("night", [
+        { playerId: "player_1", nickname: "Wolf", role: "werewolf", alive: true },
+        { playerId: "player_2", nickname: "Fox", role: "fox", alive: true },
+        { playerId: "player_3", nickname: "Villager", role: "villager", alive: true }
+      ]),
+      "player_1",
+      "player_2",
+      0
+    );
+
+    expect(game.players.find((player) => player.playerId === "player_2")?.alive).toBe(true);
+    expect(game.winner).toBe("foxes");
+    expect(game.log).toContain("妖狐被襲擊但沒有死亡。");
+  });
+
+  it("kills foxes when seers divine them", () => {
+    const game = activeState("night", [
+      { playerId: "player_1", nickname: "Wolf", role: "werewolf", alive: true },
+      { playerId: "player_2", nickname: "Seer", role: "seer", alive: true },
+      { playerId: "player_3", nickname: "Fox", role: "fox", alive: true },
+      { playerId: "player_4", nickname: "Villager", role: "villager", alive: true }
+    ]);
+
+    const divination = castDivination(game, "player_2", "player_3");
+
+    expect(divination.result).toBe("human");
+    expect(divination.state.players.find((player) => player.playerId === "player_3")?.alive).toBe(false);
+    expect(divination.state.log.at(-1)).toBe("Fox 被占卜後死亡。");
+  });
+
   it("builds player stat updates from final winners", () => {
     const wolfWin = startGame(
       lobby([
@@ -248,6 +319,23 @@ describe("game", () => {
       { playerId: "player_6", won: true }
     ]);
     expect(playerStatUpdates({ ...wolfWin, phase: "day" })).toEqual([]);
+    expect(
+      playerStatUpdates({
+        ...ended,
+        winner: "foxes",
+        players: [
+          { playerId: "player_1", nickname: "Wolf", role: "werewolf", alive: true },
+          { playerId: "player_2", nickname: "Mad", role: "madman", alive: true },
+          { playerId: "player_3", nickname: "Fox", role: "fox", alive: true },
+          { playerId: "player_4", nickname: "Villager", role: "villager", alive: true }
+        ]
+      })
+    ).toEqual([
+      { playerId: "player_1", won: false },
+      { playerId: "player_2", won: false },
+      { playerId: "player_3", won: true },
+      { playerId: "player_4", won: false }
+    ]);
   });
 
   it("requires at least three players to start", () => {
