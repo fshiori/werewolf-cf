@@ -9,6 +9,7 @@ import {
   castNightKill,
   createLobbyState,
   mediumReadingForPlayer,
+  playerStatUpdates,
   startGame,
   upsertLobbyPlayer,
   wolvesForPlayer
@@ -131,6 +132,29 @@ describe("game", () => {
 
     expect(game.phase).toBe("ended");
     expect(game.winner).toBe("werewolves");
+  });
+
+  it("builds player stat updates from final winners", () => {
+    const wolfWin = startGame(lobby([["player_1", "Alice"], ["player_2", "Bob"], ["player_3", "Carol"], ["player_4", "Dave"]]), 0, () => 0);
+    const ended = {
+      ...wolfWin,
+      phase: "ended" as const,
+      winner: "werewolves" as const
+    };
+
+    expect(playerStatUpdates(ended)).toEqual([
+      { playerId: "player_1", won: true },
+      { playerId: "player_2", won: false },
+      { playerId: "player_3", won: false },
+      { playerId: "player_4", won: false }
+    ]);
+    expect(playerStatUpdates({ ...ended, winner: "villagers" })).toEqual([
+      { playerId: "player_1", won: false },
+      { playerId: "player_2", won: true },
+      { playerId: "player_3", won: true },
+      { playerId: "player_4", won: true }
+    ]);
+    expect(playerStatUpdates({ ...wolfWin, phase: "day" })).toEqual([]);
   });
 
   it("requires at least three players to start", () => {

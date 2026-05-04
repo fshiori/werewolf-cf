@@ -38,6 +38,11 @@ export interface PublicGamePlayer {
   alive: boolean;
 }
 
+export interface PlayerStatUpdate {
+  playerId: string;
+  won: boolean;
+}
+
 export interface GameState {
   roomId: string;
   phase: GamePhase;
