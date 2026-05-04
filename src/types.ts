@@ -15,6 +15,7 @@ export interface RoomOptions {
   decider: boolean;
   lovers: boolean;
   betrayer: boolean;
+  childFox: boolean;
 }
 
 export interface RoomMember {
@@ -33,10 +34,12 @@ export type PlayerRole =
   | "common"
   | "fox"
   | "poison"
-  | "betrayer";
+  | "betrayer"
+  | "child_fox";
 export type GamePhase = "lobby" | "day" | "night" | "ended";
 export type GameWinner = "villagers" | "werewolves" | "foxes" | "lovers";
 export type DivinationResult = "human" | "werewolf";
+export type ChildFoxDivinationResult = DivinationResult | "failed";
 export type MediumResult = "human" | "werewolf";
 
 export interface MediumReading {
@@ -146,6 +149,11 @@ export type DivineClientMessage = {
   targetPlayerId: string;
 };
 
+export type ChildFoxDivineClientMessage = {
+  type: "child_fox_divine";
+  targetPlayerId: string;
+};
+
 export type GuardClientMessage = {
   type: "guard";
   targetPlayerId: string;
@@ -159,6 +167,7 @@ export type ClientMessage =
   | VoteClientMessage
   | NightKillClientMessage
   | DivineClientMessage
+  | ChildFoxDivineClientMessage
   | GuardClientMessage;
 
 export type ServerMessage =
@@ -167,8 +176,9 @@ export type ServerMessage =
   | { type: "chat"; playerId: string; nickname: string; text: string; sentAt: string }
   | { type: "wolf_chat"; playerId: string; nickname: string; text: string; sentAt: string }
   | { type: "divination_result"; targetPlayerId: string; targetNickname: string; result: DivinationResult }
+  | { type: "child_fox_result"; targetPlayerId: string; targetNickname: string; result: ChildFoxDivinationResult }
   | { type: "medium_result"; day: number; targetPlayerId: string; targetNickname: string; result: MediumResult }
-  | { type: "action_ack"; action: "vote" | "night_kill" | "guard"; targetPlayerId: string }
+  | { type: "action_ack"; action: "vote" | "night_kill" | "guard" | "child_fox_divine"; targetPlayerId: string }
   | {
       type: "game_state";
       phase: GamePhase;

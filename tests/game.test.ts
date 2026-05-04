@@ -4,6 +4,7 @@ import {
   canStartGame,
   canUsePublicChat,
   canUseWerewolfChannel,
+  castChildFoxDivination,
   castDayVote,
   castDivination,
   castGuard,
@@ -187,7 +188,8 @@ describe("game", () => {
       authority: false,
       decider: false,
       lovers: false,
-      betrayer: false
+      betrayer: false,
+      childFox: false
     });
 
     expect(normal.players.filter((player) => player.role === "poison")).toHaveLength(0);
@@ -206,7 +208,8 @@ describe("game", () => {
       authority: false,
       decider: false,
       lovers: false,
-      betrayer: false
+      betrayer: false,
+      childFox: false
     });
 
     expect(game.players.filter((player) => player.role === "big_wolf")).toHaveLength(1);
@@ -225,7 +228,8 @@ describe("game", () => {
       authority: true,
       decider: true,
       lovers: false,
-      betrayer: false
+      betrayer: false,
+      childFox: false
     });
 
     expect(game.players.find((player) => player.authority)?.playerId).toBe("player_1");
@@ -272,7 +276,8 @@ describe("game", () => {
       authority: false,
       decider: false,
       lovers: true,
-      betrayer: false
+      betrayer: false,
+      childFox: false
     });
 
     expect(game.players.filter((player) => player.lover)).toEqual([
@@ -293,7 +298,8 @@ describe("game", () => {
       authority: false,
       decider: false,
       lovers: false,
-      betrayer: true
+      betrayer: true,
+      childFox: false
     });
 
     expect(game.players.filter((player) => player.role === "betrayer")).toEqual([
@@ -302,6 +308,40 @@ describe("game", () => {
     expect(foxesForPlayer(game, "player_1")).toEqual([{ playerId: "player_11", nickname: "Player 11" }]);
     expect(foxesForPlayer(game, "player_11")).toEqual([{ playerId: "player_11", nickname: "Player 11" }]);
     expect(foxesForPlayer(game, "player_2")).toEqual([]);
+  });
+
+  it("applies the child fox room option in twenty-player games", () => {
+    const game = startGame(numberedLobby(20), 0, () => 0, {
+      poison: false,
+      bigWolf: false,
+      authority: false,
+      decider: false,
+      lovers: false,
+      betrayer: false,
+      childFox: true
+    });
+
+    expect(game.players.filter((player) => player.role === "child_fox")).toEqual([
+      expect.objectContaining({ playerId: "player_1", role: "child_fox" })
+    ]);
+    expect(foxesForPlayer(game, "player_1")).toEqual([{ playerId: "player_11", nickname: "Player 11" }]);
+  });
+
+  it("lets child foxes divine at night with possible failure", () => {
+    const game = activeState("night", [
+      { playerId: "player_1", nickname: "Child Fox", role: "child_fox", alive: true },
+      { playerId: "player_2", nickname: "Wolf", role: "werewolf", alive: true },
+      { playerId: "player_3", nickname: "Villager", role: "villager", alive: true }
+    ]);
+
+    const success = castChildFoxDivination(game, "player_1", "player_2", () => 0.9);
+
+    expect(success.result).toBe("werewolf");
+    expect(success.targetNickname).toBe("Wolf");
+    expect(success.state.divinations).toEqual({ player_1: "player_2" });
+    expect(() => castChildFoxDivination(success.state, "player_1", "player_3", () => 0.9)).toThrow("already used");
+    expect(castChildFoxDivination(game, "player_1", "player_3", () => 0.2).result).toBe("failed");
+    expect(() => castChildFoxDivination(game, "player_3", "player_2")).toThrow("Only child foxes");
   });
 
   it("kills betrayers when all foxes die", () => {
@@ -567,7 +607,8 @@ describe("game", () => {
           { playerId: "player_2", nickname: "Mad", role: "madman", alive: true },
           { playerId: "player_3", nickname: "Fox", role: "fox", alive: true },
           { playerId: "player_4", nickname: "Poison", role: "poison", alive: true },
-          { playerId: "player_5", nickname: "Betrayer", role: "betrayer", alive: true }
+          { playerId: "player_5", nickname: "Betrayer", role: "betrayer", alive: true },
+          { playerId: "player_6", nickname: "Child Fox", role: "child_fox", alive: true }
         ]
       })
     ).toEqual([
@@ -575,7 +616,8 @@ describe("game", () => {
       { playerId: "player_2", won: false },
       { playerId: "player_3", won: true },
       { playerId: "player_4", won: false },
-      { playerId: "player_5", won: true }
+      { playerId: "player_5", won: true },
+      { playerId: "player_6", won: true }
     ]);
   });
 

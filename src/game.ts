@@ -3,6 +3,7 @@ import type {
   GamePlayer,
   GameState,
   GameWinner,
+  ChildFoxDivinationResult,
   MediumReading,
   PlayerStatUpdate,
   PublicGamePlayer,
@@ -113,7 +114,7 @@ export function startGame(
   state: GameState,
   now = Date.now(),
   random = Math.random,
-  options: RoomOptions = { poison: false, bigWolf: false, authority: false, decider: false, lovers: false, betrayer: false }
+  options: RoomOptions = { poison: false, bigWolf: false, authority: false, decider: false, lovers: false, betrayer: false, childFox: false }
 ): GameState {
   if (state.phase !== "lobby") {
     throw new Error("Game already started");
@@ -233,6 +234,12 @@ function applyRoomOptions(players: GamePlayer[], options: RoomOptions): GamePlay
       nextPlayers = nextPlayers.map((player, index) => (index === betrayerIndex ? { ...player, role: "betrayer" } : player));
     }
   }
+  if (options.childFox && nextPlayers.length >= 20) {
+    const childFoxIndex = nextPlayers.findIndex((player) => player.role === "villager");
+    if (childFoxIndex !== -1) {
+      nextPlayers = nextPlayers.map((player, index) => (index === childFoxIndex ? { ...player, role: "child_fox" } : player));
+    }
+  }
   if (!options.poison || nextPlayers.length < 20) {
     return nextPlayers;
   }
@@ -343,6 +350,36 @@ export function castDivination(
   };
 }
 
+export function castChildFoxDivination(
+  state: GameState,
+  actorId: string,
+  targetId: string,
+  random = Math.random
+): { state: GameState; targetNickname: string; result: ChildFoxDivinationResult } {
+  if (state.phase !== "night") {
+    throw new Error("Child fox divination is only available at night");
+  }
+  const actor = assertLivingPlayer(state, actorId);
+  if (actor.role !== "child_fox") {
+    throw new Error("Only child foxes can divine players");
+  }
+  const divinations = state.divinations ?? {};
+  if (divinations[actorId]) {
+    throw new Error("Child fox divination is already used tonight");
+  }
+  if (actorId === targetId) {
+    throw new Error("Child foxes cannot divine themselves");
+  }
+  const target = assertLivingPlayer(state, targetId);
+  const failed = random() < 0.6;
+  const result = failed ? "failed" : isWerewolfRole(target.role) ? "werewolf" : "human";
+  const nextState = {
+    ...state,
+    divinations: { ...divinations, [actorId]: targetId }
+  };
+  return { state: nextState, targetNickname: target.nickname, result };
+}
+
 export function castGuard(state: GameState, actorId: string, targetId: string, now = Date.now()): GameState {
   if (state.phase !== "night") {
     throw new Error("Guarding is only available at night");
@@ -405,7 +442,7 @@ export function loversForPlayer(state: GameState, playerId: string): RoomMember[
 
 export function foxesForPlayer(state: GameState, playerId: string): RoomMember[] {
   const player = state.players.find((candidate) => candidate.playerId === playerId);
-  if (!player || (player.role !== "fox" && player.role !== "betrayer")) {
+  if (!player || (player.role !== "fox" && player.role !== "betrayer" && player.role !== "child_fox")) {
     return [];
   }
   return state.players
@@ -430,7 +467,7 @@ export function playerStatUpdates(state: GameState): PlayerStatUpdate[] {
     won:
       player.lover
         ? state.winner === "lovers"
-        : player.role === "fox" || player.role === "betrayer"
+        : player.role === "fox" || player.role === "betrayer" || player.role === "child_fox"
         ? state.winner === "foxes"
         : isWerewolfRole(player.role) || player.role === "madman"
           ? state.winner === "werewolves"
@@ -550,7 +587,7 @@ function endGame(state: GameState, winner: GameWinner): GameState {
 function getWinner(state: GameState): GameWinner | undefined {
   const wolves = livingWerewolves(state).length;
   const foxes = livingFoxes(state).length;
-  const villagers = livingPlayers(state).filter((player) => !isWerewolfRole(player.role) && player.role !== "fox").length;
+  const villagers = livingPlayers(state).filter((player) => !isWerewolfRole(player.role) && player.role !== "fox" && player.role !== "child_fox").length;
   if (wolves === 0) {
     return livingLovers(state).length >= 2 ? "lovers" : foxes > 0 ? "foxes" : "villagers";
   }
@@ -573,7 +610,7 @@ function livingWerewolves(state: GameState): GamePlayer[] {
 }
 
 function livingFoxes(state: GameState): GamePlayer[] {
-  return livingPlayers(state).filter((player) => player.role === "fox");
+  return livingPlayers(state).filter((player) => player.role === "fox" || player.role === "child_fox");
 }
 
 function livingLovers(state: GameState): GamePlayer[] {

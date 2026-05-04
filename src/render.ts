@@ -155,7 +155,8 @@ export function renderHome(rooms: RoomSummary[], announcement = DEFAULT_ANNOUNCE
         room.options.authority ? `<span class="option-mark">權力</span>` : "",
         room.options.decider ? `<span class="option-mark">決定</span>` : "",
         room.options.lovers ? `<span class="option-mark">戀人</span>` : "",
-        room.options.betrayer ? `<span class="option-mark">背德</span>` : ""
+        room.options.betrayer ? `<span class="option-mark">背德</span>` : "",
+        room.options.childFox ? `<span class="option-mark">子狐</span>` : ""
       ].filter(Boolean).join(" ");
       return `<a class="room-link" href="/room/${escapeHtml(room.id)}">
         <span class="room-line"><span class="status status-${status}">${status}</span><small>[${escapeHtml(room.id)}]</small> ${escapeHtml(room.name)}村</span>
@@ -232,6 +233,10 @@ export function renderHome(rooms: RoomSummary[], announcement = DEFAULT_ANNOUNCE
           <td><label><input id="optionBetrayer" type="checkbox"> <small>背德者登場，妖狐死亡時跟隨死亡</small></label></td>
         </tr>
         <tr>
+          <td><label><strong>　20人以上妖狐的占：</strong></label></td>
+          <td><label><input id="optionChildFox" type="checkbox"> <small>子狐登場，可於夜晚占卜但可能失敗</small></label></td>
+        </tr>
+        <tr>
           <td></td>
           <td><button id="createRoom">建立房間</button></td>
         </tr>
@@ -253,11 +258,12 @@ export function renderHome(rooms: RoomSummary[], announcement = DEFAULT_ANNOUNCE
         const decider = document.querySelector("#optionDecider").checked;
         const lovers = document.querySelector("#optionLovers").checked;
         const betrayer = document.querySelector("#optionBetrayer").checked;
+        const childFox = document.querySelector("#optionChildFox").checked;
         localStorage.setItem("werewolf_cf_nickname", nickname);
         const res = await fetch("/api/rooms", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ name, playerId: localStorage.getItem(playerKey), nickname, options: { poison, bigWolf, authority, decider, lovers, betrayer } })
+          body: JSON.stringify({ name, playerId: localStorage.getItem(playerKey), nickname, options: { poison, bigWolf, authority, decider, lovers, betrayer, childFox } })
         });
         const data = await res.json();
         if (!res.ok) {
@@ -486,6 +492,9 @@ export function renderRoom(roomId: string): string {
           } else if (msg.type === "divination_result") {
             const result = msg.result === "werewolf" ? "狼" : "人";
             append("<font color='#660099'>[占卜]</font> " + msg.targetNickname + " 是「" + result + "」。");
+          } else if (msg.type === "child_fox_result") {
+            const result = msg.result === "failed" ? "失敗" : msg.result === "werewolf" ? "狼" : "人";
+            append("<font color='#990099'>[子狐]</font> " + msg.targetNickname + " 是「" + result + "」。");
           } else if (msg.type === "medium_result") {
             const result = msg.result === "werewolf" ? "狼" : "人";
             append("<font color='#006666'>[靈能]</font> 第 " + msg.day + " 日被處決的 " + msg.targetNickname + " 是「" + result + "」。");
@@ -561,7 +570,8 @@ export function renderRoom(roomId: string): string {
           common: "共有者",
           fox: "妖狐",
           poison: "埋毒者",
-          betrayer: "背德者"
+          betrayer: "背德者",
+          child_fox: "子狐"
         }[value] || value;
       }
       function winnerLabel(value) {
@@ -584,7 +594,7 @@ export function renderRoom(roomId: string): string {
         const currentPlayerAlive = currentPlayer ? currentPlayer.alive : game.phase === "lobby";
         const actorCanAct =
           currentPlayerAlive &&
-          (game.phase === "day" || (game.phase === "night" && (isWolfRole(role) || role === "seer" || role === "guard")));
+          (game.phase === "day" || (game.phase === "night" && (isWolfRole(role) || role === "seer" || role === "guard" || role === "child_fox")));
         const host = game.players.find((player) => player.playerId === game.hostId);
         document.querySelector("#host").textContent = host ? host.nickname : "未定";
         document.querySelector("#startGame").disabled = game.phase !== "lobby" || game.hostId !== currentPlayerId;
@@ -640,6 +650,8 @@ export function renderRoom(roomId: string): string {
               sendCommand({ type: "night_kill", targetPlayerId: player.playerId });
             } else if (latestGame.phase === "night" && role === "seer") {
               sendCommand({ type: "divine", targetPlayerId: player.playerId });
+            } else if (latestGame.phase === "night" && role === "child_fox") {
+              sendCommand({ type: "child_fox_divine", targetPlayerId: player.playerId });
             } else if (latestGame.phase === "night" && role === "guard") {
               sendCommand({ type: "guard", targetPlayerId: player.playerId });
             }
