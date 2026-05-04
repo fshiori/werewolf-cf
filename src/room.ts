@@ -1,5 +1,6 @@
 import {
   advancePhaseByAlarm,
+  canJoinRoomState,
   castDayVote,
   castNightKill,
   createLobbyState,
@@ -81,12 +82,17 @@ export class RoomDurableObject {
         }
         const playerId = validatePlayerId(message.playerId);
         const nickname = validateNickname(message.nickname);
+        const loadedGame = await this.loadGameState();
+        if (!canJoinRoomState(loadedGame, playerId)) {
+          throw new Error("Game already started");
+        }
         this.sockets.set(socket, { playerId, nickname });
-        const game = upsertLobbyPlayer(await this.loadGameState(), { playerId, nickname });
+        const game = upsertLobbyPlayer(loadedGame, { playerId, nickname });
         await this.saveGameState(game);
         this.send(socket, buildJoinedMessage(this.roomId, playerId, this.members()));
         this.broadcast(buildPresenceMessage(this.members()));
         this.broadcastGameState(game);
+        this.sendRole(socket, game, playerId);
         return;
       }
 
@@ -178,12 +184,16 @@ export class RoomDurableObject {
 
   private sendRoles(gameState: GameState): void {
     for (const [socket, member] of this.sockets) {
-      const player = gameState.players.find((candidate) => candidate.playerId === member.playerId);
-      if (!player) {
-        continue;
-      }
-      this.send(socket, buildRoleMessage(player.role, wolvesForPlayer(gameState, player.playerId)));
+      this.sendRole(socket, gameState, member.playerId);
     }
+  }
+
+  private sendRole(socket: WebSocket, gameState: GameState, playerId: string): void {
+    const player = gameState.players.find((candidate) => candidate.playerId === playerId);
+    if (!player || gameState.phase === "lobby") {
+      return;
+    }
+    this.send(socket, buildRoleMessage(player.role, wolvesForPlayer(gameState, player.playerId)));
   }
 
   private async syncRoomStatus(gameState: GameState): Promise<void> {
