@@ -113,7 +113,8 @@ describe("messages", () => {
       type: "role",
       role: "werewolf",
       wolves: [{ playerId: "player_1", nickname: "&lt;Wolf&gt;" }],
-      commons: []
+      commons: [],
+      authority: false
     });
   });
 
@@ -122,7 +123,18 @@ describe("messages", () => {
       type: "role",
       role: "common",
       wolves: [],
-      commons: [{ playerId: "player_2", nickname: "&lt;Shared&gt;" }]
+      commons: [{ playerId: "player_2", nickname: "&lt;Shared&gt;" }],
+      authority: false
+    });
+  });
+
+  it("builds role messages with authority flag", () => {
+    expect(buildRoleMessage("villager", [], [], true)).toEqual({
+      type: "role",
+      role: "villager",
+      wolves: [],
+      commons: [],
+      authority: true
     });
   });
 });

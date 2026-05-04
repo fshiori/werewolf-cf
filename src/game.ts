@@ -109,7 +109,12 @@ export function canStartGame(state: GameState, playerId: string): boolean {
   return (state.hostId ?? state.players[0]?.playerId) === playerId;
 }
 
-export function startGame(state: GameState, now = Date.now(), random = Math.random, options: RoomOptions = { poison: false, bigWolf: false }): GameState {
+export function startGame(
+  state: GameState,
+  now = Date.now(),
+  random = Math.random,
+  options: RoomOptions = { poison: false, bigWolf: false, authority: false, decider: false }
+): GameState {
   if (state.phase !== "lobby") {
     throw new Error("Game already started");
   }
@@ -194,6 +199,18 @@ export function startGame(state: GameState, now = Date.now(), random = Math.rand
 
 function applyRoomOptions(players: GamePlayer[], options: RoomOptions): GamePlayer[] {
   let nextPlayers = players;
+  if (options.authority && nextPlayers.length >= 16) {
+    const authorityIndex = nextPlayers.findIndex((player) => player.role === "villager");
+    if (authorityIndex !== -1) {
+      nextPlayers = nextPlayers.map((player, index) => (index === authorityIndex ? { ...player, authority: true } : player));
+    }
+  }
+  if (options.decider && nextPlayers.length >= 16) {
+    const deciderIndex = nextPlayers.findIndex((player) => player.role === "villager" && !player.authority);
+    if (deciderIndex !== -1) {
+      nextPlayers = nextPlayers.map((player, index) => (index === deciderIndex ? { ...player, decider: true } : player));
+    }
+  }
   if (options.bigWolf && nextPlayers.length >= 20) {
     const wolfIndex = nextPlayers.findIndex((player) => player.role === "werewolf");
     if (wolfIndex !== -1) {
@@ -384,7 +401,7 @@ export function playerStatUpdates(state: GameState): PlayerStatUpdate[] {
 }
 
 function resolveDay(state: GameState, now = Date.now()): GameState {
-  const executedId = pickTopTarget(state.votes);
+  const executedId = pickTopTarget(state);
   const revoteCount = state.revoteCount ?? 0;
   if (!executedId && Object.keys(state.votes).length > 0 && revoteCount < MAX_REVOTES) {
     return {
@@ -421,7 +438,7 @@ function resolveDay(state: GameState, now = Date.now()): GameState {
 }
 
 function resolveNight(state: GameState, now = Date.now()): GameState {
-  const killedId = pickTopTarget(state.nightKills);
+  const killedId = pickTopActionTarget(state.nightKills);
   const protectedIds = new Set(Object.values(state.guards ?? {}));
   const protectedKill = killedId ? protectedIds.has(killedId) : false;
   const attacked = killedId ? state.players.find((player) => player.playerId === killedId) : undefined;
@@ -550,9 +567,40 @@ function keepLivingActorActions(actions: Record<string, string>, livingIds: Set<
   return Object.fromEntries(Object.entries(actions).filter(([actorId]) => livingIds.has(actorId)));
 }
 
-function pickTopTarget(votes: Record<string, string>): string | undefined {
+function pickTopTarget(state: GameState): string | undefined {
   const counts = new Map<string, number>();
-  for (const targetId of Object.values(votes)) {
+  for (const [voterId, targetId] of Object.entries(state.votes)) {
+    const voter = state.players.find((player) => player.playerId === voterId);
+    counts.set(targetId, (counts.get(targetId) ?? 0) + (voter?.authority ? 2 : 1));
+  }
+  let topTarget: string | undefined;
+  let topCount = 0;
+  let tied = false;
+  for (const [targetId, count] of counts) {
+    if (count > topCount) {
+      topTarget = targetId;
+      topCount = count;
+      tied = false;
+    } else if (count === topCount) {
+      tied = true;
+    }
+  }
+  if (!tied) {
+    return topTarget;
+  }
+  const tiedTargets = new Set(
+    Array.from(counts.entries())
+      .filter(([, count]) => count === topCount)
+      .map(([targetId]) => targetId)
+  );
+  const decider = state.players.find((player) => player.alive && player.decider);
+  const deciderTarget = decider ? state.votes[decider.playerId] : undefined;
+  return deciderTarget && tiedTargets.has(deciderTarget) ? deciderTarget : undefined;
+}
+
+function pickTopActionTarget(actions: Record<string, string>): string | undefined {
+  const counts = new Map<string, number>();
+  for (const targetId of Object.values(actions)) {
     counts.set(targetId, (counts.get(targetId) ?? 0) + 1);
   }
   let topTarget: string | undefined;

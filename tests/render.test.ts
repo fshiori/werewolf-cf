@@ -9,7 +9,7 @@ describe("render", () => {
         name: "<Test>",
         status: "lobby",
         createdAt: "2026-05-03 12:00:00",
-        options: { poison: true, bigWolf: true }
+        options: { poison: true, bigWolf: true, authority: true, decider: true }
       }
     ]);
 
@@ -24,9 +24,13 @@ describe("render", () => {
     expect(html).toContain("排行榜 JSON");
     expect(html).toContain("optionPoison");
     expect(html).toContain("optionBigWolf");
+    expect(html).toContain("optionAuthority");
+    expect(html).toContain("optionDecider");
     expect(html).toContain("20人以上埋毒者選項");
     expect(html).toContain("20人以上時大狼出場");
-    expect(html).toContain("options: { poison, bigWolf }");
+    expect(html).toContain("16人以上權力者出場");
+    expect(html).toContain("16人以上決定者出場");
+    expect(html).toContain("options: { poison, bigWolf, authority, decider }");
     expect(html).toContain("埋毒");
     expect(html).toContain("大狼");
     expect(html).toContain("leaderboardRows");
@@ -76,6 +80,8 @@ describe("render", () => {
     expect(html).toContain("roleLabel(msg.role)");
     expect(html).toContain("winnerLabel(game.winner)");
     expect(html).toContain("isWolfRole(role)");
+    expect(html).toContain("msg.authority");
+    expect(html).toContain("權力者");
     expect(html).toContain("msg.commons");
     expect(html).toContain("共有：");
     expect(html).toContain("玩家列表");

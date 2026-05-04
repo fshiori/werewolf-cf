@@ -43,18 +43,28 @@ async function listRooms(env: Env): Promise<RoomSummary[]> {
 
 function parseRoomOptions(optionRole: string): RoomOptions {
   const roles = new Set(optionRole.split(/\s+/).filter(Boolean));
-  return { poison: roles.has("poison"), bigWolf: roles.has("wfbig") };
+  return { poison: roles.has("poison"), bigWolf: roles.has("wfbig"), authority: roles.has("authority"), decider: roles.has("decide") };
 }
 
 function serializeRoomOptions(options: RoomOptions): string {
-  return [options.poison ? "poison" : "", options.bigWolf ? "wfbig" : ""].filter(Boolean).join(" ");
+  return [
+    options.poison ? "poison" : "",
+    options.bigWolf ? "wfbig" : "",
+    options.authority ? "authority" : "",
+    options.decider ? "decide" : ""
+  ].filter(Boolean).join(" ");
 }
 
 function readRoomOptions(value: unknown): RoomOptions {
   if (!isRecord(value)) {
-    return { poison: false, bigWolf: false };
+    return { poison: false, bigWolf: false, authority: false, decider: false };
   }
-  return { poison: value.poison === true, bigWolf: value.bigWolf === true };
+  return {
+    poison: value.poison === true,
+    bigWolf: value.bigWolf === true,
+    authority: value.authority === true,
+    decider: value.decider === true
+  };
 }
 
 async function roomExists(env: Env, roomId: string): Promise<boolean> {

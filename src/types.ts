@@ -11,6 +11,8 @@ export interface RoomSummary {
 export interface RoomOptions {
   poison: boolean;
   bigWolf: boolean;
+  authority: boolean;
+  decider: boolean;
 }
 
 export interface RoomMember {
@@ -36,6 +38,8 @@ export interface GamePlayer {
   nickname: string;
   role: PlayerRole;
   alive: boolean;
+  authority?: boolean;
+  decider?: boolean;
 }
 
 export interface PublicGamePlayer {
@@ -163,5 +167,5 @@ export type ServerMessage =
       phaseEndsAt?: string;
       log: string[];
     }
-  | { type: "role"; role: PlayerRole; wolves: RoomMember[]; commons: RoomMember[] }
+  | { type: "role"; role: PlayerRole; wolves: RoomMember[]; commons: RoomMember[]; authority?: boolean }
   | { type: "error"; message: string };
