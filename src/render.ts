@@ -694,6 +694,14 @@ export function renderRoom(roomId: string): string {
         const playerGrid = document.querySelector("#playerGrid");
         players.innerHTML = "";
         playerGrid.innerHTML = "";
+        const voteTargets = game.votes || {};
+        const voteSummary = {};
+        Object.entries(voteTargets).forEach(([voterId, targetId]) => {
+          const voter = game.players.find((candidate) => candidate.playerId === voterId);
+          if (!voter) return;
+          if (!voteSummary[targetId]) voteSummary[targetId] = [];
+          voteSummary[targetId].push(voter.nickname);
+        });
         let row;
         game.players.forEach((player) => {
           if (!row || row.children.length >= 5) {
@@ -723,6 +731,11 @@ export function renderRoom(roomId: string): string {
           const status = document.createElement("span");
           status.textContent = player.alive ? "(生存中)" : "(死亡)";
           nameCell.append(marker, player.nickname, document.createElement("br"), status);
+          if (voteSummary[player.playerId] && voteSummary[player.playerId].length) {
+            const votes = document.createElement("small");
+            votes.textContent = "投票：" + voteSummary[player.playerId].join(", ");
+            nameCell.append(document.createElement("br"), votes);
+          }
           cardRow.append(iconCell, nameCell);
           cardTable.appendChild(cardRow);
           card.appendChild(cardTable);

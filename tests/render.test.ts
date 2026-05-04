@@ -115,6 +115,8 @@ describe("render", () => {
     expect(html).toContain("game.revoteCount");
     expect(html).toContain("currentPlayerAlive");
     expect(html).toContain("currentPlayerDead");
+    expect(html).toContain("voteSummary");
+    expect(html).toContain("投票：");
     expect(html).toContain("actorCanAct");
     expect(html).toContain("function roleLabel(value)");
     expect(html).toContain('werewolf: "人狼"');
