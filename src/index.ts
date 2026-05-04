@@ -1,7 +1,7 @@
 import { renderHome, renderRoom } from "./render";
 import { RoomDurableObject } from "./room";
 import { DEFAULT_DAY_MINUTES, DEFAULT_NIGHT_MINUTES } from "./game";
-import { tripHashForRoom } from "./identity";
+import { registeredTripHash, tripHashForRoom } from "./identity";
 import type { GameRecordSummary, LeaderboardEntry, PlayerStats, RoomEventSummary, RoomOptions, RoomSummary } from "./types";
 import {
   isRecord,
@@ -216,6 +216,24 @@ async function roomExists(env: Env, roomId: string): Promise<boolean> {
 async function getHomeAnnouncement(env: Env): Promise<string | undefined> {
   const announcement = await env.CONFIG.get("home_announcement");
   return announcement?.trim() || undefined;
+}
+
+async function registerTrip(request: Request, env: Env): Promise<Response> {
+  const body: unknown = await request.json().catch(() => null);
+  if (!isRecord(body) || typeof body.trip !== "string") {
+    return json({ error: "Invalid Trip registration" }, { status: 400 });
+  }
+
+  try {
+    const trip = validateTrip(body.trip);
+    const tripHash = await registeredTripHash(trip);
+    await env.DB.prepare("INSERT INTO registered_trips (trip_hash) VALUES (?) ON CONFLICT(trip_hash) DO NOTHING")
+      .bind(tripHash)
+      .run();
+    return json({ registered: true });
+  } catch (error) {
+    return json({ error: error instanceof Error ? error.message : "Failed to register Trip" }, { status: 400 });
+  }
 }
 
 async function getPlayerStats(env: Env, playerIdParam: string): Promise<Response> {
@@ -455,6 +473,10 @@ export default {
 
     if (request.method === "POST" && url.pathname === "/api/rooms") {
       return createRoom(request, env);
+    }
+
+    if (request.method === "POST" && url.pathname === "/api/trips") {
+      return registerTrip(request, env);
     }
 
     if (request.method === "POST" && url.pathname === "/api/assets/avatar") {

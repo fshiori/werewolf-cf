@@ -28,7 +28,7 @@ import {
   DEFAULT_DAY_MINUTES,
   DEFAULT_NIGHT_MINUTES
 } from "./game";
-import { tripHashForRoom } from "./identity";
+import { registeredTripHash, tripHashForRoom } from "./identity";
 import {
   buildActionAckMessage,
   buildChatMessage,
@@ -130,7 +130,11 @@ export class RoomDurableObject {
         if (roomOptions.tripRequired && !message.trip) {
           throw new Error("Trip is required for this room");
         }
-        const tripHash = message.trip ? await tripHashForRoom(this.roomId, validateTrip(message.trip)) : undefined;
+        const trip = message.trip ? validateTrip(message.trip) : undefined;
+        if (roomOptions.tripRequired && trip && !(await this.isRegisteredTrip(trip))) {
+          throw new Error("Trip must be registered before joining this room");
+        }
+        const tripHash = trip ? await tripHashForRoom(this.roomId, trip) : undefined;
         const isGm = roomOptions.gmEnabled === true && Boolean(tripHash) && tripHash === roomOptions.gmTripHash;
         if (isGm) {
           this.sockets.set(socket, { playerId, nickname, tripHash, gm: true });
@@ -570,6 +574,14 @@ export class RoomDurableObject {
     await this.env.DB.prepare("INSERT INTO room_events (room_id, player_id, event_type, payload_json) VALUES (?, ?, ?, ?)")
       .bind(this.roomId, playerId, eventType, JSON.stringify(payload))
       .run();
+  }
+
+  private async isRegisteredTrip(trip: string): Promise<boolean> {
+    const tripHash = await registeredTripHash(trip);
+    const row = await this.env.DB.prepare("SELECT trip_hash FROM registered_trips WHERE trip_hash = ? LIMIT 1")
+      .bind(tripHash)
+      .first<{ trip_hash: string }>();
+    return row !== null;
   }
 
   private async loadRoomOptions(): Promise<RoomOptions> {
