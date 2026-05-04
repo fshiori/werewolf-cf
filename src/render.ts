@@ -229,6 +229,10 @@ export function renderRoom(roomId: string): string {
               <td><span id="host" class="muted">未定</span></td>
             </tr>
             <tr>
+              <td>戰績</td>
+              <td><span id="stats" class="muted">未取得</span></td>
+            </tr>
+            <tr>
               <td>玩家暱稱</td>
               <td><input id="nickname" maxlength="32" size="28"> <button id="connect">進入房間</button> <button id="startGame">開始遊戲</button></td>
             </tr>
@@ -297,11 +301,25 @@ export function renderRoom(roomId: string): string {
         div.innerHTML = line;
         document.querySelector("#chatLog").appendChild(div);
       }
+      async function refreshStats() {
+        const playerId = localStorage.getItem(playerKey);
+        const target = document.querySelector("#stats");
+        try {
+          const res = await fetch("/api/players/" + playerId + "/stats");
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || "stats failed");
+          target.textContent = data.stats.gamesPlayed + " 戰 " + data.stats.wins + " 勝 " + data.stats.losses + " 敗";
+        } catch {
+          target.textContent = "未取得";
+        }
+      }
       let latestGame;
       let role = "";
+      void refreshStats();
       document.querySelector("#connect").addEventListener("click", () => {
         const nickname = document.querySelector("#nickname").value;
         localStorage.setItem("werewolf_cf_nickname", nickname);
+        void refreshStats();
         ws = new WebSocket((location.protocol === "https:" ? "wss://" : "ws://") + location.host + "/ws/room/" + roomId);
         ws.addEventListener("open", () => ws.send(JSON.stringify({ type: "join", playerId: localStorage.getItem(playerKey), nickname })));
         ws.addEventListener("message", (event) => {
