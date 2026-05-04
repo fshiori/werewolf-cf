@@ -5,6 +5,7 @@ import type { GameState } from "../src/types";
 type SentMessage = {
   type: string;
   message: string;
+  roomId?: string;
   members?: Array<{ playerId: string; nickname: string; gm?: boolean }>;
   action?: string;
   targetPlayerId?: string;
@@ -167,6 +168,57 @@ describe("RoomDurableObject", () => {
       { type: "error", message: "Chat text is too long" },
       { type: "chat", playerId: "player_valid", nickname: "Alice", text: "ok", sentAt: expect.any(String) }
     ]);
+  });
+
+  it("allows existing players but rejects new players joining active games", async () => {
+    const game: GameState = {
+      roomId: "room_abc",
+      phase: "day",
+      day: 1,
+      players: [
+        { playerId: "player_existing", nickname: "Existing", role: "seer", alive: true },
+        { playerId: "player_villager", nickname: "Villager", role: "villager", alive: true },
+        { playerId: "player_wolf", nickname: "Wolf", role: "werewolf", alive: true }
+      ],
+      votes: {},
+      openVote: false,
+      commonTalkVisible: false,
+      deadRoleVisible: false,
+      wishRole: false,
+      dummyBoy: false,
+      dayMs: 180_000,
+      nightMs: 90_000,
+      selfVote: false,
+      voteStatus: false,
+      revoteCount: 0,
+      nightKills: {},
+      divinations: {},
+      guards: {},
+      catRevives: {},
+      lastWords: {},
+      log: []
+    };
+    const room = roomObject(game);
+    const existingMessages: SentMessage[] = [];
+    const newPlayerMessages: SentMessage[] = [];
+
+    await sendRaw(
+      room,
+      fakeSocket(existingMessages),
+      JSON.stringify({ type: "join", playerId: "player_existing", nickname: "Existing" })
+    );
+    await sendRaw(
+      room,
+      fakeSocket(newPlayerMessages),
+      JSON.stringify({ type: "join", playerId: "player_new", nickname: "New" })
+    );
+
+    expect(existingMessages).toContainEqual(
+      expect.objectContaining({ type: "joined", roomId: "room_abc", playerId: "player_existing" })
+    );
+    expect(existingMessages).toContainEqual(expect.objectContaining({ type: "game_state", phase: "day", day: 1 }));
+    expect(existingMessages).toContainEqual(expect.objectContaining({ type: "role", role: "seer" }));
+    expect(newPlayerMessages).toEqual([{ type: "error", message: "Game already started" }]);
   });
 
   it("rejects unauthorized private channel websocket commands", async () => {
