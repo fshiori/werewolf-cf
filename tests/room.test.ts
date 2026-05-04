@@ -2153,6 +2153,65 @@ describe("RoomDurableObject", () => {
     expect(deadCommonMessages).toEqual([]);
   });
 
+  it("publishes anonymized common voice only to non-common sockets when enabled", async () => {
+    const game: GameState = {
+      roomId: "room_abc",
+      phase: "night",
+      day: 1,
+      players: [
+        { playerId: "player_common_a", nickname: "Common A", role: "common", alive: true },
+        { playerId: "player_common_b", nickname: "Common B", role: "common", alive: true },
+        { playerId: "player_villager", nickname: "Villager", role: "villager", alive: true },
+        { playerId: "player_dead_common", nickname: "Dead Common", role: "common", alive: false }
+      ],
+      votes: {},
+      openVote: false,
+      commonTalkVisible: true,
+      deadRoleVisible: false,
+      wishRole: false,
+      dummyBoy: false,
+      dayMs: 180_000,
+      nightMs: 90_000,
+      selfVote: false,
+      voteStatus: false,
+      revoteCount: 0,
+      nightKills: {},
+      divinations: {},
+      guards: {},
+      catRevives: {},
+      lastWords: {},
+      log: []
+    };
+    const room = roomObject(game, { option_role: "comoutl" });
+    const commonAMessages: SentMessage[] = [];
+    const commonBMessages: SentMessage[] = [];
+    const villagerMessages: SentMessage[] = [];
+    const deadCommonMessages: SentMessage[] = [];
+    const commonASocket = fakeSocket(commonAMessages);
+    const commonBSocket = fakeSocket(commonBMessages);
+    const villagerSocket = fakeSocket(villagerMessages);
+    const deadCommonSocket = fakeSocket(deadCommonMessages);
+    connect(room, commonASocket, "player_common_a", "Common A");
+    connect(room, commonBSocket, "player_common_b", "Common B");
+    connect(room, villagerSocket, "player_villager", "Villager");
+    connect(room, deadCommonSocket, "player_dead_common", "Dead Common");
+
+    await sendRaw(room, commonASocket, JSON.stringify({ type: "common_chat", text: "secret" }));
+
+    expect(commonAMessages).toEqual([
+      expect.objectContaining({ type: "common_chat", playerId: "player_common_a", nickname: "Common A", text: "secret" })
+    ]);
+    expect(commonBMessages).toEqual([
+      expect.objectContaining({ type: "common_chat", playerId: "player_common_a", nickname: "Common A", text: "secret" })
+    ]);
+    expect(villagerMessages).toEqual([
+      expect.objectContaining({ type: "common_chat", playerId: "common_voice", nickname: "共有者的聲音", text: "secret" })
+    ]);
+    expect(deadCommonMessages).toEqual([
+      expect.objectContaining({ type: "common_chat", playerId: "common_voice", nickname: "共有者的聲音", text: "secret" })
+    ]);
+  });
+
   it("sends lovers chat only to living lover sockets", () => {
     const game: GameState = {
       roomId: "room_abc",
