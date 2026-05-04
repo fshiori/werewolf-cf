@@ -1,4 +1,13 @@
-import type { DivinationResult, GamePlayer, GameState, GameWinner, MediumReading, PublicGamePlayer, RoomMember } from "./types";
+import type {
+  DivinationResult,
+  GamePlayer,
+  GameState,
+  GameWinner,
+  MediumReading,
+  PlayerStatUpdate,
+  PublicGamePlayer,
+  RoomMember
+} from "./types";
 
 export const DAY_MS = 180_000;
 export const NIGHT_MS = 90_000;
@@ -198,6 +207,16 @@ export function mediumReadingForPlayer(state: GameState, playerId: string): Medi
     return undefined;
   }
   return state.mediumReading;
+}
+
+export function playerStatUpdates(state: GameState): PlayerStatUpdate[] {
+  if (state.phase !== "ended" || !state.winner) {
+    return [];
+  }
+  return state.players.map((player) => ({
+    playerId: player.playerId,
+    won: player.role === "werewolf" ? state.winner === "werewolves" : state.winner === "villagers"
+  }));
 }
 
 function resolveDay(state: GameState, now = Date.now()): GameState {

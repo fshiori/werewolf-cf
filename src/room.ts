@@ -9,6 +9,7 @@ import {
   castNightKill,
   createLobbyState,
   mediumReadingForPlayer,
+  playerStatUpdates,
   startGame,
   upsertLobbyPlayer,
   wolvesForPlayer
@@ -261,12 +262,18 @@ export class RoomDurableObject {
       await this.env.DB.prepare("UPDATE rooms SET status = 'playing', updated_at = CURRENT_TIMESTAMP WHERE id = ?").bind(this.roomId).run();
     }
     if (gameState.phase === "ended") {
+      const statStatements = playerStatUpdates(gameState).map((stat) =>
+        this.env.DB.prepare(
+          "INSERT INTO player_stats (player_id, games_played, wins, losses, updated_at) VALUES (?, 1, ?, ?, CURRENT_TIMESTAMP) ON CONFLICT(player_id) DO UPDATE SET games_played = games_played + 1, wins = wins + excluded.wins, losses = losses + excluded.losses, updated_at = CURRENT_TIMESTAMP"
+        ).bind(stat.playerId, stat.won ? 1 : 0, stat.won ? 0 : 1)
+      );
       await this.env.DB.batch([
         this.env.DB.prepare("UPDATE rooms SET status = 'ended', updated_at = CURRENT_TIMESTAMP WHERE id = ?").bind(this.roomId),
         this.env.DB.prepare("INSERT INTO game_records (room_id, result_json) VALUES (?, ?)").bind(
           this.roomId,
           JSON.stringify({ winner: gameState.winner, day: gameState.day, players: gameState.players })
-        )
+        ),
+        ...statStatements
       ]);
     }
   }
