@@ -50,6 +50,10 @@ export interface PlayerStats {
   losses: number;
 }
 
+export interface LeaderboardEntry extends PlayerStats {
+  rank: number;
+}
+
 export interface GameRecordSummary {
   id: number;
   roomId: string;

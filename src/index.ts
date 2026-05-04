@@ -1,6 +1,6 @@
 import { renderHome, renderRoom } from "./render";
 import { RoomDurableObject } from "./room";
-import type { GameRecordSummary, PlayerStats, RoomEventSummary, RoomSummary } from "./types";
+import type { GameRecordSummary, LeaderboardEntry, PlayerStats, RoomEventSummary, RoomSummary } from "./types";
 import { isRecord, validateNickname, validatePlayerId, validateRoomId, validateRoomName } from "./validation";
 
 export { RoomDurableObject };
@@ -66,6 +66,20 @@ async function getPlayerStats(env: Env, playerIdParam: string): Promise<Response
   } catch (error) {
     return json({ error: error instanceof Error ? error.message : "Invalid player" }, { status: 400 });
   }
+}
+
+async function getLeaderboard(env: Env): Promise<Response> {
+  const result = await env.DB.prepare(
+    "SELECT player_id, games_played, wins, losses FROM player_stats ORDER BY wins DESC, games_played DESC, player_id ASC LIMIT 20"
+  ).all<{ player_id: string; games_played: number; wins: number; losses: number }>();
+  const leaderboard: LeaderboardEntry[] = result.results.map((row, index) => ({
+    rank: index + 1,
+    playerId: row.player_id,
+    gamesPlayed: row.games_played,
+    wins: row.wins,
+    losses: row.losses
+  }));
+  return json({ leaderboard });
 }
 
 function parseRecordResult(value: string): unknown {
@@ -232,6 +246,10 @@ export default {
 
     if (request.method === "GET" && url.pathname === "/api/rooms") {
       return json({ rooms: await listRooms(env) });
+    }
+
+    if (request.method === "GET" && url.pathname === "/api/stats/leaderboard") {
+      return getLeaderboard(env);
     }
 
     const roomRecordsMatch = url.pathname.match(/^\/api\/rooms\/([^/]+)\/records$/);

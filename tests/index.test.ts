@@ -64,6 +64,13 @@ function envWithRooms(
             };
           },
           async all() {
+            if (query.includes("FROM player_stats")) {
+              return {
+                results: Object.entries(stats)
+                  .map(([player_id, stat]) => ({ player_id, ...stat }))
+                  .sort((a, b) => b.wins - a.wins || b.games_played - a.games_played || a.player_id.localeCompare(b.player_id))
+              };
+            }
             return { results: [] };
           }
         };
@@ -171,6 +178,30 @@ describe("worker routes", () => {
         wins: 0,
         losses: 0
       }
+    });
+  });
+
+  it("returns leaderboard rows ordered by wins and games played", async () => {
+    const response = await worker.fetch(
+      new Request("http://example.test/api/stats/leaderboard"),
+      envWithRooms(
+        [],
+        {},
+        {
+          player_b: { games_played: 5, wins: 3, losses: 2 },
+          player_a: { games_played: 6, wins: 3, losses: 3 },
+          player_c: { games_played: 4, wins: 1, losses: 3 }
+        }
+      )
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      leaderboard: [
+        { rank: 1, playerId: "player_a", gamesPlayed: 6, wins: 3, losses: 3 },
+        { rank: 2, playerId: "player_b", gamesPlayed: 5, wins: 3, losses: 2 },
+        { rank: 3, playerId: "player_c", gamesPlayed: 4, wins: 1, losses: 3 }
+      ]
     });
   });
 
