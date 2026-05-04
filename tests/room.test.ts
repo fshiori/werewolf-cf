@@ -1093,4 +1093,54 @@ describe("RoomDurableObject", () => {
 
     expect(messages).toEqual([{ type: "error", message: "Only werewolves can perform night kills" }]);
   });
+
+  it("rejects night role actions from unauthorized websocket players", async () => {
+    const game: GameState = {
+      roomId: "room_abc",
+      phase: "night",
+      day: 2,
+      players: [
+        { playerId: "player_villager", nickname: "Villager", role: "villager", alive: true },
+        { playerId: "player_target", nickname: "Target", role: "werewolf", alive: true },
+        { playerId: "player_dead", nickname: "Dead", role: "villager", alive: false }
+      ],
+      votes: {},
+      openVote: false,
+      commonTalkVisible: false,
+      deadRoleVisible: false,
+      wishRole: false,
+      dummyBoy: false,
+      dayMs: 180_000,
+      nightMs: 90_000,
+      selfVote: false,
+      voteStatus: false,
+      revoteCount: 0,
+      nightKills: {},
+      divinations: {},
+      guards: {},
+      catRevives: {},
+      lastWords: {},
+      log: []
+    };
+    const cases = [
+      { command: { type: "divine", targetPlayerId: "player_target" }, message: "Only seers can divine players" },
+      {
+        command: { type: "child_fox_divine", targetPlayerId: "player_target" },
+        message: "Only child foxes can divine players"
+      },
+      { command: { type: "guard", targetPlayerId: "player_target" }, message: "Only guards can protect players" },
+      { command: { type: "cat_revive", targetPlayerId: "player_dead" }, message: "Only cats can revive players" }
+    ];
+
+    for (const testCase of cases) {
+      const room = roomObject(game);
+      const messages: SentMessage[] = [];
+      const socket = fakeSocket(messages);
+      connect(room, socket, "player_villager", "Villager");
+
+      await sendRaw(room, socket, JSON.stringify(testCase.command));
+
+      expect(messages).toEqual([{ type: "error", message: testCase.message }]);
+    }
+  });
 });
