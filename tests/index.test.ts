@@ -567,6 +567,36 @@ describe("worker routes", () => {
     expect(body).not.toContain("<b>Runtime notice</b>");
   });
 
+  it("returns public runtime config from KV", async () => {
+    const response = await worker.fetch(
+      new Request("http://example.test/api/config"),
+      envWithRooms([], {
+        home_announcement: "Runtime notice",
+        maintenance_mode: "true"
+      })
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      config: {
+        homeAnnouncement: "Runtime notice",
+        maintenanceMode: true
+      }
+    });
+  });
+
+  it("returns default runtime config when KV keys are absent", async () => {
+    const response = await worker.fetch(new Request("http://example.test/api/config"), envWithRooms([]));
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      config: {
+        homeAnnouncement: null,
+        maintenanceMode: false
+      }
+    });
+  });
+
   it("returns player stats from D1", async () => {
     const response = await worker.fetch(
       new Request("http://example.test/api/players/player_stats/stats"),

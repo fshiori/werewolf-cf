@@ -132,6 +132,7 @@ function shell(body: string): string {
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/">首頁</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/api/rooms">房間 JSON</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/api/stats/leaderboard">排行榜 JSON</a></td></tr>
+            <tr><td><small><font color="#666666">・</font></small></td><td><a href="/api/config">設定 JSON</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="javascript:void(0)">規則</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="javascript:void(0)">版本</a></td></tr>
           </table>

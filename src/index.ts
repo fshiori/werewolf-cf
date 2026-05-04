@@ -219,6 +219,19 @@ async function getHomeAnnouncement(env: Env): Promise<string | undefined> {
   return announcement?.trim() || undefined;
 }
 
+async function getRuntimeConfig(env: Env): Promise<Response> {
+  const [announcement, maintenanceMode] = await Promise.all([
+    getHomeAnnouncement(env),
+    env.CONFIG.get("maintenance_mode")
+  ]);
+  return json({
+    config: {
+      homeAnnouncement: announcement ?? null,
+      maintenanceMode: maintenanceMode === "true"
+    }
+  });
+}
+
 async function registerTrip(request: Request, env: Env): Promise<Response> {
   const body: unknown = await request.json().catch(() => null);
   if (!isRecord(body) || typeof body.trip !== "string") {
@@ -617,6 +630,10 @@ export default {
 
     if (request.method === "GET" && url.pathname === "/api/stats/leaderboard") {
       return getLeaderboard(env);
+    }
+
+    if (request.method === "GET" && url.pathname === "/api/config") {
+      return getRuntimeConfig(env);
     }
 
     const roomRecordsMatch = url.pathname.match(/^\/api\/rooms\/([^/]+)\/records$/);
