@@ -1,6 +1,9 @@
 #!/usr/bin/env node
 
-const host = process.argv[2] ?? process.env.WORKER_HOST;
+const args = process.argv.slice(2);
+const labelArg = args.find((arg) => arg.startsWith("--label="));
+const smokeLabel = labelArg?.slice("--label=".length) || "Production read-only";
+const host = args.find((arg) => !arg.startsWith("--label=")) ?? process.env.WORKER_HOST;
 
 if (!host) {
   console.error("Set WORKER_HOST or pass the Worker URL as the first argument");
@@ -118,12 +121,12 @@ for (const check of checks) {
 }
 
 if (failures.length > 0) {
-  console.error("Production read-only smoke failed:");
+  console.error(`${smokeLabel} smoke failed:`);
   for (const failure of failures) {
     console.error(`- ${failure}`);
   }
   process.exit(1);
 }
 
-console.log("Production read-only smoke passed");
+console.log(`${smokeLabel} smoke passed`);
 process.exit(0);

@@ -100,6 +100,14 @@ describe("production read-only smoke script", () => {
     expect(result.stdout).toContain("Production read-only smoke passed");
   });
 
+  it("uses a custom smoke label when provided", async () => {
+    const host = await startServer();
+    const result = await runScript(["--label=Local", host]);
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("Local smoke passed");
+  });
+
   it("fails when required endpoint metadata is missing", async () => {
     const host = await startServer({
       "/api/version": {

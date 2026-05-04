@@ -43,11 +43,10 @@ npx wrangler d1 migrations apply werewolf-cf --local
 Smoke check the local Worker:
 
 ```bash
-curl -i http://127.0.0.1:8787/api/health
-curl -i http://127.0.0.1:8787/api/version
-curl -i http://127.0.0.1:8787/api/protocol
-curl -i http://127.0.0.1:8787/
+npm run smoke:local
 ```
+
+This checks the local Worker read-only endpoints and HTML pages at `http://127.0.0.1:8787`.
 
 Run production smoke checks after deployment:
 
