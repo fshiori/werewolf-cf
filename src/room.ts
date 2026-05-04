@@ -28,7 +28,7 @@ import {
   buildRoleMessage,
   buildWolfChatMessage
 } from "./messages";
-import type { GameState, RoomMember } from "./types";
+import type { GameState, RoomMember, RoomOptions } from "./types";
 import {
   parseClientMessage,
   validateChatText,
@@ -140,7 +140,7 @@ export class RoomDurableObject {
         if (!canStartGame(loadedGame, member.playerId)) {
           throw new Error("Only the room host can start the game");
         }
-        const next = startGame(loadedGame);
+        const next = startGame(loadedGame, Date.now(), Math.random, await this.loadRoomOptions());
         await this.saveGameState(next);
         await this.syncRoomStatus(next);
         await this.persistRoomEvent(member.playerId, "game_started", { day: next.day, players: next.players.length });
@@ -319,5 +319,13 @@ export class RoomDurableObject {
     await this.env.DB.prepare("INSERT INTO room_events (room_id, player_id, event_type, payload_json) VALUES (?, ?, ?, ?)")
       .bind(this.roomId, playerId, eventType, JSON.stringify(payload))
       .run();
+  }
+
+  private async loadRoomOptions(): Promise<RoomOptions> {
+    const row = await this.env.DB.prepare("SELECT option_role FROM rooms WHERE id = ? LIMIT 1")
+      .bind(this.roomId)
+      .first<{ option_role: string }>();
+    const roles = new Set((row?.option_role ?? "").split(/\s+/).filter(Boolean));
+    return { poison: roles.has("poison") };
   }
 }
