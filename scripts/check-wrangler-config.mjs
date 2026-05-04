@@ -21,8 +21,19 @@ const checks = [
 
 const failures = checks.filter((check) => !check.pattern.test(config)).map((check) => `${check.name} is missing or changed`);
 
-if (production && config.includes("local-dev-placeholder")) {
-  failures.push("Production config still contains local-dev-placeholder");
+function configValue(name) {
+  return config.match(new RegExp(`^${name}\\s*=\\s*"([^"]*)"`, "m"))?.[1];
+}
+
+if (production) {
+  const databaseId = configValue("database_id");
+  const kvId = configValue("id");
+  if (!databaseId || databaseId === "local-dev-placeholder") {
+    failures.push("Production D1 database_id must be set to a real resource id");
+  }
+  if (!kvId || kvId === "local-dev-placeholder") {
+    failures.push("Production KV id must be set to a real resource id");
+  }
 }
 
 if (failures.length > 0) {
