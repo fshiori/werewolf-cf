@@ -167,12 +167,21 @@ describe("messages", () => {
     const hidden = {
       ...createLobbyState("room_abc"),
       votes: { player_1: "player_2" },
-      openVote: false
+      openVote: false,
+      voteStatus: false
     };
     const visible = { ...hidden, openVote: true };
+    const statusOnly = { ...hidden, voteStatus: true };
+    const visibleWithStatus = { ...visible, voteStatus: true };
 
-    expect(buildGameStateMessage(hidden)).toMatchObject({ type: "game_state", votes: {} });
-    expect(buildGameStateMessage(visible)).toMatchObject({ type: "game_state", votes: { player_1: "player_2" } });
+    expect(buildGameStateMessage(hidden)).toMatchObject({ type: "game_state", votes: {}, votedPlayerIds: [] });
+    expect(buildGameStateMessage(statusOnly)).toMatchObject({ type: "game_state", votes: {}, votedPlayerIds: ["player_1"] });
+    expect(buildGameStateMessage(visible)).toMatchObject({ type: "game_state", votes: { player_1: "player_2" }, votedPlayerIds: [] });
+    expect(buildGameStateMessage(visibleWithStatus)).toMatchObject({
+      type: "game_state",
+      votes: { player_1: "player_2" },
+      votedPlayerIds: ["player_1"]
+    });
   });
 
   it("escapes public game state log entries", () => {

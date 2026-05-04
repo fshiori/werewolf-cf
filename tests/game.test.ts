@@ -49,6 +49,7 @@ function activeState(phase: "day" | "night", players: GameState["players"]): Gam
     dayMs: 180_000,
     nightMs: 90_000,
     selfVote: false,
+    voteStatus: false,
     revoteCount: 0,
     nightKills: {},
     divinations: {},
@@ -209,7 +210,8 @@ describe("game", () => {
       realTime: false,
       dayMinutes: 3,
       nightMinutes: 1.5,
-      selfVote: false
+      selfVote: false,
+      voteStatus: false
     });
 
     expect(normal.players.filter((player) => player.role === "poison")).toHaveLength(0);
@@ -237,7 +239,8 @@ describe("game", () => {
       realTime: false,
       dayMinutes: 3,
       nightMinutes: 1.5,
-      selfVote: false
+      selfVote: false,
+      voteStatus: false
     });
 
     expect(game.players.filter((player) => player.role === "big_wolf")).toHaveLength(1);
@@ -265,7 +268,8 @@ describe("game", () => {
       realTime: false,
       dayMinutes: 3,
       nightMinutes: 1.5,
-      selfVote: false
+      selfVote: false,
+      voteStatus: false
     });
 
     expect(game.players.find((player) => player.authority)?.playerId).toBe("player_1");
@@ -322,7 +326,8 @@ describe("game", () => {
       realTime: false,
       dayMinutes: 3,
       nightMinutes: 1.5,
-      selfVote: false
+      selfVote: false,
+      voteStatus: false
     });
 
     expect(game.players.filter((player) => player.lover)).toEqual([
@@ -352,7 +357,8 @@ describe("game", () => {
       realTime: false,
       dayMinutes: 3,
       nightMinutes: 1.5,
-      selfVote: false
+      selfVote: false,
+      voteStatus: false
     });
 
     expect(game.players.filter((player) => player.role === "betrayer")).toEqual([
@@ -379,7 +385,8 @@ describe("game", () => {
       realTime: false,
       dayMinutes: 3,
       nightMinutes: 1.5,
-      selfVote: false
+      selfVote: false,
+      voteStatus: false
     });
 
     expect(game.players.filter((player) => player.role === "child_fox")).toEqual([
@@ -404,7 +411,8 @@ describe("game", () => {
       realTime: false,
       dayMinutes: 3,
       nightMinutes: 1.5,
-      selfVote: false
+      selfVote: false,
+      voteStatus: false
     });
 
     expect(game.players.filter((player) => player.role === "fox")).toEqual([
@@ -433,7 +441,8 @@ describe("game", () => {
       realTime: false,
       dayMinutes: 3,
       nightMinutes: 1.5,
-      selfVote: false
+      selfVote: false,
+      voteStatus: false
     });
 
     expect(game.players.filter((player) => player.role === "cat")).toEqual([
@@ -465,7 +474,8 @@ describe("game", () => {
         realTime: true,
         dayMinutes: 2,
         nightMinutes: 1,
-        selfVote: false
+        selfVote: false,
+        voteStatus: false
       }
     );
 
@@ -498,11 +508,13 @@ describe("game", () => {
         realTime: false,
         dayMinutes: 3,
         nightMinutes: 1.5,
-        selfVote: true
+        selfVote: true,
+        voteStatus: true
       }
     );
 
     expect(game.selfVote).toBe(true);
+    expect(game.voteStatus).toBe(true);
   });
 
   it("uses default phase timers when real time is disabled", () => {
@@ -529,7 +541,8 @@ describe("game", () => {
         realTime: false,
         dayMinutes: 9,
         nightMinutes: 9,
-        selfVote: false
+        selfVote: false,
+        voteStatus: false
       }
     );
 
