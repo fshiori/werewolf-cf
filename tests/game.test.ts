@@ -46,6 +46,7 @@ function activeState(phase: "day" | "night", players: GameState["players"]): Gam
     players,
     votes: {},
     openVote: false,
+    commonTalkVisible: false,
     dayMs: 180_000,
     nightMs: 90_000,
     selfVote: false,
@@ -207,6 +208,7 @@ describe("game", () => {
       cat: false,
       lastWords: false,
       openVote: false,
+      commonTalkVisible: false,
       realTime: false,
       dayMinutes: 3,
       nightMinutes: 1.5,
@@ -236,6 +238,7 @@ describe("game", () => {
       cat: false,
       lastWords: false,
       openVote: false,
+      commonTalkVisible: false,
       realTime: false,
       dayMinutes: 3,
       nightMinutes: 1.5,
@@ -265,6 +268,7 @@ describe("game", () => {
       cat: false,
       lastWords: false,
       openVote: false,
+      commonTalkVisible: false,
       realTime: false,
       dayMinutes: 3,
       nightMinutes: 1.5,
@@ -323,6 +327,7 @@ describe("game", () => {
       cat: false,
       lastWords: false,
       openVote: false,
+      commonTalkVisible: false,
       realTime: false,
       dayMinutes: 3,
       nightMinutes: 1.5,
@@ -354,6 +359,7 @@ describe("game", () => {
       cat: false,
       lastWords: false,
       openVote: false,
+      commonTalkVisible: false,
       realTime: false,
       dayMinutes: 3,
       nightMinutes: 1.5,
@@ -382,6 +388,7 @@ describe("game", () => {
       cat: false,
       lastWords: false,
       openVote: false,
+      commonTalkVisible: false,
       realTime: false,
       dayMinutes: 3,
       nightMinutes: 1.5,
@@ -408,6 +415,7 @@ describe("game", () => {
       cat: false,
       lastWords: false,
       openVote: false,
+      commonTalkVisible: false,
       realTime: false,
       dayMinutes: 3,
       nightMinutes: 1.5,
@@ -438,6 +446,7 @@ describe("game", () => {
       cat: true,
       lastWords: false,
       openVote: false,
+      commonTalkVisible: false,
       realTime: false,
       dayMinutes: 3,
       nightMinutes: 1.5,
@@ -471,6 +480,7 @@ describe("game", () => {
         cat: false,
         lastWords: false,
         openVote: true,
+        commonTalkVisible: false,
         realTime: true,
         dayMinutes: 2,
         nightMinutes: 1,
@@ -505,6 +515,7 @@ describe("game", () => {
         cat: false,
         lastWords: false,
         openVote: false,
+        commonTalkVisible: true,
         realTime: false,
         dayMinutes: 3,
         nightMinutes: 1.5,
@@ -515,6 +526,7 @@ describe("game", () => {
 
     expect(game.selfVote).toBe(true);
     expect(game.voteStatus).toBe(true);
+    expect(game.commonTalkVisible).toBe(true);
   });
 
   it("uses default phase timers when real time is disabled", () => {
@@ -538,6 +550,7 @@ describe("game", () => {
         cat: false,
         lastWords: false,
         openVote: false,
+        commonTalkVisible: false,
         realTime: false,
         dayMinutes: 9,
         nightMinutes: 9,

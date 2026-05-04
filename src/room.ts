@@ -171,6 +171,9 @@ export class RoomDurableObject {
         }
         const text = validateChatText(message.text);
         this.broadcastCommon(game, buildCommonChatMessage(member.playerId, member.nickname, text));
+        if ((await this.loadRoomOptions()).commonTalkVisible) {
+          this.broadcastCommonVoice(game, buildCommonChatMessage("common_voice", "共有者的聲音", text));
+        }
         return;
       }
 
@@ -332,6 +335,15 @@ export class RoomDurableObject {
     }
   }
 
+  private broadcastCommonVoice(gameState: GameState, message: unknown): void {
+    const encoded = JSON.stringify(message);
+    for (const [socket, member] of this.sockets) {
+      if (!canUseCommonChannel(gameState, member.playerId)) {
+        socket.send(encoded);
+      }
+    }
+  }
+
   private broadcastLovers(gameState: GameState, message: unknown): void {
     const encoded = JSON.stringify(message);
     for (const [socket, member] of this.sockets) {
@@ -477,6 +489,7 @@ export class RoomDurableObject {
       cat: roles.has("cat"),
       lastWords: roles.has("will"),
       openVote: roles.has("open_vote"),
+      commonTalkVisible: roles.has("comoutl"),
       realTime: Boolean(realTimeToken),
       dayMinutes: readMinutes(dayMinutes, DEFAULT_DAY_MINUTES),
       nightMinutes: readMinutes(nightMinutes, DEFAULT_NIGHT_MINUTES),

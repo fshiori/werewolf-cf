@@ -22,6 +22,7 @@ export interface RoomOptions {
   cat: boolean;
   lastWords: boolean;
   openVote: boolean;
+  commonTalkVisible: boolean;
   realTime: boolean;
   dayMinutes: number;
   nightMinutes: number;
@@ -117,6 +118,7 @@ export interface GameState {
   players: GamePlayer[];
   votes: Record<string, string>;
   openVote: boolean;
+  commonTalkVisible: boolean;
   dayMs: number;
   nightMs: number;
   selfVote: boolean;
