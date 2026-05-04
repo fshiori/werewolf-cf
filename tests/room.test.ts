@@ -361,6 +361,40 @@ describe("RoomDurableObject", () => {
     expect(otherMessages).toEqual([]);
   });
 
+  it("rejects GM whisper commands with missing targets", async () => {
+    const game: GameState = {
+      roomId: "room_abc",
+      phase: "day",
+      day: 1,
+      players: [{ playerId: "player_target", nickname: "Target", role: "villager", alive: true }],
+      votes: {},
+      openVote: false,
+      commonTalkVisible: false,
+      deadRoleVisible: false,
+      wishRole: false,
+      dummyBoy: false,
+      dayMs: 180_000,
+      nightMs: 90_000,
+      selfVote: false,
+      voteStatus: false,
+      revoteCount: 0,
+      nightKills: {},
+      divinations: {},
+      guards: {},
+      catRevives: {},
+      lastWords: {},
+      log: []
+    };
+    const room = roomObject(game);
+    const messages: SentMessage[] = [];
+    const socket = fakeSocket(messages);
+    connect(room, socket, "player_gm", "GM", true);
+
+    await sendRaw(room, socket, JSON.stringify({ type: "gm_whisper", targetPlayerId: "player_missing", text: "secret" }));
+
+    expect(messages).toEqual([{ type: "error", message: "GM whisper target not found" }]);
+  });
+
   it("rejects GM control websocket commands from non-GM sockets", async () => {
     const game: GameState = {
       roomId: "room_abc",
