@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   canJoinRoomState,
   canStartGame,
+  canUsePublicChat,
   canUseWerewolfChannel,
   castDayVote,
   castDivination,
@@ -119,6 +120,23 @@ describe("game", () => {
     expect(canUseWerewolfChannel(night, "player_1")).toBe(true);
     expect(canUseWerewolfChannel(night, "player_3")).toBe(false);
     expect(canUseWerewolfChannel(night, "player_2")).toBe(false);
+  });
+
+  it("allows public chat in lobby and after end but restricts dead players during active phases", () => {
+    const waiting = lobby([["player_1", "Alice"], ["player_2", "Bob"], ["player_3", "Carol"], ["player_4", "Dave"]]);
+    let game = startGame(waiting, 0, () => 0);
+
+    game = castDayVote(game, "player_1", "player_2");
+    game = castDayVote(game, "player_2", "player_3");
+    game = castDayVote(game, "player_3", "player_2");
+    game = castDayVote(game, "player_4", "player_2");
+
+    expect(canUsePublicChat(waiting, "player_new")).toBe(true);
+    expect(canUsePublicChat(game, "player_1")).toBe(true);
+    expect(canUsePublicChat(game, "player_2")).toBe(false);
+
+    const ended = castNightKill(game, "player_1", "player_3", 0);
+    expect(canUsePublicChat(ended, "player_2")).toBe(true);
   });
 
   it("allows living seers to divine one player per night", () => {
