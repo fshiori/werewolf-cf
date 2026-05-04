@@ -10,7 +10,8 @@ import {
   validateRoomCapacity,
   validateRoomComment,
   validateRoomId,
-  validateRoomName
+  validateRoomName,
+  validateWishRole
 } from "../src/validation";
 
 describe("validation", () => {
@@ -43,6 +44,12 @@ describe("validation", () => {
     expect(() => validateRoomCapacity(15)).toThrow("Invalid room capacity");
   });
 
+  it("validates wished roles", () => {
+    expect(validateWishRole("none")).toBeUndefined();
+    expect(validateWishRole("seer")).toBe("seer");
+    expect(() => validateWishRole("cat")).toThrow("Invalid wished role");
+  });
+
   it("validates chat text", () => {
     expect(validateChatText(" hello ")).toBe("hello");
     expect(() => validateChatText("")).toThrow("Chat text is required");
@@ -61,6 +68,12 @@ describe("validation", () => {
 
   it("parses only allowed client messages", () => {
     expect(parseClientMessage('{"type":"chat","text":"hi"}')).toEqual({ type: "chat", text: "hi" });
+    expect(parseClientMessage('{"type":"join","playerId":"player_1","nickname":"Alice","wishRole":"seer"}')).toEqual({
+      type: "join",
+      playerId: "player_1",
+      nickname: "Alice",
+      wishRole: "seer"
+    });
     expect(parseClientMessage('{"type":"wolf_chat","text":"secret"}')).toEqual({ type: "wolf_chat", text: "secret" });
     expect(parseClientMessage('{"type":"fox_chat","text":"secret"}')).toEqual({ type: "fox_chat", text: "secret" });
     expect(parseClientMessage('{"type":"common_chat","text":"secret"}')).toEqual({ type: "common_chat", text: "secret" });

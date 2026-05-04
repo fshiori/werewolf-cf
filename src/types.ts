@@ -24,6 +24,7 @@ export interface RoomOptions {
   openVote: boolean;
   commonTalkVisible: boolean;
   deadRoleVisible: boolean;
+  wishRole: boolean;
   realTime: boolean;
   dayMinutes: number;
   nightMinutes: number;
@@ -68,6 +69,7 @@ export interface GamePlayer {
   nickname: string;
   role: PlayerRole;
   alive: boolean;
+  wishRole?: PlayerRole;
   authority?: boolean;
   decider?: boolean;
   lover?: boolean;
@@ -121,6 +123,7 @@ export interface GameState {
   openVote: boolean;
   commonTalkVisible: boolean;
   deadRoleVisible: boolean;
+  wishRole: boolean;
   dayMs: number;
   nightMs: number;
   selfVote: boolean;
@@ -141,6 +144,7 @@ export type JoinClientMessage = {
   type: "join";
   playerId: string;
   nickname: string;
+  wishRole?: PlayerRole;
 };
 
 export type ChatClientMessage = {

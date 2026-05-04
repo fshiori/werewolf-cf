@@ -120,7 +120,12 @@ export class RoomDurableObject {
           throw new Error(loadedGame.phase === "lobby" ? "Room is full" : "Game already started");
         }
         this.sockets.set(socket, { playerId, nickname });
-        const game = upsertLobbyPlayer(loadedGame, { playerId, nickname }, maxPlayers);
+        const roomOptions = await this.loadRoomOptions();
+        const game = upsertLobbyPlayer(
+          loadedGame,
+          { playerId, nickname, wishRole: roomOptions.wishRole ? message.wishRole : undefined },
+          maxPlayers
+        );
         await this.saveGameState(game);
         await this.persistJoin(playerId, nickname);
         this.send(socket, buildJoinedMessage(this.roomId, playerId, this.members()));
@@ -505,6 +510,7 @@ export class RoomDurableObject {
       openVote: roles.has("open_vote"),
       commonTalkVisible: roles.has("comoutl"),
       deadRoleVisible: row?.dellook === 1,
+      wishRole: roles.has("wish_role"),
       realTime: Boolean(realTimeToken),
       dayMinutes: readMinutes(dayMinutes, DEFAULT_DAY_MINUTES),
       nightMinutes: readMinutes(nightMinutes, DEFAULT_NIGHT_MINUTES),

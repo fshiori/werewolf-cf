@@ -52,6 +52,7 @@ export function createLobbyState(roomId: string): GameState {
     openVote: false,
     commonTalkVisible: false,
     deadRoleVisible: false,
+    wishRole: false,
     dayMs: DAY_MS,
     nightMs: NIGHT_MS,
     selfVote: false,
@@ -70,7 +71,7 @@ export function publicPlayers(players: GamePlayer[]): PublicGamePlayer[] {
   return players.map(({ playerId, nickname, alive }) => ({ playerId, nickname, alive }));
 }
 
-export function upsertLobbyPlayer(state: GameState, member: RoomMember, maxPlayers = Number.POSITIVE_INFINITY): GameState {
+export function upsertLobbyPlayer(state: GameState, member: RoomMember & { wishRole?: GamePlayer["role"] }, maxPlayers = Number.POSITIVE_INFINITY): GameState {
   if (state.phase !== "lobby") {
     return state;
   }
@@ -81,7 +82,7 @@ export function upsertLobbyPlayer(state: GameState, member: RoomMember, maxPlaye
       ...state,
       hostId: state.hostId ?? state.players[0]?.playerId,
       players: state.players.map((player) =>
-        player.playerId === member.playerId ? { ...player, nickname: member.nickname } : player
+        player.playerId === member.playerId ? { ...player, nickname: member.nickname, wishRole: member.wishRole } : player
       )
     };
   }
@@ -167,6 +168,7 @@ export function startGame(
     openVote: false,
     commonTalkVisible: false,
     deadRoleVisible: false,
+    wishRole: false,
     realTime: false,
     dayMinutes: DEFAULT_DAY_MINUTES,
     nightMinutes: DEFAULT_NIGHT_MINUTES,
@@ -186,7 +188,7 @@ export function startGame(
     return startGameWithPlayers(
       state,
       applyRoomOptions(
-        state.players.map((player, index) => ({ ...player, role: referenceRoleDeck[index], alive: true })),
+        assignRolesFromDeck(state.players, referenceRoleDeck, options),
         options
       ),
       now,
@@ -234,7 +236,7 @@ export function startGame(
           !commonIds.has(player.playerId)
       )?.playerId
     : undefined;
-  const players = state.players.map((player) => {
+  const roleDeck = state.players.map((player) => {
     let role: GamePlayer["role"] = "villager";
     if (wolfIds.has(player.playerId)) {
       role = "werewolf";
@@ -251,10 +253,35 @@ export function startGame(
     } else if (player.playerId === foxId) {
       role = "fox";
     }
-    return { ...player, role, alive: true };
+    return role;
   });
+  const players = assignRolesFromDeck(state.players, roleDeck, options);
 
   return startGameWithPlayers(state, applyRoomOptions(players, options), now, options);
+}
+
+function assignRolesFromDeck(players: GamePlayer[], roleDeck: GamePlayer["role"][], options: RoomOptions): GamePlayer[] {
+  if (!options.wishRole) {
+    return players.map((player, index) => ({ ...player, role: roleDeck[index], alive: true }));
+  }
+  const remainingRoles = [...roleDeck];
+  const assignments = new Map<string, GamePlayer["role"]>();
+  for (const player of players) {
+    if (!player.wishRole) {
+      continue;
+    }
+    const roleIndex = remainingRoles.indexOf(player.wishRole);
+    if (roleIndex === -1) {
+      continue;
+    }
+    assignments.set(player.playerId, player.wishRole);
+    remainingRoles.splice(roleIndex, 1);
+  }
+  return players.map((player) => ({
+    ...player,
+    role: assignments.get(player.playerId) ?? remainingRoles.shift() ?? "villager",
+    alive: true
+  }));
 }
 
 function applyRoomOptions(players: GamePlayer[], options: RoomOptions): GamePlayer[] {
@@ -342,6 +369,7 @@ function startGameWithPlayers(state: GameState, players: GamePlayer[], now: numb
     openVote: options.openVote,
     commonTalkVisible: options.commonTalkVisible,
     deadRoleVisible: options.deadRoleVisible,
+    wishRole: options.wishRole,
     dayMs: roomOptionDayMs(options),
     nightMs: roomOptionNightMs(options),
     selfVote: options.selfVote,

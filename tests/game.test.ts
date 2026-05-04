@@ -48,6 +48,7 @@ function activeState(phase: "day" | "night", players: GameState["players"]): Gam
     openVote: false,
     commonTalkVisible: false,
     deadRoleVisible: false,
+    wishRole: false,
     dayMs: 180_000,
     nightMs: 90_000,
     selfVote: false,
@@ -211,6 +212,7 @@ describe("game", () => {
       openVote: false,
       commonTalkVisible: false,
       deadRoleVisible: false,
+      wishRole: false,
       realTime: false,
       dayMinutes: 3,
       nightMinutes: 1.5,
@@ -242,6 +244,7 @@ describe("game", () => {
       openVote: false,
       commonTalkVisible: false,
       deadRoleVisible: false,
+      wishRole: false,
       realTime: false,
       dayMinutes: 3,
       nightMinutes: 1.5,
@@ -273,6 +276,7 @@ describe("game", () => {
       openVote: false,
       commonTalkVisible: false,
       deadRoleVisible: false,
+      wishRole: false,
       realTime: false,
       dayMinutes: 3,
       nightMinutes: 1.5,
@@ -333,6 +337,7 @@ describe("game", () => {
       openVote: false,
       commonTalkVisible: false,
       deadRoleVisible: false,
+      wishRole: false,
       realTime: false,
       dayMinutes: 3,
       nightMinutes: 1.5,
@@ -366,6 +371,7 @@ describe("game", () => {
       openVote: false,
       commonTalkVisible: false,
       deadRoleVisible: false,
+      wishRole: false,
       realTime: false,
       dayMinutes: 3,
       nightMinutes: 1.5,
@@ -396,6 +402,7 @@ describe("game", () => {
       openVote: false,
       commonTalkVisible: false,
       deadRoleVisible: false,
+      wishRole: false,
       realTime: false,
       dayMinutes: 3,
       nightMinutes: 1.5,
@@ -424,6 +431,7 @@ describe("game", () => {
       openVote: false,
       commonTalkVisible: false,
       deadRoleVisible: false,
+      wishRole: false,
       realTime: false,
       dayMinutes: 3,
       nightMinutes: 1.5,
@@ -456,6 +464,7 @@ describe("game", () => {
       openVote: false,
       commonTalkVisible: false,
       deadRoleVisible: false,
+      wishRole: false,
       realTime: false,
       dayMinutes: 3,
       nightMinutes: 1.5,
@@ -491,6 +500,7 @@ describe("game", () => {
         openVote: true,
         commonTalkVisible: false,
         deadRoleVisible: false,
+        wishRole: false,
         realTime: true,
         dayMinutes: 2,
         nightMinutes: 1,
@@ -527,6 +537,7 @@ describe("game", () => {
         openVote: false,
         commonTalkVisible: true,
         deadRoleVisible: false,
+        wishRole: false,
         realTime: false,
         dayMinutes: 3,
         nightMinutes: 1.5,
@@ -538,6 +549,52 @@ describe("game", () => {
     expect(game.selfVote).toBe(true);
     expect(game.voteStatus).toBe(true);
     expect(game.commonTalkVisible).toBe(true);
+  });
+
+  it("honors available wished roles when the room option is enabled", () => {
+    const game = startGame(
+      {
+        ...lobby([
+          ["player_1", "Alice"],
+          ["player_2", "Bob"],
+          ["player_3", "Carol"],
+          ["player_4", "Dave"]
+        ]),
+        players: [
+          { playerId: "player_1", nickname: "Alice", role: "villager", alive: true, wishRole: "seer" },
+          { playerId: "player_2", nickname: "Bob", role: "villager", alive: true, wishRole: "werewolf" },
+          { playerId: "player_3", nickname: "Carol", role: "villager", alive: true },
+          { playerId: "player_4", nickname: "Dave", role: "villager", alive: true, wishRole: "seer" }
+        ]
+      },
+      0,
+      () => 0,
+      {
+        poison: false,
+        bigWolf: false,
+        authority: false,
+        decider: false,
+        lovers: false,
+        betrayer: false,
+        childFox: false,
+        twoFoxes: false,
+        cat: false,
+        lastWords: false,
+        openVote: false,
+        commonTalkVisible: false,
+        deadRoleVisible: false,
+        wishRole: true,
+        realTime: false,
+        dayMinutes: 3,
+        nightMinutes: 1.5,
+        selfVote: false,
+        voteStatus: false
+      }
+    );
+
+    expect(game.players.find((player) => player.playerId === "player_1")?.role).toBe("seer");
+    expect(game.players.find((player) => player.playerId === "player_2")?.role).toBe("werewolf");
+    expect(game.players.find((player) => player.playerId === "player_4")?.role).not.toBe("seer");
   });
 
   it("uses default phase timers when real time is disabled", () => {
@@ -563,6 +620,7 @@ describe("game", () => {
         openVote: false,
         commonTalkVisible: false,
         deadRoleVisible: false,
+        wishRole: false,
         realTime: false,
         dayMinutes: 9,
         nightMinutes: 9,

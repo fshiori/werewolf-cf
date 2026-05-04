@@ -164,6 +164,7 @@ export function renderHome(rooms: RoomSummary[], announcement = DEFAULT_ANNOUNCE
         room.options.openVote ? `<span class="option-mark">公開票</span>` : "",
         room.options.commonTalkVisible ? `<span class="option-mark">共有聲</span>` : "",
         room.options.deadRoleVisible ? `<span class="option-mark">靈視</span>` : "",
+        room.options.wishRole ? `<span class="option-mark">希望</span>` : "",
         room.options.selfVote ? `<span class="option-mark">自投</span>` : "",
         room.options.voteStatus ? `<span class="option-mark">投票済</span>` : ""
       ].filter(Boolean).join(" ");
@@ -293,6 +294,10 @@ export function renderHome(rooms: RoomSummary[], announcement = DEFAULT_ANNOUNCE
           <td><label><input id="optionDeadRoleVisible" type="checkbox"> <small>允許幽靈觀看角色</small></label></td>
         </tr>
         <tr>
+          <td><label><strong>　希望角色制：</strong></label></td>
+          <td><label><input id="optionWishRole" type="checkbox"> <small>允許加入時選擇希望角色</small></label></td>
+        </tr>
+        <tr>
           <td><label><strong>　啟用白天自投功能：</strong></label></td>
           <td><label><input id="optionSelfVote" type="checkbox"> <small>允許玩家白天投票給自己</small></label></td>
         </tr>
@@ -331,6 +336,7 @@ export function renderHome(rooms: RoomSummary[], announcement = DEFAULT_ANNOUNCE
         const openVote = document.querySelector("#optionOpenVote").checked;
         const commonTalkVisible = document.querySelector("#optionCommonTalkVisible").checked;
         const deadRoleVisible = document.querySelector("#optionDeadRoleVisible").checked;
+        const wishRole = document.querySelector("#optionWishRole").checked;
         const realTime = document.querySelector("#optionRealTime").checked;
         const dayMinutes = Number(document.querySelector("#optionDayMinutes").value);
         const nightMinutes = Number(document.querySelector("#optionNightMinutes").value);
@@ -340,7 +346,7 @@ export function renderHome(rooms: RoomSummary[], announcement = DEFAULT_ANNOUNCE
         const res = await fetch("/api/rooms", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ name, comment, maxPlayers, playerId: localStorage.getItem(playerKey), nickname, options: { poison, bigWolf, authority, decider, lovers, betrayer, childFox, twoFoxes, cat, lastWords, openVote, commonTalkVisible, deadRoleVisible, realTime, dayMinutes, nightMinutes, selfVote, voteStatus } })
+          body: JSON.stringify({ name, comment, maxPlayers, playerId: localStorage.getItem(playerKey), nickname, options: { poison, bigWolf, authority, decider, lovers, betrayer, childFox, twoFoxes, cat, lastWords, openVote, commonTalkVisible, deadRoleVisible, wishRole, realTime, dayMinutes, nightMinutes, selfVote, voteStatus } })
         });
         const data = await res.json();
         if (!res.ok) {
@@ -409,6 +415,22 @@ export function renderRoom(roomId: string): string {
             <tr>
               <td>玩家暱稱</td>
               <td><input id="nickname" maxlength="32" size="28"> <button id="connect">進入房間</button> <button id="startGame">開始遊戲</button></td>
+            </tr>
+            <tr>
+              <td>希望角色</td>
+              <td>
+                <select id="wishRole">
+                  <option value="none" selected>無</option>
+                  <option value="villager">村民</option>
+                  <option value="werewolf">人狼</option>
+                  <option value="seer">占卜師</option>
+                  <option value="medium">靈能者</option>
+                  <option value="madman">狂人</option>
+                  <option value="guard">獵人</option>
+                  <option value="common">共有者</option>
+                  <option value="fox">妖狐</option>
+                </select>
+              </td>
             </tr>
             <tr>
               <td>頭像</td>
@@ -560,11 +582,12 @@ export function renderRoom(roomId: string): string {
       void refreshEvents();
       document.querySelector("#connect").addEventListener("click", () => {
         const nickname = document.querySelector("#nickname").value;
+        const wishRole = document.querySelector("#wishRole").value;
         localStorage.setItem("werewolf_cf_nickname", nickname);
         void refreshStats();
         void refreshEvents();
         ws = new WebSocket((location.protocol === "https:" ? "wss://" : "ws://") + location.host + "/ws/room/" + roomId);
-        ws.addEventListener("open", () => ws.send(JSON.stringify({ type: "join", playerId: localStorage.getItem(playerKey), nickname })));
+        ws.addEventListener("open", () => ws.send(JSON.stringify({ type: "join", playerId: localStorage.getItem(playerKey), nickname, wishRole })));
         ws.addEventListener("message", (event) => {
           const msg = JSON.parse(event.data);
           if (msg.type === "presence") {
