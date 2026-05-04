@@ -53,13 +53,24 @@ import {
   validateLastWordsText,
   validateNickname,
   validatePlayerId,
-  validateRoomId
+  validateRoomId,
+  validateTrip
 } from "./validation";
 
 type ConnectionState = {
   playerId: string;
   nickname: string;
+  tripHash?: string;
 };
+
+function bytesToHex(bytes: Uint8Array): string {
+  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+async function tripHashForRoom(roomId: string, trip: string): Promise<string> {
+  const data = new TextEncoder().encode(`${roomId}:${trip}`);
+  return bytesToHex(new Uint8Array(await crypto.subtle.digest("SHA-256", data)));
+}
 
 export class RoomDurableObject {
   private readonly roomId: string;
@@ -119,15 +130,19 @@ export class RoomDurableObject {
         if (!canJoinRoomState(loadedGame, playerId, maxPlayers)) {
           throw new Error(loadedGame.phase === "lobby" ? "Room is full" : "Game already started");
         }
-        this.sockets.set(socket, { playerId, nickname });
         const roomOptions = await this.loadRoomOptions();
+        if (roomOptions.tripRequired && !message.trip) {
+          throw new Error("Trip is required for this room");
+        }
+        const tripHash = message.trip ? await tripHashForRoom(this.roomId, validateTrip(message.trip)) : undefined;
         const game = upsertLobbyPlayer(
           loadedGame,
-          { playerId, nickname, wishRole: roomOptions.wishRole ? message.wishRole : undefined },
+          { playerId, nickname, tripHash, wishRole: roomOptions.wishRole ? message.wishRole : undefined },
           maxPlayers
         );
+        this.sockets.set(socket, { playerId, nickname, tripHash });
         await this.saveGameState(game);
-        await this.persistJoin(playerId, nickname);
+        await this.persistJoin(playerId, nickname, tripHash);
         this.send(socket, buildJoinedMessage(this.roomId, playerId, this.members()));
         this.broadcast(buildPresenceMessage(this.members()));
         await this.broadcastGameState(game);
@@ -470,14 +485,15 @@ export class RoomDurableObject {
     }
   }
 
-  private async persistJoin(playerId: string, nickname: string): Promise<void> {
+  private async persistJoin(playerId: string, nickname: string, tripHash?: string): Promise<void> {
     await this.env.DB.batch([
       this.env.DB.prepare(
-        "INSERT INTO players (id, nickname, last_seen_at) VALUES (?, ?, CURRENT_TIMESTAMP) ON CONFLICT(id) DO UPDATE SET nickname = excluded.nickname, last_seen_at = CURRENT_TIMESTAMP"
-      ).bind(playerId, nickname),
-      this.env.DB.prepare("INSERT INTO room_events (room_id, player_id, event_type) VALUES (?, ?, 'player_joined')").bind(
+        "INSERT INTO players (id, nickname, trip_hash, last_seen_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP) ON CONFLICT(id) DO UPDATE SET nickname = excluded.nickname, trip_hash = COALESCE(excluded.trip_hash, players.trip_hash), last_seen_at = CURRENT_TIMESTAMP"
+      ).bind(playerId, nickname, tripHash ?? null),
+      this.env.DB.prepare("INSERT INTO room_events (room_id, player_id, event_type, payload_json) VALUES (?, ?, 'player_joined', ?)").bind(
         this.roomId,
-        playerId
+        playerId,
+        JSON.stringify({ trip: Boolean(tripHash) })
       )
     ]);
   }
@@ -511,6 +527,7 @@ export class RoomDurableObject {
       commonTalkVisible: roles.has("comoutl"),
       deadRoleVisible: row?.dellook === 1,
       wishRole: roles.has("wish_role"),
+      tripRequired: roles.has("istrip"),
       dummyBoy: roles.has("dummy_boy"),
       customDummy: roles.has("cust_dummy"),
       dummyName: row?.dummy_name ?? "替身君",

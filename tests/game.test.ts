@@ -1195,6 +1195,16 @@ describe("game", () => {
     expect(() => upsertLobbyPlayer(waiting, { playerId: "player_3", nickname: "Carol" }, 2)).toThrow("Room is full");
   });
 
+  it("keeps trip identity unique inside a lobby", () => {
+    const waiting = upsertLobbyPlayer(createLobbyState("room_abc"), { playerId: "player_1", nickname: "Alice", tripHash: "trip_a" });
+    const renamed = upsertLobbyPlayer(waiting, { playerId: "player_1", nickname: "Alice 2", tripHash: "trip_a" });
+
+    expect(renamed.players[0]).toMatchObject({ playerId: "player_1", nickname: "Alice 2", tripHash: "trip_a" });
+    expect(() => upsertLobbyPlayer(renamed, { playerId: "player_2", nickname: "Bob", tripHash: "trip_a" })).toThrow(
+      "Trip already joined this room"
+    );
+  });
+
   it("allows only living werewolves to use the night channel", () => {
     const day = startGame(lobby([["player_1", "Alice"], ["player_2", "Bob"], ["player_3", "Carol"], ["player_4", "Dave"]]), 0, () => 0);
     const night = castDayVote(
