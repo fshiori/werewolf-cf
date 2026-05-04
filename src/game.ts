@@ -114,7 +114,16 @@ export function startGame(
   state: GameState,
   now = Date.now(),
   random = Math.random,
-  options: RoomOptions = { poison: false, bigWolf: false, authority: false, decider: false, lovers: false, betrayer: false, childFox: false }
+  options: RoomOptions = {
+    poison: false,
+    bigWolf: false,
+    authority: false,
+    decider: false,
+    lovers: false,
+    betrayer: false,
+    childFox: false,
+    twoFoxes: false
+  }
 ): GameState {
   if (state.phase !== "lobby") {
     throw new Error("Game already started");
@@ -238,6 +247,12 @@ function applyRoomOptions(players: GamePlayer[], options: RoomOptions): GamePlay
     const childFoxIndex = nextPlayers.findIndex((player) => player.role === "villager");
     if (childFoxIndex !== -1) {
       nextPlayers = nextPlayers.map((player, index) => (index === childFoxIndex ? { ...player, role: "child_fox" } : player));
+    }
+  }
+  if (options.twoFoxes && nextPlayers.length >= 20) {
+    const foxIndex = nextPlayers.findIndex((player) => player.role === "villager");
+    if (foxIndex !== -1) {
+      nextPlayers = nextPlayers.map((player, index) => (index === foxIndex ? { ...player, role: "fox" } : player));
     }
   }
   if (!options.poison || nextPlayers.length < 20) {

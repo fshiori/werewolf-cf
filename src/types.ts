@@ -16,6 +16,7 @@ export interface RoomOptions {
   lovers: boolean;
   betrayer: boolean;
   childFox: boolean;
+  twoFoxes: boolean;
 }
 
 export interface RoomMember {

@@ -145,7 +145,7 @@ describe("worker routes", () => {
   it("returns room options in room listings", async () => {
     const response = await worker.fetch(
       new Request("http://example.test/api/rooms"),
-      envWithRooms(["room_plain", "room_poison"], {}, {}, {}, {}, { room_poison: "poison wfbig authority decide lovers betr fosi" })
+      envWithRooms(["room_plain", "room_poison"], {}, {}, {}, {}, { room_poison: "poison wfbig authority decide lovers betr fosi foxs" })
     );
 
     expect(response.status).toBe(200);
@@ -156,14 +156,32 @@ describe("worker routes", () => {
           name: "plain",
           status: "lobby",
           createdAt: "2026-05-04 04:00:00",
-          options: { poison: false, bigWolf: false, authority: false, decider: false, lovers: false, betrayer: false, childFox: false }
+          options: {
+            poison: false,
+            bigWolf: false,
+            authority: false,
+            decider: false,
+            lovers: false,
+            betrayer: false,
+            childFox: false,
+            twoFoxes: false
+          }
         },
         {
           id: "room_poison",
           name: "poison",
           status: "lobby",
           createdAt: "2026-05-04 04:00:00",
-          options: { poison: true, bigWolf: true, authority: true, decider: true, lovers: true, betrayer: true, childFox: true }
+          options: {
+            poison: true,
+            bigWolf: true,
+            authority: true,
+            decider: true,
+            lovers: true,
+            betrayer: true,
+            childFox: true,
+            twoFoxes: true
+          }
         }
       ]
     });
@@ -179,7 +197,7 @@ describe("worker routes", () => {
           name: "Option Test",
           playerId: "player_owner",
           nickname: "Owner",
-          options: { poison: true, bigWolf: true, authority: true, decider: true, lovers: true, betrayer: true, childFox: true }
+          options: { poison: true, bigWolf: true, authority: true, decider: true, lovers: true, betrayer: true, childFox: true, twoFoxes: true }
         })
       }),
       env
@@ -190,10 +208,10 @@ describe("worker routes", () => {
 
     expect(response.status).toBe(200);
     expect(roomInsert?.query).toContain("option_role");
-    expect(roomInsert?.values.at(-1)).toBe("poison wfbig authority decide lovers betr fosi");
+    expect(roomInsert?.values.at(-1)).toBe("poison wfbig authority decide lovers betr fosi foxs");
     expect(JSON.parse(String(eventInsert?.values.at(-1)))).toEqual({
       name: "Option Test",
-      options: { poison: true, bigWolf: true, authority: true, decider: true, lovers: true, betrayer: true, childFox: true }
+      options: { poison: true, bigWolf: true, authority: true, decider: true, lovers: true, betrayer: true, childFox: true, twoFoxes: true }
     });
   });
 
