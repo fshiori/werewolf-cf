@@ -208,6 +208,12 @@ export type GmEndGameClientMessage = {
   winner: GameWinner;
 };
 
+export type GmSetAliveClientMessage = {
+  type: "gm_set_alive";
+  targetPlayerId: string;
+  alive: boolean;
+};
+
 export type StartGameClientMessage = {
   type: "start_game";
 };
@@ -264,6 +270,7 @@ export type ClientMessage =
   | GmWhisperClientMessage
   | GmAdvancePhaseClientMessage
   | GmEndGameClientMessage
+  | GmSetAliveClientMessage
   | StartGameClientMessage
   | KickPlayerClientMessage
   | VoteClientMessage

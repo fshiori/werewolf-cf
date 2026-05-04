@@ -244,6 +244,13 @@ export function parseClientMessage(raw: string): ClientMessage {
     return { type: "gm_end_game", winner: validateGameWinner(parsed.winner) };
   }
 
+  if (parsed.type === "gm_set_alive") {
+    if (typeof parsed.targetPlayerId !== "string" || typeof parsed.alive !== "boolean") {
+      throw new Error("Invalid GM life control message");
+    }
+    return { type: "gm_set_alive", targetPlayerId: parsed.targetPlayerId, alive: parsed.alive };
+  }
+
   if (parsed.type === "start_game") {
     return { type: "start_game" };
   }

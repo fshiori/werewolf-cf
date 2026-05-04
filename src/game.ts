@@ -728,6 +728,23 @@ export function forceEndGame(state: GameState, winner: GameWinner): GameState {
   );
 }
 
+export function forceSetPlayerAlive(state: GameState, targetPlayerId: string, alive: boolean): GameState {
+  if (state.phase === "lobby" || state.phase === "ended") {
+    throw new Error("Can only adjust life state during active games");
+  }
+  const target = state.players.find((player) => player.playerId === targetPlayerId);
+  if (!target) {
+    throw new Error("Life control target not found");
+  }
+  const players = state.players.map((player) => (player.playerId === targetPlayerId ? { ...player, alive } : player));
+  return clearActionsForDeadPlayers({
+    ...state,
+    players,
+    votes: Object.fromEntries(Object.entries(state.votes ?? {}).filter(([voterId, votedId]) => voterId !== targetPlayerId && votedId !== targetPlayerId)),
+    log: [...state.log, `GM 將 ${target.nickname} 調整為${alive ? "生存" : "死亡"}。`]
+  });
+}
+
 function resolveDay(state: GameState, now = Date.now()): GameState {
   const executedId = pickTopTarget(state);
   const revoteCount = state.revoteCount ?? 0;

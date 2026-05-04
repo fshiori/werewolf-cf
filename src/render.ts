@@ -567,6 +567,8 @@ export function renderRoom(roomId: string): string {
                   <option value="lovers">戀人</option>
                 </select>
                 <button id="gmEndGame" disabled>GM裁定</button>
+                <button id="gmKillPlayer" disabled>GM死亡</button>
+                <button id="gmRevivePlayer" disabled>GM復活</button>
               </td>
             </tr>
           </table>
@@ -822,6 +824,14 @@ export function renderRoom(roomId: string): string {
       document.querySelector("#gmEndGame").addEventListener("click", () => {
         sendCommand({ type: "gm_end_game", winner: document.querySelector("#gmWinner").value });
       });
+      document.querySelector("#gmKillPlayer").addEventListener("click", () => {
+        const target = document.querySelector("#gmWhisperTarget").value;
+        if (target) sendCommand({ type: "gm_set_alive", targetPlayerId: target, alive: false });
+      });
+      document.querySelector("#gmRevivePlayer").addEventListener("click", () => {
+        const target = document.querySelector("#gmWhisperTarget").value;
+        if (target) sendCommand({ type: "gm_set_alive", targetPlayerId: target, alive: true });
+      });
       document.querySelector("#uploadAvatar").addEventListener("click", async () => {
         const fileInput = document.querySelector("#avatarFile");
         if (!fileInput.files || fileInput.files.length === 0) return;
@@ -893,6 +903,8 @@ export function renderRoom(roomId: string): string {
         document.querySelector("#sendGmWhisper").disabled = !isGm || game.players.length === 0;
         document.querySelector("#gmAdvancePhase").disabled = !isGm || !(game.phase === "day" || game.phase === "night");
         document.querySelector("#gmEndGame").disabled = !isGm || !(game.phase === "day" || game.phase === "night");
+        document.querySelector("#gmKillPlayer").disabled = !isGm || !(game.phase === "day" || game.phase === "night") || game.players.length === 0;
+        document.querySelector("#gmRevivePlayer").disabled = !isGm || !(game.phase === "day" || game.phase === "night") || game.players.length === 0;
         document.querySelector("#setLastWords").disabled = !(currentPlayerAlive && game.phase !== "lobby" && game.phase !== "ended");
         const players = document.querySelector("#players");
         const playerGrid = document.querySelector("#playerGrid");

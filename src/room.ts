@@ -17,6 +17,7 @@ import {
   commonsForPlayer,
   createLobbyState,
   forceEndGame,
+  forceSetPlayerAlive,
   foxesForPlayer,
   loversForPlayer,
   mediumReadingForPlayer,
@@ -294,6 +295,20 @@ export class RoomDurableObject {
         await this.saveGameState(next);
         await this.syncRoomStatus(next);
         await this.persistRoomEvent(member.playerId, "gm_ended_game", { winner: message.winner, day: next.day });
+        await this.broadcastGameState(next);
+        this.sendMediumResults(next);
+        return;
+      }
+
+      if (message.type === "gm_set_alive") {
+        if (!member.gm) {
+          throw new Error("Only the GM can adjust life state");
+        }
+        const targetPlayerId = validatePlayerId(message.targetPlayerId);
+        const next = forceSetPlayerAlive(await this.loadGameState(), targetPlayerId, message.alive);
+        await this.saveGameState(next);
+        await this.syncRoomStatus(next);
+        await this.persistRoomEvent(member.playerId, "gm_set_alive", { targetPlayerId, alive: message.alive });
         await this.broadcastGameState(next);
         this.sendMediumResults(next);
         return;
