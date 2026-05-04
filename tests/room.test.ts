@@ -82,6 +82,24 @@ describe("RoomDurableObject", () => {
     ]);
   });
 
+  it("rejects pre-join websocket commands", async () => {
+    const commands = [
+      { type: "chat", text: "hello" },
+      { type: "vote", targetPlayerId: "player_target" },
+      { type: "night_kill", targetPlayerId: "player_target" }
+    ];
+
+    for (const command of commands) {
+      const room = roomObject();
+      const messages: SentMessage[] = [];
+      const socket = fakeSocket(messages);
+
+      await sendRaw(room, socket, JSON.stringify(command));
+
+      expect(messages).toEqual([{ type: "error", message: "Join required" }]);
+    }
+  });
+
   it("broadcasts game state when child fox divination completes the night", async () => {
     const game: GameState = {
       roomId: "room_abc",
