@@ -359,10 +359,14 @@ function resolveDay(state: GameState, now = Date.now()): GameState {
     };
   }
 
-  const players = executedId
+  const executed = executedId ? state.players.find((player) => player.playerId === executedId) : undefined;
+  let players = executedId
     ? state.players.map((player) => (player.playerId === executedId ? { ...player, alive: false } : player))
     : state.players;
-  const executed = executedId ? state.players.find((player) => player.playerId === executedId) : undefined;
+  const poisonTarget = executed?.role === "poison" ? firstLivingPlayer(players, (player) => player.playerId !== executed.playerId) : undefined;
+  if (poisonTarget) {
+    players = players.map((player) => (player.playerId === poisonTarget.playerId ? { ...player, alive: false } : player));
+  }
   const mediumReading: MediumReading | undefined = executed
     ? {
         day: state.day,
@@ -371,7 +375,11 @@ function resolveDay(state: GameState, now = Date.now()): GameState {
         result: executed.role === "werewolf" ? "werewolf" : "human"
       }
     : undefined;
-  const log = [...state.log, executed ? `${executed.nickname} 被投票處決。` : "白天沒有共識，無人被處決。"];
+  const log = [
+    ...state.log,
+    executed ? `${executed.nickname} 被投票處決。` : "白天沒有共識，無人被處決。",
+    ...(poisonTarget ? [`${poisonTarget.nickname} 被埋毒者牽連死亡。`] : [])
+  ];
   return withWinOrNextNight({ ...clearActionsForDeadPlayers({ ...state, players }), votes: {}, revoteCount: 0, mediumReading, log }, now);
 }
 
@@ -381,13 +389,18 @@ function resolveNight(state: GameState, now = Date.now()): GameState {
   const protectedKill = killedId ? protectedIds.has(killedId) : false;
   const attacked = killedId ? state.players.find((player) => player.playerId === killedId) : undefined;
   const foxAttack = attacked?.role === "fox";
-  const players = killedId && !protectedKill && !foxAttack
+  let players = killedId && !protectedKill && !foxAttack
     ? state.players.map((player) => (player.playerId === killedId ? { ...player, alive: false } : player))
     : state.players;
   const killed = killedId && !protectedKill && !foxAttack ? attacked : undefined;
+  const poisonWolf = killed?.role === "poison" ? firstLivingPlayer(players, (player) => player.role === "werewolf") : undefined;
+  if (poisonWolf) {
+    players = players.map((player) => (player.playerId === poisonWolf.playerId ? { ...player, alive: false } : player));
+  }
   const log = [
     ...state.log,
-    killed ? `${killed.nickname} 在夜晚死亡。` : foxAttack ? "妖狐被襲擊但沒有死亡。" : "夜晚平安過去。"
+    killed ? `${killed.nickname} 在夜晚死亡。` : foxAttack ? "妖狐被襲擊但沒有死亡。" : "夜晚平安過去。",
+    ...(poisonWolf ? [`${poisonWolf.nickname} 被埋毒者牽連死亡。`] : [])
   ];
   return withWinOrNextDay({ ...clearActionsForDeadPlayers({ ...state, players }), nightKills: {}, divinations: {}, guards: {}, log }, now);
 }
@@ -452,6 +465,10 @@ function getWinner(state: GameState): GameWinner | undefined {
 
 function livingPlayers(state: GameState): GamePlayer[] {
   return state.players.filter((player) => player.alive);
+}
+
+function firstLivingPlayer(players: GamePlayer[], predicate: (player: GamePlayer) => boolean): GamePlayer | undefined {
+  return players.find((player) => player.alive && predicate(player));
 }
 
 function livingWerewolves(state: GameState): GamePlayer[] {
