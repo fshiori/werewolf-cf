@@ -616,7 +616,7 @@ export class RoomDurableObject {
   }
 
   private async syncRoomStatus(gameState: GameState): Promise<void> {
-    if (gameState.phase === "day" && gameState.day === 1) {
+    if ((gameState.phase === "day" && gameState.day === 1) || (gameState.phase === "night" && gameState.day === 0)) {
       await this.env.DB.prepare("UPDATE rooms SET status = 'playing', updated_at = CURRENT_TIMESTAMP WHERE id = ?").bind(this.roomId).run();
     }
     if (gameState.phase === "ended") {
