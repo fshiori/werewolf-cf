@@ -41,6 +41,9 @@ describe("render", () => {
     expect(html).toContain("狼頻");
     expect(html).toContain("開始遊戲");
     expect(html).toContain("房主");
+    expect(html).toContain("戰績");
+    expect(html).toContain("/api/players/");
+    expect(html).toContain("/stats");
     expect(html).toContain("game.hostId !== currentPlayerId");
     expect(html).toContain("game.revoteCount");
     expect(html).toContain("currentPlayerAlive");
