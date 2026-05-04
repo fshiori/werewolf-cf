@@ -48,7 +48,8 @@ function parseRoomOptions(optionRole: string): RoomOptions {
     bigWolf: roles.has("wfbig"),
     authority: roles.has("authority"),
     decider: roles.has("decide"),
-    lovers: roles.has("lovers")
+    lovers: roles.has("lovers"),
+    betrayer: roles.has("betr")
   };
 }
 
@@ -58,20 +59,22 @@ function serializeRoomOptions(options: RoomOptions): string {
     options.bigWolf ? "wfbig" : "",
     options.authority ? "authority" : "",
     options.decider ? "decide" : "",
-    options.lovers ? "lovers" : ""
+    options.lovers ? "lovers" : "",
+    options.betrayer ? "betr" : ""
   ].filter(Boolean).join(" ");
 }
 
 function readRoomOptions(value: unknown): RoomOptions {
   if (!isRecord(value)) {
-    return { poison: false, bigWolf: false, authority: false, decider: false, lovers: false };
+    return { poison: false, bigWolf: false, authority: false, decider: false, lovers: false, betrayer: false };
   }
   return {
     poison: value.poison === true,
     bigWolf: value.bigWolf === true,
     authority: value.authority === true,
     decider: value.decider === true,
-    lovers: value.lovers === true
+    lovers: value.lovers === true,
+    betrayer: value.betrayer === true
   };
 }
 

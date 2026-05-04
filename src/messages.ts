@@ -50,6 +50,7 @@ export function buildRoleMessage(
   wolves: RoomMember[],
   commons: RoomMember[] = [],
   lovers: RoomMember[] = [],
+  foxes: RoomMember[] = [],
   authority = false
 ): ServerMessage {
   return {
@@ -58,6 +59,7 @@ export function buildRoleMessage(
     wolves: wolves.map((wolf) => ({ playerId: wolf.playerId, nickname: escapeHtml(wolf.nickname) })),
     commons: commons.map((common) => ({ playerId: common.playerId, nickname: escapeHtml(common.nickname) })),
     lovers: lovers.map((lover) => ({ playerId: lover.playerId, nickname: escapeHtml(lover.nickname) })),
+    foxes: foxes.map((fox) => ({ playerId: fox.playerId, nickname: escapeHtml(fox.nickname) })),
     authority
   };
 }

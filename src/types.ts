@@ -14,6 +14,7 @@ export interface RoomOptions {
   authority: boolean;
   decider: boolean;
   lovers: boolean;
+  betrayer: boolean;
 }
 
 export interface RoomMember {
@@ -21,7 +22,18 @@ export interface RoomMember {
   nickname: string;
 }
 
-export type PlayerRole = "villager" | "werewolf" | "big_wolf" | "seer" | "medium" | "madman" | "guard" | "common" | "fox" | "poison";
+export type PlayerRole =
+  | "villager"
+  | "werewolf"
+  | "big_wolf"
+  | "seer"
+  | "medium"
+  | "madman"
+  | "guard"
+  | "common"
+  | "fox"
+  | "poison"
+  | "betrayer";
 export type GamePhase = "lobby" | "day" | "night" | "ended";
 export type GameWinner = "villagers" | "werewolves" | "foxes" | "lovers";
 export type DivinationResult = "human" | "werewolf";
@@ -169,5 +181,13 @@ export type ServerMessage =
       phaseEndsAt?: string;
       log: string[];
     }
-  | { type: "role"; role: PlayerRole; wolves: RoomMember[]; commons: RoomMember[]; lovers: RoomMember[]; authority?: boolean }
+  | {
+      type: "role";
+      role: PlayerRole;
+      wolves: RoomMember[];
+      commons: RoomMember[];
+      lovers: RoomMember[];
+      foxes: RoomMember[];
+      authority?: boolean;
+    }
   | { type: "error"; message: string };

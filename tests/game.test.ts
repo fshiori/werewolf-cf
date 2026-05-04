@@ -10,6 +10,7 @@ import {
   castNightKill,
   commonsForPlayer,
   createLobbyState,
+  foxesForPlayer,
   loversForPlayer,
   mediumReadingForPlayer,
   playerStatUpdates,
@@ -185,7 +186,8 @@ describe("game", () => {
       bigWolf: false,
       authority: false,
       decider: false,
-      lovers: false
+      lovers: false,
+      betrayer: false
     });
 
     expect(normal.players.filter((player) => player.role === "poison")).toHaveLength(0);
@@ -203,7 +205,8 @@ describe("game", () => {
       bigWolf: true,
       authority: false,
       decider: false,
-      lovers: false
+      lovers: false,
+      betrayer: false
     });
 
     expect(game.players.filter((player) => player.role === "big_wolf")).toHaveLength(1);
@@ -221,7 +224,8 @@ describe("game", () => {
       bigWolf: false,
       authority: true,
       decider: true,
-      lovers: false
+      lovers: false,
+      betrayer: false
     });
 
     expect(game.players.find((player) => player.authority)?.playerId).toBe("player_1");
@@ -267,7 +271,8 @@ describe("game", () => {
       bigWolf: false,
       authority: false,
       decider: false,
-      lovers: true
+      lovers: true,
+      betrayer: false
     });
 
     expect(game.players.filter((player) => player.lover)).toEqual([
@@ -279,6 +284,41 @@ describe("game", () => {
       { playerId: "player_2", nickname: "Player 2" }
     ]);
     expect(loversForPlayer(game, "player_3")).toEqual([]);
+  });
+
+  it("applies the betrayer room option in twenty-player games", () => {
+    const game = startGame(numberedLobby(20), 0, () => 0, {
+      poison: false,
+      bigWolf: false,
+      authority: false,
+      decider: false,
+      lovers: false,
+      betrayer: true
+    });
+
+    expect(game.players.filter((player) => player.role === "betrayer")).toEqual([
+      expect.objectContaining({ playerId: "player_1", role: "betrayer" })
+    ]);
+    expect(foxesForPlayer(game, "player_1")).toEqual([{ playerId: "player_11", nickname: "Player 11" }]);
+    expect(foxesForPlayer(game, "player_11")).toEqual([{ playerId: "player_11", nickname: "Player 11" }]);
+    expect(foxesForPlayer(game, "player_2")).toEqual([]);
+  });
+
+  it("kills betrayers when all foxes die", () => {
+    let game = activeState("day", [
+      { playerId: "player_1", nickname: "Wolf", role: "werewolf", alive: true },
+      { playerId: "player_2", nickname: "Fox", role: "fox", alive: true },
+      { playerId: "player_3", nickname: "Betrayer", role: "betrayer", alive: true },
+      { playerId: "player_4", nickname: "Villager", role: "villager", alive: true }
+    ]);
+
+    game = castDayVote(game, "player_1", "player_2");
+    game = castDayVote(game, "player_2", "player_2");
+    game = castDayVote(game, "player_3", "player_2");
+    game = castDayVote(game, "player_4", "player_2");
+
+    expect(game.players.find((player) => player.playerId === "player_2")?.alive).toBe(false);
+    expect(game.players.find((player) => player.playerId === "player_3")?.alive).toBe(false);
   });
 
   it("kills the other lover when one lover dies", () => {
@@ -526,14 +566,16 @@ describe("game", () => {
           { playerId: "player_1", nickname: "Wolf", role: "werewolf", alive: true },
           { playerId: "player_2", nickname: "Mad", role: "madman", alive: true },
           { playerId: "player_3", nickname: "Fox", role: "fox", alive: true },
-          { playerId: "player_4", nickname: "Poison", role: "poison", alive: true }
+          { playerId: "player_4", nickname: "Poison", role: "poison", alive: true },
+          { playerId: "player_5", nickname: "Betrayer", role: "betrayer", alive: true }
         ]
       })
     ).toEqual([
       { playerId: "player_1", won: false },
       { playerId: "player_2", won: false },
       { playerId: "player_3", won: true },
-      { playerId: "player_4", won: false }
+      { playerId: "player_4", won: false },
+      { playerId: "player_5", won: true }
     ]);
   });
 

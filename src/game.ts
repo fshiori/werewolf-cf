@@ -113,7 +113,7 @@ export function startGame(
   state: GameState,
   now = Date.now(),
   random = Math.random,
-  options: RoomOptions = { poison: false, bigWolf: false, authority: false, decider: false, lovers: false }
+  options: RoomOptions = { poison: false, bigWolf: false, authority: false, decider: false, lovers: false, betrayer: false }
 ): GameState {
   if (state.phase !== "lobby") {
     throw new Error("Game already started");
@@ -227,6 +227,12 @@ function applyRoomOptions(players: GamePlayer[], options: RoomOptions): GamePlay
       nextPlayers = nextPlayers.map((player, index) => (index === wolfIndex ? { ...player, role: "big_wolf" } : player));
     }
   }
+  if (options.betrayer && nextPlayers.length >= 20) {
+    const betrayerIndex = nextPlayers.findIndex((player) => player.role === "villager");
+    if (betrayerIndex !== -1) {
+      nextPlayers = nextPlayers.map((player, index) => (index === betrayerIndex ? { ...player, role: "betrayer" } : player));
+    }
+  }
   if (!options.poison || nextPlayers.length < 20) {
     return nextPlayers;
   }
@@ -322,7 +328,7 @@ export function castDivination(
   const nextState = target.role === "fox"
     ? {
         ...state,
-        players: killLoversAfterDeaths(state.players.map((player) => (player.playerId === targetId ? { ...player, alive: false } : player))),
+        players: applyLinkedDeaths(state.players.map((player) => (player.playerId === targetId ? { ...player, alive: false } : player))),
         log: [...state.log, `${target.nickname} 被占卜後死亡。`]
       }
     : state;
@@ -397,6 +403,16 @@ export function loversForPlayer(state: GameState, playerId: string): RoomMember[
     .map(({ playerId: loverId, nickname }) => ({ playerId: loverId, nickname }));
 }
 
+export function foxesForPlayer(state: GameState, playerId: string): RoomMember[] {
+  const player = state.players.find((candidate) => candidate.playerId === playerId);
+  if (!player || (player.role !== "fox" && player.role !== "betrayer")) {
+    return [];
+  }
+  return state.players
+    .filter((candidate) => candidate.role === "fox")
+    .map(({ playerId: foxId, nickname }) => ({ playerId: foxId, nickname }));
+}
+
 export function mediumReadingForPlayer(state: GameState, playerId: string): MediumReading | undefined {
   const player = state.players.find((candidate) => candidate.playerId === playerId);
   if (state.phase !== "day" || !state.mediumReading || !player?.alive || player.role !== "medium") {
@@ -414,7 +430,7 @@ export function playerStatUpdates(state: GameState): PlayerStatUpdate[] {
     won:
       player.lover
         ? state.winner === "lovers"
-        : player.role === "fox"
+        : player.role === "fox" || player.role === "betrayer"
         ? state.winner === "foxes"
         : isWerewolfRole(player.role) || player.role === "madman"
           ? state.winner === "werewolves"
@@ -443,7 +459,7 @@ function resolveDay(state: GameState, now = Date.now()): GameState {
   if (poisonTarget) {
     players = players.map((player) => (player.playerId === poisonTarget.playerId ? { ...player, alive: false } : player));
   }
-  players = killLoversAfterDeaths(players);
+  players = applyLinkedDeaths(players);
   const mediumReading: MediumReading | undefined = executed
     ? {
         day: state.day,
@@ -474,7 +490,7 @@ function resolveNight(state: GameState, now = Date.now()): GameState {
   if (poisonWolf) {
     players = players.map((player) => (player.playerId === poisonWolf.playerId ? { ...player, alive: false } : player));
   }
-  players = killLoversAfterDeaths(players);
+  players = applyLinkedDeaths(players);
   const log = [
     ...state.log,
     killed ? `${killed.nickname} 在夜晚死亡。` : foxAttack ? "妖狐被襲擊但沒有死亡。" : "夜晚平安過去。",
@@ -570,6 +586,26 @@ function killLoversAfterDeaths(players: GamePlayer[]): GamePlayer[] {
     return players;
   }
   return players.map((player) => (player.lover ? { ...player, alive: false } : player));
+}
+
+function killBetrayersAfterFoxDeaths(players: GamePlayer[]): GamePlayer[] {
+  const foxes = players.filter((player) => player.role === "fox");
+  if (foxes.length === 0 || foxes.some((player) => player.alive)) {
+    return players;
+  }
+  return players.map((player) => (player.role === "betrayer" ? { ...player, alive: false } : player));
+}
+
+function applyLinkedDeaths(players: GamePlayer[]): GamePlayer[] {
+  let nextPlayers = players;
+  while (true) {
+    const before = nextPlayers.map((player) => `${player.playerId}:${player.alive ? "1" : "0"}`).join("|");
+    nextPlayers = killBetrayersAfterFoxDeaths(killLoversAfterDeaths(nextPlayers));
+    const after = nextPlayers.map((player) => `${player.playerId}:${player.alive ? "1" : "0"}`).join("|");
+    if (before === after) {
+      return nextPlayers;
+    }
+  }
 }
 
 function livingGuards(state: GameState): GamePlayer[] {

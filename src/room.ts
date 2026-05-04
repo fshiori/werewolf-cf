@@ -10,6 +10,7 @@ import {
   castNightKill,
   commonsForPlayer,
   createLobbyState,
+  foxesForPlayer,
   loversForPlayer,
   mediumReadingForPlayer,
   playerStatUpdates,
@@ -265,6 +266,7 @@ export class RoomDurableObject {
         wolvesForPlayer(gameState, player.playerId),
         commonsForPlayer(gameState, player.playerId),
         loversForPlayer(gameState, player.playerId),
+        foxesForPlayer(gameState, player.playerId),
         player.authority === true
       )
     );
@@ -341,7 +343,8 @@ export class RoomDurableObject {
       bigWolf: roles.has("wfbig"),
       authority: roles.has("authority"),
       decider: roles.has("decide"),
-      lovers: roles.has("lovers")
+      lovers: roles.has("lovers"),
+      betrayer: roles.has("betr")
     };
   }
 }
