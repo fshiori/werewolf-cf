@@ -61,7 +61,8 @@ function parseRoomOptions(optionRole: string): RoomOptions {
     openVote: roles.has("open_vote"),
     realTime: Boolean(realTimeToken),
     dayMinutes: readMinutes(dayMinutes, DEFAULT_DAY_MINUTES),
-    nightMinutes: readMinutes(nightMinutes, DEFAULT_NIGHT_MINUTES)
+    nightMinutes: readMinutes(nightMinutes, DEFAULT_NIGHT_MINUTES),
+    selfVote: roles.has("votedme")
   };
 }
 
@@ -78,7 +79,8 @@ function serializeRoomOptions(options: RoomOptions): string {
     options.cat ? "cat" : "",
     options.lastWords ? "will" : "",
     options.openVote ? "open_vote" : "",
-    options.realTime ? `real_time:${formatMinutes(options.dayMinutes)}:${formatMinutes(options.nightMinutes)}` : ""
+    options.realTime ? `real_time:${formatMinutes(options.dayMinutes)}:${formatMinutes(options.nightMinutes)}` : "",
+    options.selfVote ? "votedme" : ""
   ].filter(Boolean).join(" ");
 }
 
@@ -98,7 +100,8 @@ function readRoomOptions(value: unknown): RoomOptions {
       openVote: false,
       realTime: false,
       dayMinutes: DEFAULT_DAY_MINUTES,
-      nightMinutes: DEFAULT_NIGHT_MINUTES
+      nightMinutes: DEFAULT_NIGHT_MINUTES,
+      selfVote: false
     };
   }
   return {
@@ -115,7 +118,8 @@ function readRoomOptions(value: unknown): RoomOptions {
     openVote: value.openVote === true,
     realTime: value.realTime === true,
     dayMinutes: readMinutes(value.dayMinutes, DEFAULT_DAY_MINUTES),
-    nightMinutes: readMinutes(value.nightMinutes, DEFAULT_NIGHT_MINUTES)
+    nightMinutes: readMinutes(value.nightMinutes, DEFAULT_NIGHT_MINUTES),
+    selfVote: value.selfVote === true
   };
 }
 

@@ -23,6 +23,7 @@ export interface RoomOptions {
   realTime: boolean;
   dayMinutes: number;
   nightMinutes: number;
+  selfVote: boolean;
 }
 
 export interface RoomMember {
@@ -115,6 +116,7 @@ export interface GameState {
   openVote: boolean;
   dayMs: number;
   nightMs: number;
+  selfVote: boolean;
   revoteCount: number;
   nightKills: Record<string, string>;
   divinations: Record<string, string>;
