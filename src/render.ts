@@ -385,6 +385,7 @@ export function renderRoom(roomId: string): string {
                 <button id="sendWolfChat" disabled>狼頻</button>
                 <button id="sendFoxChat" disabled>狐頻</button>
                 <button id="sendCommonChat" disabled>共有頻</button>
+                <button id="sendLoversChat" disabled>戀頻</button>
               </td>
             </tr>
           </table>
@@ -485,6 +486,7 @@ export function renderRoom(roomId: string): string {
       }
       let latestGame;
       let role = "";
+      let isLover = false;
       void refreshStats();
       void refreshRecords();
       void refreshEvents();
@@ -507,6 +509,8 @@ export function renderRoom(roomId: string): string {
             append("<font color='#990099'>[狐頻]</font> <b>" + msg.nickname + "</b>: " + msg.text);
           } else if (msg.type === "common_chat") {
             append("<font color='#996633'>[共有頻]</font> <b>" + msg.nickname + "</b>: " + msg.text);
+          } else if (msg.type === "lovers_chat") {
+            append("<font color='#ff6699'>[戀頻]</font> <b>" + msg.nickname + "</b>: " + msg.text);
           } else if (msg.type === "divination_result") {
             const result = msg.result === "werewolf" ? "狼" : "人";
             append("<font color='#660099'>[占卜]</font> " + msg.targetNickname + " 是「" + result + "」。");
@@ -528,6 +532,7 @@ export function renderRoom(roomId: string): string {
             }
           } else if (msg.type === "role") {
             role = msg.role;
+            isLover = Boolean(msg.lovers && msg.lovers.length);
             const wolves = msg.wolves.length ? "（狼伴：" + msg.wolves.map((wolf) => wolf.nickname).join(", ") + "）" : "";
             const commons = msg.commons && msg.commons.length ? "（共有：" + msg.commons.map((common) => common.nickname).join(", ") + "）" : "";
             const lovers = msg.lovers && msg.lovers.length ? "（戀人：" + msg.lovers.map((lover) => lover.nickname).join(", ") + "）" : "";
@@ -565,6 +570,13 @@ export function renderRoom(roomId: string): string {
         const input = document.querySelector("#chatText");
         if (ws && ws.readyState === WebSocket.OPEN) {
           ws.send(JSON.stringify({ type: "common_chat", text: input.value }));
+          input.value = "";
+        }
+      });
+      document.querySelector("#sendLoversChat").addEventListener("click", () => {
+        const input = document.querySelector("#chatText");
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ type: "lovers_chat", text: input.value }));
           input.value = "";
         }
       });
@@ -634,6 +646,7 @@ export function renderRoom(roomId: string): string {
         document.querySelector("#sendWolfChat").disabled = !(game.phase === "night" && isWolfRole(role) && currentPlayerAlive);
         document.querySelector("#sendFoxChat").disabled = !(game.phase === "night" && role === "fox" && currentPlayerAlive);
         document.querySelector("#sendCommonChat").disabled = !(game.phase === "night" && role === "common" && currentPlayerAlive);
+        document.querySelector("#sendLoversChat").disabled = !(game.phase === "night" && isLover && currentPlayerAlive);
         const players = document.querySelector("#players");
         const playerGrid = document.querySelector("#playerGrid");
         players.innerHTML = "";
