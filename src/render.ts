@@ -86,6 +86,7 @@ function page(title: string, body: string): string {
     .panel td { padding: 6px; vertical-align: top; }
     .player-grid { border-spacing: 5px; border-collapse: separate; font-size: 10pt; }
     .player-card { width: 148px; border: 1px solid #b0b0b0; background: #fafafa; }
+    .player-card.voted { background: #d0ffff; }
     .player-icon {
       width: 42px;
       height: 42px;
@@ -161,7 +162,8 @@ export function renderHome(rooms: RoomSummary[], announcement = DEFAULT_ANNOUNCE
         room.options.cat ? `<span class="option-mark">貓又</span>` : "",
         room.options.lastWords ? `<span class="option-mark">遺言</span>` : "",
         room.options.openVote ? `<span class="option-mark">公開票</span>` : "",
-        room.options.selfVote ? `<span class="option-mark">自投</span>` : ""
+        room.options.selfVote ? `<span class="option-mark">自投</span>` : "",
+        room.options.voteStatus ? `<span class="option-mark">投票済</span>` : ""
       ].filter(Boolean).join(" ");
       return `<a class="room-link" href="/room/${escapeHtml(room.id)}">
         <span class="room-line"><span class="status status-${status}">${status}</span><small>[${escapeHtml(room.id)}]</small> ${escapeHtml(room.name)}村</span>
@@ -268,6 +270,10 @@ export function renderHome(rooms: RoomSummary[], announcement = DEFAULT_ANNOUNCE
           <td><label><input id="optionSelfVote" type="checkbox"> <small>允許玩家白天投票給自己</small></label></td>
         </tr>
         <tr>
+          <td><label><strong>　啟用白天投票顯示：</strong></label></td>
+          <td><label><input id="optionVoteStatus" type="checkbox"> <small>已投票玩家以特殊底色顯示</small></label></td>
+        </tr>
+        <tr>
           <td></td>
           <td><button id="createRoom">建立房間</button></td>
         </tr>
@@ -298,11 +304,12 @@ export function renderHome(rooms: RoomSummary[], announcement = DEFAULT_ANNOUNCE
         const dayMinutes = Number(document.querySelector("#optionDayMinutes").value);
         const nightMinutes = Number(document.querySelector("#optionNightMinutes").value);
         const selfVote = document.querySelector("#optionSelfVote").checked;
+        const voteStatus = document.querySelector("#optionVoteStatus").checked;
         localStorage.setItem("werewolf_cf_nickname", nickname);
         const res = await fetch("/api/rooms", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ name, playerId: localStorage.getItem(playerKey), nickname, options: { poison, bigWolf, authority, decider, lovers, betrayer, childFox, twoFoxes, cat, lastWords, openVote, realTime, dayMinutes, nightMinutes, selfVote } })
+          body: JSON.stringify({ name, playerId: localStorage.getItem(playerKey), nickname, options: { poison, bigWolf, authority, decider, lovers, betrayer, childFox, twoFoxes, cat, lastWords, openVote, realTime, dayMinutes, nightMinutes, selfVote, voteStatus } })
         });
         const data = await res.json();
         if (!res.ok) {
@@ -701,6 +708,7 @@ export function renderRoom(roomId: string): string {
         players.innerHTML = "";
         playerGrid.innerHTML = "";
         const voteTargets = game.votes || {};
+        const votedPlayerIds = new Set(game.votedPlayerIds || []);
         const voteSummary = {};
         Object.entries(voteTargets).forEach(([voterId, targetId]) => {
           const voter = game.players.find((candidate) => candidate.playerId === voterId);
@@ -715,7 +723,7 @@ export function renderRoom(roomId: string): string {
             playerGrid.appendChild(row);
           }
           const card = document.createElement("td");
-          card.className = "player-card" + (player.alive ? "" : " dead");
+          card.className = "player-card" + (votedPlayerIds.has(player.playerId) ? " voted" : "") + (player.alive ? "" : " dead");
           const initial = (player.nickname || "?").slice(0, 1);
           const cardTable = document.createElement("table");
           const cardRow = document.createElement("tr");

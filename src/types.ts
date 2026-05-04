@@ -24,6 +24,7 @@ export interface RoomOptions {
   dayMinutes: number;
   nightMinutes: number;
   selfVote: boolean;
+  voteStatus: boolean;
 }
 
 export interface RoomMember {
@@ -117,6 +118,7 @@ export interface GameState {
   dayMs: number;
   nightMs: number;
   selfVote: boolean;
+  voteStatus: boolean;
   revoteCount: number;
   nightKills: Record<string, string>;
   divinations: Record<string, string>;
@@ -243,6 +245,7 @@ export type ServerMessage =
       revoteCount: number;
       players: PublicGamePlayer[];
       votes: Record<string, string>;
+      votedPlayerIds: string[];
       winner?: GameWinner;
       phaseEndsAt?: string;
       log: string[];

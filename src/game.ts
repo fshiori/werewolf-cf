@@ -53,6 +53,7 @@ export function createLobbyState(roomId: string): GameState {
     dayMs: DAY_MS,
     nightMs: NIGHT_MS,
     selfVote: false,
+    voteStatus: false,
     revoteCount: 0,
     nightKills: {},
     divinations: {},
@@ -157,7 +158,8 @@ export function startGame(
     realTime: false,
     dayMinutes: DEFAULT_DAY_MINUTES,
     nightMinutes: DEFAULT_NIGHT_MINUTES,
-    selfVote: false
+    selfVote: false,
+    voteStatus: false
   }
 ): GameState {
   if (state.phase !== "lobby") {
@@ -329,6 +331,7 @@ function startGameWithPlayers(state: GameState, players: GamePlayer[], now: numb
     dayMs: roomOptionDayMs(options),
     nightMs: roomOptionNightMs(options),
     selfVote: options.selfVote,
+    voteStatus: options.voteStatus,
     revoteCount: 0,
     nightKills: {},
     divinations: {},

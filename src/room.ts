@@ -479,7 +479,8 @@ export class RoomDurableObject {
       realTime: Boolean(realTimeToken),
       dayMinutes: readMinutes(dayMinutes, DEFAULT_DAY_MINUTES),
       nightMinutes: readMinutes(nightMinutes, DEFAULT_NIGHT_MINUTES),
-      selfVote: roles.has("votedme")
+      selfVote: roles.has("votedme"),
+      voteStatus: roles.has("votedisplay")
     };
   }
 }
