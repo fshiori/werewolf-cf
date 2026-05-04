@@ -17,6 +17,7 @@ node --version
 npm test
 npm run typecheck
 git diff --check
+npm run check:wrangler -- --production
 ```
 
 Expected:
@@ -25,10 +26,11 @@ Expected:
 - Vitest passes.
 - TypeScript typecheck passes.
 - `git diff --check` prints no whitespace errors.
+- `npm run check:wrangler -- --production` passes.
 
 ## Remote Resource Setup
 
-Confirm `wrangler.toml` has production resource IDs, not placeholders:
+If the production config check fails, confirm `wrangler.toml` has production resource IDs, not placeholders:
 
 ```bash
 rg -n "local-dev-placeholder" wrangler.toml
