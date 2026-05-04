@@ -30,8 +30,17 @@ function responseFor(path) {
   if (path === "/api/rooms") {
     return { contentType: "application/json", body: JSON.stringify({ rooms: [] }) };
   }
-  if (["/", "/rules", "/protocol", "/version"].includes(path)) {
-    return { contentType: "text/html", body: "<!doctype html><title>Werewolf</title>" };
+  if (path === "/") {
+    return { contentType: "text/html", body: "<!doctype html><title>汝等是人是狼？</title>" };
+  }
+  if (path === "/rules") {
+    return { contentType: "text/html", body: "<!doctype html><title>規則</title>" };
+  }
+  if (path === "/protocol") {
+    return { contentType: "text/html", body: "<!doctype html><title>WebSocket 入口</title>" };
+  }
+  if (path === "/version") {
+    return { contentType: "text/html", body: "<!doctype html><title>版本資訊</title>" };
   }
   return { status: 404, contentType: "text/plain", body: "not found" };
 }
@@ -98,6 +107,20 @@ describe("production read-only smoke script", () => {
 
     expect(result.status).toBe(1);
     expect(result.stderr).toContain("/api/version");
+  });
+
+  it("fails when an HTML page does not contain the expected page text", async () => {
+    const host = await startServer({
+      "/protocol": {
+        contentType: "text/html",
+        body: "<!doctype html><title>Wrong page</title>"
+      }
+    });
+    const result = await runScript([host]);
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("/protocol");
+    expect(result.stderr).toContain("WebSocket 入口");
   });
 
   it("requires a Worker URL", async () => {
