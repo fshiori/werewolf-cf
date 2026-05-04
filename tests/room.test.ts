@@ -14,6 +14,7 @@ type SentMessage = {
   sentAt?: string;
   phase?: string;
   day?: number;
+  log?: string[];
   role?: string;
   wolves?: Array<{ playerId: string; nickname: string }>;
   lovers?: Array<{ playerId: string; nickname: string }>;
@@ -1247,6 +1248,61 @@ describe("RoomDurableObject", () => {
     await sendRaw(room, socket, JSON.stringify({ type: "set_last_words", text: "remember me" }));
 
     expect(messages).toEqual([{ type: "error", message: "Last words are not enabled in this room" }]);
+  });
+
+  it("publishes saved last words when a player dies through the websocket flow", async () => {
+    const game: GameState = {
+      roomId: "room_abc",
+      phase: "day",
+      day: 1,
+      players: [
+        { playerId: "player_target", nickname: "Target", role: "villager", alive: true },
+        { playerId: "player_voter", nickname: "Voter", role: "villager", alive: true },
+        { playerId: "player_wolf", nickname: "Wolf", role: "werewolf", alive: true }
+      ],
+      votes: {},
+      openVote: false,
+      commonTalkVisible: false,
+      deadRoleVisible: false,
+      wishRole: false,
+      dummyBoy: false,
+      dayMs: 180_000,
+      nightMs: 90_000,
+      selfVote: false,
+      voteStatus: false,
+      revoteCount: 0,
+      nightKills: {},
+      divinations: {},
+      guards: {},
+      catRevives: {},
+      lastWords: {},
+      log: []
+    };
+    const room = roomObject(game, { option_role: "will" });
+    const targetMessages: SentMessage[] = [];
+    const voterMessages: SentMessage[] = [];
+    const wolfMessages: SentMessage[] = [];
+    const targetSocket = fakeSocket(targetMessages);
+    const voterSocket = fakeSocket(voterMessages);
+    const wolfSocket = fakeSocket(wolfMessages);
+    connect(room, targetSocket, "player_target", "Target");
+    connect(room, voterSocket, "player_voter", "Voter");
+    connect(room, wolfSocket, "player_wolf", "Wolf");
+
+    await sendRaw(room, targetSocket, JSON.stringify({ type: "set_last_words", text: "remember me" }));
+    await sendRaw(room, targetSocket, JSON.stringify({ type: "vote", targetPlayerId: "player_voter" }));
+    await sendRaw(room, voterSocket, JSON.stringify({ type: "vote", targetPlayerId: "player_target" }));
+    await sendRaw(room, wolfSocket, JSON.stringify({ type: "vote", targetPlayerId: "player_target" }));
+
+    expect(targetMessages[0]).toEqual({ type: "last_words_ack" });
+    for (const messages of [targetMessages, voterMessages, wolfMessages]) {
+      expect(messages).toContainEqual(
+        expect.objectContaining({
+          type: "game_state",
+          log: expect.arrayContaining(["Target 的遺言：remember me"])
+        })
+      );
+    }
   });
 
   it("rejects invalid vote websocket commands", async () => {
