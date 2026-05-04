@@ -500,6 +500,89 @@ describe("RoomDurableObject", () => {
     expect(messages).toEqual([{ type: "error", message: "Last words are not enabled in this room" }]);
   });
 
+  it("rejects invalid vote websocket commands", async () => {
+    const cases: Array<{
+      game: GameState;
+      playerId: string;
+      nickname: string;
+      message: string;
+    }> = [
+      {
+        game: {
+          roomId: "room_abc",
+          phase: "night",
+          day: 1,
+          players: [
+            { playerId: "player_alive", nickname: "Alive", role: "villager", alive: true },
+            { playerId: "player_target", nickname: "Target", role: "werewolf", alive: true }
+          ],
+          votes: {},
+          openVote: false,
+          commonTalkVisible: false,
+          deadRoleVisible: false,
+          wishRole: false,
+          dummyBoy: false,
+          dayMs: 180_000,
+          nightMs: 90_000,
+          selfVote: false,
+          voteStatus: false,
+          revoteCount: 0,
+          nightKills: {},
+          divinations: {},
+          guards: {},
+          catRevives: {},
+          lastWords: {},
+          log: []
+        },
+        playerId: "player_alive",
+        nickname: "Alive",
+        message: "Voting is only available during the day"
+      },
+      {
+        game: {
+          roomId: "room_abc",
+          phase: "day",
+          day: 1,
+          players: [
+            { playerId: "player_dead", nickname: "Dead", role: "villager", alive: false },
+            { playerId: "player_target", nickname: "Target", role: "werewolf", alive: true }
+          ],
+          votes: {},
+          openVote: false,
+          commonTalkVisible: false,
+          deadRoleVisible: false,
+          wishRole: false,
+          dummyBoy: false,
+          dayMs: 180_000,
+          nightMs: 90_000,
+          selfVote: false,
+          voteStatus: false,
+          revoteCount: 0,
+          nightKills: {},
+          divinations: {},
+          guards: {},
+          catRevives: {},
+          lastWords: {},
+          log: []
+        },
+        playerId: "player_dead",
+        nickname: "Dead",
+        message: "Living player is required"
+      }
+    ];
+
+    for (const testCase of cases) {
+      const room = roomObject(testCase.game);
+      const messages: SentMessage[] = [];
+      const socket = fakeSocket(messages);
+      connect(room, socket, testCase.playerId, testCase.nickname);
+
+      await sendRaw(room, socket, JSON.stringify({ type: "vote", targetPlayerId: "player_target" }));
+
+      expect(messages).toEqual([{ type: "error", message: testCase.message }]);
+    }
+  });
+
   it("sends only each socket's own role message", () => {
     const game: GameState = {
       roomId: "room_abc",
