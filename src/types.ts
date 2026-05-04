@@ -57,6 +57,15 @@ export interface GameRecordSummary {
   createdAt: string;
 }
 
+export interface RoomEventSummary {
+  id: number;
+  roomId: string;
+  playerId?: string;
+  eventType: string;
+  payload: unknown;
+  createdAt: string;
+}
+
 export interface GameState {
   roomId: string;
   phase: GamePhase;
