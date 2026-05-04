@@ -66,6 +66,14 @@ Expected tables include:
 
 These checks should not create rooms or write player data.
 
+Run the automated read-only smoke first:
+
+```bash
+npm run smoke:production -- "$WORKER_HOST"
+```
+
+Or run the equivalent manual checks:
+
 ```bash
 curl -fsS "$WORKER_HOST/api/health"
 curl -fsS "$WORKER_HOST/api/version"
