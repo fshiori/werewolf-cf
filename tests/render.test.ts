@@ -64,6 +64,8 @@ describe("render", () => {
     expect(html).toContain("/room/room_abc");
     expect(html).toContain("/api/stats/leaderboard");
     expect(html).toContain("排行榜 JSON");
+    expect(html).toContain("/api/config");
+    expect(html).toContain("設定 JSON");
     expect(html).toContain("roomComment");
     expect(html).toContain("maxPlayers");
     expect(html).toContain("<option value=\"22\" selected>22</option>");
