@@ -184,15 +184,16 @@ function readRoomOptions(value: unknown): RoomOptions {
       voteStatus: false
     };
   }
+  const foxVariant = readFoxVariant(value);
   return {
     poison: value.poison === true,
     bigWolf: value.bigWolf === true,
     authority: value.authority === true,
     decider: value.decider === true,
     lovers: value.lovers === true,
-    betrayer: value.betrayer === true,
-    childFox: value.childFox === true,
-    twoFoxes: value.twoFoxes === true,
+    betrayer: foxVariant === "betrayer",
+    childFox: foxVariant === "childFox",
+    twoFoxes: foxVariant === "twoFoxes",
     cat: value.cat === true,
     lastWords: value.lastWords === true,
     openVote: value.openVote === true,
@@ -211,6 +212,19 @@ function readRoomOptions(value: unknown): RoomOptions {
     selfVote: value.selfVote === true,
     voteStatus: value.voteStatus === true
   };
+}
+
+function readFoxVariant(value: Record<string, unknown>): "betrayer" | "childFox" | "twoFoxes" | undefined {
+  if (value.betrayer === true) {
+    return "betrayer";
+  }
+  if (value.childFox === true) {
+    return "childFox";
+  }
+  if (value.twoFoxes === true) {
+    return "twoFoxes";
+  }
+  return undefined;
 }
 
 function readGmTrip(optionsValue: unknown, gmEnabled: boolean): string | undefined {
