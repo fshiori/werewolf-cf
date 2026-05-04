@@ -95,6 +95,7 @@ function page(title: string, body: string): string {
       font-weight: bold;
       color: #333366;
     }
+    .player-icon img { width: 42px; height: 42px; object-fit: cover; display: block; }
     .player-name { padding-left: 5px; }
     .dead { background: #303030; color: #dddddd; text-decoration: line-through; }
     #chatLog {
@@ -231,6 +232,10 @@ export function renderRoom(roomId: string): string {
               <td>玩家暱稱</td>
               <td><input id="nickname" maxlength="32" size="28"> <button id="connect">進入房間</button> <button id="startGame">開始遊戲</button></td>
             </tr>
+            <tr>
+              <td>頭像</td>
+              <td><input id="avatarFile" type="file" accept="image/*" size="28"> <button id="uploadAvatar">頭像</button></td>
+            </tr>
           </table>
         </td>
       </tr>
@@ -343,6 +348,20 @@ export function renderRoom(roomId: string): string {
       document.querySelector("#startGame").addEventListener("click", () => {
         sendCommand({ type: "start_game" });
       });
+      document.querySelector("#uploadAvatar").addEventListener("click", async () => {
+        const fileInput = document.querySelector("#avatarFile");
+        if (!fileInput.files || fileInput.files.length === 0) return;
+        const form = new FormData();
+        form.set("playerId", localStorage.getItem(playerKey));
+        form.set("avatar", fileInput.files[0]);
+        const res = await fetch("/api/assets/avatar", { method: "POST", body: form });
+        const data = await res.json();
+        if (!res.ok) {
+          alert(data.error || "頭像上傳失敗");
+          return;
+        }
+        if (latestGame) renderGame(latestGame);
+      });
       function sendCommand(command) {
         if (ws && ws.readyState === WebSocket.OPEN) {
           ws.send(JSON.stringify(command));
@@ -373,7 +392,14 @@ export function renderRoom(roomId: string): string {
           const cardRow = document.createElement("tr");
           const iconCell = document.createElement("td");
           iconCell.className = "player-icon";
-          iconCell.textContent = initial;
+          const avatar = document.createElement("img");
+          avatar.src = "/assets/avatar/" + player.playerId + "?v=" + Date.now();
+          avatar.alt = "";
+          avatar.addEventListener("error", () => {
+            avatar.remove();
+            iconCell.textContent = initial;
+          });
+          iconCell.appendChild(avatar);
           const nameCell = document.createElement("td");
           nameCell.className = "player-name";
           const marker = document.createElement("font");

@@ -34,6 +34,9 @@ describe("render", () => {
     expect(html).toContain("[room_abc]");
     expect(html).toContain("new WebSocket");
     expect(html).toContain("進入房間");
+    expect(html).toContain("avatarFile");
+    expect(html).toContain("/api/assets/avatar");
+    expect(html).toContain("/assets/avatar/");
     expect(html).toContain("送出");
     expect(html).toContain("狼頻");
     expect(html).toContain("開始遊戲");
