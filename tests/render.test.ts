@@ -47,6 +47,8 @@ describe("render", () => {
     expect(html).toContain("最近對局");
     expect(html).toContain("/api/rooms/");
     expect(html).toContain("/records");
+    expect(html).toContain("事件");
+    expect(html).toContain("/events");
     expect(html).toContain("game.hostId !== currentPlayerId");
     expect(html).toContain("game.revoteCount");
     expect(html).toContain("currentPlayerAlive");

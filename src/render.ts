@@ -295,6 +295,14 @@ export function renderRoom(roomId: string): string {
           </table>
         </td>
       </tr>
+      <tr>
+        <td>
+          <table class="panel">
+            <tr><th>事件</th></tr>
+            <tr><td><div id="events" class="muted">讀取中</div></td></tr>
+          </table>
+        </td>
+      </tr>
     </table>
     <script>
       const roomId = ${JSON.stringify(roomId)};
@@ -343,14 +351,37 @@ export function renderRoom(roomId: string): string {
           target.textContent = "紀錄讀取失敗。";
         }
       }
+      async function refreshEvents() {
+        const target = document.querySelector("#events");
+        try {
+          const res = await fetch("/api/rooms/" + roomId + "/events");
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || "events failed");
+          if (!data.events.length) {
+            target.textContent = "尚無事件。";
+            return;
+          }
+          target.innerHTML = "";
+          data.events.slice(0, 8).forEach((event) => {
+            const div = document.createElement("div");
+            const player = event.playerId ? "　" + event.playerId : "";
+            div.textContent = event.createdAt + "　" + event.eventType + player;
+            target.appendChild(div);
+          });
+        } catch {
+          target.textContent = "事件讀取失敗。";
+        }
+      }
       let latestGame;
       let role = "";
       void refreshStats();
       void refreshRecords();
+      void refreshEvents();
       document.querySelector("#connect").addEventListener("click", () => {
         const nickname = document.querySelector("#nickname").value;
         localStorage.setItem("werewolf_cf_nickname", nickname);
         void refreshStats();
+        void refreshEvents();
         ws = new WebSocket((location.protocol === "https:" ? "wss://" : "ws://") + location.host + "/ws/room/" + roomId);
         ws.addEventListener("open", () => ws.send(JSON.stringify({ type: "join", playerId: localStorage.getItem(playerKey), nickname })));
         ws.addEventListener("message", (event) => {
@@ -370,7 +401,10 @@ export function renderRoom(roomId: string): string {
           } else if (msg.type === "game_state") {
             latestGame = msg;
             renderGame(msg);
-            if (msg.phase === "ended") void refreshRecords();
+            if (msg.phase === "ended") {
+              void refreshRecords();
+              void refreshEvents();
+            }
           } else if (msg.type === "role") {
             role = msg.role;
             const wolves = msg.wolves.length ? "（狼伴：" + msg.wolves.map((wolf) => wolf.nickname).join(", ") + "）" : "";
