@@ -189,5 +189,5 @@ export function buildActionAckMessage(
 }
 
 export function buildErrorMessage(message: string): ServerMessage {
-  return { type: "error", message };
+  return { type: "error", message: escapeHtml(message) };
 }
