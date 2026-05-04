@@ -8,6 +8,7 @@
     "test": "vitest run --passWithNoTests",
     "typecheck": "tsc --noEmit",
     "check:wrangler": "node scripts/check-wrangler-config.mjs",
+    "predeploy": "npm run check:wrangler -- --production",
     "deploy": "wrangler deploy"
   },
   "devDependencies": {
