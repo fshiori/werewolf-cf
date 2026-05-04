@@ -313,9 +313,18 @@ async function claimTrip(request: Request, env: Env): Promise<Response> {
 async function getPlayerStats(env: Env, playerIdParam: string): Promise<Response> {
   try {
     const playerId = validatePlayerId(playerIdParam);
-    const row = await env.DB.prepare("SELECT games_played, wins, losses FROM player_stats WHERE player_id = ?")
+    const identity = await env.DB.prepare("SELECT registered_trip_hash FROM players WHERE id = ? LIMIT 1")
       .bind(playerId)
-      .first<{ games_played: number; wins: number; losses: number }>();
+      .first<{ registered_trip_hash: string | null }>();
+    const row = identity?.registered_trip_hash
+      ? await env.DB.prepare(
+          "SELECT COALESCE(SUM(ps.games_played), 0) AS games_played, COALESCE(SUM(ps.wins), 0) AS wins, COALESCE(SUM(ps.losses), 0) AS losses FROM player_stats ps INNER JOIN players p ON p.id = ps.player_id WHERE p.registered_trip_hash = ?"
+        )
+          .bind(identity.registered_trip_hash)
+          .first<{ games_played: number; wins: number; losses: number }>()
+      : await env.DB.prepare("SELECT games_played, wins, losses FROM player_stats WHERE player_id = ?")
+          .bind(playerId)
+          .first<{ games_played: number; wins: number; losses: number }>();
     const stats: PlayerStats = {
       playerId,
       gamesPlayed: row?.games_played ?? 0,
@@ -330,7 +339,7 @@ async function getPlayerStats(env: Env, playerIdParam: string): Promise<Response
 
 async function getLeaderboard(env: Env): Promise<Response> {
   const result = await env.DB.prepare(
-    "SELECT player_id, games_played, wins, losses FROM player_stats ORDER BY wins DESC, games_played DESC, player_id ASC LIMIT 20"
+    "SELECT MIN(ps.player_id) AS player_id, SUM(ps.games_played) AS games_played, SUM(ps.wins) AS wins, SUM(ps.losses) AS losses FROM player_stats ps LEFT JOIN players p ON p.id = ps.player_id GROUP BY COALESCE(p.registered_trip_hash, ps.player_id) ORDER BY wins DESC, games_played DESC, player_id ASC LIMIT 20"
   ).all<{ player_id: string; games_played: number; wins: number; losses: number }>();
   const leaderboard: LeaderboardEntry[] = result.results.map((row, index) => ({
     rank: index + 1,

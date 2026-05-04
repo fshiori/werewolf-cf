@@ -42,7 +42,8 @@ function envWithRooms(
   roomDummyNames: Record<string, string> = {},
   roomDummyLastWords: Record<string, string> = {},
   registeredTripHashes: Set<string> = new Set(),
-  excludedTripHashes: Set<string> = new Set()
+  excludedTripHashes: Set<string> = new Set(),
+  playerRegisteredTripHashes: Record<string, string> = {}
 ): Env {
   const assets = new Map<string, StoredAsset>();
   const batches: Array<Array<{ query: string; values: unknown[] }>> = [];
@@ -57,6 +58,18 @@ function envWithRooms(
               query,
               values,
               async first() {
+                if (query.includes("SELECT registered_trip_hash FROM players")) {
+                  const registered_trip_hash = playerRegisteredTripHashes[String(values[0])];
+                  return registered_trip_hash ? { registered_trip_hash } : null;
+                }
+                if (query.includes("SUM(ps.games_played)") && query.includes("WHERE p.registered_trip_hash")) {
+                  const rows = Object.entries(stats).filter(([playerId]) => playerRegisteredTripHashes[playerId] === String(values[0]));
+                  return {
+                    games_played: rows.reduce((sum, [, stat]) => sum + stat.games_played, 0),
+                    wins: rows.reduce((sum, [, stat]) => sum + stat.wins, 0),
+                    losses: rows.reduce((sum, [, stat]) => sum + stat.losses, 0)
+                  };
+                }
                 if (query.includes("FROM player_stats")) {
                   return stats[String(values[0])] ?? null;
                 }
@@ -85,6 +98,24 @@ function envWithRooms(
           },
           async all() {
             if (query.includes("FROM player_stats")) {
+              if (query.includes("GROUP BY COALESCE")) {
+                const grouped = new Map<string, { player_id: string; games_played: number; wins: number; losses: number }>();
+                for (const [player_id, stat] of Object.entries(stats)) {
+                  const key = playerRegisteredTripHashes[player_id] ?? player_id;
+                  const current = grouped.get(key);
+                  if (current) {
+                    current.player_id = [current.player_id, player_id].sort()[0];
+                    current.games_played += stat.games_played;
+                    current.wins += stat.wins;
+                    current.losses += stat.losses;
+                  } else {
+                    grouped.set(key, { player_id, ...stat });
+                  }
+                }
+                return {
+                  results: [...grouped.values()].sort((a, b) => b.wins - a.wins || b.games_played - a.games_played || a.player_id.localeCompare(b.player_id))
+                };
+              }
               return {
                 results: Object.entries(stats)
                   .map(([player_id, stat]) => ({ player_id, ...stat }))
@@ -517,6 +548,46 @@ describe("worker routes", () => {
     });
   });
 
+  it("aggregates player stats by claimed registered Trip", async () => {
+    const response = await worker.fetch(
+      new Request("http://example.test/api/players/player_current/stats"),
+      envWithRooms(
+        [],
+        {},
+        {
+          player_current: { games_played: 3, wins: 2, losses: 1 },
+          player_old: { games_played: 4, wins: 1, losses: 3 },
+          player_other: { games_played: 5, wins: 5, losses: 0 }
+        },
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        new Set(),
+        new Set(),
+        {
+          player_current: "trip_hash_a",
+          player_old: "trip_hash_a",
+          player_other: "trip_hash_b"
+        }
+      )
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      stats: {
+        playerId: "player_current",
+        gamesPlayed: 7,
+        wins: 3,
+        losses: 4
+      }
+    });
+  });
+
   it("returns zeroed stats for players without records", async () => {
     const response = await worker.fetch(new Request("http://example.test/api/players/player_new/stats"), envWithRooms([]));
 
@@ -551,6 +622,43 @@ describe("worker routes", () => {
         { rank: 1, playerId: "player_a", gamesPlayed: 6, wins: 3, losses: 3 },
         { rank: 2, playerId: "player_b", gamesPlayed: 5, wins: 3, losses: 2 },
         { rank: 3, playerId: "player_c", gamesPlayed: 4, wins: 1, losses: 3 }
+      ]
+    });
+  });
+
+  it("aggregates leaderboard rows by claimed registered Trip", async () => {
+    const response = await worker.fetch(
+      new Request("http://example.test/api/stats/leaderboard"),
+      envWithRooms(
+        [],
+        {},
+        {
+          player_b: { games_played: 5, wins: 3, losses: 2 },
+          player_a: { games_played: 6, wins: 3, losses: 3 },
+          player_c: { games_played: 4, wins: 1, losses: 3 }
+        },
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        new Set(),
+        new Set(),
+        {
+          player_a: "trip_hash_a",
+          player_b: "trip_hash_a"
+        }
+      )
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      leaderboard: [
+        { rank: 1, playerId: "player_a", gamesPlayed: 11, wins: 6, losses: 5 },
+        { rank: 2, playerId: "player_c", gamesPlayed: 4, wins: 1, losses: 3 }
       ]
     });
   });
