@@ -92,6 +92,7 @@ export class RoomDurableObject {
         this.sockets.set(socket, { playerId, nickname });
         const game = upsertLobbyPlayer(loadedGame, { playerId, nickname });
         await this.saveGameState(game);
+        await this.persistJoin(playerId, nickname);
         this.send(socket, buildJoinedMessage(this.roomId, playerId, this.members()));
         this.broadcast(buildPresenceMessage(this.members()));
         this.broadcastGameState(game);
@@ -235,5 +236,17 @@ export class RoomDurableObject {
         )
       ]);
     }
+  }
+
+  private async persistJoin(playerId: string, nickname: string): Promise<void> {
+    await this.env.DB.batch([
+      this.env.DB.prepare(
+        "INSERT INTO players (id, nickname, last_seen_at) VALUES (?, ?, CURRENT_TIMESTAMP) ON CONFLICT(id) DO UPDATE SET nickname = excluded.nickname, last_seen_at = CURRENT_TIMESTAMP"
+      ).bind(playerId, nickname),
+      this.env.DB.prepare("INSERT INTO room_events (room_id, player_id, event_type) VALUES (?, ?, 'player_joined')").bind(
+        this.roomId,
+        playerId
+      )
+    ]);
   }
 }
