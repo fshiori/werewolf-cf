@@ -376,7 +376,8 @@ export function castNightKill(state: GameState, actorId: string, targetId: strin
 export function castDivination(
   state: GameState,
   actorId: string,
-  targetId: string
+  targetId: string,
+  random = Math.random
 ): { state: GameState; targetNickname: string; result: DivinationResult } {
   if (state.phase !== "night") {
     throw new Error("Divination is only available at night");
@@ -410,7 +411,7 @@ export function castDivination(
       divinations: { ...clearedState.divinations, [actorId]: targetId }
     },
     targetNickname: target.nickname,
-    result: isWerewolfRole(target.role) ? "werewolf" : "human"
+    result: divinationResultForSeer(target.role, random)
   };
 }
 
@@ -436,7 +437,7 @@ export function castChildFoxDivination(
   }
   const target = assertLivingPlayer(state, targetId);
   const failed = random() < 0.6;
-  const result = failed ? "failed" : isWerewolfRole(target.role) ? "werewolf" : "human";
+  const result = failed ? "failed" : divinationResultForChildFox(target.role, random);
   const nextState = {
     ...state,
     divinations: { ...divinations, [actorId]: targetId }
@@ -492,6 +493,20 @@ export function castCatRevive(state: GameState, actorId: string, targetId: strin
     return resolveNight(next, now, random);
   }
   return next;
+}
+
+function divinationResultForSeer(role: GamePlayer["role"], random: () => number): DivinationResult {
+  if (role === "big_wolf") {
+    return random() < 0.3 ? "human" : "werewolf";
+  }
+  return isWerewolfRole(role) ? "werewolf" : "human";
+}
+
+function divinationResultForChildFox(role: GamePlayer["role"], random: () => number): DivinationResult {
+  if (role === "big_wolf") {
+    return random() < 0.7 ? "human" : "werewolf";
+  }
+  return isWerewolfRole(role) ? "werewolf" : "human";
 }
 
 export function advancePhaseByAlarm(state: GameState, now = Date.now()): GameState {

@@ -413,6 +413,20 @@ describe("game", () => {
     expect(() => castChildFoxDivination(game, "player_3", "player_2")).toThrow("Only child foxes");
   });
 
+  it("uses reference big wolf divination odds for seers and child foxes", () => {
+    const game = activeState("night", [
+      { playerId: "player_1", nickname: "Big Wolf", role: "big_wolf", alive: true },
+      { playerId: "player_2", nickname: "Seer", role: "seer", alive: true },
+      { playerId: "player_3", nickname: "Child Fox", role: "child_fox", alive: true },
+      { playerId: "player_4", nickname: "Villager", role: "villager", alive: true }
+    ]);
+
+    expect(castDivination(game, "player_2", "player_1", () => 0.2).result).toBe("human");
+    expect(castDivination(game, "player_2", "player_1", () => 0.8).result).toBe("werewolf");
+    expect(castChildFoxDivination(game, "player_3", "player_1", sequence(0.8, 0.6)).result).toBe("human");
+    expect(castChildFoxDivination(game, "player_3", "player_1", sequence(0.8, 0.8)).result).toBe("werewolf");
+  });
+
   it("kills betrayers when all foxes die", () => {
     let game = activeState("day", [
       { playerId: "player_1", nickname: "Wolf", role: "werewolf", alive: true },
@@ -734,7 +748,7 @@ describe("game", () => {
     ]);
 
     expect(canUseWerewolfChannel(game, "player_1")).toBe(true);
-    expect(castDivination(game, "player_2", "player_1").result).toBe("werewolf");
+    expect(castDivination(game, "player_2", "player_1", () => 0.95).result).toBe("werewolf");
 
     const killed = castNightKill(game, "player_1", "player_3", 0);
 
@@ -963,3 +977,8 @@ describe("game", () => {
     expect(mediumReadingForPlayer(game, "player_2")).toBeUndefined();
   });
 });
+
+function sequence(...values: number[]): () => number {
+  let index = 0;
+  return () => values[index++] ?? values.at(-1) ?? 0;
+}
