@@ -44,6 +44,11 @@ export function canJoinRoomState(state: GameState, playerId: string): boolean {
   return state.phase === "lobby" || state.players.some((player) => player.playerId === playerId);
 }
 
+export function canUseWerewolfChannel(state: GameState, playerId: string): boolean {
+  const player = state.players.find((candidate) => candidate.playerId === playerId);
+  return state.phase === "night" && player?.alive === true && player.role === "werewolf";
+}
+
 export function startGame(state: GameState, now = Date.now(), random = Math.random): GameState {
   if (state.phase !== "lobby") {
     throw new Error("Game already started");

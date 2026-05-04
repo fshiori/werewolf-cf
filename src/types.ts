@@ -52,6 +52,11 @@ export type ChatClientMessage = {
   text: string;
 };
 
+export type WolfChatClientMessage = {
+  type: "wolf_chat";
+  text: string;
+};
+
 export type StartGameClientMessage = {
   type: "start_game";
 };
@@ -66,12 +71,19 @@ export type NightKillClientMessage = {
   targetPlayerId: string;
 };
 
-export type ClientMessage = JoinClientMessage | ChatClientMessage | StartGameClientMessage | VoteClientMessage | NightKillClientMessage;
+export type ClientMessage =
+  | JoinClientMessage
+  | ChatClientMessage
+  | WolfChatClientMessage
+  | StartGameClientMessage
+  | VoteClientMessage
+  | NightKillClientMessage;
 
 export type ServerMessage =
   | { type: "joined"; roomId: string; playerId: string; members: RoomMember[] }
   | { type: "presence"; members: RoomMember[] }
   | { type: "chat"; playerId: string; nickname: string; text: string; sentAt: string }
+  | { type: "wolf_chat"; playerId: string; nickname: string; text: string; sentAt: string }
   | {
       type: "game_state";
       phase: GamePhase;

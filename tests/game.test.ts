@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   canJoinRoomState,
+  canUseWerewolfChannel,
   castDayVote,
   castNightKill,
   createLobbyState,
@@ -74,5 +75,19 @@ describe("game", () => {
     expect(canJoinRoomState(waiting, "player_4")).toBe(true);
     expect(canJoinRoomState(started, "player_1")).toBe(true);
     expect(canJoinRoomState(started, "player_4")).toBe(false);
+  });
+
+  it("allows only living werewolves to use the night channel", () => {
+    const day = startGame(lobby([["player_1", "Alice"], ["player_2", "Bob"], ["player_3", "Carol"], ["player_4", "Dave"]]), 0, () => 0);
+    const night = castDayVote(
+      castDayVote(castDayVote(castDayVote(day, "player_1", "player_2"), "player_2", "player_3"), "player_3", "player_2"),
+      "player_4",
+      "player_2"
+    );
+
+    expect(canUseWerewolfChannel(day, "player_1")).toBe(false);
+    expect(canUseWerewolfChannel(night, "player_1")).toBe(true);
+    expect(canUseWerewolfChannel(night, "player_3")).toBe(false);
+    expect(canUseWerewolfChannel(night, "player_2")).toBe(false);
   });
 });

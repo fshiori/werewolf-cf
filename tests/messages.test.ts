@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { createLobbyState, startGame } from "../src/game";
-import { buildChatMessage, buildGameStateMessage, buildJoinedMessage, buildPresenceMessage, buildRoleMessage } from "../src/messages";
+import {
+  buildChatMessage,
+  buildGameStateMessage,
+  buildJoinedMessage,
+  buildPresenceMessage,
+  buildRoleMessage,
+  buildWolfChatMessage
+} from "../src/messages";
 
 describe("messages", () => {
   it("builds joined messages", () => {
@@ -25,6 +32,15 @@ describe("messages", () => {
       playerId: "player_1",
       nickname: "Alice",
       text: "&lt;hello&gt;"
+    });
+  });
+
+  it("builds escaped werewolf chat messages", () => {
+    expect(buildWolfChatMessage("player_1", "<Wolf>", "<secret>")).toMatchObject({
+      type: "wolf_chat",
+      playerId: "player_1",
+      nickname: "&lt;Wolf&gt;",
+      text: "&lt;secret&gt;"
     });
   });
 
