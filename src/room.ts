@@ -2,6 +2,7 @@ import {
   advancePhaseByAlarm,
   canJoinRoomState,
   canStartGame,
+  canUseCommonChannel,
   canUseFoxChannel,
   canUsePublicChat,
   canUseWerewolfChannel,
@@ -25,6 +26,7 @@ import {
   buildActionAckMessage,
   buildChatMessage,
   buildChildFoxResultMessage,
+  buildCommonChatMessage,
   buildDivinationResultMessage,
   buildErrorMessage,
   buildFoxChatMessage,
@@ -152,6 +154,16 @@ export class RoomDurableObject {
         return;
       }
 
+      if (message.type === "common_chat") {
+        const game = await this.loadGameState();
+        if (!canUseCommonChannel(game, member.playerId)) {
+          throw new Error("Common channel is only available to living common partners at night");
+        }
+        const text = validateChatText(message.text);
+        this.broadcastCommon(game, buildCommonChatMessage(member.playerId, member.nickname, text));
+        return;
+      }
+
       if (message.type === "start_game") {
         const loadedGame = await this.loadGameState();
         if (!canStartGame(loadedGame, member.playerId)) {
@@ -265,6 +277,15 @@ export class RoomDurableObject {
     const encoded = JSON.stringify(message);
     for (const [socket, member] of this.sockets) {
       if (canUseFoxChannel(gameState, member.playerId)) {
+        socket.send(encoded);
+      }
+    }
+  }
+
+  private broadcastCommon(gameState: GameState, message: unknown): void {
+    const encoded = JSON.stringify(message);
+    for (const [socket, member] of this.sockets) {
+      if (canUseCommonChannel(gameState, member.playerId)) {
         socket.send(encoded);
       }
     }

@@ -4,6 +4,7 @@ import {
   buildActionAckMessage,
   buildChatMessage,
   buildChildFoxResultMessage,
+  buildCommonChatMessage,
   buildDivinationResultMessage,
   buildFoxChatMessage,
   buildGameStateMessage,
@@ -54,6 +55,15 @@ describe("messages", () => {
       type: "fox_chat",
       playerId: "player_1",
       nickname: "&lt;Fox&gt;",
+      text: "&lt;secret&gt;"
+    });
+  });
+
+  it("builds escaped common chat messages", () => {
+    expect(buildCommonChatMessage("player_1", "<Common>", "<secret>")).toMatchObject({
+      type: "common_chat",
+      playerId: "player_1",
+      nickname: "&lt;Common&gt;",
       text: "&lt;secret&gt;"
     });
   });
