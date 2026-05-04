@@ -305,6 +305,9 @@ export function renderRoom(roomId: string): string {
             append("<b>" + msg.nickname + "</b>: " + msg.text);
           } else if (msg.type === "wolf_chat") {
             append("<font color='#cc0000'>[狼頻]</font> <b>" + msg.nickname + "</b>: " + msg.text);
+          } else if (msg.type === "divination_result") {
+            const result = msg.result === "werewolf" ? "狼" : "人";
+            append("<font color='#660099'>[占卜]</font> " + msg.targetNickname + " 是「" + result + "」。");
           } else if (msg.type === "game_state") {
             latestGame = msg;
             renderGame(msg);
@@ -390,6 +393,8 @@ export function renderRoom(roomId: string): string {
               sendCommand({ type: "vote", targetPlayerId: player.playerId });
             } else if (latestGame.phase === "night" && role === "werewolf") {
               sendCommand({ type: "night_kill", targetPlayerId: player.playerId });
+            } else if (latestGame.phase === "night" && role === "seer") {
+              sendCommand({ type: "divine", targetPlayerId: player.playerId });
             }
           });
           players.appendChild(button);

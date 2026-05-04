@@ -35,5 +35,7 @@ describe("render", () => {
     expect(html).toContain("玩家列表");
     expect(html).toContain("能力發動 / 投票");
     expect(html).toContain("wolf_chat");
+    expect(html).toContain("divination_result");
+    expect(html).toContain("type: \"divine\"");
   });
 });

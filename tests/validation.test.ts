@@ -47,6 +47,10 @@ describe("validation", () => {
       type: "night_kill",
       targetPlayerId: "player_2"
     });
+    expect(parseClientMessage('{"type":"divine","targetPlayerId":"player_3"}')).toEqual({
+      type: "divine",
+      targetPlayerId: "player_3"
+    });
     expect(() => parseClientMessage("{bad")).toThrow("Invalid JSON");
     expect(() => parseClientMessage('{"type":"unknown"}')).toThrow("Unknown message type");
   });

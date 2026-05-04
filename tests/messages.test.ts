@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { createLobbyState, startGame } from "../src/game";
 import {
   buildChatMessage,
+  buildDivinationResultMessage,
   buildGameStateMessage,
   buildJoinedMessage,
   buildPresenceMessage,
@@ -41,6 +42,15 @@ describe("messages", () => {
       playerId: "player_1",
       nickname: "&lt;Wolf&gt;",
       text: "&lt;secret&gt;"
+    });
+  });
+
+  it("builds escaped divination result messages", () => {
+    expect(buildDivinationResultMessage("player_1", "<Wolf>", "werewolf")).toEqual({
+      type: "divination_result",
+      targetPlayerId: "player_1",
+      targetNickname: "&lt;Wolf&gt;",
+      result: "werewolf"
     });
   });
 
