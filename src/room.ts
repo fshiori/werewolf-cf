@@ -10,6 +10,7 @@ import {
   castNightKill,
   commonsForPlayer,
   createLobbyState,
+  loversForPlayer,
   mediumReadingForPlayer,
   playerStatUpdates,
   startGame,
@@ -259,7 +260,13 @@ export class RoomDurableObject {
     }
     this.send(
       socket,
-      buildRoleMessage(player.role, wolvesForPlayer(gameState, player.playerId), commonsForPlayer(gameState, player.playerId), player.authority === true)
+      buildRoleMessage(
+        player.role,
+        wolvesForPlayer(gameState, player.playerId),
+        commonsForPlayer(gameState, player.playerId),
+        loversForPlayer(gameState, player.playerId),
+        player.authority === true
+      )
     );
   }
 
@@ -329,6 +336,12 @@ export class RoomDurableObject {
       .bind(this.roomId)
       .first<{ option_role: string }>();
     const roles = new Set((row?.option_role ?? "").split(/\s+/).filter(Boolean));
-    return { poison: roles.has("poison"), bigWolf: roles.has("wfbig"), authority: roles.has("authority"), decider: roles.has("decide") };
+    return {
+      poison: roles.has("poison"),
+      bigWolf: roles.has("wfbig"),
+      authority: roles.has("authority"),
+      decider: roles.has("decide"),
+      lovers: roles.has("lovers")
+    };
   }
 }

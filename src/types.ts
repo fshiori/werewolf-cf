@@ -13,6 +13,7 @@ export interface RoomOptions {
   bigWolf: boolean;
   authority: boolean;
   decider: boolean;
+  lovers: boolean;
 }
 
 export interface RoomMember {
@@ -22,7 +23,7 @@ export interface RoomMember {
 
 export type PlayerRole = "villager" | "werewolf" | "big_wolf" | "seer" | "medium" | "madman" | "guard" | "common" | "fox" | "poison";
 export type GamePhase = "lobby" | "day" | "night" | "ended";
-export type GameWinner = "villagers" | "werewolves" | "foxes";
+export type GameWinner = "villagers" | "werewolves" | "foxes" | "lovers";
 export type DivinationResult = "human" | "werewolf";
 export type MediumResult = "human" | "werewolf";
 
@@ -40,6 +41,7 @@ export interface GamePlayer {
   alive: boolean;
   authority?: boolean;
   decider?: boolean;
+  lover?: boolean;
 }
 
 export interface PublicGamePlayer {
@@ -167,5 +169,5 @@ export type ServerMessage =
       phaseEndsAt?: string;
       log: string[];
     }
-  | { type: "role"; role: PlayerRole; wolves: RoomMember[]; commons: RoomMember[]; authority?: boolean }
+  | { type: "role"; role: PlayerRole; wolves: RoomMember[]; commons: RoomMember[]; lovers: RoomMember[]; authority?: boolean }
   | { type: "error"; message: string };

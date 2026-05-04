@@ -153,7 +153,8 @@ export function renderHome(rooms: RoomSummary[], announcement = DEFAULT_ANNOUNCE
         room.options.poison ? `<span class="option-mark">埋毒</span>` : "",
         room.options.bigWolf ? `<span class="option-mark">大狼</span>` : "",
         room.options.authority ? `<span class="option-mark">權力</span>` : "",
-        room.options.decider ? `<span class="option-mark">決定</span>` : ""
+        room.options.decider ? `<span class="option-mark">決定</span>` : "",
+        room.options.lovers ? `<span class="option-mark">戀人</span>` : ""
       ].filter(Boolean).join(" ");
       return `<a class="room-link" href="/room/${escapeHtml(room.id)}">
         <span class="room-line"><span class="status status-${status}">${status}</span><small>[${escapeHtml(room.id)}]</small> ${escapeHtml(room.name)}村</span>
@@ -222,6 +223,10 @@ export function renderHome(rooms: RoomSummary[], announcement = DEFAULT_ANNOUNCE
           <td><label><input id="optionDecider" type="checkbox"> <small>同票時決定者投票優先</small></label></td>
         </tr>
         <tr>
+          <td><label><strong>　13人以上戀人出場：</strong></label></td>
+          <td><label><input id="optionLovers" type="checkbox"> <small>兩名戀人生存到勝利條件時戀人勝利</small></label></td>
+        </tr>
+        <tr>
           <td></td>
           <td><button id="createRoom">建立房間</button></td>
         </tr>
@@ -241,11 +246,12 @@ export function renderHome(rooms: RoomSummary[], announcement = DEFAULT_ANNOUNCE
         const bigWolf = document.querySelector("#optionBigWolf").checked;
         const authority = document.querySelector("#optionAuthority").checked;
         const decider = document.querySelector("#optionDecider").checked;
+        const lovers = document.querySelector("#optionLovers").checked;
         localStorage.setItem("werewolf_cf_nickname", nickname);
         const res = await fetch("/api/rooms", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ name, playerId: localStorage.getItem(playerKey), nickname, options: { poison, bigWolf, authority, decider } })
+          body: JSON.stringify({ name, playerId: localStorage.getItem(playerKey), nickname, options: { poison, bigWolf, authority, decider, lovers } })
         });
         const data = await res.json();
         if (!res.ok) {
@@ -491,8 +497,9 @@ export function renderRoom(roomId: string): string {
             role = msg.role;
             const wolves = msg.wolves.length ? "（狼伴：" + msg.wolves.map((wolf) => wolf.nickname).join(", ") + "）" : "";
             const commons = msg.commons && msg.commons.length ? "（共有：" + msg.commons.map((common) => common.nickname).join(", ") + "）" : "";
+            const lovers = msg.lovers && msg.lovers.length ? "（戀人：" + msg.lovers.map((lover) => lover.nickname).join(", ") + "）" : "";
             const authority = msg.authority ? "（權力者）" : "";
-            document.querySelector("#role").textContent = roleLabel(msg.role) + wolves + commons + authority;
+            document.querySelector("#role").textContent = roleLabel(msg.role) + wolves + commons + lovers + authority;
             if (latestGame) renderGame(latestGame);
           } else if (msg.type === "error") {
             append("<span class='muted'>" + msg.message + "</span>");
@@ -553,7 +560,8 @@ export function renderRoom(roomId: string): string {
         return {
           villagers: "村民",
           werewolves: "人狼",
-          foxes: "妖狐"
+          foxes: "妖狐",
+          lovers: "戀人"
         }[value] || "未定";
       }
       function isWolfRole(value) {
