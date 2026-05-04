@@ -6,6 +6,21 @@ import { afterEach, describe, expect, it } from "vitest";
 const scriptPath = join(process.cwd(), "scripts/smoke-production-readonly.mjs");
 const servers = [];
 
+function protocolMetadata() {
+  return {
+    websocket: {
+      path: "/ws/room/:roomId",
+      firstClientMessage: "join",
+      channelVariants: {
+        common_chat: {
+          publicVoicePlayerId: "common_voice",
+          publicVoiceNickname: "共有者的聲音"
+        }
+      }
+    }
+  };
+}
+
 function responseFor(path) {
   if (path === "/api/health") {
     return { contentType: "application/json", body: JSON.stringify({ ok: true }) };
@@ -26,7 +41,7 @@ function responseFor(path) {
     };
   }
   if (path === "/api/protocol") {
-    return { contentType: "application/json", body: JSON.stringify({ websocket: { path: "/ws/room/:roomId", firstClientMessage: "join" } }) };
+    return { contentType: "application/json", body: JSON.stringify(protocolMetadata()) };
   }
   if (path === "/api/config") {
     return { contentType: "application/json", body: JSON.stringify({ config: { maintenanceMode: false } }) };
@@ -142,6 +157,20 @@ describe("production read-only smoke script", () => {
     expect(result.status).toBe(1);
     expect(result.stderr).toContain("/api/version");
     expect(result.stderr).toContain("werewolf-cf version metadata");
+  });
+
+  it("fails when protocol common voice metadata is missing", async () => {
+    const host = await startServer({
+      "/api/protocol": {
+        contentType: "application/json",
+        body: JSON.stringify({ websocket: { path: "/ws/room/:roomId", firstClientMessage: "join" } })
+      }
+    });
+    const result = await runScript([host]);
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("/api/protocol");
+    expect(result.stderr).toContain("common voice variant");
   });
 
   it("fails when an HTML page does not contain the expected page text", async () => {

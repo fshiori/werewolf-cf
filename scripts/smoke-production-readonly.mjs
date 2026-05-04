@@ -49,9 +49,12 @@ const checks = [
     path: "/api/protocol",
     kind: "json",
     validate(value) {
-      return value?.websocket?.path === "/ws/room/:roomId" && value?.websocket?.firstClientMessage === "join";
+      return value?.websocket?.path === "/ws/room/:roomId"
+        && value?.websocket?.firstClientMessage === "join"
+        && value?.websocket?.channelVariants?.common_chat?.publicVoicePlayerId === "common_voice"
+        && value?.websocket?.channelVariants?.common_chat?.publicVoiceNickname === "共有者的聲音";
     },
-    expected: "websocket protocol metadata"
+    expected: "websocket protocol metadata with common voice variant"
   },
   {
     path: "/api/config",
