@@ -170,6 +170,9 @@ describe("render", () => {
     expect(html).toContain("Trip");
     expect(html).toContain("avatarFile");
     expect(html).toContain("/api/assets/avatar");
+    expect(html).toContain("removeAvatar");
+    expect(html).toContain("刪頭像");
+    expect(html).toContain('method: "DELETE"');
     expect(html).toContain("/assets/avatar/");
     expect(html).toContain('profileLink.href = "/player/" + player.playerId;');
     expect(html).toContain("送出");

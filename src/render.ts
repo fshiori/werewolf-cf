@@ -709,7 +709,7 @@ export function renderRoom(roomId: string): string {
             </tr>
             <tr>
               <td>頭像</td>
-              <td><input id="avatarFile" type="file" accept="image/*" size="28"> <button id="uploadAvatar">頭像</button></td>
+              <td><input id="avatarFile" type="file" accept="image/*" size="28"> <button id="uploadAvatar">頭像</button> <button id="removeAvatar">刪頭像</button></td>
             </tr>
           </table>
         </td>
@@ -1104,6 +1104,19 @@ export function renderRoom(roomId: string): string {
         const data = await res.json();
         if (!res.ok) {
           alert(data.error || "頭像上傳失敗");
+          return;
+        }
+        if (latestGame) renderGame(latestGame);
+      });
+      document.querySelector("#removeAvatar").addEventListener("click", async () => {
+        const res = await fetch("/api/assets/avatar", {
+          method: "DELETE",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ playerId: localStorage.getItem(playerKey) })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          alert(data.error || "頭像刪除失敗");
           return;
         }
         if (latestGame) renderGame(latestGame);
