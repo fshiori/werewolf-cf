@@ -84,6 +84,76 @@ function roomObject(gameState?: GameState, roomRow: Partial<RoomRow> = {}): Room
   );
 }
 
+type StoragePut = {
+  key: string;
+  value: unknown;
+};
+
+type DbRun = {
+  query: string;
+  binds: unknown[];
+};
+
+function observableRoomObject(gameState: GameState, roomRow: Partial<RoomRow> = {}) {
+  const stored = new Map<string, unknown>([["gameState", gameState]]);
+  const puts: StoragePut[] = [];
+  const alarms: Date[] = [];
+  const deletedAlarms: number[] = [];
+  const dbRuns: DbRun[] = [];
+  const row = {
+    option_role: "",
+    dellook: 0,
+    dummy_name: "替身君",
+    dummy_last_words: "",
+    gm_trip_hash: null,
+    ...roomRow
+  };
+  const room = new RoomDurableObject(
+    {
+      id: { name: "room_abc" },
+      storage: {
+        async get(key: string) {
+          return stored.get(key);
+        },
+        async put(key: string, value: unknown) {
+          stored.set(key, value);
+          puts.push({ key, value });
+        },
+        async setAlarm(value: Date) {
+          alarms.push(value);
+        },
+        async deleteAlarm() {
+          deletedAlarms.push(Date.now());
+        }
+      }
+    } as unknown as DurableObjectState,
+    {
+      DB: {
+        prepare(query: string) {
+          return {
+            bind(...binds: unknown[]) {
+              return {
+                async first() {
+                  return query.includes("FROM rooms") ? row : null;
+                },
+                async run() {
+                  dbRuns.push({ query, binds });
+                  return {};
+                }
+              };
+            }
+          };
+        },
+        async batch(statements: unknown[]) {
+          dbRuns.push({ query: "batch", binds: statements });
+          return [];
+        }
+      }
+    } as unknown as Env
+  );
+  return { room, stored, puts, alarms, deletedAlarms, dbRuns };
+}
+
 function fakeSocket(messages: SentMessage[], closes: CloseEvent[] = []): WebSocket {
   return {
     send(data: string) {
@@ -108,6 +178,61 @@ function connect(room: RoomDurableObject, socket: WebSocket, playerId: string, n
 }
 
 describe("RoomDurableObject", () => {
+  it("advances phases through the Durable Object alarm and broadcasts the saved state", async () => {
+    const game: GameState = {
+      roomId: "room_abc",
+      phase: "night",
+      day: 0,
+      players: [
+        { playerId: "player_host", nickname: "Host", role: "villager", alive: true },
+        { playerId: "player_other", nickname: "Other", role: "villager", alive: true },
+        { playerId: "player_wolf", nickname: "Wolf", role: "werewolf", alive: true }
+      ],
+      votes: {},
+      openVote: false,
+      commonTalkVisible: false,
+      deadRoleVisible: false,
+      wishRole: false,
+      dummyBoy: false,
+      dayMs: 180_000,
+      nightMs: 90_000,
+      selfVote: false,
+      voteStatus: false,
+      revoteCount: 0,
+      nightKills: {},
+      divinations: {},
+      guards: {},
+      catRevives: {},
+      lastWords: {},
+      phaseEndsAt: "2026-05-04T00:00:00.000Z",
+      log: ["第 0 日夜晚開始。"]
+    };
+    const { room, stored, puts, alarms, deletedAlarms, dbRuns } = observableRoomObject(game);
+    const hostMessages: SentMessage[] = [];
+    const wolfMessages: SentMessage[] = [];
+    connect(room, fakeSocket(hostMessages), "player_host", "Host");
+    connect(room, fakeSocket(wolfMessages), "player_wolf", "Wolf");
+
+    await room.alarm();
+
+    const saved = stored.get("gameState") as GameState;
+    expect(saved).toEqual(expect.objectContaining({ phase: "day", day: 1 }));
+    expect(saved.log).toContain("夜晚平安過去。");
+    expect(saved.log).toContain("第 1 日白天開始。");
+    expect(puts).toContainEqual({ key: "gameState", value: saved });
+    expect(alarms).toHaveLength(1);
+    expect(alarms[0]?.toISOString()).toBe(saved.phaseEndsAt);
+    expect(deletedAlarms).toEqual([]);
+    expect(dbRuns).toContainEqual(
+      expect.objectContaining({
+        query: expect.stringContaining("UPDATE rooms SET status = 'playing'"),
+        binds: ["room_abc"]
+      })
+    );
+    expect(hostMessages).toContainEqual(expect.objectContaining({ type: "game_state", phase: "day", day: 1 }));
+    expect(wolfMessages).toContainEqual(expect.objectContaining({ type: "game_state", phase: "day", day: 1 }));
+  });
+
   it("reports malformed websocket JSON without closing the socket handler", async () => {
     const room = roomObject();
     const messages: SentMessage[] = [];
