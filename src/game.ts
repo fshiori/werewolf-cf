@@ -12,6 +12,31 @@ import type {
 export const DAY_MS = 180_000;
 export const NIGHT_MS = 90_000;
 export const MAX_REVOTES = 1;
+const REFERENCE_ROLE_DECKS: Record<number, GamePlayer["role"][]> = {
+  8: ["villager", "villager", "villager", "villager", "villager", "werewolf", "werewolf", "seer"],
+  9: ["villager", "villager", "villager", "villager", "villager", "werewolf", "werewolf", "seer", "medium"],
+  10: ["villager", "villager", "villager", "villager", "villager", "werewolf", "werewolf", "seer", "medium", "madman"],
+  11: ["villager", "villager", "villager", "villager", "villager", "werewolf", "werewolf", "seer", "medium", "madman", "guard"],
+  12: ["villager", "villager", "villager", "villager", "villager", "villager", "werewolf", "werewolf", "seer", "medium", "madman", "guard"],
+  13: ["villager", "villager", "villager", "villager", "villager", "werewolf", "werewolf", "seer", "medium", "madman", "guard", "common", "common"],
+  14: ["villager", "villager", "villager", "villager", "villager", "villager", "werewolf", "werewolf", "seer", "medium", "madman", "guard", "common", "common"],
+  15: ["villager", "villager", "villager", "villager", "villager", "villager", "werewolf", "werewolf", "seer", "medium", "madman", "guard", "common", "common", "fox"],
+  16: ["villager", "villager", "villager", "villager", "villager", "villager", "werewolf", "werewolf", "werewolf", "seer", "medium", "madman", "guard", "common", "common", "fox"],
+  17: ["villager", "villager", "villager", "villager", "villager", "villager", "villager", "werewolf", "werewolf", "werewolf", "seer", "medium", "madman", "guard", "common", "common", "fox"],
+  18: ["villager", "villager", "villager", "villager", "villager", "villager", "villager", "villager", "werewolf", "werewolf", "werewolf", "seer", "medium", "madman", "guard", "common", "common", "fox"],
+  19: ["villager", "villager", "villager", "villager", "villager", "villager", "villager", "villager", "villager", "werewolf", "werewolf", "werewolf", "seer", "medium", "madman", "guard", "common", "common", "fox"],
+  20: ["villager", "villager", "villager", "villager", "villager", "villager", "villager", "villager", "villager", "villager", "fox", "werewolf", "werewolf", "werewolf", "seer", "medium", "madman", "guard", "common", "common"],
+  21: ["villager", "villager", "villager", "villager", "villager", "villager", "villager", "villager", "villager", "villager", "villager", "fox", "werewolf", "werewolf", "werewolf", "seer", "medium", "madman", "guard", "common", "common"],
+  22: ["villager", "villager", "villager", "villager", "villager", "villager", "villager", "villager", "villager", "villager", "villager", "villager", "fox", "werewolf", "werewolf", "werewolf", "seer", "medium", "madman", "guard", "common", "common"],
+  23: ["villager", "villager", "villager", "villager", "villager", "villager", "villager", "villager", "villager", "villager", "villager", "villager", "fox", "werewolf", "werewolf", "werewolf", "werewolf", "seer", "medium", "madman", "guard", "common", "common"],
+  24: ["villager", "villager", "villager", "villager", "villager", "villager", "villager", "villager", "villager", "villager", "villager", "villager", "fox", "werewolf", "werewolf", "werewolf", "werewolf", "werewolf", "seer", "medium", "madman", "guard", "common", "common"],
+  25: ["villager", "villager", "villager", "villager", "villager", "villager", "villager", "villager", "villager", "villager", "villager", "villager", "fox", "werewolf", "werewolf", "werewolf", "werewolf", "werewolf", "seer", "medium", "madman", "guard", "guard", "common", "common"],
+  26: ["villager", "villager", "villager", "villager", "villager", "villager", "villager", "villager", "villager", "villager", "villager", "villager", "villager", "fox", "werewolf", "werewolf", "werewolf", "werewolf", "werewolf", "seer", "medium", "madman", "guard", "guard", "common", "common"],
+  27: ["villager", "villager", "villager", "villager", "villager", "villager", "villager", "villager", "villager", "villager", "villager", "villager", "villager", "fox", "werewolf", "werewolf", "werewolf", "werewolf", "werewolf", "seer", "medium", "madman", "guard", "guard", "common", "common", "common"],
+  28: ["villager", "villager", "villager", "villager", "villager", "villager", "villager", "villager", "villager", "villager", "villager", "villager", "villager", "fox", "werewolf", "werewolf", "werewolf", "werewolf", "werewolf", "seer", "seer", "medium", "madman", "guard", "guard", "common", "common", "common"],
+  29: ["villager", "villager", "villager", "villager", "villager", "villager", "villager", "villager", "villager", "villager", "villager", "villager", "villager", "fox", "werewolf", "werewolf", "werewolf", "werewolf", "werewolf", "seer", "seer", "medium", "medium", "madman", "guard", "guard", "common", "common", "common"],
+  30: ["villager", "villager", "villager", "villager", "villager", "villager", "villager", "villager", "villager", "villager", "villager", "villager", "villager", "fox", "werewolf", "werewolf", "werewolf", "werewolf", "werewolf", "werewolf", "seer", "seer", "medium", "medium", "madman", "guard", "guard", "common", "common", "common"]
+};
 
 export function createLobbyState(roomId: string): GameState {
   return {
@@ -87,6 +112,15 @@ export function startGame(state: GameState, now = Date.now(), random = Math.rand
     throw new Error("At least 3 players are required");
   }
 
+  const referenceRoleDeck = REFERENCE_ROLE_DECKS[state.players.length];
+  if (referenceRoleDeck) {
+    return startGameWithPlayers(
+      state,
+      state.players.map((player, index) => ({ ...player, role: referenceRoleDeck[index], alive: true })),
+      now
+    );
+  }
+
   const wolfCount = Math.max(1, Math.floor(state.players.length / 4));
   const firstWolfIndex = Math.floor(random() * state.players.length);
   const wolfIds = new Set(
@@ -147,6 +181,10 @@ export function startGame(state: GameState, now = Date.now(), random = Math.rand
     return { ...player, role, alive: true };
   });
 
+  return startGameWithPlayers(state, players, now);
+}
+
+function startGameWithPlayers(state: GameState, players: GamePlayer[], now: number): GameState {
   return {
     ...state,
     phase: "day",
