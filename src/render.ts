@@ -130,6 +130,7 @@ function shell(body: string): string {
           <table class="menu-list">
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/">首頁</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/api/rooms">房間 JSON</a></td></tr>
+            <tr><td><small><font color="#666666">・</font></small></td><td><a href="/api/stats/leaderboard">排行榜 JSON</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="javascript:void(0)">規則</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="javascript:void(0)">版本</a></td></tr>
           </table>
@@ -164,6 +165,23 @@ export function renderHome(rooms: RoomSummary[], announcement = DEFAULT_ANNOUNCE
     <fieldset>
       <legend><strong>遊戲列表</strong></legend>
       <div style="line-height:135%;margin:12px 20px 18px;"><strong>${roomRows}</strong></div>
+    </fieldset>
+    <fieldset>
+      <legend><strong>戰績排行榜</strong></legend>
+      <table class="form-table" style="margin:12px 20px 18px;">
+        <thead>
+          <tr>
+            <td><strong>順位</strong></td>
+            <td><strong>玩家</strong></td>
+            <td><strong>勝</strong></td>
+            <td><strong>敗</strong></td>
+            <td><strong>場數</strong></td>
+          </tr>
+        </thead>
+        <tbody id="leaderboardRows">
+          <tr><td colspan="5" class="muted">讀取中...</td></tr>
+        </tbody>
+      </table>
     </fieldset>
     <fieldset>
       <legend><strong>建立村子</strong></legend>
@@ -209,6 +227,40 @@ export function renderHome(rooms: RoomSummary[], announcement = DEFAULT_ANNOUNCE
         }
         location.href = "/room/" + data.roomId;
       });
+
+      async function refreshLeaderboard() {
+        const rows = document.querySelector("#leaderboardRows");
+        try {
+          const res = await fetch("/api/stats/leaderboard");
+          const data = await res.json();
+          if (!res.ok || !Array.isArray(data.leaderboard)) {
+            throw new Error(data.error || "讀取失敗");
+          }
+          rows.textContent = "";
+          if (data.leaderboard.length === 0) {
+            const row = document.createElement("tr");
+            const cell = document.createElement("td");
+            cell.colSpan = 5;
+            cell.className = "muted";
+            cell.textContent = "尚無戰績。";
+            row.append(cell);
+            rows.append(row);
+            return;
+          }
+          for (const entry of data.leaderboard) {
+            const row = document.createElement("tr");
+            for (const value of [entry.rank, entry.playerId, entry.wins, entry.losses, entry.gamesPlayed]) {
+              const cell = document.createElement("td");
+              cell.textContent = String(value);
+              row.append(cell);
+            }
+            rows.append(row);
+          }
+        } catch {
+          rows.innerHTML = '<tr><td colspan="5" class="muted">排行榜讀取失敗。</td></tr>';
+        }
+      }
+      void refreshLeaderboard();
     </script>
   `));
 }
