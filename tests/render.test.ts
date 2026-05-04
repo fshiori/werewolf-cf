@@ -54,5 +54,6 @@ describe("render", () => {
     expect(html).toContain("divination_result");
     expect(html).toContain("medium_result");
     expect(html).toContain("type: \"divine\"");
+    expect(html).toContain("type: \"guard\"");
   });
 });

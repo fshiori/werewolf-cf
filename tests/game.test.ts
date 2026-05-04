@@ -6,6 +6,7 @@ import {
   canUseWerewolfChannel,
   castDayVote,
   castDivination,
+  castGuard,
   castNightKill,
   createLobbyState,
   mediumReadingForPlayer,
@@ -84,6 +85,39 @@ describe("game", () => {
 
     const divination = castDivination(game, "player_2", "player_4");
     expect(divination.result).toBe("human");
+  });
+
+  it("adds a guard in seven-player games and prevents guarded night kills", () => {
+    let game = startGame(
+      lobby([
+        ["player_1", "Alice"],
+        ["player_2", "Bob"],
+        ["player_3", "Carol"],
+        ["player_4", "Dave"],
+        ["player_5", "Ellen"],
+        ["player_6", "Frank"],
+        ["player_7", "Grace"]
+      ]),
+      0,
+      () => 0
+    );
+
+    expect(game.players.find((player) => player.playerId === "player_5")?.role).toBe("guard");
+
+    for (const player of game.players) {
+      game = castDayVote(game, player.playerId, "player_7");
+    }
+
+    game = castNightKill(game, "player_1", "player_2", 0);
+    expect(game.phase).toBe("night");
+
+    game = castGuard(game, "player_5", "player_2", 0);
+
+    expect(game.phase).toBe("day");
+    expect(game.players.find((player) => player.playerId === "player_2")?.alive).toBe(true);
+    expect(game.guards).toEqual({});
+    expect(game.log.at(-2)).toBe("夜晚平安過去。");
+    expect(() => castGuard(game, "player_2", "player_3")).toThrow("Guarding is only available at night");
   });
 
   it("moves from completed day vote to night", () => {

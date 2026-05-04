@@ -6,6 +6,7 @@ import {
   canUseWerewolfChannel,
   castDayVote,
   castDivination,
+  castGuard,
   castNightKill,
   createLobbyState,
   mediumReadingForPlayer,
@@ -159,6 +160,16 @@ export class RoomDurableObject {
         const result = castDivination(await this.loadGameState(), member.playerId, targetPlayerId);
         await this.saveGameState(result.state);
         this.send(socket, buildDivinationResultMessage(targetPlayerId, result.targetNickname, result.result));
+        return;
+      }
+
+      if (message.type === "guard") {
+        const targetPlayerId = validatePlayerId(message.targetPlayerId);
+        const next = castGuard(await this.loadGameState(), member.playerId, targetPlayerId);
+        await this.saveGameState(next);
+        await this.syncRoomStatus(next);
+        this.broadcastGameState(next);
+        this.sendMediumResults(next);
         return;
       }
 
