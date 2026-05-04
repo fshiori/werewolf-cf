@@ -32,6 +32,11 @@ async function listRooms(env: Env): Promise<RoomSummary[]> {
   }));
 }
 
+async function roomExists(env: Env, roomId: string): Promise<boolean> {
+  const result = await env.DB.prepare("SELECT id FROM rooms WHERE id = ? LIMIT 1").bind(roomId).first<{ id: string }>();
+  return result !== null;
+}
+
 async function createRoom(request: Request, env: Env): Promise<Response> {
   const body: unknown = await request.json().catch(() => null);
   if (!isRecord(body) || typeof body.name !== "string" || typeof body.playerId !== "string" || typeof body.nickname !== "string") {
@@ -62,9 +67,12 @@ async function createRoom(request: Request, env: Env): Promise<Response> {
   }
 }
 
-function routeRoomWebSocket(request: Request, env: Env, roomId: string): Response | Promise<Response> {
+async function routeRoomWebSocket(request: Request, env: Env, roomId: string): Promise<Response> {
   try {
     const validRoomId = validateRoomId(roomId);
+    if (!(await roomExists(env, validRoomId))) {
+      return json({ error: "Room not found" }, { status: 404 });
+    }
     const id = env.ROOM_DO.idFromName(validRoomId);
     return env.ROOM_DO.get(id).fetch(request);
   } catch (error) {
@@ -91,7 +99,11 @@ export default {
     const roomMatch = url.pathname.match(/^\/room\/([^/]+)$/);
     if (request.method === "GET" && roomMatch) {
       try {
-        return html(renderRoom(validateRoomId(roomMatch[1])));
+        const roomId = validateRoomId(roomMatch[1]);
+        if (!(await roomExists(env, roomId))) {
+          return new Response("Room not found", { status: 404 });
+        }
+        return html(renderRoom(roomId));
       } catch (error) {
         return json({ error: error instanceof Error ? error.message : "Invalid room" }, { status: 400 });
       }
