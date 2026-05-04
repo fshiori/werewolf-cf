@@ -60,6 +60,16 @@ export function buildLoversChatMessage(playerId: string, nickname: string, text:
   };
 }
 
+export function buildDeadChatMessage(playerId: string, nickname: string, text: string): ServerMessage {
+  return {
+    type: "dead_chat",
+    playerId,
+    nickname: escapeHtml(nickname),
+    text: escapeHtml(text),
+    sentAt: new Date().toISOString()
+  };
+}
+
 export function buildGameStateMessage(state: GameState): ServerMessage {
   return {
     type: "game_state",

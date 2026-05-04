@@ -3,6 +3,7 @@ import {
   canJoinRoomState,
   canStartGame,
   canUseCommonChannel,
+  canUseDeadChannel,
   canUseFoxChannel,
   canUseLoversChannel,
   canUsePublicChat,
@@ -29,6 +30,7 @@ import {
   buildChatMessage,
   buildChildFoxResultMessage,
   buildCommonChatMessage,
+  buildDeadChatMessage,
   buildDivinationResultMessage,
   buildErrorMessage,
   buildFoxChatMessage,
@@ -179,6 +181,16 @@ export class RoomDurableObject {
         return;
       }
 
+      if (message.type === "dead_chat") {
+        const game = await this.loadGameState();
+        if (!canUseDeadChannel(game, member.playerId)) {
+          throw new Error("Dead channel is only available to dead players during the game");
+        }
+        const text = validateChatText(message.text);
+        this.broadcastDead(game, buildDeadChatMessage(member.playerId, member.nickname, text));
+        return;
+      }
+
       if (message.type === "start_game") {
         const loadedGame = await this.loadGameState();
         if (!canStartGame(loadedGame, member.playerId)) {
@@ -321,6 +333,15 @@ export class RoomDurableObject {
     const encoded = JSON.stringify(message);
     for (const [socket, member] of this.sockets) {
       if (canUseLoversChannel(gameState, member.playerId)) {
+        socket.send(encoded);
+      }
+    }
+  }
+
+  private broadcastDead(gameState: GameState, message: unknown): void {
+    const encoded = JSON.stringify(message);
+    for (const [socket, member] of this.sockets) {
+      if (canUseDeadChannel(gameState, member.playerId)) {
         socket.send(encoded);
       }
     }

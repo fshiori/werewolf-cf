@@ -393,6 +393,7 @@ export function renderRoom(roomId: string): string {
                 <button id="sendFoxChat" disabled>狐頻</button>
                 <button id="sendCommonChat" disabled>共有頻</button>
                 <button id="sendLoversChat" disabled>戀頻</button>
+                <button id="sendDeadChat" disabled>靈界</button>
               </td>
             </tr>
           </table>
@@ -518,6 +519,8 @@ export function renderRoom(roomId: string): string {
             append("<font color='#996633'>[共有頻]</font> <b>" + msg.nickname + "</b>: " + msg.text);
           } else if (msg.type === "lovers_chat") {
             append("<font color='#ff6699'>[戀頻]</font> <b>" + msg.nickname + "</b>: " + msg.text);
+          } else if (msg.type === "dead_chat") {
+            append("<font color='#666666'>[靈界]</font> <b>" + msg.nickname + "</b>: " + msg.text);
           } else if (msg.type === "divination_result") {
             const result = msg.result === "werewolf" ? "狼" : "人";
             append("<font color='#660099'>[占卜]</font> " + msg.targetNickname + " 是「" + result + "」。");
@@ -589,6 +592,13 @@ export function renderRoom(roomId: string): string {
           input.value = "";
         }
       });
+      document.querySelector("#sendDeadChat").addEventListener("click", () => {
+        const input = document.querySelector("#chatText");
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ type: "dead_chat", text: input.value }));
+          input.value = "";
+        }
+      });
       document.querySelector("#setLastWords").addEventListener("click", () => {
         const input = document.querySelector("#lastWordsText");
         if (ws && ws.readyState === WebSocket.OPEN) {
@@ -652,6 +662,7 @@ export function renderRoom(roomId: string): string {
         const currentPlayerId = localStorage.getItem(playerKey);
         const currentPlayer = game.players.find((player) => player.playerId === currentPlayerId);
         const currentPlayerAlive = currentPlayer ? currentPlayer.alive : game.phase === "lobby";
+        const currentPlayerDead = Boolean(currentPlayer && !currentPlayer.alive);
         const actorCanAct =
           currentPlayerAlive &&
           (game.phase === "day" || (game.phase === "night" && (isWolfRole(role) || role === "seer" || role === "guard" || role === "child_fox" || role === "cat")));
@@ -662,6 +673,7 @@ export function renderRoom(roomId: string): string {
         document.querySelector("#sendFoxChat").disabled = !(game.phase === "night" && role === "fox" && currentPlayerAlive);
         document.querySelector("#sendCommonChat").disabled = !(game.phase === "night" && role === "common" && currentPlayerAlive);
         document.querySelector("#sendLoversChat").disabled = !(game.phase === "night" && isLover && currentPlayerAlive);
+        document.querySelector("#sendDeadChat").disabled = !(currentPlayerDead && game.phase !== "lobby" && game.phase !== "ended");
         document.querySelector("#setLastWords").disabled = !(currentPlayerAlive && game.phase !== "lobby" && game.phase !== "ended");
         const players = document.querySelector("#players");
         const playerGrid = document.querySelector("#playerGrid");

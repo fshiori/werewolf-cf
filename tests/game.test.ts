@@ -3,6 +3,7 @@ import {
   canJoinRoomState,
   canStartGame,
   canUseCommonChannel,
+  canUseDeadChannel,
   canUseFoxChannel,
   canUseLoversChannel,
   canUsePublicChat,
@@ -880,6 +881,19 @@ describe("game", () => {
     expect(canUseLoversChannel(night, "player_3")).toBe(false);
     expect(canUseLoversChannel(night, "player_4")).toBe(false);
     expect(canUseLoversChannel({ ...night, phase: "day" }, "player_1")).toBe(false);
+  });
+
+  it("allows only dead players to use the dead channel during active phases", () => {
+    const night = activeState("night", [
+      { playerId: "player_1", nickname: "Alive", role: "villager", alive: true },
+      { playerId: "player_2", nickname: "Dead", role: "villager", alive: false }
+    ]);
+
+    expect(canUseDeadChannel(night, "player_2")).toBe(true);
+    expect(canUseDeadChannel(night, "player_1")).toBe(false);
+    expect(canUseDeadChannel({ ...night, phase: "day" }, "player_2")).toBe(true);
+    expect(canUseDeadChannel({ ...night, phase: "lobby" }, "player_2")).toBe(false);
+    expect(canUseDeadChannel({ ...night, phase: "ended", winner: "villagers" }, "player_2")).toBe(false);
   });
 
   it("allows public chat in lobby and after end but restricts dead players during active phases", () => {

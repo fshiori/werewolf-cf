@@ -5,6 +5,7 @@ import {
   buildChatMessage,
   buildChildFoxResultMessage,
   buildCommonChatMessage,
+  buildDeadChatMessage,
   buildDivinationResultMessage,
   buildFoxChatMessage,
   buildGameStateMessage,
@@ -75,6 +76,15 @@ describe("messages", () => {
       type: "lovers_chat",
       playerId: "player_1",
       nickname: "&lt;Lover&gt;",
+      text: "&lt;secret&gt;"
+    });
+  });
+
+  it("builds escaped dead chat messages", () => {
+    expect(buildDeadChatMessage("player_1", "<Dead>", "<secret>")).toMatchObject({
+      type: "dead_chat",
+      playerId: "player_1",
+      nickname: "&lt;Dead&gt;",
       text: "&lt;secret&gt;"
     });
   });

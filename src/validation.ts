@@ -128,6 +128,13 @@ export function parseClientMessage(raw: string): ClientMessage {
     return { type: "lovers_chat", text: parsed.text };
   }
 
+  if (parsed.type === "dead_chat") {
+    if (typeof parsed.text !== "string") {
+      throw new Error("Invalid dead chat message");
+    }
+    return { type: "dead_chat", text: parsed.text };
+  }
+
   if (parsed.type === "start_game") {
     return { type: "start_game" };
   }
