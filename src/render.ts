@@ -772,7 +772,7 @@ export function renderRoom(roomId: string): string {
             </tr>
             <tr>
               <td>頭像</td>
-              <td><input id="avatarFile" type="file" accept="image/png,image/jpeg,image/gif,image/webp" size="28"> <button id="uploadAvatar">頭像</button> <button id="removeAvatar">刪頭像</button></td>
+              <td><input id="avatarFile" type="file" accept="image/png,image/jpeg,image/gif,image/webp" size="28"> <button id="uploadAvatar">頭像</button> <button id="removeAvatar">刪頭像</button> <small class="muted">PNG/JPEG/GIF/WebP 512KiB以下</small></td>
             </tr>
           </table>
         </td>
@@ -1160,6 +1160,10 @@ export function renderRoom(roomId: string): string {
       document.querySelector("#uploadAvatar").addEventListener("click", async () => {
         const fileInput = document.querySelector("#avatarFile");
         if (!fileInput.files || fileInput.files.length === 0) return;
+        if (fileInput.files[0].size > 512 * 1024) {
+          alert("頭像需小於 512KiB");
+          return;
+        }
         const form = new FormData();
         form.set("playerId", localStorage.getItem(playerKey));
         form.set("avatar", fileInput.files[0]);

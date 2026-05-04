@@ -155,7 +155,7 @@ npx wrangler kv key put maintenance_mode false --binding CONFIG --remote
 
 Only run this when production writes are acceptable.
 
-Avatar uploads accept PNG, JPEG, GIF, and WebP content types.
+Avatar uploads accept PNG, JPEG, GIF, and WebP content types up to 512 KiB.
 
 ```bash
 printf '\x89PNG\r\n\x1a\n' > /tmp/werewolf-smoke-avatar.png
