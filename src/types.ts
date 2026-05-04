@@ -12,7 +12,7 @@ export interface RoomMember {
   nickname: string;
 }
 
-export type PlayerRole = "villager" | "werewolf" | "seer" | "medium" | "madman" | "guard";
+export type PlayerRole = "villager" | "werewolf" | "seer" | "medium" | "madman" | "guard" | "common";
 export type GamePhase = "lobby" | "day" | "night" | "ended";
 export type GameWinner = "villagers" | "werewolves";
 export type DivinationResult = "human" | "werewolf";
@@ -157,5 +157,5 @@ export type ServerMessage =
       phaseEndsAt?: string;
       log: string[];
     }
-  | { type: "role"; role: PlayerRole; wolves: RoomMember[] }
+  | { type: "role"; role: PlayerRole; wolves: RoomMember[]; commons: RoomMember[] }
   | { type: "error"; message: string };

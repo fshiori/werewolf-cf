@@ -463,7 +463,8 @@ export function renderRoom(roomId: string): string {
           } else if (msg.type === "role") {
             role = msg.role;
             const wolves = msg.wolves.length ? "（狼伴：" + msg.wolves.map((wolf) => wolf.nickname).join(", ") + "）" : "";
-            document.querySelector("#role").textContent = msg.role + wolves;
+            const commons = msg.commons && msg.commons.length ? "（共有：" + msg.commons.map((common) => common.nickname).join(", ") + "）" : "";
+            document.querySelector("#role").textContent = msg.role + wolves + commons;
             if (latestGame) renderGame(latestGame);
           } else if (msg.type === "error") {
             append("<span class='muted'>" + msg.message + "</span>");
