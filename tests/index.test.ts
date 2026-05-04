@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import worker from "../src/index";
 
-function envWithRooms(roomIds: string[]): Env {
+function envWithRooms(roomIds: string[], config: Record<string, string> = {}): Env {
   return {
     DB: {
       prepare(query: string) {
@@ -38,7 +38,11 @@ function envWithRooms(roomIds: string[]): Env {
       }
     },
     ASSETS: {} as R2Bucket,
-    CONFIG: {} as KVNamespace
+    CONFIG: {
+      async get(key: string) {
+        return config[key] ?? null;
+      }
+    } as unknown as KVNamespace
   } as unknown as Env;
 }
 
@@ -55,5 +59,17 @@ describe("worker routes", () => {
 
     expect(response.status).toBe(200);
     expect(await response.text()).toContain("[room_exists]");
+  });
+
+  it("renders home announcements from KV config", async () => {
+    const response = await worker.fetch(
+      new Request("http://example.test/"),
+      envWithRooms([], { home_announcement: "<b>Runtime notice</b>" })
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.text();
+    expect(body).toContain("&lt;b&gt;Runtime notice&lt;/b&gt;");
+    expect(body).not.toContain("<b>Runtime notice</b>");
   });
 });
