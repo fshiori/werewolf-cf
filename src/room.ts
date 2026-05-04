@@ -18,6 +18,7 @@ import {
   createLobbyState,
   forceEndGame,
   forceSetPlayerAlive,
+  forceSetPlayerRole,
   foxesForPlayer,
   loversForPlayer,
   mediumReadingForPlayer,
@@ -310,6 +311,21 @@ export class RoomDurableObject {
         await this.syncRoomStatus(next);
         await this.persistRoomEvent(member.playerId, "gm_set_alive", { targetPlayerId, alive: message.alive });
         await this.broadcastGameState(next);
+        this.sendMediumResults(next);
+        return;
+      }
+
+      if (message.type === "gm_set_role") {
+        if (!member.gm) {
+          throw new Error("Only the GM can adjust roles");
+        }
+        const targetPlayerId = validatePlayerId(message.targetPlayerId);
+        const next = forceSetPlayerRole(await this.loadGameState(), targetPlayerId, message.role);
+        await this.saveGameState(next);
+        await this.syncRoomStatus(next);
+        await this.persistRoomEvent(member.playerId, "gm_set_role", { targetPlayerId, role: message.role });
+        await this.broadcastGameState(next);
+        this.sendRoles(next);
         this.sendMediumResults(next);
         return;
       }

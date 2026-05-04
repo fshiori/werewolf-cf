@@ -745,6 +745,21 @@ export function forceSetPlayerAlive(state: GameState, targetPlayerId: string, al
   });
 }
 
+export function forceSetPlayerRole(state: GameState, targetPlayerId: string, role: GamePlayer["role"]): GameState {
+  if (state.phase === "lobby" || state.phase === "ended") {
+    throw new Error("Can only adjust roles during active games");
+  }
+  const target = state.players.find((player) => player.playerId === targetPlayerId);
+  if (!target) {
+    throw new Error("Role control target not found");
+  }
+  return clearActionsForDeadPlayers({
+    ...state,
+    players: state.players.map((player) => (player.playerId === targetPlayerId ? { ...player, role } : player)),
+    log: [...state.log, `GM 將 ${target.nickname} 的角色調整為 ${role}。`]
+  });
+}
+
 function resolveDay(state: GameState, now = Date.now()): GameState {
   const executedId = pickTopTarget(state);
   const revoteCount = state.revoteCount ?? 0;
