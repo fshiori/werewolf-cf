@@ -15,6 +15,7 @@ type SentMessage = {
   day?: number;
   role?: string;
   wolves?: Array<{ playerId: string; nickname: string }>;
+  players?: Array<{ playerId: string; nickname: string; alive: boolean; role?: string }>;
 };
 
 function roomObject(gameState?: GameState): RoomDurableObject {
@@ -188,6 +189,57 @@ describe("RoomDurableObject", () => {
         wolves: []
       })
     ]);
+  });
+
+  it("broadcasts public game state without roles", async () => {
+    const game: GameState = {
+      roomId: "room_abc",
+      phase: "day",
+      day: 1,
+      players: [
+        { playerId: "player_wolf", nickname: "Wolf", role: "werewolf", alive: true },
+        { playerId: "player_villager", nickname: "Villager", role: "villager", alive: true },
+        { playerId: "player_seer", nickname: "Seer", role: "seer", alive: true }
+      ],
+      votes: {},
+      openVote: false,
+      commonTalkVisible: false,
+      deadRoleVisible: false,
+      wishRole: false,
+      dummyBoy: false,
+      dayMs: 180_000,
+      nightMs: 90_000,
+      selfVote: false,
+      voteStatus: false,
+      revoteCount: 0,
+      nightKills: {},
+      divinations: {},
+      guards: {},
+      catRevives: {},
+      lastWords: {},
+      log: []
+    };
+    const room = roomObject(game);
+    const wolfMessages: SentMessage[] = [];
+    const villagerMessages: SentMessage[] = [];
+    const wolfSocket = fakeSocket(wolfMessages);
+    const villagerSocket = fakeSocket(villagerMessages);
+    connect(room, wolfSocket, "player_wolf", "Wolf");
+    connect(room, villagerSocket, "player_villager", "Villager");
+
+    await (room as unknown as { broadcastGameState(gameState: GameState): Promise<void> }).broadcastGameState(game);
+
+    for (const message of [wolfMessages[0], villagerMessages[0]]) {
+      expect(message).toMatchObject({
+        type: "game_state",
+        players: [
+          { playerId: "player_wolf", nickname: "Wolf", alive: true },
+          { playerId: "player_villager", nickname: "Villager", alive: true },
+          { playerId: "player_seer", nickname: "Seer", alive: true }
+        ]
+      });
+      expect(JSON.stringify(message)).not.toContain('"role"');
+    }
   });
 
   it("broadcasts game state when child fox divination completes the night", async () => {
