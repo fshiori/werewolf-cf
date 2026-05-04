@@ -560,6 +560,59 @@ describe("RoomDurableObject", () => {
     }
   });
 
+  it("starts games through the websocket handler and sends private roles", async () => {
+    const game: GameState = {
+      roomId: "room_abc",
+      phase: "lobby",
+      day: 0,
+      hostId: "player_host",
+      players: [
+        { playerId: "player_host", nickname: "Host", role: "villager", alive: true },
+        { playerId: "player_guest", nickname: "Guest", role: "villager", alive: true },
+        { playerId: "player_third", nickname: "Third", role: "villager", alive: true }
+      ],
+      votes: {},
+      openVote: false,
+      commonTalkVisible: false,
+      deadRoleVisible: false,
+      wishRole: false,
+      dummyBoy: false,
+      dayMs: 180_000,
+      nightMs: 90_000,
+      selfVote: false,
+      voteStatus: false,
+      revoteCount: 0,
+      nightKills: {},
+      divinations: {},
+      guards: {},
+      catRevives: {},
+      lastWords: {},
+      log: []
+    };
+    const room = roomObject(game);
+    const hostMessages: SentMessage[] = [];
+    const guestMessages: SentMessage[] = [];
+    const thirdMessages: SentMessage[] = [];
+    const hostSocket = fakeSocket(hostMessages);
+    const guestSocket = fakeSocket(guestMessages);
+    const thirdSocket = fakeSocket(thirdMessages);
+    connect(room, hostSocket, "player_host", "Host");
+    connect(room, guestSocket, "player_guest", "Guest");
+    connect(room, thirdSocket, "player_third", "Third");
+
+    await sendRaw(room, hostSocket, JSON.stringify({ type: "start_game" }));
+
+    for (const messages of [hostMessages, guestMessages, thirdMessages]) {
+      expect(messages).toContainEqual(expect.objectContaining({ type: "game_state", phase: "day", day: 1 }));
+      expect(messages.find((message) => message.type === "game_state")?.players?.some((player) => "role" in player)).toBe(false);
+      expect(messages.filter((message) => message.type === "role")).toHaveLength(1);
+    }
+    const roles = [hostMessages, guestMessages, thirdMessages].map((messages) => messages.find((message) => message.type === "role")?.role);
+    expect(roles).toHaveLength(3);
+    expect(roles).toContain("werewolf");
+    expect(roles.every((role) => typeof role === "string")).toBe(true);
+  });
+
   it("rejects kick websocket commands with invalid targets", async () => {
     const game: GameState = {
       roomId: "room_abc",
