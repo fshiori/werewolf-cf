@@ -49,7 +49,7 @@ npx wrangler d1 migrations apply werewolf-cf --remote
 Confirm core D1 tables exist:
 
 ```bash
-npm run check:d1-schema -- --remote
+npm run check:d1-schema:remote
 ```
 
 Or run the equivalent manual query:
