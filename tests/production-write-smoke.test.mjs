@@ -32,9 +32,11 @@ async function readBody(request) {
 
 async function startServer(overrides = {}) {
   const roomId = overrides.roomId ?? "room_smoke";
+  const requests = overrides.requests ?? [];
   const sockets = new Set();
   const server = createServer(async (request, response) => {
     const path = request.url?.split("?")[0] ?? "/";
+    requests.push({ method: request.method, path });
     if (overrides[path]) {
       const result = await overrides[path](request);
       response.writeHead(result.status ?? 200, { "content-type": result.contentType ?? "application/json" });
@@ -180,12 +182,16 @@ describe("production write smoke script", () => {
   });
 
   it("fails when avatar bytes do not round trip", async () => {
+    const requests = [];
     const host = await startServer({
+      requests,
       "/assets/avatar/player_smoke_avatar": async () => ({ contentType: "image/png", body: Buffer.from("wrong") })
     });
     const result = await runScript([host, "--yes"]);
 
     expect(result.status).toBe(1);
     expect(result.stderr).toContain("downloaded avatar did not match uploaded bytes");
+    expect(requests).toContainEqual({ method: "DELETE", path: "/api/assets/avatar" });
+    expect(result.stdout).toContain("ok cleanup DELETE /api/assets/avatar");
   });
 });
