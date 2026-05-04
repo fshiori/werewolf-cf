@@ -5,6 +5,7 @@ import {
   buildDivinationResultMessage,
   buildGameStateMessage,
   buildJoinedMessage,
+  buildMediumResultMessage,
   buildPresenceMessage,
   buildRoleMessage,
   buildWolfChatMessage
@@ -51,6 +52,23 @@ describe("messages", () => {
       targetPlayerId: "player_1",
       targetNickname: "&lt;Wolf&gt;",
       result: "werewolf"
+    });
+  });
+
+  it("builds escaped medium result messages", () => {
+    expect(
+      buildMediumResultMessage({
+        day: 1,
+        targetPlayerId: "player_1",
+        targetNickname: "<Victim>",
+        result: "human"
+      })
+    ).toEqual({
+      type: "medium_result",
+      day: 1,
+      targetPlayerId: "player_1",
+      targetNickname: "&lt;Victim&gt;",
+      result: "human"
     });
   });
 

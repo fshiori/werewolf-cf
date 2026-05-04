@@ -12,10 +12,18 @@ export interface RoomMember {
   nickname: string;
 }
 
-export type PlayerRole = "villager" | "werewolf" | "seer";
+export type PlayerRole = "villager" | "werewolf" | "seer" | "medium";
 export type GamePhase = "lobby" | "day" | "night" | "ended";
 export type GameWinner = "villagers" | "werewolves";
 export type DivinationResult = "human" | "werewolf";
+export type MediumResult = "human" | "werewolf";
+
+export interface MediumReading {
+  day: number;
+  targetPlayerId: string;
+  targetNickname: string;
+  result: MediumResult;
+}
 
 export interface GamePlayer {
   playerId: string;
@@ -39,6 +47,7 @@ export interface GameState {
   votes: Record<string, string>;
   nightKills: Record<string, string>;
   divinations: Record<string, string>;
+  mediumReading?: MediumReading;
   winner?: GameWinner;
   phaseEndsAt?: string;
   log: string[];
@@ -94,6 +103,7 @@ export type ServerMessage =
   | { type: "chat"; playerId: string; nickname: string; text: string; sentAt: string }
   | { type: "wolf_chat"; playerId: string; nickname: string; text: string; sentAt: string }
   | { type: "divination_result"; targetPlayerId: string; targetNickname: string; result: DivinationResult }
+  | { type: "medium_result"; day: number; targetPlayerId: string; targetNickname: string; result: MediumResult }
   | {
       type: "game_state";
       phase: GamePhase;
