@@ -654,6 +654,15 @@ describe("worker routes", () => {
     expect(body).toContain("目前功能");
   });
 
+  it("renders protocol page", async () => {
+    const response = await worker.fetch(new Request("http://example.test/protocol"), envWithRooms([]));
+
+    expect(response.status).toBe(200);
+    const body = await response.text();
+    expect(body).toContain("WebSocket 入口");
+    expect(body).toContain("GET /ws/room/:roomId");
+  });
+
   it("rejects malformed player profile ids", async () => {
     const response = await worker.fetch(new Request("http://example.test/player/not-valid!"), envWithRooms([]));
 

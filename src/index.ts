@@ -1,4 +1,4 @@
-import { renderHome, renderPlayerProfile, renderRoom, renderRules, renderVersion } from "./render";
+import { renderHome, renderPlayerProfile, renderProtocol, renderRoom, renderRules, renderVersion } from "./render";
 import { RoomDurableObject } from "./room";
 import { DEFAULT_DAY_MINUTES, DEFAULT_NIGHT_MINUTES } from "./game";
 import { registeredTripHash, tripHashForRoom } from "./identity";
@@ -735,6 +735,10 @@ export default {
 
     if (request.method === "GET" && url.pathname === "/rules") {
       return html(renderRules());
+    }
+
+    if (request.method === "GET" && url.pathname === "/protocol") {
+      return html(renderProtocol());
     }
 
     if (request.method === "GET" && url.pathname === "/version") {
