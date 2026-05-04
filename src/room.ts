@@ -141,6 +141,7 @@ export class RoomDurableObject {
         const next = startGame(loadedGame);
         await this.saveGameState(next);
         await this.syncRoomStatus(next);
+        await this.persistRoomEvent(member.playerId, "game_started", { day: next.day, players: next.players.length });
         this.broadcastGameState(next);
         this.sendRoles(next);
         return;
@@ -284,6 +285,10 @@ export class RoomDurableObject {
           this.roomId,
           JSON.stringify({ winner: gameState.winner, day: gameState.day, players: gameState.players })
         ),
+        this.env.DB.prepare("INSERT INTO room_events (room_id, event_type, payload_json) VALUES (?, 'game_ended', ?)").bind(
+          this.roomId,
+          JSON.stringify({ winner: gameState.winner, day: gameState.day, players: gameState.players.length })
+        ),
         ...statStatements
       ]);
     }
@@ -299,5 +304,11 @@ export class RoomDurableObject {
         playerId
       )
     ]);
+  }
+
+  private async persistRoomEvent(playerId: string | null, eventType: string, payload: unknown): Promise<void> {
+    await this.env.DB.prepare("INSERT INTO room_events (room_id, player_id, event_type, payload_json) VALUES (?, ?, ?, ?)")
+      .bind(this.roomId, playerId, eventType, JSON.stringify(payload))
+      .run();
   }
 }
