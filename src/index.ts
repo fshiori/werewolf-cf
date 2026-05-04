@@ -219,15 +219,19 @@ async function getHomeAnnouncement(env: Env): Promise<string | undefined> {
   return announcement?.trim() || undefined;
 }
 
+async function isMaintenanceMode(env: Env): Promise<boolean> {
+  return (await env.CONFIG.get("maintenance_mode")) === "true";
+}
+
 async function getRuntimeConfig(env: Env): Promise<Response> {
   const [announcement, maintenanceMode] = await Promise.all([
     getHomeAnnouncement(env),
-    env.CONFIG.get("maintenance_mode")
+    isMaintenanceMode(env)
   ]);
   return json({
     config: {
       homeAnnouncement: announcement ?? null,
-      maintenanceMode: maintenanceMode === "true"
+      maintenanceMode
     }
   });
 }
@@ -511,6 +515,10 @@ async function getRoomEvents(env: Env, roomIdParam: string): Promise<Response> {
 }
 
 async function createRoom(request: Request, env: Env): Promise<Response> {
+  if (await isMaintenanceMode(env)) {
+    return json({ error: "Server is under maintenance" }, { status: 503 });
+  }
+
   const body: unknown = await request.json().catch(() => null);
   if (!isRecord(body) || typeof body.name !== "string" || typeof body.playerId !== "string" || typeof body.nickname !== "string") {
     return json({ error: "Invalid request" }, { status: 400 });
@@ -621,7 +629,8 @@ export default {
     const url = new URL(request.url);
 
     if (request.method === "GET" && url.pathname === "/") {
-      return html(renderHome(await listRooms(env), await getHomeAnnouncement(env)));
+      const [rooms, announcement, maintenanceMode] = await Promise.all([listRooms(env), getHomeAnnouncement(env), isMaintenanceMode(env)]);
+      return html(renderHome(rooms, announcement, maintenanceMode));
     }
 
     if (request.method === "GET" && url.pathname === "/api/rooms") {
