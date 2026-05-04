@@ -1,4 +1,4 @@
-import { renderHome, renderPlayerProfile, renderRoom } from "./render";
+import { renderHome, renderPlayerProfile, renderRoom, renderRules } from "./render";
 import { RoomDurableObject } from "./room";
 import { DEFAULT_DAY_MINUTES, DEFAULT_NIGHT_MINUTES } from "./game";
 import { registeredTripHash, tripHashForRoom } from "./identity";
@@ -643,6 +643,10 @@ export default {
 
     if (request.method === "GET" && url.pathname === "/api/config") {
       return getRuntimeConfig(env);
+    }
+
+    if (request.method === "GET" && url.pathname === "/rules") {
+      return html(renderRules());
     }
 
     const roomRecordsMatch = url.pathname.match(/^\/api\/rooms\/([^/]+)\/records$/);

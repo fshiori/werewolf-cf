@@ -548,6 +548,15 @@ describe("worker routes", () => {
     expect(await response.text()).toContain("player_profile");
   });
 
+  it("renders rules page", async () => {
+    const response = await worker.fetch(new Request("http://example.test/rules"), envWithRooms([]));
+
+    expect(response.status).toBe(200);
+    const body = await response.text();
+    expect(body).toContain("基本流程");
+    expect(body).toContain("村子選項");
+  });
+
   it("rejects malformed player profile ids", async () => {
     const response = await worker.fetch(new Request("http://example.test/player/not-valid!"), envWithRooms([]));
 

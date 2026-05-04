@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { renderHome, renderPlayerProfile, renderRoom } from "../src/render";
+import { renderHome, renderPlayerProfile, renderRoom, renderRules } from "../src/render";
 
 describe("render", () => {
   it("renders home with room rows and escaped names", () => {
@@ -66,6 +66,7 @@ describe("render", () => {
     expect(html).toContain("排行榜 JSON");
     expect(html).toContain("/api/config");
     expect(html).toContain("設定 JSON");
+    expect(html).toContain("/rules");
     expect(html).toContain("roomComment");
     expect(html).toContain("maxPlayers");
     expect(html).toContain("<option value=\"22\" selected>22</option>");
@@ -267,5 +268,17 @@ describe("render", () => {
     expect(html).toContain("/api/players/\" + playerId + \"/records");
     expect(html).toContain("最近參戰紀錄");
     expect(html).toContain("function roleLabel(value)");
+  });
+
+  it("renders implemented rules page", () => {
+    const html = renderRules();
+
+    expect(html).toContain("基本流程");
+    expect(html).toContain("白天");
+    expect(html).toContain("夜晚");
+    expect(html).toContain("角色");
+    expect(html).toContain("人狼 / 大狼");
+    expect(html).toContain("Trip限定");
+    expect(html).toContain("Durable Object alarm");
   });
 });
