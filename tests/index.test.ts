@@ -462,7 +462,7 @@ describe("worker routes", () => {
     expect(roomInsert?.values).toContain("Custom Dummy");
     expect(roomInsert?.values).toContain("Remember the dummy");
     expect(String(roomInsert?.values.at(-2))).toMatch(/^[0-9a-f]{64}$/);
-    expect(roomInsert?.values.at(-1)).toBe("poison wfbig authority decide lovers betr fosi foxs cat will open_vote comoutl wish_role istrip as_gm dummy_boy cust_dummy real_time:5:2 votedme votedisplay");
+    expect(roomInsert?.values.at(-1)).toBe("poison wfbig authority decide lovers betr cat will open_vote comoutl wish_role istrip as_gm dummy_boy cust_dummy real_time:5:2 votedme votedisplay");
     expect(JSON.parse(String(eventInsert?.values.at(-1)))).toEqual({
       name: "Option Test",
       comment: "Beginners welcome",
@@ -474,8 +474,8 @@ describe("worker routes", () => {
         decider: true,
         lovers: true,
         betrayer: true,
-        childFox: true,
-        twoFoxes: true,
+        childFox: false,
+        twoFoxes: false,
         cat: true,
         lastWords: true,
         openVote: true,
@@ -495,6 +495,37 @@ describe("worker routes", () => {
         voteStatus: true
       }
     });
+  });
+
+  it("normalizes fox room variants to one server-side option", async () => {
+    const cases = [
+      { options: { betrayer: true, childFox: true, twoFoxes: true }, expected: "betr" },
+      { options: { childFox: true, twoFoxes: true }, expected: "fosi" },
+      { options: { twoFoxes: true }, expected: "foxs" }
+    ];
+
+    for (const [index, testCase] of cases.entries()) {
+      const env = envWithRooms([]);
+      const response = await worker.fetch(
+        new Request("http://example.test/api/rooms", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            name: `Fox Variant ${index}`,
+            maxPlayers: 22,
+            playerId: `player_owner_${index}`,
+            nickname: "Owner",
+            options: testCase.options
+          })
+        }),
+        env
+      );
+      const batches = (env as unknown as { batches: Array<Array<{ query: string; values: unknown[] }>> }).batches;
+      const roomInsert = batches[0].find((statement) => statement.query.includes("INSERT INTO rooms"));
+
+      expect(response.status).toBe(200);
+      expect(roomInsert?.values.at(-1)).toBe(testCase.expected);
+    }
   });
 
   it("rejects GM rooms without a GM Trip", async () => {
