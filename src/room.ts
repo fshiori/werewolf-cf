@@ -38,6 +38,8 @@ import {
   buildErrorMessage,
   buildFoxChatMessage,
   buildGameStateMessage,
+  buildGmChatMessage,
+  buildGmWhisperMessage,
   buildJoinedMessage,
   buildLastWordsAckMessage,
   buildLoversChatMessage,
@@ -220,6 +222,29 @@ export class RoomDurableObject {
         return;
       }
 
+      if (message.type === "gm_chat") {
+        if (!member.gm) {
+          throw new Error("GM chat is only available to the GM");
+        }
+        const text = validateChatText(message.text);
+        this.broadcast(buildGmChatMessage(member.playerId, member.nickname, text));
+        return;
+      }
+
+      if (message.type === "gm_whisper") {
+        if (!member.gm) {
+          throw new Error("GM whisper is only available to the GM");
+        }
+        const targetPlayerId = validatePlayerId(message.targetPlayerId);
+        const target = (await this.loadGameState()).players.find((player) => player.playerId === targetPlayerId);
+        if (!target) {
+          throw new Error("GM whisper target not found");
+        }
+        const text = validateChatText(message.text);
+        this.sendGmWhisper(buildGmWhisperMessage(member.playerId, member.nickname, target, text), targetPlayerId);
+        return;
+      }
+
       if (message.type === "start_game") {
         const loadedGame = await this.loadGameState();
         if (!member.gm && !canStartGame(loadedGame, member.playerId)) {
@@ -381,6 +406,15 @@ export class RoomDurableObject {
     const encoded = JSON.stringify(message);
     for (const [socket, member] of this.sockets) {
       if (canUseDeadChannel(gameState, member.playerId)) {
+        socket.send(encoded);
+      }
+    }
+  }
+
+  private sendGmWhisper(message: unknown, targetPlayerId: string): void {
+    const encoded = JSON.stringify(message);
+    for (const [socket, member] of this.sockets) {
+      if (member.gm || member.playerId === targetPlayerId) {
         socket.send(encoded);
       }
     }

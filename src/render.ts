@@ -518,6 +518,9 @@ export function renderRoom(roomId: string): string {
                 <button id="sendCommonChat" disabled>共有頻</button>
                 <button id="sendLoversChat" disabled>戀頻</button>
                 <button id="sendDeadChat" disabled>靈界</button>
+                <button id="sendGmChat" disabled>GM</button>
+                <select id="gmWhisperTarget"></select>
+                <button id="sendGmWhisper" disabled>GM私語</button>
               </td>
             </tr>
           </table>
@@ -620,6 +623,7 @@ export function renderRoom(roomId: string): string {
       let latestGame;
       let role = "";
       let isLover = false;
+      let isGm = false;
       let revealedRoles = {};
       void refreshStats();
       void refreshRecords();
@@ -636,10 +640,21 @@ export function renderRoom(roomId: string): string {
         ws.addEventListener("open", () => ws.send(JSON.stringify({ type: "join", playerId: localStorage.getItem(playerKey), nickname, trip, wishRole })));
         ws.addEventListener("message", (event) => {
           const msg = JSON.parse(event.data);
-          if (msg.type === "presence") {
+          if (msg.type === "joined") {
+            isGm = msg.members.some((m) => m.playerId === localStorage.getItem(playerKey) && m.gm);
+            if (latestGame) renderGame(latestGame);
+          } else if (msg.type === "presence") {
+            isGm = msg.members.some((m) => m.playerId === localStorage.getItem(playerKey) && m.gm);
             document.querySelector("#members").textContent = msg.members.map((m) => m.gm ? m.nickname + " [GM]" : m.nickname).join(", ");
+            if (latestGame) renderGame(latestGame);
           } else if (msg.type === "chat") {
             append("<b>" + msg.nickname + "</b>: " + msg.text);
+          } else if (msg.type === "gm_chat") {
+            append("<font color='#008800'>[GM]</font> <b>" + msg.nickname + "</b>: " + msg.text);
+          } else if (msg.type === "gm_whisper") {
+            const currentPlayerId = localStorage.getItem(playerKey);
+            const label = currentPlayerId === msg.targetPlayerId ? "[GM私語]" : "[GM私語→" + msg.targetNickname + "]";
+            append("<font color='#008800'>" + label + "</font> <b>" + msg.nickname + "</b>: " + msg.text);
           } else if (msg.type === "wolf_chat") {
             append("<font color='#cc0000'>[狼頻]</font> <b>" + msg.nickname + "</b>: " + msg.text);
           } else if (msg.type === "fox_chat") {
@@ -731,6 +746,21 @@ export function renderRoom(roomId: string): string {
           input.value = "";
         }
       });
+      document.querySelector("#sendGmChat").addEventListener("click", () => {
+        const input = document.querySelector("#chatText");
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ type: "gm_chat", text: input.value }));
+          input.value = "";
+        }
+      });
+      document.querySelector("#sendGmWhisper").addEventListener("click", () => {
+        const input = document.querySelector("#chatText");
+        const target = document.querySelector("#gmWhisperTarget").value;
+        if (ws && ws.readyState === WebSocket.OPEN && target) {
+          ws.send(JSON.stringify({ type: "gm_whisper", targetPlayerId: target, text: input.value }));
+          input.value = "";
+        }
+      });
       document.querySelector("#setLastWords").addEventListener("click", () => {
         const input = document.querySelector("#lastWordsText");
         if (ws && ws.readyState === WebSocket.OPEN) {
@@ -800,17 +830,21 @@ export function renderRoom(roomId: string): string {
           (game.phase === "day" || (game.phase === "night" && (isWolfRole(role) || role === "seer" || role === "guard" || role === "child_fox" || role === "cat")));
         const host = game.players.find((player) => player.playerId === game.hostId);
         document.querySelector("#host").textContent = host ? host.nickname : "未定";
-        document.querySelector("#startGame").disabled = game.phase !== "lobby" || game.hostId !== currentPlayerId;
+        document.querySelector("#startGame").disabled = game.phase !== "lobby" || (game.hostId !== currentPlayerId && !isGm);
         document.querySelector("#sendWolfChat").disabled = !(game.phase === "night" && isWolfRole(role) && currentPlayerAlive);
         document.querySelector("#sendFoxChat").disabled = !(game.phase === "night" && role === "fox" && currentPlayerAlive);
         document.querySelector("#sendCommonChat").disabled = !(game.phase === "night" && role === "common" && currentPlayerAlive);
         document.querySelector("#sendLoversChat").disabled = !(game.phase === "night" && isLover && currentPlayerAlive);
         document.querySelector("#sendDeadChat").disabled = !(currentPlayerDead && game.phase !== "lobby" && game.phase !== "ended");
+        document.querySelector("#sendGmChat").disabled = !isGm;
+        document.querySelector("#sendGmWhisper").disabled = !isGm || game.players.length === 0;
         document.querySelector("#setLastWords").disabled = !(currentPlayerAlive && game.phase !== "lobby" && game.phase !== "ended");
         const players = document.querySelector("#players");
         const playerGrid = document.querySelector("#playerGrid");
+        const gmWhisperTarget = document.querySelector("#gmWhisperTarget");
         players.innerHTML = "";
         playerGrid.innerHTML = "";
+        gmWhisperTarget.innerHTML = "";
         const voteTargets = game.votes || {};
         const votedPlayerIds = new Set(game.votedPlayerIds || []);
         const voteSummary = {};
@@ -822,6 +856,10 @@ export function renderRoom(roomId: string): string {
         });
         let row;
         game.players.forEach((player) => {
+          const option = document.createElement("option");
+          option.value = player.playerId;
+          option.textContent = player.nickname;
+          gmWhisperTarget.appendChild(option);
           if (!row || row.children.length >= 5) {
             row = document.createElement("tr");
             playerGrid.appendChild(row);

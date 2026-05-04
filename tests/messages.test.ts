@@ -9,6 +9,8 @@ import {
   buildDivinationResultMessage,
   buildFoxChatMessage,
   buildGameStateMessage,
+  buildGmChatMessage,
+  buildGmWhisperMessage,
   buildJoinedMessage,
   buildLastWordsAckMessage,
   buildLoversChatMessage,
@@ -42,6 +44,23 @@ describe("messages", () => {
       playerId: "player_1",
       nickname: "Alice",
       text: "&lt;hello&gt;"
+    });
+  });
+
+  it("builds escaped GM messages", () => {
+    expect(buildGmChatMessage("player_gm", "<GM>", "<notice>")).toMatchObject({
+      type: "gm_chat",
+      playerId: "player_gm",
+      nickname: "&lt;GM&gt;",
+      text: "&lt;notice&gt;"
+    });
+    expect(buildGmWhisperMessage("player_gm", "<GM>", { playerId: "player_1", nickname: "<Alice>" }, "<secret>")).toMatchObject({
+      type: "gm_whisper",
+      playerId: "player_gm",
+      nickname: "&lt;GM&gt;",
+      targetPlayerId: "player_1",
+      targetNickname: "&lt;Alice&gt;",
+      text: "&lt;secret&gt;"
     });
   });
 
