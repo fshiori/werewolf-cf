@@ -810,6 +810,51 @@ describe("RoomDurableObject", () => {
     expect(gmMessages.some((message) => message.type === "role")).toBe(false);
   });
 
+  it("rejects GM adjudication outside active games through the websocket handler", async () => {
+    const baseGame: GameState = {
+      roomId: "room_abc",
+      phase: "lobby",
+      day: 0,
+      players: [
+        { playerId: "player_wolf", nickname: "Wolf", role: "werewolf", alive: true },
+        { playerId: "player_villager", nickname: "Villager", role: "villager", alive: true },
+        { playerId: "player_seer", nickname: "Seer", role: "seer", alive: true }
+      ],
+      votes: {},
+      openVote: false,
+      commonTalkVisible: false,
+      deadRoleVisible: false,
+      wishRole: false,
+      dummyBoy: false,
+      dayMs: 180_000,
+      nightMs: 90_000,
+      selfVote: false,
+      voteStatus: false,
+      revoteCount: 0,
+      nightKills: {},
+      divinations: {},
+      guards: {},
+      catRevives: {},
+      lastWords: {},
+      log: []
+    };
+    const cases: Array<{ game: GameState; message: string }> = [
+      { game: baseGame, message: "Cannot adjudicate a lobby game" },
+      { game: { ...baseGame, phase: "ended", winner: "villagers" }, message: "Game already ended" }
+    ];
+
+    for (const testCase of cases) {
+      const room = roomObject(testCase.game);
+      const messages: SentMessage[] = [];
+      const socket = fakeSocket(messages);
+      connect(room, socket, "player_gm", "GM", true);
+
+      await sendRaw(room, socket, JSON.stringify({ type: "gm_end_game", winner: "werewolves" }));
+
+      expect(messages).toEqual([{ type: "error", message: testCase.message }]);
+    }
+  });
+
   it("rejects host-only websocket commands from non-host sockets", async () => {
     const game: GameState = {
       roomId: "room_abc",
