@@ -133,7 +133,7 @@ function shell(body: string): string {
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/api/rooms">房間 JSON</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/api/stats/leaderboard">排行榜 JSON</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/api/config">設定 JSON</a></td></tr>
-            <tr><td><small><font color="#666666">・</font></small></td><td><a href="javascript:void(0)">規則</a></td></tr>
+            <tr><td><small><font color="#666666">・</font></small></td><td><a href="/rules">規則</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="javascript:void(0)">版本</a></td></tr>
           </table>
         </td>
@@ -582,6 +582,45 @@ export function renderPlayerProfile(playerId: string): string {
       }
       void refreshProfile();
     </script>
+  `));
+}
+
+export function renderRules(): string {
+  return page("Rules", shell(`
+    <fieldset>
+      <legend><strong>基本流程</strong></legend>
+      <table class="form-table">
+        <tr><td><strong>　開始：</strong></td><td>房主或 GM 可在大廳開始遊戲，角色由村子選項與人數分配。</td></tr>
+        <tr><td><strong>　白天：</strong></td><td>生存者公開討論並投票，最高票者處刑；同票會進行一次重新投票。</td></tr>
+        <tr><td><strong>　夜晚：</strong></td><td>人狼襲擊，占卜師、獵人、子狐、貓又依角色使用能力。</td></tr>
+        <tr><td><strong>　勝負：</strong></td><td>村民、人狼、妖狐、戀人依存活狀態判定勝利。</td></tr>
+      </table>
+    </fieldset>
+    <fieldset>
+      <legend><strong>角色</strong></legend>
+      <table class="form-table">
+        <tr><td><strong>　村民：</strong></td><td>沒有夜晚能力，透過白天投票找出人狼。</td></tr>
+        <tr><td><strong>　人狼 / 大狼：</strong></td><td>夜晚選擇襲擊目標；大狼在占卜時可能被判定為人。</td></tr>
+        <tr><td><strong>　占卜師：</strong></td><td>夜晚占卜一名玩家，結果為人或狼。</td></tr>
+        <tr><td><strong>　靈能者：</strong></td><td>隔日得知前一天被處刑者是人或狼。</td></tr>
+        <tr><td><strong>　狂人：</strong></td><td>隸屬村民計數，但勝利目標偏向人狼。</td></tr>
+        <tr><td><strong>　獵人：</strong></td><td>夜晚護衛一名玩家，可阻止襲擊。</td></tr>
+        <tr><td><strong>　共有者：</strong></td><td>可在夜晚與其他共有者對話。</td></tr>
+        <tr><td><strong>　妖狐 / 背德者 / 子狐：</strong></td><td>妖狐被襲擊不死；背德者跟隨妖狐死亡；子狐可嘗試占卜。</td></tr>
+        <tr><td><strong>　埋毒者 / 貓又：</strong></td><td>死亡時可能牽連其他玩家；貓又可嘗試復活。</td></tr>
+      </table>
+    </fieldset>
+    <fieldset>
+      <legend><strong>村子選項</strong></legend>
+      <table class="form-table">
+        <tr><td><strong>　Trip限定：</strong></td><td>玩家必須使用已登記且未排除的 Trip 才能加入。</td></tr>
+        <tr><td><strong>　GM制：</strong></td><td>指定 Trip 可作為 GM 加入，不參與角色分配，可管理流程。</td></tr>
+        <tr><td><strong>　替身君：</strong></td><td>加入替身君並由第一夜開始，可自訂名稱與遺言。</td></tr>
+        <tr><td><strong>　公開票 / 投票顯示：</strong></td><td>控制白天投票資訊是否公開與已投票玩家顯示。</td></tr>
+        <tr><td><strong>　遺言 / 幽靈視角：</strong></td><td>控制死亡訊息與死後可見資訊。</td></tr>
+        <tr><td><strong>　限時時間：</strong></td><td>啟用後 Durable Object alarm 會依日夜時間自動換日。</td></tr>
+      </table>
+    </fieldset>
   `));
 }
 
