@@ -7,9 +7,10 @@
     "dev": "wrangler dev",
     "test": "vitest run --passWithNoTests",
     "typecheck": "tsc --noEmit",
+    "check:whitespace": "git diff --check",
     "check:wrangler": "node scripts/check-wrangler-config.mjs",
     "check:d1-schema": "node scripts/check-d1-schema.mjs",
-    "check:deploy": "npm test && npm run typecheck && npm run check:wrangler -- --production",
+    "check:deploy": "npm test && npm run typecheck && npm run check:whitespace && npm run check:wrangler -- --production",
     "smoke:production": "node scripts/smoke-production-readonly.mjs",
     "predeploy": "npm run check:deploy",
     "deploy": "wrangler deploy"

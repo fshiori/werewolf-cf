@@ -146,7 +146,6 @@ Run the same checks used for local development:
 
 ```bash
 npm run check:deploy
-git diff --check
 ```
 
 Apply remote D1 migrations before deploying code that depends on new columns or tables:
