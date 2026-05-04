@@ -54,6 +54,17 @@ export function validateChatText(value: string): string {
   return text;
 }
 
+export function validateLastWordsText(value: string): string {
+  const text = value.trim();
+  if (text.length === 0) {
+    throw new Error("Last words are required");
+  }
+  if (text.length > 500) {
+    throw new Error("Last words are too long");
+  }
+  return text;
+}
+
 export function escapeHtml(value: string): string {
   return value
     .replaceAll("&", "&amp;")
@@ -161,6 +172,13 @@ export function parseClientMessage(raw: string): ClientMessage {
       throw new Error("Invalid cat revive message");
     }
     return { type: "cat_revive", targetPlayerId: parsed.targetPlayerId };
+  }
+
+  if (parsed.type === "set_last_words") {
+    if (typeof parsed.text !== "string") {
+      throw new Error("Invalid last words message");
+    }
+    return { type: "set_last_words", text: parsed.text };
   }
 
   throw new Error("Unknown message type");

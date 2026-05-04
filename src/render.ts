@@ -158,7 +158,8 @@ export function renderHome(rooms: RoomSummary[], announcement = DEFAULT_ANNOUNCE
         room.options.betrayer ? `<span class="option-mark">背德</span>` : "",
         room.options.childFox ? `<span class="option-mark">子狐</span>` : "",
         room.options.twoFoxes ? `<span class="option-mark">雙狐</span>` : "",
-        room.options.cat ? `<span class="option-mark">貓又</span>` : ""
+        room.options.cat ? `<span class="option-mark">貓又</span>` : "",
+        room.options.lastWords ? `<span class="option-mark">遺言</span>` : ""
       ].filter(Boolean).join(" ");
       return `<a class="room-link" href="/room/${escapeHtml(room.id)}">
         <span class="room-line"><span class="status status-${status}">${status}</span><small>[${escapeHtml(room.id)}]</small> ${escapeHtml(room.name)}村</span>
@@ -247,6 +248,10 @@ export function renderHome(rooms: RoomSummary[], announcement = DEFAULT_ANNOUNCE
           <td><label><input id="optionCat" type="checkbox"> <small>貓又登場，可牽連死亡並嘗試復活</small></label></td>
         </tr>
         <tr>
+          <td><label><strong>　遺言：</strong></label></td>
+          <td><label><input id="optionLastWords" type="checkbox"> <small>生存中可留下死亡時公開的遺言</small></label></td>
+        </tr>
+        <tr>
           <td></td>
           <td><button id="createRoom">建立房間</button></td>
         </tr>
@@ -271,11 +276,12 @@ export function renderHome(rooms: RoomSummary[], announcement = DEFAULT_ANNOUNCE
         const childFox = document.querySelector("#optionChildFox").checked;
         const twoFoxes = document.querySelector("#optionTwoFoxes").checked;
         const cat = document.querySelector("#optionCat").checked;
+        const lastWords = document.querySelector("#optionLastWords").checked;
         localStorage.setItem("werewolf_cf_nickname", nickname);
         const res = await fetch("/api/rooms", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ name, playerId: localStorage.getItem(playerKey), nickname, options: { poison, bigWolf, authority, decider, lovers, betrayer, childFox, twoFoxes, cat } })
+          body: JSON.stringify({ name, playerId: localStorage.getItem(playerKey), nickname, options: { poison, bigWolf, authority, decider, lovers, betrayer, childFox, twoFoxes, cat, lastWords } })
         });
         const data = await res.json();
         if (!res.ok) {
@@ -368,6 +374,7 @@ export function renderRoom(roomId: string): string {
               <td>
                 <div>身分：<span id="role" class="muted">未分配</span></div>
                 <div id="players" class="muted">等待狀態更新</div>
+                <div><input id="lastWordsText" maxlength="500" size="60"> <button id="setLastWords">遺言</button></div>
               </td>
             </tr>
           </table>
@@ -522,6 +529,8 @@ export function renderRoom(roomId: string): string {
             append("<font color='#006666'>[靈能]</font> 第 " + msg.day + " 日被處決的 " + msg.targetNickname + " 是「" + result + "」。");
           } else if (msg.type === "action_ack") {
             append("<span class='muted'>行動已送出。</span>");
+          } else if (msg.type === "last_words_ack") {
+            append("<span class='muted'>遺言已更新。</span>");
           } else if (msg.type === "game_state") {
             latestGame = msg;
             renderGame(msg);
@@ -578,6 +587,12 @@ export function renderRoom(roomId: string): string {
         if (ws && ws.readyState === WebSocket.OPEN) {
           ws.send(JSON.stringify({ type: "lovers_chat", text: input.value }));
           input.value = "";
+        }
+      });
+      document.querySelector("#setLastWords").addEventListener("click", () => {
+        const input = document.querySelector("#lastWordsText");
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ type: "set_last_words", text: input.value }));
         }
       });
       document.querySelector("#startGame").addEventListener("click", () => {
@@ -647,6 +662,7 @@ export function renderRoom(roomId: string): string {
         document.querySelector("#sendFoxChat").disabled = !(game.phase === "night" && role === "fox" && currentPlayerAlive);
         document.querySelector("#sendCommonChat").disabled = !(game.phase === "night" && role === "common" && currentPlayerAlive);
         document.querySelector("#sendLoversChat").disabled = !(game.phase === "night" && isLover && currentPlayerAlive);
+        document.querySelector("#setLastWords").disabled = !(currentPlayerAlive && game.phase !== "lobby" && game.phase !== "ended");
         const players = document.querySelector("#players");
         const playerGrid = document.querySelector("#playerGrid");
         players.innerHTML = "";

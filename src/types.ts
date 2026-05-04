@@ -18,6 +18,7 @@ export interface RoomOptions {
   childFox: boolean;
   twoFoxes: boolean;
   cat: boolean;
+  lastWords: boolean;
 }
 
 export interface RoomMember {
@@ -112,6 +113,7 @@ export interface GameState {
   divinations: Record<string, string>;
   guards: Record<string, string>;
   catRevives: Record<string, string>;
+  lastWords: Record<string, string>;
   mediumReading?: MediumReading;
   winner?: GameWinner;
   phaseEndsAt?: string;
@@ -183,6 +185,11 @@ export type CatReviveClientMessage = {
   targetPlayerId: string;
 };
 
+export type SetLastWordsClientMessage = {
+  type: "set_last_words";
+  text: string;
+};
+
 export type ClientMessage =
   | JoinClientMessage
   | ChatClientMessage
@@ -196,7 +203,8 @@ export type ClientMessage =
   | DivineClientMessage
   | ChildFoxDivineClientMessage
   | GuardClientMessage
-  | CatReviveClientMessage;
+  | CatReviveClientMessage
+  | SetLastWordsClientMessage;
 
 export type ServerMessage =
   | { type: "joined"; roomId: string; playerId: string; members: RoomMember[] }
@@ -209,6 +217,7 @@ export type ServerMessage =
   | { type: "divination_result"; targetPlayerId: string; targetNickname: string; result: DivinationResult }
   | { type: "child_fox_result"; targetPlayerId: string; targetNickname: string; result: ChildFoxDivinationResult }
   | { type: "medium_result"; day: number; targetPlayerId: string; targetNickname: string; result: MediumResult }
+  | { type: "last_words_ack" }
   | { type: "action_ack"; action: "vote" | "night_kill" | "guard" | "child_fox_divine" | "cat_revive"; targetPlayerId: string }
   | {
       type: "game_state";

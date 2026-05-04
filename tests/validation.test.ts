@@ -4,6 +4,7 @@ import {
   isRecord,
   parseClientMessage,
   validateChatText,
+  validateLastWordsText,
   validateNickname,
   validatePlayerId,
   validateRoomId,
@@ -34,6 +35,12 @@ describe("validation", () => {
     expect(() => validateChatText("x".repeat(501))).toThrow("Chat text is too long");
   });
 
+  it("validates last words text", () => {
+    expect(validateLastWordsText(" final words ")).toBe("final words");
+    expect(() => validateLastWordsText("")).toThrow("Last words are required");
+    expect(() => validateLastWordsText("x".repeat(501))).toThrow("Last words are too long");
+  });
+
   it("escapes html-sensitive characters", () => {
     expect(escapeHtml(`<b class="x">& hi</b>`)).toBe("&lt;b class=&quot;x&quot;&gt;&amp; hi&lt;/b&gt;");
   });
@@ -44,6 +51,7 @@ describe("validation", () => {
     expect(parseClientMessage('{"type":"fox_chat","text":"secret"}')).toEqual({ type: "fox_chat", text: "secret" });
     expect(parseClientMessage('{"type":"common_chat","text":"secret"}')).toEqual({ type: "common_chat", text: "secret" });
     expect(parseClientMessage('{"type":"lovers_chat","text":"secret"}')).toEqual({ type: "lovers_chat", text: "secret" });
+    expect(parseClientMessage('{"type":"set_last_words","text":"bye"}')).toEqual({ type: "set_last_words", text: "bye" });
     expect(parseClientMessage('{"type":"start_game"}')).toEqual({ type: "start_game" });
     expect(parseClientMessage('{"type":"vote","targetPlayerId":"player_1"}')).toEqual({ type: "vote", targetPlayerId: "player_1" });
     expect(parseClientMessage('{"type":"night_kill","targetPlayerId":"player_2"}')).toEqual({

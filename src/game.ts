@@ -52,6 +52,7 @@ export function createLobbyState(roomId: string): GameState {
     divinations: {},
     guards: {},
     catRevives: {},
+    lastWords: {},
     log: ["等待玩家加入。"]
   };
 }
@@ -139,7 +140,8 @@ export function startGame(
     betrayer: false,
     childFox: false,
     twoFoxes: false,
-    cat: false
+    cat: false,
+    lastWords: false
   }
 ): GameState {
   if (state.phase !== "lobby") {
@@ -311,9 +313,24 @@ function startGameWithPlayers(state: GameState, players: GamePlayer[], now: numb
     divinations: {},
     guards: {},
     catRevives: {},
+    lastWords: state.lastWords ?? {},
     mediumReading: undefined,
     phaseEndsAt: new Date(now + DAY_MS).toISOString(),
     log: [...state.log, "遊戲開始。", "第 1 日白天開始。"]
+  };
+}
+
+export function setLastWords(state: GameState, playerId: string, text: string): GameState {
+  if (state.phase === "lobby" || state.phase === "ended") {
+    throw new Error("Last words are only available during active games");
+  }
+  assertLivingPlayer(state, playerId);
+  return {
+    ...state,
+    lastWords: {
+      ...(state.lastWords ?? {}),
+      [playerId]: text
+    }
   };
 }
 
@@ -371,11 +388,14 @@ export function castDivination(
     throw new Error("Seers cannot divine themselves");
   }
   const target = assertLivingPlayer(state, targetId);
+  const divinedPlayers = target.role === "fox"
+    ? applyLinkedDeaths(state.players.map((player) => (player.playerId === targetId ? { ...player, alive: false } : player)))
+    : state.players;
   const nextState = target.role === "fox"
     ? {
         ...state,
-        players: applyLinkedDeaths(state.players.map((player) => (player.playerId === targetId ? { ...player, alive: false } : player))),
-        log: [...state.log, `${target.nickname} 被占卜後死亡。`]
+        players: divinedPlayers,
+        log: [...state.log, `${target.nickname} 被占卜後死亡。`, ...lastWordsForNewDeaths(state.players, divinedPlayers, state.lastWords ?? {})]
       }
     : state;
   const clearedState = clearActionsForDeadPlayers(nextState);
@@ -579,7 +599,8 @@ function resolveDay(state: GameState, now = Date.now()): GameState {
   const log = [
     ...state.log,
     executed ? `${executed.nickname} 被投票處決。` : "白天沒有共識，無人被處決。",
-    ...(poisonTarget ? [`${poisonTarget.nickname} 被${executed?.role === "cat" ? "貓又" : "埋毒者"}牽連死亡。`] : [])
+    ...(poisonTarget ? [`${poisonTarget.nickname} 被${executed?.role === "cat" ? "貓又" : "埋毒者"}牽連死亡。`] : []),
+    ...lastWordsForNewDeaths(state.players, players, state.lastWords ?? {})
   ];
   return withWinOrNextNight({ ...clearActionsForDeadPlayers({ ...state, players }), votes: {}, revoteCount: 0, mediumReading, log }, now);
 }
@@ -608,7 +629,8 @@ function resolveNight(state: GameState, now = Date.now(), random = Math.random):
     ...state.log,
     killed ? `${killed.nickname} 在夜晚死亡。` : foxAttack ? "妖狐被襲擊但沒有死亡。" : catSurvivesAttack ? "貓又被襲擊但沒有死亡。" : "夜晚平安過去。",
     ...(poisonWolf ? [`${poisonWolf.nickname} 被${killed?.role === "cat" ? "貓又" : "埋毒者"}牽連死亡。`] : []),
-    ...(catRevived ? [`${catRevived.nickname} 被貓又復活。`] : [])
+    ...(catRevived ? [`${catRevived.nickname} 被貓又復活。`] : []),
+    ...lastWordsForNewDeaths(state.players, players, state.lastWords ?? {})
   ];
   return withWinOrNextDay({ ...clearActionsForDeadPlayers({ ...state, players }), nightKills: {}, divinations: {}, guards: {}, catRevives: {}, log }, now);
 }
@@ -721,6 +743,15 @@ function applyLinkedDeaths(players: GamePlayer[]): GamePlayer[] {
       return nextPlayers;
     }
   }
+}
+
+function lastWordsForNewDeaths(before: GamePlayer[], after: GamePlayer[], lastWords: Record<string, string>): string[] {
+  return after
+    .filter((player) => before.some((candidate) => candidate.playerId === player.playerId && candidate.alive) && !player.alive)
+    .flatMap((player) => {
+      const text = lastWords[player.playerId]?.trim();
+      return text ? [`${player.nickname} 的遺言：${text}`] : [];
+    });
 }
 
 function livingGuards(state: GameState): GamePlayer[] {

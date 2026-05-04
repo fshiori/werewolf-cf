@@ -9,7 +9,18 @@ describe("render", () => {
         name: "<Test>",
         status: "lobby",
         createdAt: "2026-05-03 12:00:00",
-        options: { poison: true, bigWolf: true, authority: true, decider: true, lovers: true, betrayer: true, childFox: true, twoFoxes: true, cat: true }
+        options: {
+          poison: true,
+          bigWolf: true,
+          authority: true,
+          decider: true,
+          lovers: true,
+          betrayer: true,
+          childFox: true,
+          twoFoxes: true,
+          cat: true,
+          lastWords: true
+        }
       }
     ]);
 
@@ -31,6 +42,7 @@ describe("render", () => {
     expect(html).toContain("optionChildFox");
     expect(html).toContain("optionTwoFoxes");
     expect(html).toContain("optionCat");
+    expect(html).toContain("optionLastWords");
     expect(html).toContain("20人以上埋毒者選項");
     expect(html).toContain("20人以上時大狼出場");
     expect(html).toContain("16人以上權力者出場");
@@ -40,13 +52,15 @@ describe("render", () => {
     expect(html).toContain("20人以上妖狐的占");
     expect(html).toContain("20人以上兩隻妖狐");
     expect(html).toContain("20人以上貓又登場");
-    expect(html).toContain("options: { poison, bigWolf, authority, decider, lovers, betrayer, childFox, twoFoxes, cat }");
+    expect(html).toContain("生存中可留下死亡時公開的遺言");
+    expect(html).toContain("options: { poison, bigWolf, authority, decider, lovers, betrayer, childFox, twoFoxes, cat, lastWords }");
     expect(html).toContain("埋毒");
     expect(html).toContain("大狼");
     expect(html).toContain("背德");
     expect(html).toContain("子狐");
     expect(html).toContain("雙狐");
     expect(html).toContain("貓又");
+    expect(html).toContain("遺言");
     expect(html).toContain("leaderboardRows");
     expect(html).toContain("尚無戰績。");
     expect(html).toContain("cell.textContent = String(value);");
@@ -114,6 +128,10 @@ describe("render", () => {
     expect(html).toContain("fox_chat");
     expect(html).toContain("common_chat");
     expect(html).toContain("lovers_chat");
+    expect(html).toContain("lastWordsText");
+    expect(html).toContain("setLastWords");
+    expect(html).toContain("set_last_words");
+    expect(html).toContain("last_words_ack");
     expect(html).toContain("isLover");
     expect(html).toContain("action_ack");
     expect(html).toContain("divination_result");

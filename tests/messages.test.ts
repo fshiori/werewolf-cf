@@ -9,6 +9,7 @@ import {
   buildFoxChatMessage,
   buildGameStateMessage,
   buildJoinedMessage,
+  buildLastWordsAckMessage,
   buildLoversChatMessage,
   buildMediumResultMessage,
   buildPresenceMessage,
@@ -121,6 +122,10 @@ describe("messages", () => {
     });
   });
 
+  it("builds last words acknowledgement messages", () => {
+    expect(buildLastWordsAckMessage()).toEqual({ type: "last_words_ack" });
+  });
+
   it("builds public game state messages without roles", () => {
     const game = startGame(
       {
@@ -146,6 +151,20 @@ describe("messages", () => {
       ]
     });
     expect(JSON.stringify(buildGameStateMessage(game))).not.toContain('"role"');
+  });
+
+  it("escapes public game state log entries", () => {
+    const game = {
+      ...createLobbyState("room_abc"),
+      log: ["Alice 的遺言：<script>alert(1)</script>"]
+    };
+
+    const message = buildGameStateMessage(game);
+
+    expect(message.type).toBe("game_state");
+    if (message.type === "game_state") {
+      expect(message.log).toEqual(["Alice 的遺言：&lt;script&gt;alert(1)&lt;/script&gt;"]);
+    }
   });
 
   it("builds role messages with escaped wolf list", () => {
