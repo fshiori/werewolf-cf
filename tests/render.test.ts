@@ -15,9 +15,15 @@ describe("render", () => {
     expect(html).toContain("<fieldset>");
     expect(html).toContain("選單");
     expect(html).toContain("遊戲列表");
+    expect(html).toContain("戰績排行榜");
     expect(html).toContain("建立村子");
     expect(html).toContain("&lt;Test&gt;");
     expect(html).toContain("/room/room_abc");
+    expect(html).toContain("/api/stats/leaderboard");
+    expect(html).toContain("排行榜 JSON");
+    expect(html).toContain("leaderboardRows");
+    expect(html).toContain("尚無戰績。");
+    expect(html).toContain("cell.textContent = String(value);");
     expect(html).toContain("建立房間");
   });
 
