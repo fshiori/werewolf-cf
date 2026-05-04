@@ -23,6 +23,7 @@ describe("render", () => {
           cat: true,
           lastWords: true,
           openVote: true,
+          commonTalkVisible: true,
           realTime: true,
           dayMinutes: 5,
           nightMinutes: 2,
@@ -59,6 +60,7 @@ describe("render", () => {
     expect(html).toContain("optionCat");
     expect(html).toContain("optionLastWords");
     expect(html).toContain("optionOpenVote");
+    expect(html).toContain("optionCommonTalkVisible");
     expect(html).toContain("optionRealTime");
     expect(html).toContain("optionDayMinutes");
     expect(html).toContain("optionNightMinutes");
@@ -75,10 +77,11 @@ describe("render", () => {
     expect(html).toContain("20人以上貓又登場");
     expect(html).toContain("生存中可留下死亡時公開的遺言");
     expect(html).toContain("白天公開目前投票目標");
+    expect(html).toContain("允許晚上顯示共生者悄悄話");
     expect(html).toContain("允許玩家白天投票給自己");
     expect(html).toContain("已投票玩家以特殊底色顯示");
     expect(html).toContain("JSON.stringify({ name, comment, maxPlayers, playerId:");
-    expect(html).toContain("options: { poison, bigWolf, authority, decider, lovers, betrayer, childFox, twoFoxes, cat, lastWords, openVote, realTime, dayMinutes, nightMinutes, selfVote, voteStatus }");
+    expect(html).toContain("options: { poison, bigWolf, authority, decider, lovers, betrayer, childFox, twoFoxes, cat, lastWords, openVote, commonTalkVisible, realTime, dayMinutes, nightMinutes, selfVote, voteStatus }");
     expect(html).toContain("埋毒");
     expect(html).toContain("大狼");
     expect(html).toContain("背德");
@@ -87,6 +90,7 @@ describe("render", () => {
     expect(html).toContain("貓又");
     expect(html).toContain("遺言");
     expect(html).toContain("公開票");
+    expect(html).toContain("共有聲");
     expect(html).toContain("自投");
     expect(html).toContain("投票済");
     expect(html).toContain("leaderboardRows");

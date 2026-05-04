@@ -155,7 +155,7 @@ describe("worker routes", () => {
         {},
         {},
         {},
-        { room_poison: "poison wfbig authority decide lovers betr fosi foxs cat will open_vote real_time:5:2 votedme votedisplay" },
+        { room_poison: "poison wfbig authority decide lovers betr fosi foxs cat will open_vote comoutl real_time:5:2 votedme votedisplay" },
         { room_poison: "<test comment>" },
         { room_poison: 30 }
       )
@@ -183,6 +183,7 @@ describe("worker routes", () => {
             cat: false,
             lastWords: false,
             openVote: false,
+            commonTalkVisible: false,
             realTime: false,
             dayMinutes: 3,
             nightMinutes: 1.5,
@@ -209,6 +210,7 @@ describe("worker routes", () => {
             cat: true,
             lastWords: true,
             openVote: true,
+            commonTalkVisible: true,
             realTime: true,
             dayMinutes: 5,
             nightMinutes: 2,
@@ -244,6 +246,7 @@ describe("worker routes", () => {
             cat: true,
             lastWords: true,
             openVote: true,
+            commonTalkVisible: true,
             realTime: true,
             dayMinutes: 5,
             nightMinutes: 2,
@@ -264,7 +267,7 @@ describe("worker routes", () => {
     expect(roomInsert?.query).toContain("max_user");
     expect(roomInsert?.values).toContain("Beginners welcome");
     expect(roomInsert?.values).toContain(16);
-    expect(roomInsert?.values.at(-1)).toBe("poison wfbig authority decide lovers betr fosi foxs cat will open_vote real_time:5:2 votedme votedisplay");
+    expect(roomInsert?.values.at(-1)).toBe("poison wfbig authority decide lovers betr fosi foxs cat will open_vote comoutl real_time:5:2 votedme votedisplay");
     expect(JSON.parse(String(eventInsert?.values.at(-1)))).toEqual({
       name: "Option Test",
       comment: "Beginners welcome",
@@ -281,6 +284,7 @@ describe("worker routes", () => {
         cat: true,
         lastWords: true,
         openVote: true,
+        commonTalkVisible: true,
         realTime: true,
         dayMinutes: 5,
         nightMinutes: 2,

@@ -162,6 +162,7 @@ export function renderHome(rooms: RoomSummary[], announcement = DEFAULT_ANNOUNCE
         room.options.cat ? `<span class="option-mark">貓又</span>` : "",
         room.options.lastWords ? `<span class="option-mark">遺言</span>` : "",
         room.options.openVote ? `<span class="option-mark">公開票</span>` : "",
+        room.options.commonTalkVisible ? `<span class="option-mark">共有聲</span>` : "",
         room.options.selfVote ? `<span class="option-mark">自投</span>` : "",
         room.options.voteStatus ? `<span class="option-mark">投票済</span>` : ""
       ].filter(Boolean).join(" ");
@@ -283,6 +284,10 @@ export function renderHome(rooms: RoomSummary[], announcement = DEFAULT_ANNOUNCE
           <td><label><input id="optionOpenVote" type="checkbox"> <small>白天公開目前投票目標</small></label></td>
         </tr>
         <tr>
+          <td><label><strong>　共生者夜晚對話顯示：</strong></label></td>
+          <td><label><input id="optionCommonTalkVisible" type="checkbox"> <small>允許晚上顯示共生者悄悄話</small></label></td>
+        </tr>
+        <tr>
           <td><label><strong>　啟用白天自投功能：</strong></label></td>
           <td><label><input id="optionSelfVote" type="checkbox"> <small>允許玩家白天投票給自己</small></label></td>
         </tr>
@@ -319,6 +324,7 @@ export function renderHome(rooms: RoomSummary[], announcement = DEFAULT_ANNOUNCE
         const cat = document.querySelector("#optionCat").checked;
         const lastWords = document.querySelector("#optionLastWords").checked;
         const openVote = document.querySelector("#optionOpenVote").checked;
+        const commonTalkVisible = document.querySelector("#optionCommonTalkVisible").checked;
         const realTime = document.querySelector("#optionRealTime").checked;
         const dayMinutes = Number(document.querySelector("#optionDayMinutes").value);
         const nightMinutes = Number(document.querySelector("#optionNightMinutes").value);
@@ -328,7 +334,7 @@ export function renderHome(rooms: RoomSummary[], announcement = DEFAULT_ANNOUNCE
         const res = await fetch("/api/rooms", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ name, comment, maxPlayers, playerId: localStorage.getItem(playerKey), nickname, options: { poison, bigWolf, authority, decider, lovers, betrayer, childFox, twoFoxes, cat, lastWords, openVote, realTime, dayMinutes, nightMinutes, selfVote, voteStatus } })
+          body: JSON.stringify({ name, comment, maxPlayers, playerId: localStorage.getItem(playerKey), nickname, options: { poison, bigWolf, authority, decider, lovers, betrayer, childFox, twoFoxes, cat, lastWords, openVote, commonTalkVisible, realTime, dayMinutes, nightMinutes, selfVote, voteStatus } })
         });
         const data = await res.json();
         if (!res.ok) {
