@@ -177,6 +177,9 @@ describe("render", () => {
     expect(html).toContain("Trip");
     expect(html).toContain("avatarFile");
     expect(html).toContain("image/png,image/jpeg,image/gif,image/webp");
+    expect(html).toContain("PNG/JPEG/GIF/WebP 512KiB以下");
+    expect(html).toContain("512 * 1024");
+    expect(html).toContain("頭像需小於 512KiB");
     expect(html).toContain("/api/assets/avatar");
     expect(html).toContain("removeAvatar");
     expect(html).toContain("刪頭像");
