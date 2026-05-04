@@ -13,6 +13,8 @@ import type {
 
 export const DAY_MS = 180_000;
 export const NIGHT_MS = 90_000;
+export const DEFAULT_DAY_MINUTES = DAY_MS / 60_000;
+export const DEFAULT_NIGHT_MINUTES = NIGHT_MS / 60_000;
 export const MAX_REVOTES = 1;
 const REFERENCE_ROLE_DECKS: Record<number, GamePlayer["role"][]> = {
   8: ["villager", "villager", "villager", "villager", "villager", "werewolf", "werewolf", "seer"],
@@ -48,6 +50,8 @@ export function createLobbyState(roomId: string): GameState {
     players: [],
     votes: {},
     openVote: false,
+    dayMs: DAY_MS,
+    nightMs: NIGHT_MS,
     revoteCount: 0,
     nightKills: {},
     divinations: {},
@@ -148,7 +152,10 @@ export function startGame(
     twoFoxes: false,
     cat: false,
     lastWords: false,
-    openVote: false
+    openVote: false,
+    realTime: false,
+    dayMinutes: DEFAULT_DAY_MINUTES,
+    nightMinutes: DEFAULT_NIGHT_MINUTES
   }
 ): GameState {
   if (state.phase !== "lobby") {
@@ -317,6 +324,8 @@ function startGameWithPlayers(state: GameState, players: GamePlayer[], now: numb
     players,
     votes: {},
     openVote: options.openVote,
+    dayMs: roomOptionDayMs(options),
+    nightMs: roomOptionNightMs(options),
     revoteCount: 0,
     nightKills: {},
     divinations: {},
@@ -324,7 +333,7 @@ function startGameWithPlayers(state: GameState, players: GamePlayer[], now: numb
     catRevives: {},
     lastWords: state.lastWords ?? {},
     mediumReading: undefined,
-    phaseEndsAt: new Date(now + DAY_MS).toISOString(),
+    phaseEndsAt: new Date(now + roomOptionDayMs(options)).toISOString(),
     log: [...state.log, "遊戲開始。", "第 1 日白天開始。"]
   };
 }
@@ -596,7 +605,7 @@ function resolveDay(state: GameState, now = Date.now()): GameState {
       ...state,
       votes: {},
       revoteCount: revoteCount + 1,
-      phaseEndsAt: new Date(now + DAY_MS).toISOString(),
+      phaseEndsAt: new Date(now + (state.dayMs ?? DAY_MS)).toISOString(),
       log: [...state.log, "投票結果平手，重新投票。"]
     };
   }
@@ -667,7 +676,7 @@ function withWinOrNextNight(state: GameState, now: number): GameState {
   return {
     ...state,
     phase: "night",
-    phaseEndsAt: new Date(now + NIGHT_MS).toISOString(),
+    phaseEndsAt: new Date(now + (state.nightMs ?? NIGHT_MS)).toISOString(),
     log: [...state.log, `第 ${state.day} 日夜晚開始。`]
   };
 }
@@ -683,9 +692,17 @@ function withWinOrNextDay(state: GameState, now: number): GameState {
     phase: "day",
     day,
     revoteCount: 0,
-    phaseEndsAt: new Date(now + DAY_MS).toISOString(),
+    phaseEndsAt: new Date(now + (state.dayMs ?? DAY_MS)).toISOString(),
     log: [...state.log, `第 ${day} 日白天開始。`]
   };
+}
+
+function roomOptionDayMs(options: RoomOptions): number {
+  return Math.max(1, options.realTime ? options.dayMinutes : DEFAULT_DAY_MINUTES) * 60_000;
+}
+
+function roomOptionNightMs(options: RoomOptions): number {
+  return Math.max(1, options.realTime ? options.nightMinutes : DEFAULT_NIGHT_MINUTES) * 60_000;
 }
 
 function endGame(state: GameState, winner: GameWinner): GameState {

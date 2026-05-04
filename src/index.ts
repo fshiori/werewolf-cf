@@ -1,5 +1,6 @@
 import { renderHome, renderRoom } from "./render";
 import { RoomDurableObject } from "./room";
+import { DEFAULT_DAY_MINUTES, DEFAULT_NIGHT_MINUTES } from "./game";
 import type { GameRecordSummary, LeaderboardEntry, PlayerStats, RoomEventSummary, RoomOptions, RoomSummary } from "./types";
 import { isRecord, validateNickname, validatePlayerId, validateRoomId, validateRoomName } from "./validation";
 
@@ -42,7 +43,10 @@ async function listRooms(env: Env): Promise<RoomSummary[]> {
 }
 
 function parseRoomOptions(optionRole: string): RoomOptions {
-  const roles = new Set(optionRole.split(/\s+/).filter(Boolean));
+  const tokens = optionRole.split(/\s+/).filter(Boolean);
+  const roles = new Set(tokens);
+  const realTimeToken = tokens.find((token) => token.startsWith("real_time:"));
+  const [, dayMinutes, nightMinutes] = realTimeToken?.split(":") ?? [];
   return {
     poison: roles.has("poison"),
     bigWolf: roles.has("wfbig"),
@@ -54,7 +58,10 @@ function parseRoomOptions(optionRole: string): RoomOptions {
     twoFoxes: roles.has("foxs"),
     cat: roles.has("cat"),
     lastWords: roles.has("will"),
-    openVote: roles.has("open_vote")
+    openVote: roles.has("open_vote"),
+    realTime: Boolean(realTimeToken),
+    dayMinutes: readMinutes(dayMinutes, DEFAULT_DAY_MINUTES),
+    nightMinutes: readMinutes(nightMinutes, DEFAULT_NIGHT_MINUTES)
   };
 }
 
@@ -70,7 +77,8 @@ function serializeRoomOptions(options: RoomOptions): string {
     options.twoFoxes ? "foxs" : "",
     options.cat ? "cat" : "",
     options.lastWords ? "will" : "",
-    options.openVote ? "open_vote" : ""
+    options.openVote ? "open_vote" : "",
+    options.realTime ? `real_time:${formatMinutes(options.dayMinutes)}:${formatMinutes(options.nightMinutes)}` : ""
   ].filter(Boolean).join(" ");
 }
 
@@ -87,7 +95,10 @@ function readRoomOptions(value: unknown): RoomOptions {
       twoFoxes: false,
       cat: false,
       lastWords: false,
-      openVote: false
+      openVote: false,
+      realTime: false,
+      dayMinutes: DEFAULT_DAY_MINUTES,
+      nightMinutes: DEFAULT_NIGHT_MINUTES
     };
   }
   return {
@@ -101,8 +112,20 @@ function readRoomOptions(value: unknown): RoomOptions {
     twoFoxes: value.twoFoxes === true,
     cat: value.cat === true,
     lastWords: value.lastWords === true,
-    openVote: value.openVote === true
+    openVote: value.openVote === true,
+    realTime: value.realTime === true,
+    dayMinutes: readMinutes(value.dayMinutes, DEFAULT_DAY_MINUTES),
+    nightMinutes: readMinutes(value.nightMinutes, DEFAULT_NIGHT_MINUTES)
   };
+}
+
+function readMinutes(value: unknown, fallback: number): number {
+  const minutes = typeof value === "number" ? value : typeof value === "string" ? Number(value) : Number.NaN;
+  return Number.isFinite(minutes) && minutes >= 1 && minutes <= 99 ? minutes : fallback;
+}
+
+function formatMinutes(value: number): string {
+  return String(readMinutes(value, DEFAULT_DAY_MINUTES));
 }
 
 async function roomExists(env: Env, roomId: string): Promise<boolean> {

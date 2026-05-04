@@ -20,7 +20,10 @@ describe("render", () => {
           twoFoxes: true,
           cat: true,
           lastWords: true,
-          openVote: true
+          openVote: true,
+          realTime: true,
+          dayMinutes: 5,
+          nightMinutes: 2
         }
       }
     ]);
@@ -30,6 +33,7 @@ describe("render", () => {
     expect(html).toContain("遊戲列表");
     expect(html).toContain("戰績排行榜");
     expect(html).toContain("建立村子");
+    expect(html).toContain("限時 5/2");
     expect(html).toContain("&lt;Test&gt;");
     expect(html).toContain("/room/room_abc");
     expect(html).toContain("/api/stats/leaderboard");
@@ -45,6 +49,9 @@ describe("render", () => {
     expect(html).toContain("optionCat");
     expect(html).toContain("optionLastWords");
     expect(html).toContain("optionOpenVote");
+    expect(html).toContain("optionRealTime");
+    expect(html).toContain("optionDayMinutes");
+    expect(html).toContain("optionNightMinutes");
     expect(html).toContain("20人以上埋毒者選項");
     expect(html).toContain("20人以上時大狼出場");
     expect(html).toContain("16人以上權力者出場");
@@ -56,7 +63,7 @@ describe("render", () => {
     expect(html).toContain("20人以上貓又登場");
     expect(html).toContain("生存中可留下死亡時公開的遺言");
     expect(html).toContain("白天公開目前投票目標");
-    expect(html).toContain("options: { poison, bigWolf, authority, decider, lovers, betrayer, childFox, twoFoxes, cat, lastWords, openVote }");
+    expect(html).toContain("options: { poison, bigWolf, authority, decider, lovers, betrayer, childFox, twoFoxes, cat, lastWords, openVote, realTime, dayMinutes, nightMinutes }");
     expect(html).toContain("埋毒");
     expect(html).toContain("大狼");
     expect(html).toContain("背德");
