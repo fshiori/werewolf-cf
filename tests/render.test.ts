@@ -43,6 +43,8 @@ describe("render", () => {
     expect(html).toContain("房主");
     expect(html).toContain("game.hostId !== currentPlayerId");
     expect(html).toContain("game.revoteCount");
+    expect(html).toContain("currentPlayerAlive");
+    expect(html).toContain("actorCanAct");
     expect(html).toContain("玩家列表");
     expect(html).toContain("能力發動 / 投票");
     expect(html).toContain("wolf_chat");
