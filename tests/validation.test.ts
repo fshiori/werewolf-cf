@@ -13,6 +13,7 @@ import {
   validateRoomId,
   validateRoomName,
   validateTrip,
+  validateTripExclusionReason,
   validateWishRole
 } from "../src/validation";
 
@@ -38,6 +39,12 @@ describe("validation", () => {
     expect(validateRoomComment("  Friendly village  ")).toBe("Friendly village");
     expect(validateRoomComment("   ")).toBe("");
     expect(() => validateRoomComment("x".repeat(121))).toThrow("Room comment is too long");
+  });
+
+  it("normalizes optional Trip exclusion reasons", () => {
+    expect(validateTripExclusionReason("  blocked  ")).toBe("blocked");
+    expect(validateTripExclusionReason("   ")).toBe("");
+    expect(() => validateTripExclusionReason("x".repeat(121))).toThrow("Trip exclusion reason is too long");
   });
 
   it("validates reference room capacities", () => {

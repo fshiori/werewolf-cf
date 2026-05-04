@@ -63,6 +63,14 @@ export function validateRoomComment(value: string): string {
   return comment;
 }
 
+export function validateTripExclusionReason(value: string): string {
+  const reason = value.trim();
+  if (reason.length > 120) {
+    throw new Error("Trip exclusion reason is too long");
+  }
+  return reason;
+}
+
 export function validateRoomCapacity(value: unknown): number {
   const capacity = typeof value === "number" ? value : typeof value === "string" ? Number(value) : Number.NaN;
   if (!ROOM_CAPACITIES.some((allowed) => allowed === capacity)) {

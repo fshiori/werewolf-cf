@@ -1,0 +1,5 @@
+CREATE TABLE IF NOT EXISTS excluded_trips (
+  trip_hash TEXT PRIMARY KEY,
+  reason TEXT NOT NULL DEFAULT '',
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);

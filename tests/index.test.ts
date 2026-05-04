@@ -384,6 +384,25 @@ describe("worker routes", () => {
     expect(String(runs[0].values[0])).toMatch(/^[0-9a-f]{64}$/);
   });
 
+  it("excludes Trip identities", async () => {
+    const env = envWithRooms([]);
+    const response = await worker.fetch(
+      new Request("http://example.test/api/trips/exclusions", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ trip: "ab12CD", reason: "blocked" })
+      }),
+      env
+    );
+    const runs = (env as unknown as { runs: Array<{ query: string; values: unknown[] }> }).runs;
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ excluded: true });
+    expect(runs[0].query).toContain("INSERT INTO excluded_trips");
+    expect(String(runs[0].values[0])).toMatch(/^[0-9a-f]{64}$/);
+    expect(runs[0].values[1]).toBe("blocked");
+  });
+
   it("returns 404 for formatted room ids missing from D1", async () => {
     const response = await worker.fetch(new Request("http://example.test/room/room_missing"), envWithRooms([]));
 
