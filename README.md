@@ -22,6 +22,12 @@ Run typecheck:
 npm run typecheck
 ```
 
+Check local Cloudflare binding configuration:
+
+```bash
+npm run check:wrangler
+```
+
 Start local Worker:
 
 ```bash
@@ -142,6 +148,7 @@ Run the same checks used for local development:
 npm test
 npm run typecheck
 git diff --check
+npm run check:wrangler -- --production
 ```
 
 Apply remote D1 migrations before deploying code that depends on new columns or tables:
