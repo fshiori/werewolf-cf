@@ -23,18 +23,18 @@ import {
 
 describe("messages", () => {
   it("builds joined messages", () => {
-    expect(buildJoinedMessage("room_abc", "player_1", [])).toEqual({
+    expect(buildJoinedMessage("room_abc", "player_1", [{ playerId: "player_1", nickname: "<Alice>" }])).toEqual({
       type: "joined",
       roomId: "room_abc",
       playerId: "player_1",
-      members: []
+      members: [{ playerId: "player_1", nickname: "&lt;Alice&gt;" }]
     });
   });
 
   it("builds presence messages", () => {
-    expect(buildPresenceMessage([{ playerId: "player_1", nickname: "Alice" }, { playerId: "player_gm", nickname: "GM", gm: true }])).toEqual({
+    expect(buildPresenceMessage([{ playerId: "player_1", nickname: "Alice" }, { playerId: "player_gm", nickname: "<GM>", gm: true }])).toEqual({
       type: "presence",
-      members: [{ playerId: "player_1", nickname: "Alice" }, { playerId: "player_gm", nickname: "GM", gm: true }]
+      members: [{ playerId: "player_1", nickname: "Alice" }, { playerId: "player_gm", nickname: "&lt;GM&gt;", gm: true }]
     });
   });
 

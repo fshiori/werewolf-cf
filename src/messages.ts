@@ -2,12 +2,19 @@ import { publicPlayers } from "./game";
 import type { ChildFoxDivinationResult, DivinationResult, GameState, MediumReading, PlayerRole, RoomMember, ServerMessage } from "./types";
 import { escapeHtml } from "./validation";
 
+function publicMembers(members: RoomMember[]): RoomMember[] {
+  return members.map((member) => ({
+    ...member,
+    nickname: escapeHtml(member.nickname)
+  }));
+}
+
 export function buildJoinedMessage(roomId: string, playerId: string, members: RoomMember[]): ServerMessage {
-  return { type: "joined", roomId, playerId, members };
+  return { type: "joined", roomId, playerId, members: publicMembers(members) };
 }
 
 export function buildPresenceMessage(members: RoomMember[]): ServerMessage {
-  return { type: "presence", members };
+  return { type: "presence", members: publicMembers(members) };
 }
 
 export function buildChatMessage(playerId: string, nickname: string, text: string): ServerMessage {
