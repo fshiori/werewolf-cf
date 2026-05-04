@@ -51,6 +51,7 @@ export function createLobbyState(roomId: string): GameState {
     nightKills: {},
     divinations: {},
     guards: {},
+    catRevives: {},
     log: ["等待玩家加入。"]
   };
 }
@@ -122,7 +123,8 @@ export function startGame(
     lovers: false,
     betrayer: false,
     childFox: false,
-    twoFoxes: false
+    twoFoxes: false,
+    cat: false
   }
 ): GameState {
   if (state.phase !== "lobby") {
@@ -255,6 +257,12 @@ function applyRoomOptions(players: GamePlayer[], options: RoomOptions): GamePlay
       nextPlayers = nextPlayers.map((player, index) => (index === foxIndex ? { ...player, role: "fox" } : player));
     }
   }
+  if (options.cat && nextPlayers.length >= 20) {
+    const catIndex = nextPlayers.findIndex((player) => player.role === "villager");
+    if (catIndex !== -1) {
+      nextPlayers = nextPlayers.map((player, index) => (index === catIndex ? { ...player, role: "cat" } : player));
+    }
+  }
   if (!options.poison || nextPlayers.length < 20) {
     return nextPlayers;
   }
@@ -287,6 +295,7 @@ function startGameWithPlayers(state: GameState, players: GamePlayer[], now: numb
     nightKills: {},
     divinations: {},
     guards: {},
+    catRevives: {},
     mediumReading: undefined,
     phaseEndsAt: new Date(now + DAY_MS).toISOString(),
     log: [...state.log, "遊戲開始。", "第 1 日白天開始。"]
@@ -307,7 +316,7 @@ export function castDayVote(state: GameState, voterId: string, targetId: string)
   return next;
 }
 
-export function castNightKill(state: GameState, actorId: string, targetId: string, now = Date.now()): GameState {
+export function castNightKill(state: GameState, actorId: string, targetId: string, now = Date.now(), random = Math.random): GameState {
   if (state.phase !== "night") {
     throw new Error("Night actions are only available at night");
   }
@@ -322,7 +331,7 @@ export function castNightKill(state: GameState, actorId: string, targetId: strin
 
   const next = { ...state, nightKills: { ...state.nightKills, [actorId]: targetId } };
   if (areNightActionsComplete(next)) {
-    return resolveNight(next, now);
+    return resolveNight(next, now, random);
   }
   return next;
 }
@@ -411,6 +420,36 @@ export function castGuard(state: GameState, actorId: string, targetId: string, n
   const next = { ...state, guards: { ...guards, [actorId]: target.playerId } };
   if (areNightActionsComplete(next)) {
     return resolveNight(next, now);
+  }
+  return next;
+}
+
+export function castCatRevive(state: GameState, actorId: string, targetId: string, now = Date.now(), random = Math.random): GameState {
+  if (state.phase !== "night") {
+    throw new Error("Cat revival is only available at night");
+  }
+  const actor = assertLivingPlayer(state, actorId);
+  if (actor.role !== "cat") {
+    throw new Error("Only cats can revive players");
+  }
+  if (state.day === 1) {
+    throw new Error("Cats cannot revive on the first night");
+  }
+  const catRevives = state.catRevives ?? {};
+  if (catRevives[actorId]) {
+    throw new Error("Cat revival is already used tonight");
+  }
+  if (actorId === targetId) {
+    throw new Error("Cats cannot revive themselves");
+  }
+  const target = state.players.find((candidate) => candidate.playerId === targetId);
+  if (!target || target.alive) {
+    throw new Error("Dead player is required");
+  }
+
+  const next = { ...state, catRevives: { ...catRevives, [actorId]: targetId } };
+  if (areNightActionsComplete(next)) {
+    return resolveNight(next, now, random);
   }
   return next;
 }
@@ -507,7 +546,9 @@ function resolveDay(state: GameState, now = Date.now()): GameState {
   let players = executedId
     ? state.players.map((player) => (player.playerId === executedId ? { ...player, alive: false } : player))
     : state.players;
-  const poisonTarget = executed?.role === "poison" ? firstLivingPlayer(players, (player) => player.playerId !== executed.playerId) : undefined;
+  const poisonTarget = executed?.role === "poison" || executed?.role === "cat"
+    ? firstLivingPlayer(players, (player) => player.playerId !== executed.playerId)
+    : undefined;
   if (poisonTarget) {
     players = players.map((player) => (player.playerId === poisonTarget.playerId ? { ...player, alive: false } : player));
   }
@@ -523,32 +564,38 @@ function resolveDay(state: GameState, now = Date.now()): GameState {
   const log = [
     ...state.log,
     executed ? `${executed.nickname} 被投票處決。` : "白天沒有共識，無人被處決。",
-    ...(poisonTarget ? [`${poisonTarget.nickname} 被埋毒者牽連死亡。`] : [])
+    ...(poisonTarget ? [`${poisonTarget.nickname} 被${executed?.role === "cat" ? "貓又" : "埋毒者"}牽連死亡。`] : [])
   ];
   return withWinOrNextNight({ ...clearActionsForDeadPlayers({ ...state, players }), votes: {}, revoteCount: 0, mediumReading, log }, now);
 }
 
-function resolveNight(state: GameState, now = Date.now()): GameState {
+function resolveNight(state: GameState, now = Date.now(), random = Math.random): GameState {
   const killedId = pickTopActionTarget(state.nightKills);
   const protectedIds = new Set(Object.values(state.guards ?? {}));
   const protectedKill = killedId ? protectedIds.has(killedId) : false;
   const attacked = killedId ? state.players.find((player) => player.playerId === killedId) : undefined;
   const foxAttack = attacked?.role === "fox";
-  let players = killedId && !protectedKill && !foxAttack
+  const catSurvivesAttack = attacked?.role === "cat" && !protectedKill && random() >= 0.9;
+  let players = killedId && !protectedKill && !foxAttack && !catSurvivesAttack
     ? state.players.map((player) => (player.playerId === killedId ? { ...player, alive: false } : player))
     : state.players;
-  const killed = killedId && !protectedKill && !foxAttack ? attacked : undefined;
-  const poisonWolf = killed?.role === "poison" ? firstLivingPlayer(players, (player) => isWerewolfRole(player.role)) : undefined;
+  const killed = killedId && !protectedKill && !foxAttack && !catSurvivesAttack ? attacked : undefined;
+  const poisonWolf = killed?.role === "poison" || killed?.role === "cat" ? firstLivingPlayer(players, (player) => isWerewolfRole(player.role)) : undefined;
   if (poisonWolf) {
     players = players.map((player) => (player.playerId === poisonWolf.playerId ? { ...player, alive: false } : player));
+  }
+  const catRevived = catSurvivesAttack ? undefined : pickCatRevival(state, players, random);
+  if (catRevived) {
+    players = players.map((player) => (player.playerId === catRevived.playerId ? { ...player, alive: true } : player));
   }
   players = applyLinkedDeaths(players);
   const log = [
     ...state.log,
-    killed ? `${killed.nickname} 在夜晚死亡。` : foxAttack ? "妖狐被襲擊但沒有死亡。" : "夜晚平安過去。",
-    ...(poisonWolf ? [`${poisonWolf.nickname} 被埋毒者牽連死亡。`] : [])
+    killed ? `${killed.nickname} 在夜晚死亡。` : foxAttack ? "妖狐被襲擊但沒有死亡。" : catSurvivesAttack ? "貓又被襲擊但沒有死亡。" : "夜晚平安過去。",
+    ...(poisonWolf ? [`${poisonWolf.nickname} 被${killed?.role === "cat" ? "貓又" : "埋毒者"}牽連死亡。`] : []),
+    ...(catRevived ? [`${catRevived.nickname} 被貓又復活。`] : [])
   ];
-  return withWinOrNextDay({ ...clearActionsForDeadPlayers({ ...state, players }), nightKills: {}, divinations: {}, guards: {}, log }, now);
+  return withWinOrNextDay({ ...clearActionsForDeadPlayers({ ...state, players }), nightKills: {}, divinations: {}, guards: {}, catRevives: {}, log }, now);
 }
 
 function withWinOrNextNight(state: GameState, now: number): GameState {
@@ -591,6 +638,7 @@ function endGame(state: GameState, winner: GameWinner): GameState {
     nightKills: {},
     divinations: {},
     guards: {},
+    catRevives: {},
     mediumReading: undefined,
     log: [
       ...state.log,
@@ -664,6 +712,17 @@ function livingGuards(state: GameState): GamePlayer[] {
   return livingPlayers(state).filter((player) => player.role === "guard");
 }
 
+function pickCatRevival(state: GameState, players: GamePlayer[], random: () => number): GamePlayer | undefined {
+  for (const [actorId, targetId] of Object.entries(state.catRevives ?? {})) {
+    const actor = players.find((player) => player.playerId === actorId);
+    const target = players.find((player) => player.playerId === targetId);
+    if (actor?.alive && actor.role === "cat" && target && !target.alive && random() >= 0.9) {
+      return target;
+    }
+  }
+  return undefined;
+}
+
 function areNightActionsComplete(state: GameState): boolean {
   return (
     Object.keys(state.nightKills).length >= livingWerewolves(state).length &&
@@ -686,7 +745,8 @@ function clearActionsForDeadPlayers(state: GameState): GameState {
     votes: keepLivingActorActions(state.votes, livingIds),
     nightKills: keepLivingActorActions(state.nightKills, livingIds),
     divinations: keepLivingActorActions(state.divinations, livingIds),
-    guards: keepLivingActorActions(state.guards ?? {}, livingIds)
+    guards: keepLivingActorActions(state.guards ?? {}, livingIds),
+    catRevives: keepLivingActorActions(state.catRevives ?? {}, livingIds)
   };
 }
 
