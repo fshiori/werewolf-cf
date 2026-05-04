@@ -673,6 +673,7 @@ export function renderProtocol(): string {
         <tr><td><strong>　型別來源：</strong></td><td><code>src/types.ts</code></td></tr>
         <tr><td><strong>　驗證來源：</strong></td><td><code>src/validation.ts</code></td></tr>
         <tr><td><strong>　執行來源：</strong></td><td><code>src/room.ts</code></td></tr>
+        <tr><td><strong>　JSON：</strong></td><td><code>/api/protocol</code></td></tr>
         <tr><td><strong>　文件：</strong></td><td><code>README.md#websocket-protocol</code></td></tr>
       </table>
     </fieldset>

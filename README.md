@@ -57,6 +57,7 @@ Runtime and public metadata:
 
 - `GET /api/health`: Worker, D1, KV, Durable Object, and R2 binding health.
 - `GET /api/version`: Application version, runtime, bindings, and capability metadata.
+- `GET /api/protocol`: Machine-readable WebSocket route, message, and private-channel metadata.
 - `GET /api/config`: Public runtime config summary.
 
 Rooms and records:
