@@ -161,6 +161,7 @@ Apply remote D1 migrations before deploying code that depends on new columns or 
 
 ```bash
 npx wrangler d1 migrations apply werewolf-cf --remote
+npm run check:d1-schema:remote
 ```
 
 Deploy:
