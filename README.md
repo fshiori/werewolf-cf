@@ -83,6 +83,55 @@ Trip and avatar management:
 - `DELETE /api/assets/avatar`: Remove the current player's avatar from R2.
 - `GET /assets/avatar/:playerId`: Read a player's avatar.
 
+## WebSocket Protocol
+
+Room WebSockets connect through the room Durable Object. The client opens:
+
+```text
+GET /ws/room/:roomId
+Upgrade: websocket
+```
+
+Every frame is a JSON object with a `type` string. The first client frame must be `join`; every other command returns an `error` server message until the socket has joined.
+
+Client messages:
+
+- `join`: `{ "type": "join", "playerId": "player_...", "nickname": "...", "trip": "Abc123", "wishRole": "seer" }`. `trip` is required only for Trip-limited rooms. `wishRole` is used only when wished roles are enabled.
+- `chat`: public chat, `{ "type": "chat", "text": "..." }`. During the game, only living players and GM may use it.
+- `wolf_chat`, `fox_chat`, `common_chat`, `lovers_chat`: private night channels for living members of the matching side or pair.
+- `dead_chat`: private dead-player chat during an active game.
+- `set_last_words`: `{ "type": "set_last_words", "text": "..." }`, available only when last words are enabled.
+- `start_game`: room host or GM starts the game from lobby.
+- `kick_player`: `{ "type": "kick_player", "targetPlayerId": "player_..." }`, lobby-only host or GM kick.
+- `vote`: day vote, `{ "type": "vote", "targetPlayerId": "player_..." }`.
+- `night_kill`: werewolf night action, `{ "type": "night_kill", "targetPlayerId": "player_..." }`.
+- `divine`: seer night action, `{ "type": "divine", "targetPlayerId": "player_..." }`.
+- `child_fox_divine`: child fox night action, `{ "type": "child_fox_divine", "targetPlayerId": "player_..." }`.
+- `guard`: guard night action, `{ "type": "guard", "targetPlayerId": "player_..." }`.
+- `cat_revive`: cat revive action, `{ "type": "cat_revive", "targetPlayerId": "player_..." }`.
+- `gm_chat`: GM broadcast chat, `{ "type": "gm_chat", "text": "..." }`.
+- `gm_whisper`: GM private message to one player, `{ "type": "gm_whisper", "targetPlayerId": "player_...", "text": "..." }`.
+- `gm_advance_phase`: GM forces the current day or night phase to advance.
+- `gm_end_game`: GM adjudicates a winner, `{ "type": "gm_end_game", "winner": "villagers" }`.
+- `gm_set_alive`: GM changes life state, `{ "type": "gm_set_alive", "targetPlayerId": "player_...", "alive": true }`.
+- `gm_set_role`: GM changes role, `{ "type": "gm_set_role", "targetPlayerId": "player_...", "role": "seer" }`.
+- `gm_set_flag`: GM changes `authority`, `decider`, or `lover`, `{ "type": "gm_set_flag", "targetPlayerId": "player_...", "flag": "authority", "enabled": true }`.
+
+Server messages:
+
+- `joined`: confirms room id, player id, and current members.
+- `presence`: current connected members, including `gm: true` for GM connections.
+- `game_state`: public phase, day, players, vote visibility, winner, timer, and log state.
+- `role`: sent privately after game start with the receiver's role and visible partners.
+- `chat`, `wolf_chat`, `fox_chat`, `common_chat`, `lovers_chat`, `dead_chat`, `gm_chat`, `gm_whisper`: chat events with escaped nickname/text and `sentAt`.
+- `action_ack`: confirms `vote`, `night_kill`, `guard`, `child_fox_divine`, `cat_revive`, or `kick_player`.
+- `divination_result`, `child_fox_result`, `medium_result`: private role result messages.
+- `revealed_roles`: sent to dead players when dead-role visibility is enabled, and to everyone after the game ends.
+- `last_words_ack`: confirms saved last words.
+- `error`: validation, permission, phase, or rule failure; the socket stays open unless a kick closes it.
+
+Private channel delivery is enforced inside the Durable Object. Werewolf, fox, common, lovers, dead-player, GM-only, and GM-whisper messages are filtered per socket before sending.
+
 ## Deployment
 
 Run the same checks used for local development:
