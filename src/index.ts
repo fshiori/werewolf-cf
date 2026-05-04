@@ -291,7 +291,64 @@ function getVersion(): Response {
       runtime: "Cloudflare Workers",
       language: "TypeScript",
       bindings: ["ROOM_DO", "DB", "ASSETS", "CONFIG"],
-      capabilities: ["rooms", "websockets", "game_loop", "trip_identity", "gm_controls", "player_stats", "avatars", "runtime_config"]
+      capabilities: ["rooms", "websockets", "websocket_protocol", "game_loop", "trip_identity", "gm_controls", "player_stats", "avatars", "runtime_config"]
+    }
+  });
+}
+
+function getProtocol(): Response {
+  return json({
+    websocket: {
+      path: "/ws/room/:roomId",
+      firstClientMessage: "join",
+      clientMessages: [
+        "join",
+        "chat",
+        "wolf_chat",
+        "fox_chat",
+        "common_chat",
+        "lovers_chat",
+        "dead_chat",
+        "gm_chat",
+        "gm_whisper",
+        "gm_advance_phase",
+        "gm_end_game",
+        "gm_set_alive",
+        "gm_set_role",
+        "gm_set_flag",
+        "start_game",
+        "kick_player",
+        "vote",
+        "night_kill",
+        "divine",
+        "child_fox_divine",
+        "guard",
+        "cat_revive",
+        "set_last_words"
+      ],
+      serverMessages: [
+        "joined",
+        "presence",
+        "chat",
+        "wolf_chat",
+        "fox_chat",
+        "common_chat",
+        "lovers_chat",
+        "dead_chat",
+        "gm_chat",
+        "gm_whisper",
+        "revealed_roles",
+        "divination_result",
+        "child_fox_result",
+        "medium_result",
+        "last_words_ack",
+        "action_ack",
+        "game_state",
+        "role",
+        "error"
+      ],
+      privateChannels: ["wolf_chat", "fox_chat", "common_chat", "lovers_chat", "dead_chat", "gm_chat", "gm_whisper"],
+      enforcedBy: "RoomDurableObject"
     }
   });
 }
@@ -731,6 +788,10 @@ export default {
 
     if (request.method === "GET" && url.pathname === "/api/version") {
       return getVersion();
+    }
+
+    if (request.method === "GET" && url.pathname === "/api/protocol") {
+      return getProtocol();
     }
 
     if (request.method === "GET" && url.pathname === "/rules") {
