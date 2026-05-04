@@ -147,6 +147,13 @@ describe("render", () => {
     expect(html).not.toContain("<b>Maintenance</b>");
   });
 
+  it("renders maintenance mode state on home", () => {
+    const html = renderHome([], "Maintenance", true);
+
+    expect(html).toContain("目前維護中，暫停建立新村。");
+    expect(html).toContain('<button id="createRoom" disabled>建立房間</button>');
+  });
+
   it("renders room page with websocket client script", () => {
     const html = renderRoom("room_abc");
 

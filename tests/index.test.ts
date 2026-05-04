@@ -567,6 +567,38 @@ describe("worker routes", () => {
     expect(body).not.toContain("<b>Runtime notice</b>");
   });
 
+  it("renders maintenance mode on home from KV config", async () => {
+    const response = await worker.fetch(
+      new Request("http://example.test/"),
+      envWithRooms([], {
+        maintenance_mode: "true"
+      })
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.text();
+    expect(body).toContain("目前維護中，暫停建立新村。");
+    expect(body).toContain('<button id="createRoom" disabled>建立房間</button>');
+  });
+
+  it("rejects room creation during maintenance mode", async () => {
+    const response = await worker.fetch(
+      new Request("http://example.test/api/rooms", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          name: "Maintenance Test",
+          playerId: "player_owner",
+          nickname: "Owner"
+        })
+      }),
+      envWithRooms([], { maintenance_mode: "true" })
+    );
+
+    expect(response.status).toBe(503);
+    expect(await response.json()).toEqual({ error: "Server is under maintenance" });
+  });
+
   it("returns public runtime config from KV", async () => {
     const response = await worker.fetch(
       new Request("http://example.test/api/config"),
