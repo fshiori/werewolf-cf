@@ -140,7 +140,7 @@ Server messages:
 - `presence`: current connected members, including `gm: true` for GM connections.
 - `game_state`: public phase, day, players, vote visibility, winner, timer, and log state.
 - `role`: sent privately after game start with the receiver's role and visible partners.
-- `chat`, `wolf_chat`, `fox_chat`, `common_chat`, `lovers_chat`, `dead_chat`, `gm_chat`, `gm_whisper`: chat events with escaped nickname/text and `sentAt`.
+- `chat`, `wolf_chat`, `fox_chat`, `common_chat`, `lovers_chat`, `dead_chat`, `gm_chat`, `gm_whisper`: chat events with escaped nickname/text and `sentAt`. When `commonTalkVisible` is enabled, living non-common players and dead common partners receive the same `common_chat` event as an anonymous public voice with `playerId: "common_voice"` and nickname `共有者的聲音`.
 - `action_ack`: confirms `vote`, `night_kill`, `guard`, `child_fox_divine`, `cat_revive`, or `kick_player`.
 - `divination_result`, `child_fox_result`, `medium_result`: private role result messages.
 - `revealed_roles`: sent to dead players when dead-role visibility is enabled, and to everyone after the game ends.

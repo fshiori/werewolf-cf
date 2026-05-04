@@ -335,6 +335,7 @@ describe("render", () => {
     expect(html).toContain("Server Messages");
     expect(html).toContain("game_state");
     expect(html).toContain("revealed_roles");
+    expect(html).toContain("common_voice");
     expect(html).toContain("/api/protocol");
     expect(html).toContain("README.md#websocket-protocol");
   });
