@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   canJoinRoomState,
   canStartGame,
+  canUseCommonChannel,
   canUseFoxChannel,
   canUsePublicChat,
   canUseWerewolfChannel,
@@ -778,6 +779,21 @@ describe("game", () => {
     expect(canUseFoxChannel(night, "player_4")).toBe(false);
     expect(canUseFoxChannel(night, "player_5")).toBe(false);
     expect(canUseFoxChannel({ ...night, phase: "day" }, "player_1")).toBe(false);
+  });
+
+  it("allows only living common partners to use the common channel at night", () => {
+    const night = activeState("night", [
+      { playerId: "player_1", nickname: "Common A", role: "common", alive: true },
+      { playerId: "player_2", nickname: "Common B", role: "common", alive: true },
+      { playerId: "player_3", nickname: "Villager", role: "villager", alive: true },
+      { playerId: "player_4", nickname: "Dead Common", role: "common", alive: false }
+    ]);
+
+    expect(canUseCommonChannel(night, "player_1")).toBe(true);
+    expect(canUseCommonChannel(night, "player_2")).toBe(true);
+    expect(canUseCommonChannel(night, "player_3")).toBe(false);
+    expect(canUseCommonChannel(night, "player_4")).toBe(false);
+    expect(canUseCommonChannel({ ...night, phase: "day" }, "player_1")).toBe(false);
   });
 
   it("allows public chat in lobby and after end but restricts dead players during active phases", () => {

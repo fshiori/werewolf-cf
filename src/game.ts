@@ -101,6 +101,11 @@ export function canUseFoxChannel(state: GameState, playerId: string): boolean {
   return state.phase === "night" && player?.alive === true && player.role === "fox";
 }
 
+export function canUseCommonChannel(state: GameState, playerId: string): boolean {
+  const player = state.players.find((candidate) => candidate.playerId === playerId);
+  return state.phase === "night" && player?.alive === true && player.role === "common";
+}
+
 export function canUsePublicChat(state: GameState, playerId: string): boolean {
   if (state.phase === "lobby" || state.phase === "ended") {
     return true;

@@ -384,6 +384,7 @@ export function renderRoom(roomId: string): string {
                 <button id="sendChat">送出</button>
                 <button id="sendWolfChat" disabled>狼頻</button>
                 <button id="sendFoxChat" disabled>狐頻</button>
+                <button id="sendCommonChat" disabled>共有頻</button>
               </td>
             </tr>
           </table>
@@ -504,6 +505,8 @@ export function renderRoom(roomId: string): string {
             append("<font color='#cc0000'>[狼頻]</font> <b>" + msg.nickname + "</b>: " + msg.text);
           } else if (msg.type === "fox_chat") {
             append("<font color='#990099'>[狐頻]</font> <b>" + msg.nickname + "</b>: " + msg.text);
+          } else if (msg.type === "common_chat") {
+            append("<font color='#996633'>[共有頻]</font> <b>" + msg.nickname + "</b>: " + msg.text);
           } else if (msg.type === "divination_result") {
             const result = msg.result === "werewolf" ? "狼" : "人";
             append("<font color='#660099'>[占卜]</font> " + msg.targetNickname + " 是「" + result + "」。");
@@ -555,6 +558,13 @@ export function renderRoom(roomId: string): string {
         const input = document.querySelector("#chatText");
         if (ws && ws.readyState === WebSocket.OPEN) {
           ws.send(JSON.stringify({ type: "fox_chat", text: input.value }));
+          input.value = "";
+        }
+      });
+      document.querySelector("#sendCommonChat").addEventListener("click", () => {
+        const input = document.querySelector("#chatText");
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ type: "common_chat", text: input.value }));
           input.value = "";
         }
       });
@@ -623,6 +633,7 @@ export function renderRoom(roomId: string): string {
         document.querySelector("#startGame").disabled = game.phase !== "lobby" || game.hostId !== currentPlayerId;
         document.querySelector("#sendWolfChat").disabled = !(game.phase === "night" && isWolfRole(role) && currentPlayerAlive);
         document.querySelector("#sendFoxChat").disabled = !(game.phase === "night" && role === "fox" && currentPlayerAlive);
+        document.querySelector("#sendCommonChat").disabled = !(game.phase === "night" && role === "common" && currentPlayerAlive);
         const players = document.querySelector("#players");
         const playerGrid = document.querySelector("#playerGrid");
         players.innerHTML = "";

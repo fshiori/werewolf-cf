@@ -40,6 +40,16 @@ export function buildFoxChatMessage(playerId: string, nickname: string, text: st
   };
 }
 
+export function buildCommonChatMessage(playerId: string, nickname: string, text: string): ServerMessage {
+  return {
+    type: "common_chat",
+    playerId,
+    nickname: escapeHtml(nickname),
+    text: escapeHtml(text),
+    sentAt: new Date().toISOString()
+  };
+}
+
 export function buildGameStateMessage(state: GameState): ServerMessage {
   return {
     type: "game_state",

@@ -103,6 +103,13 @@ export function parseClientMessage(raw: string): ClientMessage {
     return { type: "fox_chat", text: parsed.text };
   }
 
+  if (parsed.type === "common_chat") {
+    if (typeof parsed.text !== "string") {
+      throw new Error("Invalid common chat message");
+    }
+    return { type: "common_chat", text: parsed.text };
+  }
+
   if (parsed.type === "start_game") {
     return { type: "start_game" };
   }
