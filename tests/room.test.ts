@@ -361,6 +361,62 @@ describe("RoomDurableObject", () => {
     expect(otherMessages).toEqual([]);
   });
 
+  it("rejects GM control websocket commands from non-GM sockets", async () => {
+    const game: GameState = {
+      roomId: "room_abc",
+      phase: "day",
+      day: 1,
+      players: [
+        { playerId: "player_villager", nickname: "Villager", role: "villager", alive: true },
+        { playerId: "player_target", nickname: "Target", role: "werewolf", alive: true }
+      ],
+      votes: {},
+      openVote: false,
+      commonTalkVisible: false,
+      deadRoleVisible: false,
+      wishRole: false,
+      dummyBoy: false,
+      dayMs: 180_000,
+      nightMs: 90_000,
+      selfVote: false,
+      voteStatus: false,
+      revoteCount: 0,
+      nightKills: {},
+      divinations: {},
+      guards: {},
+      catRevives: {},
+      lastWords: {},
+      log: []
+    };
+    const cases = [
+      { command: { type: "gm_advance_phase" }, message: "Only the GM can advance phases" },
+      { command: { type: "gm_end_game", winner: "villagers" }, message: "Only the GM can adjudicate games" },
+      {
+        command: { type: "gm_set_alive", targetPlayerId: "player_target", alive: false },
+        message: "Only the GM can adjust life state"
+      },
+      {
+        command: { type: "gm_set_role", targetPlayerId: "player_target", role: "seer" },
+        message: "Only the GM can adjust roles"
+      },
+      {
+        command: { type: "gm_set_flag", targetPlayerId: "player_target", flag: "lover", enabled: true },
+        message: "Only the GM can adjust player flags"
+      }
+    ];
+
+    for (const testCase of cases) {
+      const room = roomObject(game);
+      const messages: SentMessage[] = [];
+      const socket = fakeSocket(messages);
+      connect(room, socket, "player_villager", "Villager");
+
+      await sendRaw(room, socket, JSON.stringify(testCase.command));
+
+      expect(messages).toEqual([{ type: "error", message: testCase.message }]);
+    }
+  });
+
   it("sends only each socket's own role message", () => {
     const game: GameState = {
       roomId: "room_abc",
