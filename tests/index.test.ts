@@ -1267,4 +1267,22 @@ describe("worker routes", () => {
     expect(download.status).toBe(404);
     expect(await download.text()).toBe("Avatar not found");
   });
+
+  it("rejects oversized avatars", async () => {
+    const env = envWithRooms([]);
+    const form = new FormData();
+    form.set("playerId", "player_avatar");
+    form.set("avatar", new File([new Uint8Array(512 * 1024 + 1)], "avatar.png", { type: "image/png" }));
+
+    const upload = await worker.fetch(
+      new Request("http://example.test/api/assets/avatar", {
+        method: "POST",
+        body: form
+      }),
+      env
+    );
+
+    expect(upload.status).toBe(400);
+    expect(await upload.json()).toEqual({ error: "Avatar is too large" });
+  });
 });
