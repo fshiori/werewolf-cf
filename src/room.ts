@@ -257,7 +257,10 @@ export class RoomDurableObject {
     if (!player || gameState.phase === "lobby") {
       return;
     }
-    this.send(socket, buildRoleMessage(player.role, wolvesForPlayer(gameState, player.playerId), commonsForPlayer(gameState, player.playerId)));
+    this.send(
+      socket,
+      buildRoleMessage(player.role, wolvesForPlayer(gameState, player.playerId), commonsForPlayer(gameState, player.playerId), player.authority === true)
+    );
   }
 
   private sendMediumResults(gameState: GameState): void {
@@ -326,6 +329,6 @@ export class RoomDurableObject {
       .bind(this.roomId)
       .first<{ option_role: string }>();
     const roles = new Set((row?.option_role ?? "").split(/\s+/).filter(Boolean));
-    return { poison: roles.has("poison"), bigWolf: roles.has("wfbig") };
+    return { poison: roles.has("poison"), bigWolf: roles.has("wfbig"), authority: roles.has("authority"), decider: roles.has("decide") };
   }
 }

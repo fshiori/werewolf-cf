@@ -179,7 +179,7 @@ describe("game", () => {
 
   it("applies the poison room option in twenty-player games", () => {
     const normal = startGame(numberedLobby(20), 0, () => 0);
-    const withPoison = startGame(numberedLobby(20), 0, () => 0, { poison: true, bigWolf: false });
+    const withPoison = startGame(numberedLobby(20), 0, () => 0, { poison: true, bigWolf: false, authority: false, decider: false });
 
     expect(normal.players.filter((player) => player.role === "poison")).toHaveLength(0);
     expect(normal.players.filter((player) => player.role === "werewolf")).toHaveLength(3);
@@ -191,7 +191,7 @@ describe("game", () => {
   });
 
   it("applies the big wolf room option in twenty-player games", () => {
-    const game = startGame(numberedLobby(20), 0, () => 0, { poison: false, bigWolf: true });
+    const game = startGame(numberedLobby(20), 0, () => 0, { poison: false, bigWolf: true, authority: false, decider: false });
 
     expect(game.players.filter((player) => player.role === "big_wolf")).toHaveLength(1);
     expect(game.players.filter((player) => player.role === "werewolf")).toHaveLength(2);
@@ -200,6 +200,51 @@ describe("game", () => {
       { playerId: "player_13", nickname: "Player 13" },
       { playerId: "player_14", nickname: "Player 14" }
     ]);
+  });
+
+  it("applies authority and decider room options in sixteen-player games", () => {
+    const game = startGame(numberedLobby(16), 0, () => 0, {
+      poison: false,
+      bigWolf: false,
+      authority: true,
+      decider: true
+    });
+
+    expect(game.players.find((player) => player.authority)?.playerId).toBe("player_1");
+    expect(game.players.find((player) => player.decider)?.playerId).toBe("player_2");
+  });
+
+  it("counts authority votes as two votes", () => {
+    let game = activeState("day", [
+      { playerId: "player_1", nickname: "Authority", role: "villager", alive: true, authority: true },
+      { playerId: "player_2", nickname: "Bob", role: "villager", alive: true },
+      { playerId: "player_3", nickname: "Carol", role: "villager", alive: true },
+      { playerId: "player_4", nickname: "Dave", role: "werewolf", alive: true }
+    ]);
+
+    game = castDayVote(game, "player_1", "player_4");
+    game = castDayVote(game, "player_2", "player_3");
+    game = castDayVote(game, "player_3", "player_2");
+    game = castDayVote(game, "player_4", "player_1");
+
+    expect(game.players.find((player) => player.playerId === "player_4")?.alive).toBe(false);
+  });
+
+  it("uses decider votes to resolve tied executions", () => {
+    let game = activeState("day", [
+      { playerId: "player_1", nickname: "Decider", role: "villager", alive: true, decider: true },
+      { playerId: "player_2", nickname: "Bob", role: "villager", alive: true },
+      { playerId: "player_3", nickname: "Carol", role: "villager", alive: true },
+      { playerId: "player_4", nickname: "Dave", role: "werewolf", alive: true }
+    ]);
+
+    game = castDayVote(game, "player_1", "player_3");
+    game = castDayVote(game, "player_2", "player_3");
+    game = castDayVote(game, "player_3", "player_4");
+    game = castDayVote(game, "player_4", "player_4");
+
+    expect(game.revoteCount).toBe(0);
+    expect(game.players.find((player) => player.playerId === "player_3")?.alive).toBe(false);
   });
 
   it("moves from completed day vote to night", () => {
