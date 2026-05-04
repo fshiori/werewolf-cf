@@ -16,8 +16,8 @@ Latest automated rerun:
 
 - Date: 2026-05-04
 - `npm test`
-  - Output: `6 passed (6)` test files
-  - Output: `196 passed (196)` tests
+  - Output: `7 passed (7)` test files
+  - Output: `199 passed (199)` tests
   - Files:
     - `tests/game.test.ts`
     - `tests/index.test.ts`
@@ -25,6 +25,7 @@ Latest automated rerun:
     - `tests/messages.test.ts`
     - `tests/render.test.ts`
     - `tests/room.test.ts`
+    - `tests/wrangler-config.test.mjs`
   - Result: passed
 - `npm run typecheck`
   - Output: no TypeScript errors
