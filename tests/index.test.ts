@@ -12,7 +12,19 @@ type MockPlayerStats = {
   losses: number;
 };
 
-function envWithRooms(roomIds: string[], config: Record<string, string> = {}, stats: Record<string, MockPlayerStats> = {}): Env {
+type MockGameRecord = {
+  id: number;
+  room_id: string;
+  result_json: string;
+  created_at: string;
+};
+
+function envWithRooms(
+  roomIds: string[],
+  config: Record<string, string> = {},
+  stats: Record<string, MockPlayerStats> = {},
+  records: Record<string, MockGameRecord[]> = {}
+): Env {
   const assets = new Map<string, StoredAsset>();
 
   return {
@@ -26,6 +38,12 @@ function envWithRooms(roomIds: string[], config: Record<string, string> = {}, st
                   return stats[value] ?? null;
                 }
                 return roomIds.includes(value) ? { id: value } : null;
+              },
+              async all() {
+                if (query.includes("FROM game_records")) {
+                  return { results: records[value] ?? [] };
+                }
+                return { results: [] };
               },
               async run() {
                 return {};
@@ -141,6 +159,46 @@ describe("worker routes", () => {
         losses: 0
       }
     });
+  });
+
+  it("returns game records for existing rooms", async () => {
+    const response = await worker.fetch(
+      new Request("http://example.test/api/rooms/room_records/records"),
+      envWithRooms(
+        ["room_records"],
+        {},
+        {},
+        {
+          room_records: [
+            {
+              id: 1,
+              room_id: "room_records",
+              result_json: '{"winner":"villagers","day":3}',
+              created_at: "2026-05-04 04:00:00"
+            }
+          ]
+        }
+      )
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      records: [
+        {
+          id: 1,
+          roomId: "room_records",
+          result: { winner: "villagers", day: 3 },
+          createdAt: "2026-05-04 04:00:00"
+        }
+      ]
+    });
+  });
+
+  it("returns 404 for game records from missing rooms", async () => {
+    const response = await worker.fetch(new Request("http://example.test/api/rooms/room_missing/records"), envWithRooms([]));
+
+    expect(response.status).toBe(404);
+    expect(await response.json()).toEqual({ error: "Room not found" });
   });
 
   it("stores uploaded avatar images in R2 and serves them back", async () => {

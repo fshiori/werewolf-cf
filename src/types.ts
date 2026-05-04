@@ -50,6 +50,13 @@ export interface PlayerStats {
   losses: number;
 }
 
+export interface GameRecordSummary {
+  id: number;
+  roomId: string;
+  result: unknown;
+  createdAt: string;
+}
+
 export interface GameState {
   roomId: string;
   phase: GamePhase;
