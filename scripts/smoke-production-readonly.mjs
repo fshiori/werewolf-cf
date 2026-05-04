@@ -46,7 +46,7 @@ const checks = [
     path: "/api/protocol",
     kind: "json",
     validate(value) {
-      return value?.path === "/ws/room/:roomId" && value?.firstClientMessage === "join";
+      return value?.websocket?.path === "/ws/room/:roomId" && value?.websocket?.firstClientMessage === "join";
     },
     expected: "websocket protocol metadata"
   },
@@ -54,7 +54,7 @@ const checks = [
     path: "/api/config",
     kind: "json",
     validate(value) {
-      return typeof value?.maintenanceMode === "boolean";
+      return typeof value?.config?.maintenanceMode === "boolean";
     },
     expected: "maintenanceMode boolean"
   },
