@@ -1150,6 +1150,53 @@ describe("RoomDurableObject", () => {
     }
   });
 
+  it("rejects kick websocket commands after the game starts", async () => {
+    const game: GameState = {
+      roomId: "room_abc",
+      phase: "day",
+      day: 1,
+      hostId: "player_host",
+      players: [
+        { playerId: "player_host", nickname: "Host", role: "villager", alive: true },
+        { playerId: "player_target", nickname: "Target", role: "villager", alive: true },
+        { playerId: "player_other", nickname: "Other", role: "werewolf", alive: true }
+      ],
+      votes: {},
+      openVote: false,
+      commonTalkVisible: false,
+      deadRoleVisible: false,
+      wishRole: false,
+      dummyBoy: false,
+      dayMs: 180_000,
+      nightMs: 90_000,
+      selfVote: false,
+      voteStatus: false,
+      revoteCount: 0,
+      nightKills: {},
+      divinations: {},
+      guards: {},
+      catRevives: {},
+      lastWords: {},
+      log: []
+    };
+
+    const cases = [
+      { playerId: "player_host", nickname: "Host", gm: false, message: "Only the room host or GM can kick players" },
+      { playerId: "player_gm", nickname: "GM", gm: true, message: "Players can only be kicked before the game starts" }
+    ];
+
+    for (const testCase of cases) {
+      const room = roomObject(game);
+      const messages: SentMessage[] = [];
+      const socket = fakeSocket(messages);
+      connect(room, socket, testCase.playerId, testCase.nickname, testCase.gm);
+
+      await sendRaw(room, socket, JSON.stringify({ type: "kick_player", targetPlayerId: "player_target" }));
+
+      expect(messages).toEqual([{ type: "error", message: testCase.message }]);
+    }
+  });
+
   it("kicks lobby players through the websocket handler", async () => {
     const game: GameState = {
       roomId: "room_abc",
