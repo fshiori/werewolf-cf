@@ -3,6 +3,16 @@ import type { ClientMessage } from "./types";
 const ROOM_ID_RE = /^room_[A-Za-z0-9_-]{3,64}$/;
 const PLAYER_ID_RE = /^player_[A-Za-z0-9_-]{1,64}$/;
 const ROOM_CAPACITIES = [8, 16, 22, 30] as const;
+const PLAYER_ROLES = [
+  "villager",
+  "werewolf",
+  "seer",
+  "medium",
+  "madman",
+  "guard",
+  "common",
+  "fox"
+] as const;
 
 export function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -60,6 +70,20 @@ export function validateRoomCapacity(value: unknown): number {
   return capacity;
 }
 
+export function validateWishRole(value: unknown): (typeof PLAYER_ROLES)[number] | undefined {
+  if (value === undefined || value === null || value === "" || value === "none") {
+    return undefined;
+  }
+  if (typeof value !== "string") {
+    throw new Error("Invalid wished role");
+  }
+  const wishRole = PLAYER_ROLES.find((role) => role === value);
+  if (!wishRole) {
+    throw new Error("Invalid wished role");
+  }
+  return wishRole;
+}
+
 export function validateChatText(value: string): string {
   const text = value.trim();
   if (text.length === 0) {
@@ -107,7 +131,7 @@ export function parseClientMessage(raw: string): ClientMessage {
     if (typeof parsed.playerId !== "string" || typeof parsed.nickname !== "string") {
       throw new Error("Invalid join message");
     }
-    return { type: "join", playerId: parsed.playerId, nickname: parsed.nickname };
+    return { type: "join", playerId: parsed.playerId, nickname: parsed.nickname, wishRole: validateWishRole(parsed.wishRole) };
   }
 
   if (parsed.type === "chat") {

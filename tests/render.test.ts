@@ -25,6 +25,7 @@ describe("render", () => {
           openVote: true,
           commonTalkVisible: true,
           deadRoleVisible: true,
+          wishRole: true,
           realTime: true,
           dayMinutes: 5,
           nightMinutes: 2,
@@ -63,6 +64,7 @@ describe("render", () => {
     expect(html).toContain("optionOpenVote");
     expect(html).toContain("optionCommonTalkVisible");
     expect(html).toContain("optionDeadRoleVisible");
+    expect(html).toContain("optionWishRole");
     expect(html).toContain("optionRealTime");
     expect(html).toContain("optionDayMinutes");
     expect(html).toContain("optionNightMinutes");
@@ -81,10 +83,11 @@ describe("render", () => {
     expect(html).toContain("白天公開目前投票目標");
     expect(html).toContain("允許晚上顯示共生者悄悄話");
     expect(html).toContain("允許幽靈觀看角色");
+    expect(html).toContain("允許加入時選擇希望角色");
     expect(html).toContain("允許玩家白天投票給自己");
     expect(html).toContain("已投票玩家以特殊底色顯示");
     expect(html).toContain("JSON.stringify({ name, comment, maxPlayers, playerId:");
-    expect(html).toContain("options: { poison, bigWolf, authority, decider, lovers, betrayer, childFox, twoFoxes, cat, lastWords, openVote, commonTalkVisible, deadRoleVisible, realTime, dayMinutes, nightMinutes, selfVote, voteStatus }");
+    expect(html).toContain("options: { poison, bigWolf, authority, decider, lovers, betrayer, childFox, twoFoxes, cat, lastWords, openVote, commonTalkVisible, deadRoleVisible, wishRole, realTime, dayMinutes, nightMinutes, selfVote, voteStatus }");
     expect(html).toContain("埋毒");
     expect(html).toContain("大狼");
     expect(html).toContain("背德");
@@ -95,6 +98,7 @@ describe("render", () => {
     expect(html).toContain("公開票");
     expect(html).toContain("共有聲");
     expect(html).toContain("靈視");
+    expect(html).toContain("希望");
     expect(html).toContain("自投");
     expect(html).toContain("投票済");
     expect(html).toContain("leaderboardRows");
@@ -173,6 +177,8 @@ describe("render", () => {
     expect(html).toContain("lovers_chat");
     expect(html).toContain("dead_chat");
     expect(html).toContain("revealed_roles");
+    expect(html).toContain("wishRole");
+    expect(html).toContain("<option value=\"seer\">占卜師</option>");
     expect(html).toContain("sendDeadChat");
     expect(html).toContain("lastWordsText");
     expect(html).toContain("setLastWords");
