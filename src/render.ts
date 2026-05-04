@@ -287,15 +287,18 @@ export function renderHome(rooms: RoomSummary[], announcement = DEFAULT_ANNOUNCE
         </tr>
         <tr>
           <td><label><strong>　20人以上妖狐的選項：</strong></label></td>
-          <td><label><input id="optionBetrayer" type="checkbox"> <small>背德者登場，妖狐死亡時跟隨死亡</small></label></td>
+          <td>
+            <label><input id="optionFoxNone" name="optionFoxVariant" type="radio" checked> <small>追加なし</small></label>
+            <label><input id="optionBetrayer" name="optionFoxVariant" type="radio"> <small>背德者登場，妖狐死亡時跟隨死亡</small></label>
+          </td>
         </tr>
         <tr>
           <td><label><strong>　20人以上妖狐的占：</strong></label></td>
-          <td><label><input id="optionChildFox" type="checkbox"> <small>子狐登場，可於夜晚占卜但可能失敗</small></label></td>
+          <td><label><input id="optionChildFox" name="optionFoxVariant" type="radio"> <small>子狐登場，可於夜晚占卜但可能失敗</small></label></td>
         </tr>
         <tr>
           <td><label><strong>　20人以上兩隻妖狐：</strong></label></td>
-          <td><label><input id="optionTwoFoxes" type="checkbox"> <small>第二隻妖狐登場</small></label></td>
+          <td><label><input id="optionTwoFoxes" name="optionFoxVariant" type="radio"> <small>第二隻妖狐登場</small></label></td>
         </tr>
         <tr>
           <td><label><strong>　20人以上貓又登場：</strong></label></td>
