@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { renderHome, renderPlayerProfile, renderRoom, renderRules, renderVersion } from "../src/render";
+import { renderHome, renderPlayerProfile, renderProtocol, renderRoom, renderRules, renderVersion } from "../src/render";
 
 describe("render", () => {
   it("renders home with room rows and escaped names", () => {
@@ -72,6 +72,8 @@ describe("render", () => {
     expect(html).toContain("/api/version");
     expect(html).toContain("版本 JSON");
     expect(html).toContain("/rules");
+    expect(html).toContain("/protocol");
+    expect(html).toContain("通訊協定");
     expect(html).toContain("/version");
     expect(html).toContain("roomComment");
     expect(html).toContain("maxPlayers");
@@ -308,5 +310,19 @@ describe("render", () => {
     expect(html).toContain("/api/version");
     expect(html).toContain("目前功能");
     expect(html).toContain("docs/test-results/2026-05-03-core-game-loop.md");
+  });
+
+  it("renders websocket protocol page", () => {
+    const html = renderProtocol();
+
+    expect(html).toContain("WebSocket 入口");
+    expect(html).toContain("GET /ws/room/:roomId");
+    expect(html).toContain("Client Messages");
+    expect(html).toContain("wolf_chat / fox_chat / common_chat / lovers_chat");
+    expect(html).toContain("gm_*");
+    expect(html).toContain("Server Messages");
+    expect(html).toContain("game_state");
+    expect(html).toContain("revealed_roles");
+    expect(html).toContain("README.md#websocket-protocol");
   });
 });

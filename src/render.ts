@@ -137,6 +137,7 @@ function shell(body: string): string {
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/api/health">狀態 JSON</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/api/version">版本 JSON</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/rules">規則</a></td></tr>
+            <tr><td><small><font color="#666666">・</font></small></td><td><a href="/protocol">通訊協定</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/version">版本</a></td></tr>
           </table>
         </td>
@@ -623,6 +624,56 @@ export function renderRules(): string {
         <tr><td><strong>　公開票 / 投票顯示：</strong></td><td>控制白天投票資訊是否公開與已投票玩家顯示。</td></tr>
         <tr><td><strong>　遺言 / 幽靈視角：</strong></td><td>控制死亡訊息與死後可見資訊。</td></tr>
         <tr><td><strong>　限時時間：</strong></td><td>啟用後 Durable Object alarm 會依日夜時間自動換日。</td></tr>
+      </table>
+    </fieldset>
+  `));
+}
+
+export function renderProtocol(): string {
+  return page("Protocol", shell(`
+    <fieldset>
+      <legend><strong>WebSocket 入口</strong></legend>
+      <table class="form-table">
+        <tr><td><strong>　連線：</strong></td><td><code>GET /ws/room/:roomId</code></td></tr>
+        <tr><td><strong>　格式：</strong></td><td>每個 frame 都是 JSON object，必須包含 <code>type</code>。</td></tr>
+        <tr><td><strong>　加入：</strong></td><td>第一個訊息必須是 <code>join</code>，未加入前其他訊息會收到 <code>error</code>。</td></tr>
+        <tr><td><strong>　權威來源：</strong></td><td>房間 Durable Object 驗證權限並過濾每個 socket 可收到的私有頻道訊息。</td></tr>
+      </table>
+    </fieldset>
+    <fieldset>
+      <legend><strong>Client Messages</strong></legend>
+      <table class="form-table">
+        <tr><td><strong>　join：</strong></td><td><code>{ type, playerId, nickname, trip, wishRole }</code></td></tr>
+        <tr><td><strong>　chat：</strong></td><td>公開發言。遊戲中限生存玩家與 GM 使用。</td></tr>
+        <tr><td><strong>　wolf_chat / fox_chat / common_chat / lovers_chat：</strong></td><td>夜晚私有頻道，限對應陣營或關係的生存玩家。</td></tr>
+        <tr><td><strong>　dead_chat：</strong></td><td>遊戲進行中死亡玩家的靈界頻道。</td></tr>
+        <tr><td><strong>　vote：</strong></td><td>白天投票，payload 含 <code>targetPlayerId</code>。</td></tr>
+        <tr><td><strong>　night_kill / divine / child_fox_divine / guard / cat_revive：</strong></td><td>夜晚或角色能力行動，payload 含 <code>targetPlayerId</code>。</td></tr>
+        <tr><td><strong>　set_last_words：</strong></td><td>遺言啟用時可儲存死亡時公開文字。</td></tr>
+        <tr><td><strong>　start_game / kick_player：</strong></td><td>房主或 GM 的大廳控制。</td></tr>
+        <tr><td><strong>　gm_*：</strong></td><td>GM 聊天、私語、換日、裁定、調整生死、角色與旗標。</td></tr>
+      </table>
+    </fieldset>
+    <fieldset>
+      <legend><strong>Server Messages</strong></legend>
+      <table class="form-table">
+        <tr><td><strong>　joined / presence：</strong></td><td>連線確認與目前成員清單。</td></tr>
+        <tr><td><strong>　game_state：</strong></td><td>公開階段、日期、玩家生死、投票可見狀態、勝者、計時與系統 log。</td></tr>
+        <tr><td><strong>　role：</strong></td><td>私密角色訊息，包含可見同伴與權力者資訊。</td></tr>
+        <tr><td><strong>　chat family：</strong></td><td>公開、狼、狐、共有、戀人、靈界、GM 與 GM 私語訊息。</td></tr>
+        <tr><td><strong>　action_ack：</strong></td><td>確認投票、襲擊、護衛、子狐占卜、貓又復活或踢人。</td></tr>
+        <tr><td><strong>　divination_result / child_fox_result / medium_result：</strong></td><td>私密角色結果。</td></tr>
+        <tr><td><strong>　revealed_roles：</strong></td><td>幽靈視角啟用時給死亡玩家；遊戲結束後給所有人。</td></tr>
+        <tr><td><strong>　last_words_ack / error：</strong></td><td>遺言確認與驗證、權限、階段或規則錯誤。</td></tr>
+      </table>
+    </fieldset>
+    <fieldset>
+      <legend><strong>參考</strong></legend>
+      <table class="form-table">
+        <tr><td><strong>　型別來源：</strong></td><td><code>src/types.ts</code></td></tr>
+        <tr><td><strong>　驗證來源：</strong></td><td><code>src/validation.ts</code></td></tr>
+        <tr><td><strong>　執行來源：</strong></td><td><code>src/room.ts</code></td></tr>
+        <tr><td><strong>　文件：</strong></td><td><code>README.md#websocket-protocol</code></td></tr>
       </table>
     </fieldset>
   `));
