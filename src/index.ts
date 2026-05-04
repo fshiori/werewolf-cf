@@ -630,6 +630,21 @@ async function uploadAvatar(request: Request, env: Env): Promise<Response> {
   }
 }
 
+async function removeAvatar(request: Request, env: Env): Promise<Response> {
+  const body: unknown = await request.json().catch(() => null);
+  if (!isRecord(body) || typeof body.playerId !== "string") {
+    return json({ error: "Invalid avatar removal" }, { status: 400 });
+  }
+
+  try {
+    const playerId = validatePlayerId(body.playerId);
+    await env.ASSETS.delete(avatarKey(playerId));
+    return json({ removed: true });
+  } catch (error) {
+    return json({ error: error instanceof Error ? error.message : "Failed to remove avatar" }, { status: 400 });
+  }
+}
+
 async function getAvatar(env: Env, playerIdParam: string): Promise<Response> {
   try {
     const playerId = validatePlayerId(playerIdParam);
@@ -740,6 +755,10 @@ export default {
 
     if (request.method === "POST" && url.pathname === "/api/assets/avatar") {
       return uploadAvatar(request, env);
+    }
+
+    if (request.method === "DELETE" && url.pathname === "/api/assets/avatar") {
+      return removeAvatar(request, env);
     }
 
     const avatarMatch = url.pathname.match(/^\/assets\/avatar\/([^/]+)$/);

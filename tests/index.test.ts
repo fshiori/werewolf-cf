@@ -206,6 +206,9 @@ function envWithRooms(
             headers.set("content-type", asset.contentType);
           }
         };
+      },
+      async delete(key: string) {
+        assets.delete(key);
       }
     } as unknown as R2Bucket,
     CONFIG: {
@@ -992,6 +995,34 @@ describe("worker routes", () => {
     expect(download.status).toBe(200);
     expect(download.headers.get("content-type")).toBe("image/png");
     expect(await download.text()).toBe("avatar-bytes");
+  });
+
+  it("removes uploaded avatar images from R2", async () => {
+    const env = envWithRooms([]);
+    const form = new FormData();
+    form.set("playerId", "player_avatar");
+    form.set("avatar", new File(["avatar-bytes"], "avatar.png", { type: "image/png" }));
+
+    await worker.fetch(
+      new Request("http://example.test/api/assets/avatar", {
+        method: "POST",
+        body: form
+      }),
+      env
+    );
+    const removal = await worker.fetch(
+      new Request("http://example.test/api/assets/avatar", {
+        method: "DELETE",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ playerId: "player_avatar" })
+      }),
+      env
+    );
+    const download = await worker.fetch(new Request("http://example.test/assets/avatar/player_avatar"), env);
+
+    expect(removal.status).toBe(200);
+    expect(await removal.json()).toEqual({ removed: true });
+    expect(download.status).toBe(404);
   });
 
   it("rejects non-image avatars and reports missing avatars", async () => {
