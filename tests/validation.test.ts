@@ -51,6 +51,10 @@ describe("validation", () => {
       type: "divine",
       targetPlayerId: "player_3"
     });
+    expect(parseClientMessage('{"type":"child_fox_divine","targetPlayerId":"player_3"}')).toEqual({
+      type: "child_fox_divine",
+      targetPlayerId: "player_3"
+    });
     expect(parseClientMessage('{"type":"guard","targetPlayerId":"player_4"}')).toEqual({
       type: "guard",
       targetPlayerId: "player_4"

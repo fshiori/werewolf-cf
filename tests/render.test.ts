@@ -9,7 +9,7 @@ describe("render", () => {
         name: "<Test>",
         status: "lobby",
         createdAt: "2026-05-03 12:00:00",
-        options: { poison: true, bigWolf: true, authority: true, decider: true, lovers: true, betrayer: true }
+        options: { poison: true, bigWolf: true, authority: true, decider: true, lovers: true, betrayer: true, childFox: true }
       }
     ]);
 
@@ -28,16 +28,19 @@ describe("render", () => {
     expect(html).toContain("optionDecider");
     expect(html).toContain("optionLovers");
     expect(html).toContain("optionBetrayer");
+    expect(html).toContain("optionChildFox");
     expect(html).toContain("20人以上埋毒者選項");
     expect(html).toContain("20人以上時大狼出場");
     expect(html).toContain("16人以上權力者出場");
     expect(html).toContain("16人以上決定者出場");
     expect(html).toContain("13人以上戀人出場");
     expect(html).toContain("20人以上妖狐的選項");
-    expect(html).toContain("options: { poison, bigWolf, authority, decider, lovers, betrayer }");
+    expect(html).toContain("20人以上妖狐的占");
+    expect(html).toContain("options: { poison, bigWolf, authority, decider, lovers, betrayer, childFox }");
     expect(html).toContain("埋毒");
     expect(html).toContain("大狼");
     expect(html).toContain("背德");
+    expect(html).toContain("子狐");
     expect(html).toContain("leaderboardRows");
     expect(html).toContain("尚無戰績。");
     expect(html).toContain("cell.textContent = String(value);");
@@ -83,6 +86,7 @@ describe("render", () => {
     expect(html).toContain('fox: "妖狐"');
     expect(html).toContain('poison: "埋毒者"');
     expect(html).toContain('betrayer: "背德者"');
+    expect(html).toContain('child_fox: "子狐"');
     expect(html).toContain("roleLabel(msg.role)");
     expect(html).toContain("winnerLabel(game.winner)");
     expect(html).toContain("isWolfRole(role)");
@@ -99,6 +103,8 @@ describe("render", () => {
     expect(html).toContain("wolf_chat");
     expect(html).toContain("action_ack");
     expect(html).toContain("divination_result");
+    expect(html).toContain("child_fox_result");
+    expect(html).toContain("child_fox_divine");
     expect(html).toContain("medium_result");
     expect(html).toContain("type: \"divine\"");
     expect(html).toContain("type: \"guard\"");

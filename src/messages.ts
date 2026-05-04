@@ -1,5 +1,5 @@
 import { publicPlayers } from "./game";
-import type { DivinationResult, GameState, MediumReading, PlayerRole, RoomMember, ServerMessage } from "./types";
+import type { ChildFoxDivinationResult, DivinationResult, GameState, MediumReading, PlayerRole, RoomMember, ServerMessage } from "./types";
 import { escapeHtml } from "./validation";
 
 export function buildJoinedMessage(roomId: string, playerId: string, members: RoomMember[]): ServerMessage {
@@ -77,6 +77,19 @@ export function buildDivinationResultMessage(
   };
 }
 
+export function buildChildFoxResultMessage(
+  targetPlayerId: string,
+  targetNickname: string,
+  result: ChildFoxDivinationResult
+): ServerMessage {
+  return {
+    type: "child_fox_result",
+    targetPlayerId,
+    targetNickname: escapeHtml(targetNickname),
+    result
+  };
+}
+
 export function buildMediumResultMessage(reading: MediumReading): ServerMessage {
   return {
     type: "medium_result",
@@ -87,7 +100,7 @@ export function buildMediumResultMessage(reading: MediumReading): ServerMessage 
   };
 }
 
-export function buildActionAckMessage(action: "vote" | "night_kill" | "guard", targetPlayerId: string): ServerMessage {
+export function buildActionAckMessage(action: "vote" | "night_kill" | "guard" | "child_fox_divine", targetPlayerId: string): ServerMessage {
   return { type: "action_ack", action, targetPlayerId };
 }
 

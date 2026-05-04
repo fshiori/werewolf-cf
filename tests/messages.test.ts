@@ -3,6 +3,7 @@ import { createLobbyState, startGame } from "../src/game";
 import {
   buildActionAckMessage,
   buildChatMessage,
+  buildChildFoxResultMessage,
   buildDivinationResultMessage,
   buildGameStateMessage,
   buildJoinedMessage,
@@ -53,6 +54,15 @@ describe("messages", () => {
       targetPlayerId: "player_1",
       targetNickname: "&lt;Wolf&gt;",
       result: "werewolf"
+    });
+  });
+
+  it("builds escaped child fox result messages", () => {
+    expect(buildChildFoxResultMessage("player_1", "<Wolf>", "failed")).toEqual({
+      type: "child_fox_result",
+      targetPlayerId: "player_1",
+      targetNickname: "&lt;Wolf&gt;",
+      result: "failed"
     });
   });
 

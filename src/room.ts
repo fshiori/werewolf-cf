@@ -4,6 +4,7 @@ import {
   canStartGame,
   canUsePublicChat,
   canUseWerewolfChannel,
+  castChildFoxDivination,
   castDayVote,
   castDivination,
   castGuard,
@@ -21,6 +22,7 @@ import {
 import {
   buildActionAckMessage,
   buildChatMessage,
+  buildChildFoxResultMessage,
   buildDivinationResultMessage,
   buildErrorMessage,
   buildGameStateMessage,
@@ -166,6 +168,15 @@ export class RoomDurableObject {
         const result = castDivination(await this.loadGameState(), member.playerId, targetPlayerId);
         await this.saveGameState(result.state);
         this.send(socket, buildDivinationResultMessage(targetPlayerId, result.targetNickname, result.result));
+        return;
+      }
+
+      if (message.type === "child_fox_divine") {
+        const targetPlayerId = validatePlayerId(message.targetPlayerId);
+        const result = castChildFoxDivination(await this.loadGameState(), member.playerId, targetPlayerId, Math.random);
+        await this.saveGameState(result.state);
+        this.send(socket, buildChildFoxResultMessage(targetPlayerId, result.targetNickname, result.result));
+        this.send(socket, buildActionAckMessage("child_fox_divine", targetPlayerId));
         return;
       }
 
@@ -344,7 +355,8 @@ export class RoomDurableObject {
       authority: roles.has("authority"),
       decider: roles.has("decide"),
       lovers: roles.has("lovers"),
-      betrayer: roles.has("betr")
+      betrayer: roles.has("betr"),
+      childFox: roles.has("fosi")
     };
   }
 }

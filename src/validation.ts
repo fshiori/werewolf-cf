@@ -121,6 +121,13 @@ export function parseClientMessage(raw: string): ClientMessage {
     return { type: "divine", targetPlayerId: parsed.targetPlayerId };
   }
 
+  if (parsed.type === "child_fox_divine") {
+    if (typeof parsed.targetPlayerId !== "string") {
+      throw new Error("Invalid child fox divine message");
+    }
+    return { type: "child_fox_divine", targetPlayerId: parsed.targetPlayerId };
+  }
+
   if (parsed.type === "guard") {
     if (typeof parsed.targetPlayerId !== "string") {
       throw new Error("Invalid guard message");
