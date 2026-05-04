@@ -26,8 +26,24 @@ type CloseEvent = {
   reason: string;
 };
 
-function roomObject(gameState?: GameState): RoomDurableObject {
+type RoomRow = {
+  option_role: string;
+  dellook: number;
+  dummy_name: string;
+  dummy_last_words: string;
+  gm_trip_hash: string | null;
+};
+
+function roomObject(gameState?: GameState, roomRow: Partial<RoomRow> = {}): RoomDurableObject {
   const stored = new Map<string, unknown>(gameState ? [["gameState", gameState]] : []);
+  const row = {
+    option_role: "",
+    dellook: 0,
+    dummy_name: "替身君",
+    dummy_last_words: "",
+    gm_trip_hash: null,
+    ...roomRow
+  };
   return new RoomDurableObject(
     {
       id: { name: "room_abc" },
@@ -49,7 +65,7 @@ function roomObject(gameState?: GameState): RoomDurableObject {
             bind() {
               return {
                 async first() {
-                  return { option_role: "", dellook: 0, dummy_name: "替身君", dummy_last_words: "", gm_trip_hash: null };
+                  return row;
                 },
                 async run() {
                   return {};
@@ -1280,6 +1296,63 @@ describe("RoomDurableObject", () => {
       });
       expect(JSON.stringify(message)).not.toContain('"role"');
     }
+  });
+
+  it("sends revealed roles only to dead players during active games when enabled", async () => {
+    const game: GameState = {
+      roomId: "room_abc",
+      phase: "day",
+      day: 2,
+      players: [
+        { playerId: "player_wolf", nickname: "Wolf", role: "werewolf", alive: true },
+        { playerId: "player_villager", nickname: "Villager", role: "villager", alive: true },
+        { playerId: "player_seer", nickname: "Seer", role: "seer", alive: false }
+      ],
+      votes: {},
+      openVote: false,
+      commonTalkVisible: false,
+      deadRoleVisible: true,
+      wishRole: false,
+      dummyBoy: false,
+      dayMs: 180_000,
+      nightMs: 90_000,
+      selfVote: false,
+      voteStatus: false,
+      revoteCount: 0,
+      nightKills: {},
+      divinations: {},
+      guards: {},
+      catRevives: {},
+      lastWords: {},
+      log: []
+    };
+    const room = roomObject(game, { dellook: 1 });
+    const wolfMessages: SentMessage[] = [];
+    const villagerMessages: SentMessage[] = [];
+    const seerMessages: SentMessage[] = [];
+    const wolfSocket = fakeSocket(wolfMessages);
+    const villagerSocket = fakeSocket(villagerMessages);
+    const seerSocket = fakeSocket(seerMessages);
+    connect(room, wolfSocket, "player_wolf", "Wolf");
+    connect(room, villagerSocket, "player_villager", "Villager");
+    connect(room, seerSocket, "player_seer", "Seer");
+
+    await (room as unknown as { broadcastGameState(gameState: GameState): Promise<void> }).broadcastGameState(game);
+
+    for (const messages of [wolfMessages, villagerMessages]) {
+      expect(messages).toEqual([expect.objectContaining({ type: "game_state", phase: "day", day: 2 })]);
+    }
+    expect(seerMessages).toEqual([
+      expect.objectContaining({ type: "game_state", phase: "day", day: 2 }),
+      expect.objectContaining({
+        type: "revealed_roles",
+        roles: {
+          player_wolf: "werewolf",
+          player_villager: "villager",
+          player_seer: "seer"
+        }
+      })
+    ]);
   });
 
   it("sends wolf chat only to living werewolf sockets", () => {
