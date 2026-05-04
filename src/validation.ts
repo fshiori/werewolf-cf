@@ -2,6 +2,7 @@ import type { ClientMessage } from "./types";
 
 const ROOM_ID_RE = /^room_[A-Za-z0-9_-]{3,64}$/;
 const PLAYER_ID_RE = /^player_[A-Za-z0-9_-]{1,64}$/;
+const TRIP_RE = /^[A-Za-z0-9]{4,32}$/;
 const ROOM_CAPACITIES = [8, 16, 22, 30] as const;
 const PLAYER_ROLES = [
   "villager",
@@ -84,6 +85,17 @@ export function validateWishRole(value: unknown): (typeof PLAYER_ROLES)[number] 
   return wishRole;
 }
 
+export function validateTrip(value: string): string {
+  const trip = value.trim();
+  if (trip.length === 0) {
+    throw new Error("Trip is required");
+  }
+  if (!TRIP_RE.test(trip) || !/[A-Za-z]/.test(trip) || !/[0-9]/.test(trip)) {
+    throw new Error("Trip must contain only letters and numbers with at least one of each");
+  }
+  return trip;
+}
+
 export function validateChatText(value: string): string {
   const text = value.trim();
   if (text.length === 0) {
@@ -139,7 +151,13 @@ export function parseClientMessage(raw: string): ClientMessage {
     if (typeof parsed.playerId !== "string" || typeof parsed.nickname !== "string") {
       throw new Error("Invalid join message");
     }
-    return { type: "join", playerId: parsed.playerId, nickname: parsed.nickname, wishRole: validateWishRole(parsed.wishRole) };
+    return {
+      type: "join",
+      playerId: parsed.playerId,
+      nickname: parsed.nickname,
+      trip: typeof parsed.trip === "string" && parsed.trip.trim() ? validateTrip(parsed.trip) : undefined,
+      wishRole: validateWishRole(parsed.wishRole)
+    };
   }
 
   if (parsed.type === "chat") {

@@ -73,18 +73,27 @@ export function publicPlayers(players: GamePlayer[]): PublicGamePlayer[] {
   return players.map(({ playerId, nickname, alive }) => ({ playerId, nickname, alive }));
 }
 
-export function upsertLobbyPlayer(state: GameState, member: RoomMember & { wishRole?: GamePlayer["role"] }, maxPlayers = Number.POSITIVE_INFINITY): GameState {
+export function upsertLobbyPlayer(
+  state: GameState,
+  member: RoomMember & { tripHash?: string; wishRole?: GamePlayer["role"] },
+  maxPlayers = Number.POSITIVE_INFINITY
+): GameState {
   if (state.phase !== "lobby") {
     return state;
   }
 
   const existing = state.players.find((player) => player.playerId === member.playerId);
+  if (member.tripHash && state.players.some((player) => player.playerId !== member.playerId && player.tripHash === member.tripHash)) {
+    throw new Error("Trip already joined this room");
+  }
   if (existing) {
     return {
       ...state,
       hostId: state.hostId ?? state.players[0]?.playerId,
       players: state.players.map((player) =>
-        player.playerId === member.playerId ? { ...player, nickname: member.nickname, wishRole: member.wishRole } : player
+        player.playerId === member.playerId
+          ? { ...player, nickname: member.nickname, tripHash: member.tripHash ?? player.tripHash, wishRole: member.wishRole }
+          : player
       )
     };
   }

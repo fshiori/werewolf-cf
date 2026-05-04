@@ -161,7 +161,7 @@ describe("worker routes", () => {
         {},
         {},
         {},
-        { room_poison: "poison wfbig authority decide lovers betr fosi foxs cat will open_vote comoutl wish_role dummy_boy cust_dummy real_time:5:2 votedme votedisplay" },
+        { room_poison: "poison wfbig authority decide lovers betr fosi foxs cat will open_vote comoutl wish_role istrip dummy_boy cust_dummy real_time:5:2 votedme votedisplay" },
         { room_poison: "<test comment>" },
         { room_poison: 30 },
         { room_poison: true },
@@ -195,6 +195,7 @@ describe("worker routes", () => {
             commonTalkVisible: false,
             deadRoleVisible: false,
             wishRole: false,
+            tripRequired: false,
             dummyBoy: false,
             customDummy: false,
             dummyName: "替身君",
@@ -228,6 +229,7 @@ describe("worker routes", () => {
             commonTalkVisible: true,
             deadRoleVisible: true,
             wishRole: true,
+            tripRequired: true,
             dummyBoy: true,
             customDummy: true,
             dummyName: "Custom Dummy",
@@ -270,6 +272,7 @@ describe("worker routes", () => {
             commonTalkVisible: true,
             deadRoleVisible: true,
             wishRole: true,
+            tripRequired: true,
             dummyBoy: true,
             customDummy: true,
             dummyName: "Custom Dummy",
@@ -300,7 +303,7 @@ describe("worker routes", () => {
     expect(roomInsert?.query).toContain("dummy_last_words");
     expect(roomInsert?.values).toContain("Custom Dummy");
     expect(roomInsert?.values).toContain("Remember the dummy");
-    expect(roomInsert?.values.at(-1)).toBe("poison wfbig authority decide lovers betr fosi foxs cat will open_vote comoutl wish_role dummy_boy cust_dummy real_time:5:2 votedme votedisplay");
+    expect(roomInsert?.values.at(-1)).toBe("poison wfbig authority decide lovers betr fosi foxs cat will open_vote comoutl wish_role istrip dummy_boy cust_dummy real_time:5:2 votedme votedisplay");
     expect(JSON.parse(String(eventInsert?.values.at(-1)))).toEqual({
       name: "Option Test",
       comment: "Beginners welcome",
@@ -320,6 +323,7 @@ describe("worker routes", () => {
         commonTalkVisible: true,
         deadRoleVisible: true,
         wishRole: true,
+        tripRequired: true,
         dummyBoy: true,
         customDummy: true,
         dummyName: "Custom Dummy",

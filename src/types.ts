@@ -25,6 +25,7 @@ export interface RoomOptions {
   commonTalkVisible: boolean;
   deadRoleVisible: boolean;
   wishRole: boolean;
+  tripRequired?: boolean;
   dummyBoy: boolean;
   customDummy: boolean;
   dummyName: string;
@@ -73,6 +74,7 @@ export interface GamePlayer {
   nickname: string;
   role: PlayerRole;
   alive: boolean;
+  tripHash?: string;
   wishRole?: PlayerRole;
   authority?: boolean;
   decider?: boolean;
@@ -149,6 +151,7 @@ export type JoinClientMessage = {
   type: "join";
   playerId: string;
   nickname: string;
+  trip?: string;
   wishRole?: PlayerRole;
 };
 

@@ -12,6 +12,7 @@ import {
   validateRoomComment,
   validateRoomId,
   validateRoomName,
+  validateTrip,
   validateWishRole
 } from "../src/validation";
 
@@ -51,6 +52,14 @@ describe("validation", () => {
     expect(() => validateWishRole("cat")).toThrow("Invalid wished role");
   });
 
+  it("validates trip codes", () => {
+    expect(validateTrip(" ab12CD ")).toBe("ab12CD");
+    expect(() => validateTrip("")).toThrow("Trip is required");
+    expect(() => validateTrip("abcd")).toThrow("Trip must contain");
+    expect(() => validateTrip("1234")).toThrow("Trip must contain");
+    expect(() => validateTrip("ab-12")).toThrow("Trip must contain");
+  });
+
   it("validates chat text", () => {
     expect(validateChatText(" hello ")).toBe("hello");
     expect(() => validateChatText("")).toThrow("Chat text is required");
@@ -71,10 +80,11 @@ describe("validation", () => {
 
   it("parses only allowed client messages", () => {
     expect(parseClientMessage('{"type":"chat","text":"hi"}')).toEqual({ type: "chat", text: "hi" });
-    expect(parseClientMessage('{"type":"join","playerId":"player_1","nickname":"Alice","wishRole":"seer"}')).toEqual({
+    expect(parseClientMessage('{"type":"join","playerId":"player_1","nickname":"Alice","trip":"ab12CD","wishRole":"seer"}')).toEqual({
       type: "join",
       playerId: "player_1",
       nickname: "Alice",
+      trip: "ab12CD",
       wishRole: "seer"
     });
     expect(parseClientMessage('{"type":"wolf_chat","text":"secret"}')).toEqual({ type: "wolf_chat", text: "secret" });
