@@ -150,7 +150,8 @@ export function renderHome(rooms: RoomSummary[], announcement = DEFAULT_ANNOUNCE
       const status = escapeHtml(room.status);
       const optionMarks = [
         `<span class="option-mark">即時</span>`,
-        room.options.poison ? `<span class="option-mark">埋毒</span>` : ""
+        room.options.poison ? `<span class="option-mark">埋毒</span>` : "",
+        room.options.bigWolf ? `<span class="option-mark">大狼</span>` : ""
       ].filter(Boolean).join(" ");
       return `<a class="room-link" href="/room/${escapeHtml(room.id)}">
         <span class="room-line"><span class="status status-${status}">${status}</span><small>[${escapeHtml(room.id)}]</small> ${escapeHtml(room.name)}村</span>
@@ -207,6 +208,10 @@ export function renderHome(rooms: RoomSummary[], announcement = DEFAULT_ANNOUNCE
           <td><label><input id="optionPoison" type="checkbox"> <small>埋毒者登場</small></label></td>
         </tr>
         <tr>
+          <td><label><strong>　20人以上時大狼出場：</strong></label></td>
+          <td><label><input id="optionBigWolf" type="checkbox"> <small>狼群隨機一隻取代為大狼</small></label></td>
+        </tr>
+        <tr>
           <td></td>
           <td><button id="createRoom">建立房間</button></td>
         </tr>
@@ -223,11 +228,12 @@ export function renderHome(rooms: RoomSummary[], announcement = DEFAULT_ANNOUNCE
         const nickname = document.querySelector("#nickname").value;
         const name = document.querySelector("#roomName").value;
         const poison = document.querySelector("#optionPoison").checked;
+        const bigWolf = document.querySelector("#optionBigWolf").checked;
         localStorage.setItem("werewolf_cf_nickname", nickname);
         const res = await fetch("/api/rooms", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ name, playerId: localStorage.getItem(playerKey), nickname, options: { poison } })
+          body: JSON.stringify({ name, playerId: localStorage.getItem(playerKey), nickname, options: { poison, bigWolf } })
         });
         const data = await res.json();
         if (!res.ok) {
@@ -520,6 +526,7 @@ export function renderRoom(roomId: string): string {
         return {
           villager: "村民",
           werewolf: "人狼",
+          big_wolf: "大狼",
           seer: "占卜師",
           medium: "靈能者",
           madman: "狂人",
@@ -536,6 +543,9 @@ export function renderRoom(roomId: string): string {
           foxes: "妖狐"
         }[value] || "未定";
       }
+      function isWolfRole(value) {
+        return value === "werewolf" || value === "big_wolf";
+      }
       function renderGame(game) {
         document.querySelector("#phase").textContent =
           game.phase + (game.day ? " " + game.day : "") + (game.revoteCount ? " 再投票 " + game.revoteCount : "");
@@ -545,11 +555,11 @@ export function renderRoom(roomId: string): string {
         const currentPlayerAlive = currentPlayer ? currentPlayer.alive : game.phase === "lobby";
         const actorCanAct =
           currentPlayerAlive &&
-          (game.phase === "day" || (game.phase === "night" && (role === "werewolf" || role === "seer" || role === "guard")));
+          (game.phase === "day" || (game.phase === "night" && (isWolfRole(role) || role === "seer" || role === "guard")));
         const host = game.players.find((player) => player.playerId === game.hostId);
         document.querySelector("#host").textContent = host ? host.nickname : "未定";
         document.querySelector("#startGame").disabled = game.phase !== "lobby" || game.hostId !== currentPlayerId;
-        document.querySelector("#sendWolfChat").disabled = !(game.phase === "night" && role === "werewolf" && currentPlayerAlive);
+        document.querySelector("#sendWolfChat").disabled = !(game.phase === "night" && isWolfRole(role) && currentPlayerAlive);
         const players = document.querySelector("#players");
         const playerGrid = document.querySelector("#playerGrid");
         players.innerHTML = "";
@@ -597,7 +607,7 @@ export function renderRoom(roomId: string): string {
             if (!latestGame) return;
             if (latestGame.phase === "day") {
               sendCommand({ type: "vote", targetPlayerId: player.playerId });
-            } else if (latestGame.phase === "night" && role === "werewolf") {
+            } else if (latestGame.phase === "night" && isWolfRole(role)) {
               sendCommand({ type: "night_kill", targetPlayerId: player.playerId });
             } else if (latestGame.phase === "night" && role === "seer") {
               sendCommand({ type: "divine", targetPlayerId: player.playerId });

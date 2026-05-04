@@ -326,6 +326,6 @@ export class RoomDurableObject {
       .bind(this.roomId)
       .first<{ option_role: string }>();
     const roles = new Set((row?.option_role ?? "").split(/\s+/).filter(Boolean));
-    return { poison: roles.has("poison") };
+    return { poison: roles.has("poison"), bigWolf: roles.has("wfbig") };
   }
 }

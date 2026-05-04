@@ -10,6 +10,7 @@ export interface RoomSummary {
 
 export interface RoomOptions {
   poison: boolean;
+  bigWolf: boolean;
 }
 
 export interface RoomMember {
@@ -17,7 +18,7 @@ export interface RoomMember {
   nickname: string;
 }
 
-export type PlayerRole = "villager" | "werewolf" | "seer" | "medium" | "madman" | "guard" | "common" | "fox" | "poison";
+export type PlayerRole = "villager" | "werewolf" | "big_wolf" | "seer" | "medium" | "madman" | "guard" | "common" | "fox" | "poison";
 export type GamePhase = "lobby" | "day" | "night" | "ended";
 export type GameWinner = "villagers" | "werewolves" | "foxes";
 export type DivinationResult = "human" | "werewolf";
