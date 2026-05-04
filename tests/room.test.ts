@@ -418,6 +418,63 @@ describe("RoomDurableObject", () => {
     expect(deadCommonMessages).toEqual([]);
   });
 
+  it("sends lovers chat only to living lover sockets", () => {
+    const game: GameState = {
+      roomId: "room_abc",
+      phase: "night",
+      day: 1,
+      players: [
+        { playerId: "player_lover_a", nickname: "Lover A", role: "villager", alive: true, lover: true },
+        { playerId: "player_lover_b", nickname: "Lover B", role: "werewolf", alive: true, lover: true },
+        { playerId: "player_villager", nickname: "Villager", role: "villager", alive: true },
+        { playerId: "player_dead_lover", nickname: "Dead Lover", role: "villager", alive: false, lover: true }
+      ],
+      votes: {},
+      openVote: false,
+      commonTalkVisible: false,
+      deadRoleVisible: false,
+      wishRole: false,
+      dummyBoy: false,
+      dayMs: 180_000,
+      nightMs: 90_000,
+      selfVote: false,
+      voteStatus: false,
+      revoteCount: 0,
+      nightKills: {},
+      divinations: {},
+      guards: {},
+      catRevives: {},
+      lastWords: {},
+      log: []
+    };
+    const room = roomObject(game);
+    const loverAMessages: SentMessage[] = [];
+    const loverBMessages: SentMessage[] = [];
+    const villagerMessages: SentMessage[] = [];
+    const deadLoverMessages: SentMessage[] = [];
+    const loverASocket = fakeSocket(loverAMessages);
+    const loverBSocket = fakeSocket(loverBMessages);
+    const villagerSocket = fakeSocket(villagerMessages);
+    const deadLoverSocket = fakeSocket(deadLoverMessages);
+    connect(room, loverASocket, "player_lover_a", "Lover A");
+    connect(room, loverBSocket, "player_lover_b", "Lover B");
+    connect(room, villagerSocket, "player_villager", "Villager");
+    connect(room, deadLoverSocket, "player_dead_lover", "Dead Lover");
+
+    (room as unknown as { broadcastLovers(gameState: GameState, message: unknown): void }).broadcastLovers(game, {
+      type: "lovers_chat",
+      playerId: "player_lover_a",
+      nickname: "Lover A",
+      text: "secret",
+      sentAt: "2026-05-04T00:00:00.000Z"
+    });
+
+    expect(loverAMessages).toEqual([expect.objectContaining({ type: "lovers_chat", text: "secret" })]);
+    expect(loverBMessages).toEqual([expect.objectContaining({ type: "lovers_chat", text: "secret" })]);
+    expect(villagerMessages).toEqual([]);
+    expect(deadLoverMessages).toEqual([]);
+  });
+
   it("broadcasts game state when child fox divination completes the night", async () => {
     const game: GameState = {
       roomId: "room_abc",
