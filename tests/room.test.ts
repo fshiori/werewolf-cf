@@ -1372,6 +1372,52 @@ describe("RoomDurableObject", () => {
     expect(roles.every((role) => typeof role === "string")).toBe(true);
   });
 
+  it("marks dummy boy games as playing when they start on the first night", async () => {
+    const game: GameState = {
+      roomId: "room_abc",
+      phase: "lobby",
+      day: 0,
+      hostId: "player_host",
+      players: [
+        { playerId: "player_host", nickname: "Host", role: "villager", alive: true },
+        { playerId: "player_guest", nickname: "Guest", role: "villager", alive: true },
+        { playerId: "player_third", nickname: "Third", role: "villager", alive: true }
+      ],
+      votes: {},
+      openVote: false,
+      commonTalkVisible: false,
+      deadRoleVisible: false,
+      wishRole: false,
+      dummyBoy: false,
+      dayMs: 180_000,
+      nightMs: 90_000,
+      selfVote: false,
+      voteStatus: false,
+      revoteCount: 0,
+      nightKills: {},
+      divinations: {},
+      guards: {},
+      catRevives: {},
+      lastWords: {},
+      log: []
+    };
+    const { room, stored, dbRuns } = observableRoomObject(game, { option_role: "dummy_boy" });
+    const hostMessages: SentMessage[] = [];
+    const hostSocket = fakeSocket(hostMessages);
+    connect(room, hostSocket, "player_host", "Host");
+
+    await sendRaw(room, hostSocket, JSON.stringify({ type: "start_game" }));
+
+    expect(stored.get("gameState")).toEqual(expect.objectContaining({ phase: "night", day: 0, dummyBoy: true }));
+    expect(hostMessages).toContainEqual(expect.objectContaining({ type: "game_state", phase: "night", day: 0 }));
+    expect(dbRuns).toContainEqual(
+      expect.objectContaining({
+        query: expect.stringContaining("UPDATE rooms SET status = 'playing'"),
+        binds: ["room_abc"]
+      })
+    );
+  });
+
   it("lets GM sockets start games without receiving player roles", async () => {
     const game: GameState = {
       roomId: "room_abc",
