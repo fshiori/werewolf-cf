@@ -19,6 +19,14 @@ function generateRoomId(): string {
   return `room_${crypto.randomUUID().replaceAll("-", "").slice(0, 16)}`;
 }
 
+function avatarKey(playerId: string): string {
+  return `avatars/${playerId}`;
+}
+
+function isFileLike(value: unknown): value is File {
+  return typeof value === "object" && value !== null && "stream" in value && "size" in value && "type" in value;
+}
+
 async function listRooms(env: Env): Promise<RoomSummary[]> {
   const result = await env.DB.prepare(
     "SELECT id, name, status, created_at FROM rooms ORDER BY created_at DESC LIMIT 50"
@@ -72,6 +80,51 @@ async function createRoom(request: Request, env: Env): Promise<Response> {
   }
 }
 
+async function uploadAvatar(request: Request, env: Env): Promise<Response> {
+  const form = await request.formData().catch(() => null);
+  const playerIdValue = form?.get("playerId");
+  const avatarValue = form?.get("avatar");
+  if (typeof playerIdValue !== "string" || !isFileLike(avatarValue)) {
+    return json({ error: "Invalid avatar upload" }, { status: 400 });
+  }
+
+  try {
+    const playerId = validatePlayerId(playerIdValue);
+    if (!avatarValue.type.startsWith("image/")) {
+      return json({ error: "Avatar must be an image" }, { status: 400 });
+    }
+    if (avatarValue.size > 512 * 1024) {
+      return json({ error: "Avatar is too large" }, { status: 400 });
+    }
+
+    const key = avatarKey(playerId);
+    await env.ASSETS.put(key, avatarValue.stream(), {
+      httpMetadata: { contentType: avatarValue.type }
+    });
+    return json({ key });
+  } catch (error) {
+    return json({ error: error instanceof Error ? error.message : "Failed to upload avatar" }, { status: 400 });
+  }
+}
+
+async function getAvatar(env: Env, playerIdParam: string): Promise<Response> {
+  try {
+    const playerId = validatePlayerId(playerIdParam);
+    const object = await env.ASSETS.get(avatarKey(playerId));
+    if (!object) {
+      return new Response("Avatar not found", { status: 404 });
+    }
+
+    const headers = new Headers();
+    object.writeHttpMetadata(headers);
+    headers.set("etag", object.httpEtag);
+    headers.set("cache-control", "public, max-age=3600");
+    return new Response(object.body, { headers });
+  } catch (error) {
+    return json({ error: error instanceof Error ? error.message : "Invalid avatar" }, { status: 400 });
+  }
+}
+
 async function routeRoomWebSocket(request: Request, env: Env, roomId: string): Promise<Response> {
   try {
     const validRoomId = validateRoomId(roomId);
@@ -99,6 +152,15 @@ export default {
 
     if (request.method === "POST" && url.pathname === "/api/rooms") {
       return createRoom(request, env);
+    }
+
+    if (request.method === "POST" && url.pathname === "/api/assets/avatar") {
+      return uploadAvatar(request, env);
+    }
+
+    const avatarMatch = url.pathname.match(/^\/assets\/avatar\/([^/]+)$/);
+    if (request.method === "GET" && avatarMatch) {
+      return getAvatar(env, avatarMatch[1]);
     }
 
     const roomMatch = url.pathname.match(/^\/room\/([^/]+)$/);
