@@ -94,12 +94,18 @@ type DbRun = {
   binds: unknown[];
 };
 
+type BoundStatement = {
+  query: string;
+  binds: unknown[];
+};
+
 function observableRoomObject(gameState: GameState, roomRow: Partial<RoomRow> = {}) {
   const stored = new Map<string, unknown>([["gameState", gameState]]);
   const puts: StoragePut[] = [];
   const alarms: Date[] = [];
   const deletedAlarms: number[] = [];
   const dbRuns: DbRun[] = [];
+  const batches: BoundStatement[][] = [];
   const row = {
     option_role: "",
     dellook: 0,
@@ -133,6 +139,8 @@ function observableRoomObject(gameState: GameState, roomRow: Partial<RoomRow> = 
           return {
             bind(...binds: unknown[]) {
               return {
+                query,
+                binds,
                 async first() {
                   return query.includes("FROM rooms") ? row : null;
                 },
@@ -144,14 +152,15 @@ function observableRoomObject(gameState: GameState, roomRow: Partial<RoomRow> = 
             }
           };
         },
-        async batch(statements: unknown[]) {
+        async batch(statements: BoundStatement[]) {
+          batches.push(statements);
           dbRuns.push({ query: "batch", binds: statements });
           return [];
         }
       }
     } as unknown as Env
   );
-  return { room, stored, puts, alarms, deletedAlarms, dbRuns };
+  return { room, stored, puts, alarms, deletedAlarms, dbRuns, batches };
 }
 
 function fakeSocket(messages: SentMessage[], closes: CloseEvent[] = []): WebSocket {
@@ -231,6 +240,73 @@ describe("RoomDurableObject", () => {
     );
     expect(hostMessages).toContainEqual(expect.objectContaining({ type: "game_state", phase: "day", day: 1 }));
     expect(wolfMessages).toContainEqual(expect.objectContaining({ type: "game_state", phase: "day", day: 1 }));
+  });
+
+  it("persists final game records and player stats exactly once when a GM ends a game", async () => {
+    const game: GameState = {
+      roomId: "room_abc",
+      phase: "day",
+      day: 2,
+      players: [
+        { playerId: "player_villager", nickname: "Villager", role: "villager", alive: true },
+        { playerId: "player_wolf", nickname: "Wolf", role: "werewolf", alive: false },
+        { playerId: "player_fox", nickname: "Fox", role: "fox", alive: false }
+      ],
+      votes: {},
+      openVote: false,
+      commonTalkVisible: false,
+      deadRoleVisible: false,
+      wishRole: false,
+      dummyBoy: false,
+      dayMs: 180_000,
+      nightMs: 90_000,
+      selfVote: false,
+      voteStatus: false,
+      revoteCount: 0,
+      nightKills: {},
+      divinations: {},
+      guards: {},
+      catRevives: {},
+      lastWords: {},
+      phaseEndsAt: "2026-05-04T00:00:00.000Z",
+      log: []
+    };
+    const { room, stored, puts, deletedAlarms, batches } = observableRoomObject(game);
+    const gmMessages: SentMessage[] = [];
+    const villagerMessages: SentMessage[] = [];
+    const gmSocket = fakeSocket(gmMessages);
+    const villagerSocket = fakeSocket(villagerMessages);
+    connect(room, gmSocket, "player_gm", "GM", true);
+    connect(room, villagerSocket, "player_villager", "Villager");
+
+    await sendRaw(room, gmSocket, JSON.stringify({ type: "gm_end_game", winner: "villagers" }));
+    await (room as unknown as { syncRoomStatus(gameState: GameState): Promise<void> }).syncRoomStatus(stored.get("gameState") as GameState);
+
+    const saved = stored.get("gameState") as GameState;
+    expect(saved).toEqual(expect.objectContaining({ phase: "ended", winner: "villagers", phaseEndsAt: undefined }));
+    expect(deletedAlarms).toHaveLength(1);
+    expect(puts).toContainEqual({ key: "gameFinalized", value: true });
+    expect(batches).toHaveLength(1);
+    const finalizationBatch = batches[0] ?? [];
+    expect(finalizationBatch).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ query: expect.stringContaining("UPDATE rooms SET status = 'ended'"), binds: ["room_abc"] }),
+        expect.objectContaining({ query: expect.stringContaining("INSERT INTO game_records"), binds: expect.arrayContaining(["room_abc"]) }),
+        expect.objectContaining({ query: expect.stringContaining("INSERT INTO room_events"), binds: expect.arrayContaining(["room_abc"]) }),
+        expect.objectContaining({ query: expect.stringContaining("INSERT INTO player_stats"), binds: ["player_villager", 1, 0] }),
+        expect.objectContaining({ query: expect.stringContaining("INSERT INTO player_stats"), binds: ["player_wolf", 0, 1] }),
+        expect.objectContaining({ query: expect.stringContaining("INSERT INTO player_stats"), binds: ["player_fox", 0, 1] })
+      ])
+    );
+    const gameRecord = finalizationBatch.find((statement) => statement.query.includes("INSERT INTO game_records"));
+    expect(JSON.parse(gameRecord?.binds[1] as string)).toEqual({
+      winner: "villagers",
+      day: 2,
+      players: saved.players
+    });
+    expect(gmMessages).toContainEqual(expect.objectContaining({ type: "game_state", phase: "ended", winner: "villagers" }));
+    expect(villagerMessages).toContainEqual(expect.objectContaining({ type: "game_state", phase: "ended", winner: "villagers" }));
+    expect(villagerMessages).toContainEqual(expect.objectContaining({ type: "revealed_roles" }));
   });
 
   it("reports malformed websocket JSON without closing the socket handler", async () => {
