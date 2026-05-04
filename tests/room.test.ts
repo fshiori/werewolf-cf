@@ -1305,6 +1305,66 @@ describe("RoomDurableObject", () => {
     }
   });
 
+  it("rejects last words websocket commands outside eligible player states", async () => {
+    const baseGame: GameState = {
+      roomId: "room_abc",
+      phase: "day",
+      day: 1,
+      players: [
+        { playerId: "player_alive", nickname: "Alive", role: "villager", alive: true },
+        { playerId: "player_dead", nickname: "Dead", role: "villager", alive: false }
+      ],
+      votes: {},
+      openVote: false,
+      commonTalkVisible: false,
+      deadRoleVisible: false,
+      wishRole: false,
+      dummyBoy: false,
+      dayMs: 180_000,
+      nightMs: 90_000,
+      selfVote: false,
+      voteStatus: false,
+      revoteCount: 0,
+      nightKills: {},
+      divinations: {},
+      guards: {},
+      catRevives: {},
+      lastWords: {},
+      log: []
+    };
+    const cases: Array<{ game: GameState; playerId: string; nickname: string; message: string }> = [
+      {
+        game: { ...baseGame, phase: "lobby", day: 0 },
+        playerId: "player_alive",
+        nickname: "Alive",
+        message: "Last words are only available during active games"
+      },
+      {
+        game: { ...baseGame, phase: "ended", winner: "villagers" },
+        playerId: "player_alive",
+        nickname: "Alive",
+        message: "Last words are only available during active games"
+      },
+      {
+        game: baseGame,
+        playerId: "player_dead",
+        nickname: "Dead",
+        message: "Living player is required"
+      }
+    ];
+
+    for (const testCase of cases) {
+      const room = roomObject(testCase.game, { option_role: "will" });
+      const messages: SentMessage[] = [];
+      const socket = fakeSocket(messages);
+      connect(room, socket, testCase.playerId, testCase.nickname);
+
+      await sendRaw(room, socket, JSON.stringify({ type: "set_last_words", text: "remember me" }));
+
+      expect(messages).toEqual([{ type: "error", message: testCase.message }]);
+    }
+  });
+
   it("rejects invalid vote websocket commands", async () => {
     const cases: Array<{
       game: GameState;
