@@ -35,7 +35,8 @@ function envWithRooms(
   records: Record<string, MockGameRecord[]> = {},
   events: Record<string, MockRoomEvent[]> = {},
   roomOptionRoles: Record<string, string> = {},
-  roomComments: Record<string, string> = {}
+  roomComments: Record<string, string> = {},
+  roomCapacities: Record<string, number> = {}
 ): Env {
   const assets = new Map<string, StoredAsset>();
   const batches: Array<Array<{ query: string; values: unknown[] }>> = [];
@@ -44,22 +45,22 @@ function envWithRooms(
     DB: {
       prepare(query: string) {
         return {
-          bind(...values: string[]) {
+          bind(...values: unknown[]) {
             return {
               query,
               values,
               async first() {
                 if (query.includes("FROM player_stats")) {
-                  return stats[values[0]] ?? null;
+                  return stats[String(values[0])] ?? null;
                 }
-                return roomIds.includes(values[0]) ? { id: values[0] } : null;
+                return roomIds.includes(String(values[0])) ? { id: values[0] } : null;
               },
               async all() {
                 if (query.includes("FROM game_records")) {
-                  return { results: records[values[0]] ?? [] };
+                  return { results: records[String(values[0])] ?? [] };
                 }
                 if (query.includes("FROM room_events")) {
-                  return { results: events[values[0]] ?? [] };
+                  return { results: events[String(values[0])] ?? [] };
                 }
                 return { results: [] };
               },
@@ -82,6 +83,7 @@ function envWithRooms(
                   id,
                   name: id.replace(/^room_/, ""),
                   room_comment: roomComments[id] ?? "",
+                  max_user: roomCapacities[id] ?? 22,
                   status: "lobby",
                   created_at: "2026-05-04 04:00:00",
                   option_role: roomOptionRoles[id] ?? ""
@@ -154,7 +156,8 @@ describe("worker routes", () => {
         {},
         {},
         { room_poison: "poison wfbig authority decide lovers betr fosi foxs cat will open_vote real_time:5:2 votedme votedisplay" },
-        { room_poison: "<test comment>" }
+        { room_poison: "<test comment>" },
+        { room_poison: 30 }
       )
     );
 
@@ -165,6 +168,7 @@ describe("worker routes", () => {
           id: "room_plain",
           name: "plain",
           comment: "",
+          maxPlayers: 22,
           status: "lobby",
           createdAt: "2026-05-04 04:00:00",
           options: {
@@ -190,6 +194,7 @@ describe("worker routes", () => {
           id: "room_poison",
           name: "poison",
           comment: "<test comment>",
+          maxPlayers: 30,
           status: "lobby",
           createdAt: "2026-05-04 04:00:00",
           options: {
@@ -224,6 +229,7 @@ describe("worker routes", () => {
         body: JSON.stringify({
           name: "Option Test",
           comment: "Beginners welcome",
+          maxPlayers: 16,
           playerId: "player_owner",
           nickname: "Owner",
           options: {
@@ -255,11 +261,14 @@ describe("worker routes", () => {
     expect(response.status).toBe(200);
     expect(roomInsert?.query).toContain("option_role");
     expect(roomInsert?.query).toContain("room_comment");
+    expect(roomInsert?.query).toContain("max_user");
     expect(roomInsert?.values).toContain("Beginners welcome");
+    expect(roomInsert?.values).toContain(16);
     expect(roomInsert?.values.at(-1)).toBe("poison wfbig authority decide lovers betr fosi foxs cat will open_vote real_time:5:2 votedme votedisplay");
     expect(JSON.parse(String(eventInsert?.values.at(-1)))).toEqual({
       name: "Option Test",
       comment: "Beginners welcome",
+      maxPlayers: 16,
       options: {
         poison: true,
         bigWolf: true,

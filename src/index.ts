@@ -2,7 +2,7 @@ import { renderHome, renderRoom } from "./render";
 import { RoomDurableObject } from "./room";
 import { DEFAULT_DAY_MINUTES, DEFAULT_NIGHT_MINUTES } from "./game";
 import type { GameRecordSummary, LeaderboardEntry, PlayerStats, RoomEventSummary, RoomOptions, RoomSummary } from "./types";
-import { isRecord, validateNickname, validatePlayerId, validateRoomComment, validateRoomId, validateRoomName } from "./validation";
+import { isRecord, validateNickname, validatePlayerId, validateRoomCapacity, validateRoomComment, validateRoomId, validateRoomName } from "./validation";
 
 export { RoomDurableObject };
 
@@ -30,13 +30,14 @@ function isFileLike(value: unknown): value is File {
 
 async function listRooms(env: Env): Promise<RoomSummary[]> {
   const result = await env.DB.prepare(
-    "SELECT id, name, room_comment, status, created_at, option_role FROM rooms ORDER BY created_at DESC LIMIT 50"
-  ).all<{ id: string; name: string; room_comment?: string | null; status: RoomSummary["status"]; created_at: string; option_role?: string }>();
+    "SELECT id, name, room_comment, max_user, status, created_at, option_role FROM rooms ORDER BY created_at DESC LIMIT 50"
+  ).all<{ id: string; name: string; room_comment?: string | null; max_user?: number | null; status: RoomSummary["status"]; created_at: string; option_role?: string }>();
 
   return result.results.map((room) => ({
     id: room.id,
     name: room.name,
     comment: room.room_comment ?? "",
+    maxPlayers: room.max_user ?? 22,
     status: room.status,
     createdAt: room.created_at,
     options: parseRoomOptions(room.option_role ?? "")
@@ -255,6 +256,7 @@ async function createRoom(request: Request, env: Env): Promise<Response> {
     const roomId = generateRoomId();
     const name = validateRoomName(body.name);
     const comment = validateRoomComment(typeof body.comment === "string" ? body.comment : "");
+    const maxPlayers = validateRoomCapacity(body.maxPlayers ?? 22);
     const playerId = validatePlayerId(body.playerId);
     const nickname = validateNickname(body.nickname);
     const options = readRoomOptions(body.options);
@@ -264,11 +266,11 @@ async function createRoom(request: Request, env: Env): Promise<Response> {
       env.DB.prepare(
         "INSERT INTO players (id, nickname, last_seen_at) VALUES (?, ?, CURRENT_TIMESTAMP) ON CONFLICT(id) DO UPDATE SET nickname = excluded.nickname, last_seen_at = CURRENT_TIMESTAMP"
       ).bind(playerId, nickname),
-      env.DB.prepare("INSERT INTO rooms (id, name, room_comment, status, option_role) VALUES (?, ?, ?, 'lobby', ?)").bind(roomId, name, comment, optionRole),
+      env.DB.prepare("INSERT INTO rooms (id, name, room_comment, max_user, status, option_role) VALUES (?, ?, ?, ?, 'lobby', ?)").bind(roomId, name, comment, maxPlayers, optionRole),
       env.DB.prepare("INSERT INTO room_events (room_id, player_id, event_type, payload_json) VALUES (?, ?, 'room_created', ?)").bind(
         roomId,
         playerId,
-        JSON.stringify({ name, comment, options })
+        JSON.stringify({ name, comment, maxPlayers, options })
       )
     ]);
 

@@ -2,6 +2,7 @@ import type { ClientMessage } from "./types";
 
 const ROOM_ID_RE = /^room_[A-Za-z0-9_-]{3,64}$/;
 const PLAYER_ID_RE = /^player_[A-Za-z0-9_-]{1,64}$/;
+const ROOM_CAPACITIES = [8, 16, 22, 30] as const;
 
 export function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -49,6 +50,14 @@ export function validateRoomComment(value: string): string {
     throw new Error("Room comment is too long");
   }
   return comment;
+}
+
+export function validateRoomCapacity(value: unknown): number {
+  const capacity = typeof value === "number" ? value : typeof value === "string" ? Number(value) : Number.NaN;
+  if (!ROOM_CAPACITIES.some((allowed) => allowed === capacity)) {
+    throw new Error("Invalid room capacity");
+  }
+  return capacity;
 }
 
 export function validateChatText(value: string): string {

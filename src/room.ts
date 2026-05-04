@@ -114,11 +114,12 @@ export class RoomDurableObject {
         const playerId = validatePlayerId(message.playerId);
         const nickname = validateNickname(message.nickname);
         const loadedGame = await this.loadGameState();
-        if (!canJoinRoomState(loadedGame, playerId)) {
-          throw new Error("Game already started");
+        const maxPlayers = await this.loadRoomCapacity();
+        if (!canJoinRoomState(loadedGame, playerId, maxPlayers)) {
+          throw new Error(loadedGame.phase === "lobby" ? "Room is full" : "Game already started");
         }
         this.sockets.set(socket, { playerId, nickname });
-        const game = upsertLobbyPlayer(loadedGame, { playerId, nickname });
+        const game = upsertLobbyPlayer(loadedGame, { playerId, nickname }, maxPlayers);
         await this.saveGameState(game);
         await this.persistJoin(playerId, nickname);
         this.send(socket, buildJoinedMessage(this.roomId, playerId, this.members()));
@@ -482,6 +483,14 @@ export class RoomDurableObject {
       selfVote: roles.has("votedme"),
       voteStatus: roles.has("votedisplay")
     };
+  }
+
+  private async loadRoomCapacity(): Promise<number> {
+    const row = await this.env.DB.prepare("SELECT max_user FROM rooms WHERE id = ? LIMIT 1")
+      .bind(this.roomId)
+      .first<{ max_user: number | null }>();
+    const maxPlayers = row?.max_user ?? 22;
+    return [8, 16, 22, 30].includes(maxPlayers) ? maxPlayers : 22;
   }
 }
 
