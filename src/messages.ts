@@ -45,12 +45,19 @@ export function buildGameStateMessage(state: GameState): ServerMessage {
   };
 }
 
-export function buildRoleMessage(role: PlayerRole, wolves: RoomMember[], commons: RoomMember[] = [], authority = false): ServerMessage {
+export function buildRoleMessage(
+  role: PlayerRole,
+  wolves: RoomMember[],
+  commons: RoomMember[] = [],
+  lovers: RoomMember[] = [],
+  authority = false
+): ServerMessage {
   return {
     type: "role",
     role,
     wolves: wolves.map((wolf) => ({ playerId: wolf.playerId, nickname: escapeHtml(wolf.nickname) })),
     commons: commons.map((common) => ({ playerId: common.playerId, nickname: escapeHtml(common.nickname) })),
+    lovers: lovers.map((lover) => ({ playerId: lover.playerId, nickname: escapeHtml(lover.nickname) })),
     authority
   };
 }

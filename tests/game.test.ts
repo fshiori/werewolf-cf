@@ -10,6 +10,7 @@ import {
   castNightKill,
   commonsForPlayer,
   createLobbyState,
+  loversForPlayer,
   mediumReadingForPlayer,
   playerStatUpdates,
   startGame,
@@ -179,7 +180,13 @@ describe("game", () => {
 
   it("applies the poison room option in twenty-player games", () => {
     const normal = startGame(numberedLobby(20), 0, () => 0);
-    const withPoison = startGame(numberedLobby(20), 0, () => 0, { poison: true, bigWolf: false, authority: false, decider: false });
+    const withPoison = startGame(numberedLobby(20), 0, () => 0, {
+      poison: true,
+      bigWolf: false,
+      authority: false,
+      decider: false,
+      lovers: false
+    });
 
     expect(normal.players.filter((player) => player.role === "poison")).toHaveLength(0);
     expect(normal.players.filter((player) => player.role === "werewolf")).toHaveLength(3);
@@ -191,7 +198,13 @@ describe("game", () => {
   });
 
   it("applies the big wolf room option in twenty-player games", () => {
-    const game = startGame(numberedLobby(20), 0, () => 0, { poison: false, bigWolf: true, authority: false, decider: false });
+    const game = startGame(numberedLobby(20), 0, () => 0, {
+      poison: false,
+      bigWolf: true,
+      authority: false,
+      decider: false,
+      lovers: false
+    });
 
     expect(game.players.filter((player) => player.role === "big_wolf")).toHaveLength(1);
     expect(game.players.filter((player) => player.role === "werewolf")).toHaveLength(2);
@@ -207,7 +220,8 @@ describe("game", () => {
       poison: false,
       bigWolf: false,
       authority: true,
-      decider: true
+      decider: true,
+      lovers: false
     });
 
     expect(game.players.find((player) => player.authority)?.playerId).toBe("player_1");
@@ -245,6 +259,57 @@ describe("game", () => {
 
     expect(game.revoteCount).toBe(0);
     expect(game.players.find((player) => player.playerId === "player_3")?.alive).toBe(false);
+  });
+
+  it("applies lovers room option in thirteen-player games", () => {
+    const game = startGame(numberedLobby(13), 0, () => 0, {
+      poison: false,
+      bigWolf: false,
+      authority: false,
+      decider: false,
+      lovers: true
+    });
+
+    expect(game.players.filter((player) => player.lover)).toEqual([
+      expect.objectContaining({ playerId: "player_1" }),
+      expect.objectContaining({ playerId: "player_2" })
+    ]);
+    expect(loversForPlayer(game, "player_1")).toEqual([
+      { playerId: "player_1", nickname: "Player 1" },
+      { playerId: "player_2", nickname: "Player 2" }
+    ]);
+    expect(loversForPlayer(game, "player_3")).toEqual([]);
+  });
+
+  it("kills the other lover when one lover dies", () => {
+    let game = activeState("day", [
+      { playerId: "player_1", nickname: "Lover A", role: "villager", alive: true, lover: true },
+      { playerId: "player_2", nickname: "Lover B", role: "villager", alive: true, lover: true },
+      { playerId: "player_3", nickname: "Wolf", role: "werewolf", alive: true }
+    ]);
+
+    game = castDayVote(game, "player_1", "player_1");
+    game = castDayVote(game, "player_2", "player_1");
+    game = castDayVote(game, "player_3", "player_1");
+
+    expect(game.players.find((player) => player.playerId === "player_1")?.alive).toBe(false);
+    expect(game.players.find((player) => player.playerId === "player_2")?.alive).toBe(false);
+  });
+
+  it("gives lovers the win when both lovers survive a normal win condition", () => {
+    let game = activeState("day", [
+      { playerId: "player_1", nickname: "Lover A", role: "villager", alive: true, lover: true },
+      { playerId: "player_2", nickname: "Lover B", role: "werewolf", alive: true, lover: true },
+      { playerId: "player_3", nickname: "Villager", role: "villager", alive: true }
+    ]);
+
+    game = castDayVote(game, "player_1", "player_3");
+    game = castDayVote(game, "player_2", "player_3");
+    game = castDayVote(game, "player_3", "player_2");
+
+    expect(game.phase).toBe("ended");
+    expect(game.winner).toBe("lovers");
+    expect(game.log.at(-1)).toBe("戀人勝利。");
   });
 
   it("moves from completed day vote to night", () => {
