@@ -529,6 +529,59 @@ describe("RoomDurableObject", () => {
     }
   });
 
+  it("rejects GM player controls outside active games through the websocket handler", async () => {
+    const baseGame: GameState = {
+      roomId: "room_abc",
+      phase: "lobby",
+      day: 0,
+      players: [{ playerId: "player_target", nickname: "Target", role: "villager", alive: true }],
+      votes: {},
+      openVote: false,
+      commonTalkVisible: false,
+      deadRoleVisible: false,
+      wishRole: false,
+      dummyBoy: false,
+      dayMs: 180_000,
+      nightMs: 90_000,
+      selfVote: false,
+      voteStatus: false,
+      revoteCount: 0,
+      nightKills: {},
+      divinations: {},
+      guards: {},
+      catRevives: {},
+      lastWords: {},
+      log: []
+    };
+    const cases = [
+      {
+        command: { type: "gm_set_alive", targetPlayerId: "player_target", alive: false },
+        message: "Can only adjust life state during active games"
+      },
+      {
+        command: { type: "gm_set_role", targetPlayerId: "player_target", role: "seer" },
+        message: "Can only adjust roles during active games"
+      },
+      {
+        command: { type: "gm_set_flag", targetPlayerId: "player_target", flag: "lover", enabled: true },
+        message: "Can only adjust player flags during active games"
+      }
+    ];
+
+    for (const game of [baseGame, { ...baseGame, phase: "ended" as const, winner: "villagers" as const }]) {
+      for (const testCase of cases) {
+        const room = roomObject(game);
+        const messages: SentMessage[] = [];
+        const socket = fakeSocket(messages);
+        connect(room, socket, "player_gm", "GM", true);
+
+        await sendRaw(room, socket, JSON.stringify(testCase.command));
+
+        expect(messages).toEqual([{ type: "error", message: testCase.message }]);
+      }
+    }
+  });
+
   it("updates private roles after GM role changes through the websocket handler", async () => {
     const game: GameState = {
       roomId: "room_abc",
