@@ -5,6 +5,7 @@ import {
   canUsePublicChat,
   canUseWerewolfChannel,
   castChildFoxDivination,
+  castCatRevive,
   castDayVote,
   castDivination,
   castGuard,
@@ -43,6 +44,7 @@ function activeState(phase: "day" | "night", players: GameState["players"]): Gam
     nightKills: {},
     divinations: {},
     guards: {},
+    catRevives: {},
     log: []
   };
 }
@@ -190,7 +192,8 @@ describe("game", () => {
       lovers: false,
       betrayer: false,
       childFox: false,
-      twoFoxes: false
+      twoFoxes: false,
+      cat: false
     });
 
     expect(normal.players.filter((player) => player.role === "poison")).toHaveLength(0);
@@ -211,7 +214,8 @@ describe("game", () => {
       lovers: false,
       betrayer: false,
       childFox: false,
-      twoFoxes: false
+      twoFoxes: false,
+      cat: false
     });
 
     expect(game.players.filter((player) => player.role === "big_wolf")).toHaveLength(1);
@@ -232,7 +236,8 @@ describe("game", () => {
       lovers: false,
       betrayer: false,
       childFox: false,
-      twoFoxes: false
+      twoFoxes: false,
+      cat: false
     });
 
     expect(game.players.find((player) => player.authority)?.playerId).toBe("player_1");
@@ -281,7 +286,8 @@ describe("game", () => {
       lovers: true,
       betrayer: false,
       childFox: false,
-      twoFoxes: false
+      twoFoxes: false,
+      cat: false
     });
 
     expect(game.players.filter((player) => player.lover)).toEqual([
@@ -304,7 +310,8 @@ describe("game", () => {
       lovers: false,
       betrayer: true,
       childFox: false,
-      twoFoxes: false
+      twoFoxes: false,
+      cat: false
     });
 
     expect(game.players.filter((player) => player.role === "betrayer")).toEqual([
@@ -324,7 +331,8 @@ describe("game", () => {
       lovers: false,
       betrayer: false,
       childFox: true,
-      twoFoxes: false
+      twoFoxes: false,
+      cat: false
     });
 
     expect(game.players.filter((player) => player.role === "child_fox")).toEqual([
@@ -342,7 +350,8 @@ describe("game", () => {
       lovers: false,
       betrayer: false,
       childFox: false,
-      twoFoxes: true
+      twoFoxes: true,
+      cat: false
     });
 
     expect(game.players.filter((player) => player.role === "fox")).toEqual([
@@ -352,6 +361,24 @@ describe("game", () => {
     expect(foxesForPlayer(game, "player_1")).toEqual([
       { playerId: "player_1", nickname: "Player 1" },
       { playerId: "player_11", nickname: "Player 11" }
+    ]);
+  });
+
+  it("applies the cat room option in twenty-player games", () => {
+    const game = startGame(numberedLobby(20), 0, () => 0, {
+      poison: false,
+      bigWolf: false,
+      authority: false,
+      decider: false,
+      lovers: false,
+      betrayer: false,
+      childFox: false,
+      twoFoxes: false,
+      cat: true
+    });
+
+    expect(game.players.filter((player) => player.role === "cat")).toEqual([
+      expect.objectContaining({ playerId: "player_1", role: "cat" })
     ]);
   });
 
@@ -573,6 +600,56 @@ describe("game", () => {
     expect(game.players.find((player) => player.playerId === "player_2")?.alive).toBe(false);
     expect(game.winner).toBe("villagers");
     expect(game.log).toContain("Wolf 被埋毒者牽連死亡。");
+  });
+
+  it("treats cats as poison when executed", () => {
+    let game = activeState("day", [
+      { playerId: "player_1", nickname: "Cat", role: "cat", alive: true },
+      { playerId: "player_2", nickname: "Wolf", role: "werewolf", alive: true },
+      { playerId: "player_3", nickname: "Villager", role: "villager", alive: true }
+    ]);
+
+    game = castDayVote(game, "player_1", "player_1");
+    game = castDayVote(game, "player_2", "player_1");
+    game = castDayVote(game, "player_3", "player_1");
+
+    expect(game.players.find((player) => player.playerId === "player_1")?.alive).toBe(false);
+    expect(game.players.find((player) => player.playerId === "player_2")?.alive).toBe(false);
+    expect(game.log).toContain("Wolf 被貓又牽連死亡。");
+  });
+
+  it("lets cats survive wolf attacks on a successful roll", () => {
+    const game = castNightKill(
+      activeState("night", [
+        { playerId: "player_1", nickname: "Wolf", role: "werewolf", alive: true },
+        { playerId: "player_2", nickname: "Cat", role: "cat", alive: true },
+        { playerId: "player_3", nickname: "Villager", role: "villager", alive: true }
+      ]),
+      "player_1",
+      "player_2",
+      0,
+      () => 0.95
+    );
+
+    expect(game.players.find((player) => player.playerId === "player_2")?.alive).toBe(true);
+    expect(game.log).toContain("貓又被襲擊但沒有死亡。");
+  });
+
+  it("lets cats revive dead players on a successful roll", () => {
+    let game = activeState("night", [
+      { playerId: "player_1", nickname: "Wolf", role: "werewolf", alive: true },
+      { playerId: "player_2", nickname: "Cat", role: "cat", alive: true },
+      { playerId: "player_3", nickname: "Dead", role: "villager", alive: false },
+      { playerId: "player_4", nickname: "Villager", role: "villager", alive: true }
+    ]);
+    game = { ...game, day: 2 };
+
+    game = castCatRevive(game, "player_2", "player_3", 0, () => 0.95);
+    game = castNightKill(game, "player_1", "player_4", 0, () => 0.95);
+
+    expect(game.players.find((player) => player.playerId === "player_3")?.alive).toBe(true);
+    expect(game.log).toContain("Dead 被貓又復活。");
+    expect(() => castCatRevive(activeState("day", game.players), "player_2", "player_3")).toThrow("only available at night");
   });
 
   it("treats big wolves as werewolves for night actions and divination", () => {

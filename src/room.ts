@@ -4,6 +4,7 @@ import {
   canStartGame,
   canUsePublicChat,
   canUseWerewolfChannel,
+  castCatRevive,
   castChildFoxDivination,
   castDayVote,
   castDivination,
@@ -191,6 +192,17 @@ export class RoomDurableObject {
         return;
       }
 
+      if (message.type === "cat_revive") {
+        const targetPlayerId = validatePlayerId(message.targetPlayerId);
+        const next = castCatRevive(await this.loadGameState(), member.playerId, targetPlayerId);
+        await this.saveGameState(next);
+        await this.syncRoomStatus(next);
+        this.send(socket, buildActionAckMessage("cat_revive", targetPlayerId));
+        this.broadcastGameState(next);
+        this.sendMediumResults(next);
+        return;
+      }
+
       const targetPlayerId = validatePlayerId(message.targetPlayerId);
       const next = castNightKill(await this.loadGameState(), member.playerId, targetPlayerId);
       await this.saveGameState(next);
@@ -357,7 +369,8 @@ export class RoomDurableObject {
       lovers: roles.has("lovers"),
       betrayer: roles.has("betr"),
       childFox: roles.has("fosi"),
-      twoFoxes: roles.has("foxs")
+      twoFoxes: roles.has("foxs"),
+      cat: roles.has("cat")
     };
   }
 }

@@ -135,5 +135,12 @@ export function parseClientMessage(raw: string): ClientMessage {
     return { type: "guard", targetPlayerId: parsed.targetPlayerId };
   }
 
+  if (parsed.type === "cat_revive") {
+    if (typeof parsed.targetPlayerId !== "string") {
+      throw new Error("Invalid cat revive message");
+    }
+    return { type: "cat_revive", targetPlayerId: parsed.targetPlayerId };
+  }
+
   throw new Error("Unknown message type");
 }

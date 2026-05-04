@@ -157,7 +157,8 @@ export function renderHome(rooms: RoomSummary[], announcement = DEFAULT_ANNOUNCE
         room.options.lovers ? `<span class="option-mark">戀人</span>` : "",
         room.options.betrayer ? `<span class="option-mark">背德</span>` : "",
         room.options.childFox ? `<span class="option-mark">子狐</span>` : "",
-        room.options.twoFoxes ? `<span class="option-mark">雙狐</span>` : ""
+        room.options.twoFoxes ? `<span class="option-mark">雙狐</span>` : "",
+        room.options.cat ? `<span class="option-mark">貓又</span>` : ""
       ].filter(Boolean).join(" ");
       return `<a class="room-link" href="/room/${escapeHtml(room.id)}">
         <span class="room-line"><span class="status status-${status}">${status}</span><small>[${escapeHtml(room.id)}]</small> ${escapeHtml(room.name)}村</span>
@@ -242,6 +243,10 @@ export function renderHome(rooms: RoomSummary[], announcement = DEFAULT_ANNOUNCE
           <td><label><input id="optionTwoFoxes" type="checkbox"> <small>第二隻妖狐登場</small></label></td>
         </tr>
         <tr>
+          <td><label><strong>　20人以上貓又登場：</strong></label></td>
+          <td><label><input id="optionCat" type="checkbox"> <small>貓又登場，可牽連死亡並嘗試復活</small></label></td>
+        </tr>
+        <tr>
           <td></td>
           <td><button id="createRoom">建立房間</button></td>
         </tr>
@@ -265,11 +270,12 @@ export function renderHome(rooms: RoomSummary[], announcement = DEFAULT_ANNOUNCE
         const betrayer = document.querySelector("#optionBetrayer").checked;
         const childFox = document.querySelector("#optionChildFox").checked;
         const twoFoxes = document.querySelector("#optionTwoFoxes").checked;
+        const cat = document.querySelector("#optionCat").checked;
         localStorage.setItem("werewolf_cf_nickname", nickname);
         const res = await fetch("/api/rooms", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ name, playerId: localStorage.getItem(playerKey), nickname, options: { poison, bigWolf, authority, decider, lovers, betrayer, childFox, twoFoxes } })
+          body: JSON.stringify({ name, playerId: localStorage.getItem(playerKey), nickname, options: { poison, bigWolf, authority, decider, lovers, betrayer, childFox, twoFoxes, cat } })
         });
         const data = await res.json();
         if (!res.ok) {
@@ -577,7 +583,8 @@ export function renderRoom(roomId: string): string {
           fox: "妖狐",
           poison: "埋毒者",
           betrayer: "背德者",
-          child_fox: "子狐"
+          child_fox: "子狐",
+          cat: "貓又"
         }[value] || value;
       }
       function winnerLabel(value) {
@@ -600,7 +607,7 @@ export function renderRoom(roomId: string): string {
         const currentPlayerAlive = currentPlayer ? currentPlayer.alive : game.phase === "lobby";
         const actorCanAct =
           currentPlayerAlive &&
-          (game.phase === "day" || (game.phase === "night" && (isWolfRole(role) || role === "seer" || role === "guard" || role === "child_fox")));
+          (game.phase === "day" || (game.phase === "night" && (isWolfRole(role) || role === "seer" || role === "guard" || role === "child_fox" || role === "cat")));
         const host = game.players.find((player) => player.playerId === game.hostId);
         document.querySelector("#host").textContent = host ? host.nickname : "未定";
         document.querySelector("#startGame").disabled = game.phase !== "lobby" || game.hostId !== currentPlayerId;
@@ -644,7 +651,14 @@ export function renderRoom(roomId: string): string {
           row.appendChild(card);
           const button = document.createElement("button");
           button.textContent = (player.alive ? "" : "× ") + player.nickname;
-          button.disabled = !actorCanAct || !player.alive || player.playerId === currentPlayerId || game.phase === "ended" || game.phase === "lobby";
+          const catReviveTarget = game.phase === "night" && role === "cat" && !player.alive;
+          button.disabled =
+            !actorCanAct ||
+            (game.phase === "night" && role === "cat" && !catReviveTarget) ||
+            (!player.alive && !catReviveTarget) ||
+            player.playerId === currentPlayerId ||
+            game.phase === "ended" ||
+            game.phase === "lobby";
           if (!player.alive) {
             button.className = "dead";
           }
@@ -660,6 +674,8 @@ export function renderRoom(roomId: string): string {
               sendCommand({ type: "child_fox_divine", targetPlayerId: player.playerId });
             } else if (latestGame.phase === "night" && role === "guard") {
               sendCommand({ type: "guard", targetPlayerId: player.playerId });
+            } else if (latestGame.phase === "night" && role === "cat") {
+              sendCommand({ type: "cat_revive", targetPlayerId: player.playerId });
             }
           });
           players.appendChild(button);

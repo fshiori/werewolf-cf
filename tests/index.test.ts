@@ -145,7 +145,7 @@ describe("worker routes", () => {
   it("returns room options in room listings", async () => {
     const response = await worker.fetch(
       new Request("http://example.test/api/rooms"),
-      envWithRooms(["room_plain", "room_poison"], {}, {}, {}, {}, { room_poison: "poison wfbig authority decide lovers betr fosi foxs" })
+      envWithRooms(["room_plain", "room_poison"], {}, {}, {}, {}, { room_poison: "poison wfbig authority decide lovers betr fosi foxs cat" })
     );
 
     expect(response.status).toBe(200);
@@ -164,7 +164,8 @@ describe("worker routes", () => {
             lovers: false,
             betrayer: false,
             childFox: false,
-            twoFoxes: false
+            twoFoxes: false,
+            cat: false
           }
         },
         {
@@ -180,7 +181,8 @@ describe("worker routes", () => {
             lovers: true,
             betrayer: true,
             childFox: true,
-            twoFoxes: true
+            twoFoxes: true,
+            cat: true
           }
         }
       ]
@@ -197,7 +199,17 @@ describe("worker routes", () => {
           name: "Option Test",
           playerId: "player_owner",
           nickname: "Owner",
-          options: { poison: true, bigWolf: true, authority: true, decider: true, lovers: true, betrayer: true, childFox: true, twoFoxes: true }
+          options: {
+            poison: true,
+            bigWolf: true,
+            authority: true,
+            decider: true,
+            lovers: true,
+            betrayer: true,
+            childFox: true,
+            twoFoxes: true,
+            cat: true
+          }
         })
       }),
       env
@@ -208,10 +220,10 @@ describe("worker routes", () => {
 
     expect(response.status).toBe(200);
     expect(roomInsert?.query).toContain("option_role");
-    expect(roomInsert?.values.at(-1)).toBe("poison wfbig authority decide lovers betr fosi foxs");
+    expect(roomInsert?.values.at(-1)).toBe("poison wfbig authority decide lovers betr fosi foxs cat");
     expect(JSON.parse(String(eventInsert?.values.at(-1)))).toEqual({
       name: "Option Test",
-      options: { poison: true, bigWolf: true, authority: true, decider: true, lovers: true, betrayer: true, childFox: true, twoFoxes: true }
+      options: { poison: true, bigWolf: true, authority: true, decider: true, lovers: true, betrayer: true, childFox: true, twoFoxes: true, cat: true }
     });
   });
 

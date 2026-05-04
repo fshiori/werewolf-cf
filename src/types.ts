@@ -17,6 +17,7 @@ export interface RoomOptions {
   betrayer: boolean;
   childFox: boolean;
   twoFoxes: boolean;
+  cat: boolean;
 }
 
 export interface RoomMember {
@@ -36,7 +37,8 @@ export type PlayerRole =
   | "fox"
   | "poison"
   | "betrayer"
-  | "child_fox";
+  | "child_fox"
+  | "cat";
 export type GamePhase = "lobby" | "day" | "night" | "ended";
 export type GameWinner = "villagers" | "werewolves" | "foxes" | "lovers";
 export type DivinationResult = "human" | "werewolf";
@@ -109,6 +111,7 @@ export interface GameState {
   nightKills: Record<string, string>;
   divinations: Record<string, string>;
   guards: Record<string, string>;
+  catRevives: Record<string, string>;
   mediumReading?: MediumReading;
   winner?: GameWinner;
   phaseEndsAt?: string;
@@ -160,6 +163,11 @@ export type GuardClientMessage = {
   targetPlayerId: string;
 };
 
+export type CatReviveClientMessage = {
+  type: "cat_revive";
+  targetPlayerId: string;
+};
+
 export type ClientMessage =
   | JoinClientMessage
   | ChatClientMessage
@@ -169,7 +177,8 @@ export type ClientMessage =
   | NightKillClientMessage
   | DivineClientMessage
   | ChildFoxDivineClientMessage
-  | GuardClientMessage;
+  | GuardClientMessage
+  | CatReviveClientMessage;
 
 export type ServerMessage =
   | { type: "joined"; roomId: string; playerId: string; members: RoomMember[] }
@@ -179,7 +188,7 @@ export type ServerMessage =
   | { type: "divination_result"; targetPlayerId: string; targetNickname: string; result: DivinationResult }
   | { type: "child_fox_result"; targetPlayerId: string; targetNickname: string; result: ChildFoxDivinationResult }
   | { type: "medium_result"; day: number; targetPlayerId: string; targetNickname: string; result: MediumResult }
-  | { type: "action_ack"; action: "vote" | "night_kill" | "guard" | "child_fox_divine"; targetPlayerId: string }
+  | { type: "action_ack"; action: "vote" | "night_kill" | "guard" | "child_fox_divine" | "cat_revive"; targetPlayerId: string }
   | {
       type: "game_state";
       phase: GamePhase;

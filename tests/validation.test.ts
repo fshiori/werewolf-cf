@@ -59,6 +59,10 @@ describe("validation", () => {
       type: "guard",
       targetPlayerId: "player_4"
     });
+    expect(parseClientMessage('{"type":"cat_revive","targetPlayerId":"player_4"}')).toEqual({
+      type: "cat_revive",
+      targetPlayerId: "player_4"
+    });
     expect(() => parseClientMessage("{bad")).toThrow("Invalid JSON");
     expect(() => parseClientMessage('{"type":"unknown"}')).toThrow("Unknown message type");
   });

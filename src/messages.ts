@@ -100,7 +100,10 @@ export function buildMediumResultMessage(reading: MediumReading): ServerMessage 
   };
 }
 
-export function buildActionAckMessage(action: "vote" | "night_kill" | "guard" | "child_fox_divine", targetPlayerId: string): ServerMessage {
+export function buildActionAckMessage(
+  action: "vote" | "night_kill" | "guard" | "child_fox_divine" | "cat_revive",
+  targetPlayerId: string
+): ServerMessage {
   return { type: "action_ack", action, targetPlayerId };
 }
 
