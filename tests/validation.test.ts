@@ -98,6 +98,7 @@ describe("validation", () => {
       targetPlayerId: "player_1",
       text: "secret"
     });
+    expect(parseClientMessage('{"type":"gm_advance_phase"}')).toEqual({ type: "gm_advance_phase" });
     expect(parseClientMessage('{"type":"set_last_words","text":"bye"}')).toEqual({ type: "set_last_words", text: "bye" });
     expect(parseClientMessage('{"type":"start_game"}')).toEqual({ type: "start_game" });
     expect(parseClientMessage('{"type":"kick_player","targetPlayerId":"player_1"}')).toEqual({

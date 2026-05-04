@@ -264,6 +264,24 @@ export class RoomDurableObject {
         return;
       }
 
+      if (message.type === "gm_advance_phase") {
+        if (!member.gm) {
+          throw new Error("Only the GM can advance phases");
+        }
+        const loadedGame = await this.loadGameState();
+        if (loadedGame.phase !== "day" && loadedGame.phase !== "night") {
+          throw new Error("Only active day or night phases can be advanced");
+        }
+        const next = advancePhaseByAlarm(loadedGame);
+        await this.saveGameState(next);
+        await this.syncRoomStatus(next);
+        await this.persistRoomEvent(member.playerId, "gm_advanced_phase", { phase: loadedGame.phase, day: loadedGame.day });
+        await this.broadcastGameState(next);
+        this.sendMediumResults(next);
+        this.sendRoles(next);
+        return;
+      }
+
       if (message.type === "kick_player") {
         const loadedGame = await this.loadGameState();
         if (!member.gm && !canStartGame(loadedGame, member.playerId)) {
