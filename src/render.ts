@@ -464,7 +464,7 @@ export function renderRoom(roomId: string): string {
             role = msg.role;
             const wolves = msg.wolves.length ? "（狼伴：" + msg.wolves.map((wolf) => wolf.nickname).join(", ") + "）" : "";
             const commons = msg.commons && msg.commons.length ? "（共有：" + msg.commons.map((common) => common.nickname).join(", ") + "）" : "";
-            document.querySelector("#role").textContent = msg.role + wolves + commons;
+            document.querySelector("#role").textContent = roleLabel(msg.role) + wolves + commons;
             if (latestGame) renderGame(latestGame);
           } else if (msg.type === "error") {
             append("<span class='muted'>" + msg.message + "</span>");
@@ -507,10 +507,29 @@ export function renderRoom(roomId: string): string {
           ws.send(JSON.stringify(command));
         }
       }
+      function roleLabel(value) {
+        return {
+          villager: "村民",
+          werewolf: "人狼",
+          seer: "占卜師",
+          medium: "靈能者",
+          madman: "狂人",
+          guard: "獵人",
+          common: "共有者",
+          fox: "妖狐"
+        }[value] || value;
+      }
+      function winnerLabel(value) {
+        return {
+          villagers: "村民",
+          werewolves: "人狼",
+          foxes: "妖狐"
+        }[value] || "未定";
+      }
       function renderGame(game) {
         document.querySelector("#phase").textContent =
           game.phase + (game.day ? " " + game.day : "") + (game.revoteCount ? " 再投票 " + game.revoteCount : "");
-        document.querySelector("#winner").textContent = game.winner || "未定";
+        document.querySelector("#winner").textContent = winnerLabel(game.winner);
         const currentPlayerId = localStorage.getItem(playerKey);
         const currentPlayer = game.players.find((player) => player.playerId === currentPlayerId);
         const currentPlayerAlive = currentPlayer ? currentPlayer.alive : game.phase === "lobby";

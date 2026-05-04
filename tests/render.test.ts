@@ -60,6 +60,11 @@ describe("render", () => {
     expect(html).toContain("game.revoteCount");
     expect(html).toContain("currentPlayerAlive");
     expect(html).toContain("actorCanAct");
+    expect(html).toContain("function roleLabel(value)");
+    expect(html).toContain('werewolf: "人狼"');
+    expect(html).toContain('fox: "妖狐"');
+    expect(html).toContain("roleLabel(msg.role)");
+    expect(html).toContain("winnerLabel(game.winner)");
     expect(html).toContain("msg.commons");
     expect(html).toContain("共有：");
     expect(html).toContain("玩家列表");
