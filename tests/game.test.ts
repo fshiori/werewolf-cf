@@ -177,6 +177,19 @@ describe("game", () => {
     ]);
   });
 
+  it("applies the poison room option in twenty-player games", () => {
+    const normal = startGame(numberedLobby(20), 0, () => 0);
+    const withPoison = startGame(numberedLobby(20), 0, () => 0, { poison: true });
+
+    expect(normal.players.filter((player) => player.role === "poison")).toHaveLength(0);
+    expect(normal.players.filter((player) => player.role === "werewolf")).toHaveLength(3);
+    expect(withPoison.players.filter((player) => player.role === "poison")).toHaveLength(1);
+    expect(withPoison.players.filter((player) => player.role === "werewolf")).toHaveLength(4);
+    expect(withPoison.players.filter((player) => player.role === "villager")).toHaveLength(
+      normal.players.filter((player) => player.role === "villager").length - 2
+    );
+  });
+
   it("moves from completed day vote to night", () => {
     let game = startGame(lobby([["player_1", "Alice"], ["player_2", "Bob"], ["player_3", "Carol"], ["player_4", "Dave"]]), 0, () => 0);
 

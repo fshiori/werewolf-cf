@@ -6,7 +6,8 @@ import type {
   MediumReading,
   PlayerStatUpdate,
   PublicGamePlayer,
-  RoomMember
+  RoomMember,
+  RoomOptions
 } from "./types";
 
 export const DAY_MS = 180_000;
@@ -104,7 +105,7 @@ export function canStartGame(state: GameState, playerId: string): boolean {
   return (state.hostId ?? state.players[0]?.playerId) === playerId;
 }
 
-export function startGame(state: GameState, now = Date.now(), random = Math.random): GameState {
+export function startGame(state: GameState, now = Date.now(), random = Math.random, options: RoomOptions = { poison: false }): GameState {
   if (state.phase !== "lobby") {
     throw new Error("Game already started");
   }
@@ -116,7 +117,10 @@ export function startGame(state: GameState, now = Date.now(), random = Math.rand
   if (referenceRoleDeck) {
     return startGameWithPlayers(
       state,
-      state.players.map((player, index) => ({ ...player, role: referenceRoleDeck[index], alive: true })),
+      applyRoomOptions(
+        state.players.map((player, index) => ({ ...player, role: referenceRoleDeck[index], alive: true })),
+        options
+      ),
       now
     );
   }
@@ -181,7 +185,29 @@ export function startGame(state: GameState, now = Date.now(), random = Math.rand
     return { ...player, role, alive: true };
   });
 
-  return startGameWithPlayers(state, players, now);
+  return startGameWithPlayers(state, applyRoomOptions(players, options), now);
+}
+
+function applyRoomOptions(players: GamePlayer[], options: RoomOptions): GamePlayer[] {
+  if (!options.poison || players.length < 20) {
+    return players;
+  }
+  const villagerIndexes = players
+    .map((player, index) => ({ player, index }))
+    .filter(({ player }) => player.role === "villager")
+    .map(({ index }) => index);
+  if (villagerIndexes.length < 2) {
+    return players;
+  }
+  return players.map((player, index) => {
+    if (index === villagerIndexes[0]) {
+      return { ...player, role: "poison" };
+    }
+    if (index === villagerIndexes[1]) {
+      return { ...player, role: "werewolf" };
+    }
+    return player;
+  });
 }
 
 function startGameWithPlayers(state: GameState, players: GamePlayer[], now: number): GameState {
