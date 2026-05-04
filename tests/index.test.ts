@@ -310,8 +310,8 @@ describe("worker routes", () => {
             decider: true,
             lovers: true,
             betrayer: true,
-            childFox: true,
-            twoFoxes: true,
+            childFox: false,
+            twoFoxes: false,
             cat: true,
             lastWords: true,
             openVote: true,
@@ -333,6 +333,30 @@ describe("worker routes", () => {
         }
       ]
     });
+  });
+
+  it("normalizes fox room variants from stored option_role tokens", async () => {
+    const response = await worker.fetch(
+      new Request("http://example.test/api/rooms"),
+      envWithRooms(
+        ["room_betr", "room_child", "room_two"],
+        {},
+        {},
+        {},
+        {},
+        {
+          room_betr: "betr fosi foxs",
+          room_child: "fosi foxs",
+          room_two: "foxs"
+        }
+      )
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.json() as { rooms: Array<{ id: string; options: { betrayer: boolean; childFox: boolean; twoFoxes: boolean } }> };
+    expect(body.rooms.find((room) => room.id === "room_betr")?.options).toMatchObject({ betrayer: true, childFox: false, twoFoxes: false });
+    expect(body.rooms.find((room) => room.id === "room_child")?.options).toMatchObject({ betrayer: false, childFox: true, twoFoxes: false });
+    expect(body.rooms.find((room) => room.id === "room_two")?.options).toMatchObject({ betrayer: false, childFox: false, twoFoxes: true });
   });
 
   it("returns a single room summary", async () => {
