@@ -1,5 +1,5 @@
 import { publicPlayers } from "./game";
-import type { DivinationResult, GameState, PlayerRole, RoomMember, ServerMessage } from "./types";
+import type { DivinationResult, GameState, MediumReading, PlayerRole, RoomMember, ServerMessage } from "./types";
 import { escapeHtml } from "./validation";
 
 export function buildJoinedMessage(roomId: string, playerId: string, members: RoomMember[]): ServerMessage {
@@ -62,6 +62,16 @@ export function buildDivinationResultMessage(
     targetPlayerId,
     targetNickname: escapeHtml(targetNickname),
     result
+  };
+}
+
+export function buildMediumResultMessage(reading: MediumReading): ServerMessage {
+  return {
+    type: "medium_result",
+    day: reading.day,
+    targetPlayerId: reading.targetPlayerId,
+    targetNickname: escapeHtml(reading.targetNickname),
+    result: reading.result
   };
 }
 

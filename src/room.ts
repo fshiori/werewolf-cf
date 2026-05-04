@@ -7,6 +7,7 @@ import {
   castDivination,
   castNightKill,
   createLobbyState,
+  mediumReadingForPlayer,
   startGame,
   upsertLobbyPlayer,
   wolvesForPlayer
@@ -17,6 +18,7 @@ import {
   buildErrorMessage,
   buildGameStateMessage,
   buildJoinedMessage,
+  buildMediumResultMessage,
   buildPresenceMessage,
   buildRoleMessage,
   buildWolfChatMessage
@@ -72,6 +74,7 @@ export class RoomDurableObject {
     await this.saveGameState(next);
     await this.syncRoomStatus(next);
     this.broadcastGameState(next);
+    this.sendMediumResults(next);
   }
 
   private async onMessage(socket: WebSocket, event: MessageEvent): Promise<void> {
@@ -99,6 +102,7 @@ export class RoomDurableObject {
         this.broadcast(buildPresenceMessage(this.members()));
         this.broadcastGameState(game);
         this.sendRole(socket, game, playerId);
+        this.sendMediumResult(socket, game, playerId);
         return;
       }
 
@@ -158,6 +162,7 @@ export class RoomDurableObject {
       await this.saveGameState(next);
       await this.syncRoomStatus(next);
       this.broadcastGameState(next);
+      this.sendMediumResults(next);
     } catch (error) {
       this.send(socket, buildErrorMessage(error instanceof Error ? error.message : "Unknown error"));
     }
@@ -231,6 +236,20 @@ export class RoomDurableObject {
       return;
     }
     this.send(socket, buildRoleMessage(player.role, wolvesForPlayer(gameState, player.playerId)));
+  }
+
+  private sendMediumResults(gameState: GameState): void {
+    for (const [socket, member] of this.sockets) {
+      this.sendMediumResult(socket, gameState, member.playerId);
+    }
+  }
+
+  private sendMediumResult(socket: WebSocket, gameState: GameState, playerId: string): void {
+    const reading = mediumReadingForPlayer(gameState, playerId);
+    if (!reading) {
+      return;
+    }
+    this.send(socket, buildMediumResultMessage(reading));
   }
 
   private async syncRoomStatus(gameState: GameState): Promise<void> {

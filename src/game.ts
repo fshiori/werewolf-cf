@@ -1,4 +1,4 @@
-import type { DivinationResult, GamePlayer, GameState, GameWinner, PublicGamePlayer, RoomMember } from "./types";
+import type { DivinationResult, GamePlayer, GameState, GameWinner, MediumReading, PublicGamePlayer, RoomMember } from "./types";
 
 export const DAY_MS = 180_000;
 export const NIGHT_MS = 90_000;
@@ -73,12 +73,15 @@ export function startGame(state: GameState, now = Date.now(), random = Math.rand
     Array.from({ length: wolfCount }, (_, offset) => state.players[(firstWolfIndex + offset) % state.players.length].playerId)
   );
   const seerId = state.players.find((player) => !wolfIds.has(player.playerId))?.playerId;
+  const mediumId = state.players.find((player) => !wolfIds.has(player.playerId) && player.playerId !== seerId)?.playerId;
   const players = state.players.map((player) => {
     let role: GamePlayer["role"] = "villager";
     if (wolfIds.has(player.playerId)) {
       role = "werewolf";
     } else if (state.players.length >= 4 && player.playerId === seerId) {
       role = "seer";
+    } else if (state.players.length >= 5 && player.playerId === mediumId) {
+      role = "medium";
     }
     return { ...player, role, alive: true };
   });
@@ -91,6 +94,7 @@ export function startGame(state: GameState, now = Date.now(), random = Math.rand
     votes: {},
     nightKills: {},
     divinations: {},
+    mediumReading: undefined,
     phaseEndsAt: new Date(now + DAY_MS).toISOString(),
     log: [...state.log, "遊戲開始。", "第 1 日白天開始。"]
   };
@@ -177,14 +181,30 @@ export function wolvesForPlayer(state: GameState, playerId: string): RoomMember[
     .map(({ playerId: wolfId, nickname }) => ({ playerId: wolfId, nickname }));
 }
 
+export function mediumReadingForPlayer(state: GameState, playerId: string): MediumReading | undefined {
+  const player = state.players.find((candidate) => candidate.playerId === playerId);
+  if (state.phase !== "day" || !state.mediumReading || !player?.alive || player.role !== "medium") {
+    return undefined;
+  }
+  return state.mediumReading;
+}
+
 function resolveDay(state: GameState, now = Date.now()): GameState {
   const executedId = pickTopTarget(state.votes);
   const players = executedId
     ? state.players.map((player) => (player.playerId === executedId ? { ...player, alive: false } : player))
     : state.players;
   const executed = executedId ? state.players.find((player) => player.playerId === executedId) : undefined;
+  const mediumReading: MediumReading | undefined = executed
+    ? {
+        day: state.day,
+        targetPlayerId: executed.playerId,
+        targetNickname: executed.nickname,
+        result: executed.role === "werewolf" ? "werewolf" : "human"
+      }
+    : undefined;
   const log = [...state.log, executed ? `${executed.nickname} 被投票處決。` : "白天沒有共識，無人被處決。"];
-  return withWinOrNextNight({ ...state, players, votes: {}, log }, now);
+  return withWinOrNextNight({ ...state, players, votes: {}, mediumReading, log }, now);
 }
 
 function resolveNight(state: GameState, now = Date.now()): GameState {
@@ -234,6 +254,7 @@ function endGame(state: GameState, winner: GameWinner): GameState {
     votes: {},
     nightKills: {},
     divinations: {},
+    mediumReading: undefined,
     log: [...state.log, winner === "villagers" ? "村民勝利。" : "狼人勝利。"]
   };
 }

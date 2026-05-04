@@ -308,6 +308,9 @@ export function renderRoom(roomId: string): string {
           } else if (msg.type === "divination_result") {
             const result = msg.result === "werewolf" ? "狼" : "人";
             append("<font color='#660099'>[占卜]</font> " + msg.targetNickname + " 是「" + result + "」。");
+          } else if (msg.type === "medium_result") {
+            const result = msg.result === "werewolf" ? "狼" : "人";
+            append("<font color='#006666'>[靈能]</font> 第 " + msg.day + " 日被處決的 " + msg.targetNickname + " 是「" + result + "」。");
           } else if (msg.type === "game_state") {
             latestGame = msg;
             renderGame(msg);

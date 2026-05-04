@@ -7,6 +7,7 @@ import {
   castDivination,
   castNightKill,
   createLobbyState,
+  mediumReadingForPlayer,
   startGame,
   upsertLobbyPlayer,
   wolvesForPlayer
@@ -37,8 +38,25 @@ describe("game", () => {
     expect(game.day).toBe(1);
     expect(game.players.filter((player) => player.role === "werewolf")).toHaveLength(1);
     expect(game.players.filter((player) => player.role === "seer")).toHaveLength(1);
+    expect(game.players.filter((player) => player.role === "medium")).toHaveLength(0);
     expect(wolvesForPlayer(game, "player_1")).toEqual([{ playerId: "player_1", nickname: "Alice" }]);
     expect(wolvesForPlayer(game, "player_2")).toEqual([]);
+  });
+
+  it("adds a medium in five-player games", () => {
+    const game = startGame(
+      lobby([
+        ["player_1", "Alice"],
+        ["player_2", "Bob"],
+        ["player_3", "Carol"],
+        ["player_4", "Dave"],
+        ["player_5", "Ellen"]
+      ]),
+      0,
+      () => 0
+    );
+
+    expect(game.players.find((player) => player.playerId === "player_3")?.role).toBe("medium");
   });
 
   it("moves from completed day vote to night", () => {
@@ -117,5 +135,39 @@ describe("game", () => {
     expect(divination.state.divinations).toEqual({ player_2: "player_1" });
     expect(() => castDivination(divination.state, "player_2", "player_3")).toThrow("already used");
     expect(() => castDivination(game, "player_3", "player_1")).toThrow("Only seers");
+  });
+
+  it("returns medium readings only to living mediums during the next day", () => {
+    let game = startGame(
+      lobby([
+        ["player_1", "Alice"],
+        ["player_2", "Bob"],
+        ["player_3", "Carol"],
+        ["player_4", "Dave"],
+        ["player_5", "Ellen"]
+      ]),
+      0,
+      () => 0
+    );
+
+    game = castDayVote(game, "player_1", "player_4");
+    game = castDayVote(game, "player_2", "player_4");
+    game = castDayVote(game, "player_3", "player_4");
+    game = castDayVote(game, "player_4", "player_3");
+    game = castDayVote(game, "player_5", "player_3");
+
+    expect(game.phase).toBe("night");
+    expect(mediumReadingForPlayer(game, "player_3")).toBeUndefined();
+
+    game = castNightKill(game, "player_1", "player_5", 0);
+
+    expect(game.phase).toBe("day");
+    expect(mediumReadingForPlayer(game, "player_3")).toEqual({
+      day: 1,
+      targetPlayerId: "player_4",
+      targetNickname: "Dave",
+      result: "human"
+    });
+    expect(mediumReadingForPlayer(game, "player_2")).toBeUndefined();
   });
 });
