@@ -60,6 +60,8 @@ describe("render", () => {
     expect(html).toContain("game.revoteCount");
     expect(html).toContain("currentPlayerAlive");
     expect(html).toContain("actorCanAct");
+    expect(html).toContain("msg.commons");
+    expect(html).toContain("共有：");
     expect(html).toContain("玩家列表");
     expect(html).toContain("能力發動 / 投票");
     expect(html).toContain("wolf_chat");

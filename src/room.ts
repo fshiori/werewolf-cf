@@ -8,6 +8,7 @@ import {
   castDivination,
   castGuard,
   castNightKill,
+  commonsForPlayer,
   createLobbyState,
   mediumReadingForPlayer,
   playerStatUpdates,
@@ -256,7 +257,7 @@ export class RoomDurableObject {
     if (!player || gameState.phase === "lobby") {
       return;
     }
-    this.send(socket, buildRoleMessage(player.role, wolvesForPlayer(gameState, player.playerId)));
+    this.send(socket, buildRoleMessage(player.role, wolvesForPlayer(gameState, player.playerId), commonsForPlayer(gameState, player.playerId)));
   }
 
   private sendMediumResults(gameState: GameState): void {

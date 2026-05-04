@@ -8,6 +8,7 @@ import {
   castDivination,
   castGuard,
   castNightKill,
+  commonsForPlayer,
   createLobbyState,
   mediumReadingForPlayer,
   playerStatUpdates,
@@ -22,6 +23,10 @@ function lobby(players: Array<[string, string]>): GameState {
     (state, [playerId, nickname]) => upsertLobbyPlayer(state, { playerId, nickname }),
     createLobbyState("room_abc")
   );
+}
+
+function numberedLobby(count: number): GameState {
+  return lobby(Array.from({ length: count }, (_, index) => [`player_${index + 1}`, `Player ${index + 1}`]));
 }
 
 describe("game", () => {
@@ -118,6 +123,20 @@ describe("game", () => {
     expect(game.guards).toEqual({});
     expect(game.log.at(-2)).toBe("夜晚平安過去。");
     expect(() => castGuard(game, "player_2", "player_3")).toThrow("Guarding is only available at night");
+  });
+
+  it("adds common partners in thirteen-player games", () => {
+    const game = startGame(numberedLobby(13), 0, () => 0);
+
+    expect(game.players.filter((player) => player.role === "common")).toEqual([
+      expect.objectContaining({ playerId: "player_8", role: "common" }),
+      expect.objectContaining({ playerId: "player_9", role: "common" })
+    ]);
+    expect(commonsForPlayer(game, "player_8")).toEqual([
+      { playerId: "player_8", nickname: "Player 8" },
+      { playerId: "player_9", nickname: "Player 9" }
+    ]);
+    expect(commonsForPlayer(game, "player_10")).toEqual([]);
   });
 
   it("moves from completed day vote to night", () => {

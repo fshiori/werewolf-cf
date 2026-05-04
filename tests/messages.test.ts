@@ -112,7 +112,17 @@ describe("messages", () => {
     expect(buildRoleMessage("werewolf", [{ playerId: "player_1", nickname: "<Wolf>" }])).toEqual({
       type: "role",
       role: "werewolf",
-      wolves: [{ playerId: "player_1", nickname: "&lt;Wolf&gt;" }]
+      wolves: [{ playerId: "player_1", nickname: "&lt;Wolf&gt;" }],
+      commons: []
+    });
+  });
+
+  it("builds role messages with escaped common partner list", () => {
+    expect(buildRoleMessage("common", [], [{ playerId: "player_2", nickname: "<Shared>" }])).toEqual({
+      type: "role",
+      role: "common",
+      wolves: [],
+      commons: [{ playerId: "player_2", nickname: "&lt;Shared&gt;" }]
     });
   });
 });

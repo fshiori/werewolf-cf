@@ -101,6 +101,21 @@ export function startGame(state: GameState, now = Date.now(), random = Math.rand
     (player) =>
       !wolfIds.has(player.playerId) && player.playerId !== seerId && player.playerId !== mediumId && player.playerId !== madmanId
   )?.playerId;
+  const commonIds = new Set(
+    state.players.length >= 13
+      ? state.players
+          .filter(
+            (player) =>
+              !wolfIds.has(player.playerId) &&
+              player.playerId !== seerId &&
+              player.playerId !== mediumId &&
+              player.playerId !== madmanId &&
+              player.playerId !== guardId
+          )
+          .slice(0, 2)
+          .map((player) => player.playerId)
+      : []
+  );
   const players = state.players.map((player) => {
     let role: GamePlayer["role"] = "villager";
     if (wolfIds.has(player.playerId)) {
@@ -113,6 +128,8 @@ export function startGame(state: GameState, now = Date.now(), random = Math.rand
       role = "madman";
     } else if (state.players.length >= 7 && player.playerId === guardId) {
       role = "guard";
+    } else if (commonIds.has(player.playerId)) {
+      role = "common";
     }
     return { ...player, role, alive: true };
   });
@@ -232,6 +249,16 @@ export function wolvesForPlayer(state: GameState, playerId: string): RoomMember[
   return state.players
     .filter((candidate) => candidate.role === "werewolf")
     .map(({ playerId: wolfId, nickname }) => ({ playerId: wolfId, nickname }));
+}
+
+export function commonsForPlayer(state: GameState, playerId: string): RoomMember[] {
+  const player = state.players.find((candidate) => candidate.playerId === playerId);
+  if (!player || player.role !== "common") {
+    return [];
+  }
+  return state.players
+    .filter((candidate) => candidate.role === "common")
+    .map(({ playerId: commonId, nickname }) => ({ playerId: commonId, nickname }));
 }
 
 export function mediumReadingForPlayer(state: GameState, playerId: string): MediumReading | undefined {
