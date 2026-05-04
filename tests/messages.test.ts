@@ -163,6 +163,18 @@ describe("messages", () => {
     expect(JSON.stringify(buildGameStateMessage(game))).not.toContain('"role"');
   });
 
+  it("hides vote mappings unless open vote is enabled", () => {
+    const hidden = {
+      ...createLobbyState("room_abc"),
+      votes: { player_1: "player_2" },
+      openVote: false
+    };
+    const visible = { ...hidden, openVote: true };
+
+    expect(buildGameStateMessage(hidden)).toMatchObject({ type: "game_state", votes: {} });
+    expect(buildGameStateMessage(visible)).toMatchObject({ type: "game_state", votes: { player_1: "player_2" } });
+  });
+
   it("escapes public game state log entries", () => {
     const game = {
       ...createLobbyState("room_abc"),

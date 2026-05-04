@@ -45,6 +45,7 @@ function activeState(phase: "day" | "night", players: GameState["players"]): Gam
     day: 1,
     players,
     votes: {},
+    openVote: false,
     revoteCount: 0,
     nightKills: {},
     divinations: {},
@@ -200,7 +201,8 @@ describe("game", () => {
       childFox: false,
       twoFoxes: false,
       cat: false,
-      lastWords: false
+      lastWords: false,
+      openVote: false
     });
 
     expect(normal.players.filter((player) => player.role === "poison")).toHaveLength(0);
@@ -223,7 +225,8 @@ describe("game", () => {
       childFox: false,
       twoFoxes: false,
       cat: false,
-      lastWords: false
+      lastWords: false,
+      openVote: false
     });
 
     expect(game.players.filter((player) => player.role === "big_wolf")).toHaveLength(1);
@@ -246,7 +249,8 @@ describe("game", () => {
       childFox: false,
       twoFoxes: false,
       cat: false,
-      lastWords: false
+      lastWords: false,
+      openVote: false
     });
 
     expect(game.players.find((player) => player.authority)?.playerId).toBe("player_1");
@@ -297,7 +301,8 @@ describe("game", () => {
       childFox: false,
       twoFoxes: false,
       cat: false,
-      lastWords: false
+      lastWords: false,
+      openVote: false
     });
 
     expect(game.players.filter((player) => player.lover)).toEqual([
@@ -322,7 +327,8 @@ describe("game", () => {
       childFox: false,
       twoFoxes: false,
       cat: false,
-      lastWords: false
+      lastWords: false,
+      openVote: false
     });
 
     expect(game.players.filter((player) => player.role === "betrayer")).toEqual([
@@ -344,7 +350,8 @@ describe("game", () => {
       childFox: true,
       twoFoxes: false,
       cat: false,
-      lastWords: false
+      lastWords: false,
+      openVote: false
     });
 
     expect(game.players.filter((player) => player.role === "child_fox")).toEqual([
@@ -364,7 +371,8 @@ describe("game", () => {
       childFox: false,
       twoFoxes: true,
       cat: false,
-      lastWords: false
+      lastWords: false,
+      openVote: false
     });
 
     expect(game.players.filter((player) => player.role === "fox")).toEqual([
@@ -388,12 +396,40 @@ describe("game", () => {
       childFox: false,
       twoFoxes: false,
       cat: true,
-      lastWords: false
+      lastWords: false,
+      openVote: false
     });
 
     expect(game.players.filter((player) => player.role === "cat")).toEqual([
       expect.objectContaining({ playerId: "player_1", role: "cat" })
     ]);
+  });
+
+  it("stores the open vote room option in started games", () => {
+    const game = startGame(
+      lobby([
+        ["player_1", "Alice"],
+        ["player_2", "Bob"],
+        ["player_3", "Carol"]
+      ]),
+      0,
+      () => 0,
+      {
+        poison: false,
+        bigWolf: false,
+        authority: false,
+        decider: false,
+        lovers: false,
+        betrayer: false,
+        childFox: false,
+        twoFoxes: false,
+        cat: false,
+        lastWords: false,
+        openVote: true
+      }
+    );
+
+    expect(game.openVote).toBe(true);
   });
 
   it("lets child foxes divine at night with possible failure", () => {

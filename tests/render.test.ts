@@ -19,7 +19,8 @@ describe("render", () => {
           childFox: true,
           twoFoxes: true,
           cat: true,
-          lastWords: true
+          lastWords: true,
+          openVote: true
         }
       }
     ]);
@@ -43,6 +44,7 @@ describe("render", () => {
     expect(html).toContain("optionTwoFoxes");
     expect(html).toContain("optionCat");
     expect(html).toContain("optionLastWords");
+    expect(html).toContain("optionOpenVote");
     expect(html).toContain("20人以上埋毒者選項");
     expect(html).toContain("20人以上時大狼出場");
     expect(html).toContain("16人以上權力者出場");
@@ -53,7 +55,8 @@ describe("render", () => {
     expect(html).toContain("20人以上兩隻妖狐");
     expect(html).toContain("20人以上貓又登場");
     expect(html).toContain("生存中可留下死亡時公開的遺言");
-    expect(html).toContain("options: { poison, bigWolf, authority, decider, lovers, betrayer, childFox, twoFoxes, cat, lastWords }");
+    expect(html).toContain("白天公開目前投票目標");
+    expect(html).toContain("options: { poison, bigWolf, authority, decider, lovers, betrayer, childFox, twoFoxes, cat, lastWords, openVote }");
     expect(html).toContain("埋毒");
     expect(html).toContain("大狼");
     expect(html).toContain("背德");
@@ -61,6 +64,7 @@ describe("render", () => {
     expect(html).toContain("雙狐");
     expect(html).toContain("貓又");
     expect(html).toContain("遺言");
+    expect(html).toContain("公開票");
     expect(html).toContain("leaderboardRows");
     expect(html).toContain("尚無戰績。");
     expect(html).toContain("cell.textContent = String(value);");

@@ -78,7 +78,7 @@ export function buildGameStateMessage(state: GameState): ServerMessage {
     hostId: state.hostId,
     revoteCount: state.revoteCount ?? 0,
     players: publicPlayers(state.players).map((player) => ({ ...player, nickname: escapeHtml(player.nickname) })),
-    votes: state.votes,
+    votes: state.openVote ? state.votes : {},
     winner: state.winner,
     phaseEndsAt: state.phaseEndsAt,
     log: state.log.map(escapeHtml)
