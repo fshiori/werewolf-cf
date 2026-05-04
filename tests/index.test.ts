@@ -1231,7 +1231,7 @@ describe("worker routes", () => {
     expect(download.status).toBe(404);
   });
 
-  it("rejects non-image avatars and reports missing avatars", async () => {
+  it("rejects unsupported avatars and reports missing avatars", async () => {
     const env = envWithRooms([]);
     const form = new FormData();
     form.set("playerId", "player_avatar");
@@ -1246,7 +1246,21 @@ describe("worker routes", () => {
     );
 
     expect(upload.status).toBe(400);
-    expect(await upload.json()).toEqual({ error: "Avatar must be an image" });
+    expect(await upload.json()).toEqual({ error: "Avatar must be a PNG, JPEG, GIF, or WebP image" });
+
+    const svgForm = new FormData();
+    svgForm.set("playerId", "player_avatar");
+    svgForm.set("avatar", new File(["<svg></svg>"], "avatar.svg", { type: "image/svg+xml" }));
+    const svgUpload = await worker.fetch(
+      new Request("http://example.test/api/assets/avatar", {
+        method: "POST",
+        body: svgForm
+      }),
+      env
+    );
+
+    expect(svgUpload.status).toBe(400);
+    expect(await svgUpload.json()).toEqual({ error: "Avatar must be a PNG, JPEG, GIF, or WebP image" });
 
     const download = await worker.fetch(new Request("http://example.test/assets/avatar/player_missing"), env);
 
