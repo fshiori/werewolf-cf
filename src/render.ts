@@ -543,6 +543,7 @@ export function renderRoom(roomId: string): string {
                 <button id="sendGmChat" disabled>GM</button>
                 <select id="gmWhisperTarget"></select>
                 <button id="sendGmWhisper" disabled>GM私語</button>
+                <button id="gmAdvancePhase" disabled>GM換日</button>
               </td>
             </tr>
           </table>
@@ -792,6 +793,9 @@ export function renderRoom(roomId: string): string {
       document.querySelector("#startGame").addEventListener("click", () => {
         sendCommand({ type: "start_game" });
       });
+      document.querySelector("#gmAdvancePhase").addEventListener("click", () => {
+        sendCommand({ type: "gm_advance_phase" });
+      });
       document.querySelector("#uploadAvatar").addEventListener("click", async () => {
         const fileInput = document.querySelector("#avatarFile");
         if (!fileInput.files || fileInput.files.length === 0) return;
@@ -861,6 +865,7 @@ export function renderRoom(roomId: string): string {
         document.querySelector("#sendDeadChat").disabled = !(currentPlayerDead && game.phase !== "lobby" && game.phase !== "ended");
         document.querySelector("#sendGmChat").disabled = !isGm;
         document.querySelector("#sendGmWhisper").disabled = !isGm || game.players.length === 0;
+        document.querySelector("#gmAdvancePhase").disabled = !isGm || !(game.phase === "day" || game.phase === "night");
         document.querySelector("#setLastWords").disabled = !(currentPlayerAlive && game.phase !== "lobby" && game.phase !== "ended");
         const players = document.querySelector("#players");
         const playerGrid = document.querySelector("#playerGrid");

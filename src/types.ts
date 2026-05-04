@@ -199,6 +199,10 @@ export type GmWhisperClientMessage = {
   text: string;
 };
 
+export type GmAdvancePhaseClientMessage = {
+  type: "gm_advance_phase";
+};
+
 export type StartGameClientMessage = {
   type: "start_game";
 };
@@ -253,6 +257,7 @@ export type ClientMessage =
   | DeadChatClientMessage
   | GmChatClientMessage
   | GmWhisperClientMessage
+  | GmAdvancePhaseClientMessage
   | StartGameClientMessage
   | KickPlayerClientMessage
   | VoteClientMessage

@@ -216,6 +216,10 @@ export function parseClientMessage(raw: string): ClientMessage {
     return { type: "gm_whisper", targetPlayerId: parsed.targetPlayerId, text: parsed.text };
   }
 
+  if (parsed.type === "gm_advance_phase") {
+    return { type: "gm_advance_phase" };
+  }
+
   if (parsed.type === "start_game") {
     return { type: "start_game" };
   }
