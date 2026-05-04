@@ -100,15 +100,20 @@ function parseRoomOptions(optionRole: string): RoomOptions {
   const roles = new Set(tokens);
   const realTimeToken = tokens.find((token) => token.startsWith("real_time:"));
   const [, dayMinutes, nightMinutes] = realTimeToken?.split(":") ?? [];
+  const foxVariant = readFoxVariant({
+    betrayer: roles.has("betr"),
+    childFox: roles.has("fosi"),
+    twoFoxes: roles.has("foxs")
+  });
   return {
     poison: roles.has("poison"),
     bigWolf: roles.has("wfbig"),
     authority: roles.has("authority"),
     decider: roles.has("decide"),
     lovers: roles.has("lovers"),
-    betrayer: roles.has("betr"),
-    childFox: roles.has("fosi"),
-    twoFoxes: roles.has("foxs"),
+    betrayer: foxVariant === "betrayer",
+    childFox: foxVariant === "childFox",
+    twoFoxes: foxVariant === "twoFoxes",
     cat: roles.has("cat"),
     lastWords: roles.has("will"),
     openVote: roles.has("open_vote"),
