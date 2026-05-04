@@ -137,6 +137,92 @@ describe("RoomDurableObject", () => {
     ]);
   });
 
+  it("rejects unauthorized private channel websocket commands", async () => {
+    const game: GameState = {
+      roomId: "room_abc",
+      phase: "night",
+      day: 1,
+      players: [
+        { playerId: "player_wolf", nickname: "Wolf", role: "werewolf", alive: true },
+        { playerId: "player_dead_wolf", nickname: "Dead Wolf", role: "werewolf", alive: false },
+        { playerId: "player_villager", nickname: "Villager", role: "villager", alive: true },
+        { playerId: "player_dead", nickname: "Dead", role: "villager", alive: false }
+      ],
+      votes: {},
+      openVote: false,
+      commonTalkVisible: false,
+      deadRoleVisible: false,
+      wishRole: false,
+      dummyBoy: false,
+      dayMs: 180_000,
+      nightMs: 90_000,
+      selfVote: false,
+      voteStatus: false,
+      revoteCount: 0,
+      nightKills: {},
+      divinations: {},
+      guards: {},
+      catRevives: {},
+      lastWords: {},
+      log: []
+    };
+    const cases = [
+      {
+        playerId: "player_villager",
+        nickname: "Villager",
+        command: { type: "wolf_chat", text: "secret" },
+        message: "Werewolf channel is only available to living werewolves at night"
+      },
+      {
+        playerId: "player_dead_wolf",
+        nickname: "Dead Wolf",
+        command: { type: "wolf_chat", text: "secret" },
+        message: "Werewolf channel is only available to living werewolves at night"
+      },
+      {
+        playerId: "player_villager",
+        nickname: "Villager",
+        command: { type: "fox_chat", text: "secret" },
+        message: "Fox channel is only available to living foxes at night"
+      },
+      {
+        playerId: "player_villager",
+        nickname: "Villager",
+        command: { type: "common_chat", text: "secret" },
+        message: "Common channel is only available to living common partners at night"
+      },
+      {
+        playerId: "player_villager",
+        nickname: "Villager",
+        command: { type: "lovers_chat", text: "secret" },
+        message: "Lovers channel is only available to living lovers at night"
+      },
+      {
+        playerId: "player_villager",
+        nickname: "Villager",
+        command: { type: "dead_chat", text: "secret" },
+        message: "Dead channel is only available to dead players during the game"
+      },
+      {
+        playerId: "player_wolf",
+        nickname: "Wolf",
+        command: { type: "dead_chat", text: "secret" },
+        message: "Dead channel is only available to dead players during the game"
+      }
+    ];
+
+    for (const testCase of cases) {
+      const room = roomObject(game);
+      const messages: SentMessage[] = [];
+      const socket = fakeSocket(messages);
+      connect(room, socket, testCase.playerId, testCase.nickname);
+
+      await sendRaw(room, socket, JSON.stringify(testCase.command));
+
+      expect(messages).toEqual([{ type: "error", message: testCase.message }]);
+    }
+  });
+
   it("sends only each socket's own role message", () => {
     const game: GameState = {
       roomId: "room_abc",
