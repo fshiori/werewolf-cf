@@ -43,6 +43,7 @@ function envWithRooms(
 ): Env {
   const assets = new Map<string, StoredAsset>();
   const batches: Array<Array<{ query: string; values: unknown[] }>> = [];
+  const runs: Array<{ query: string; values: unknown[] }> = [];
 
   const env = {
     DB: {
@@ -68,6 +69,7 @@ function envWithRooms(
                 return { results: [] };
               },
               async run() {
+                runs.push({ query, values });
                 return {};
               }
             };
@@ -148,6 +150,7 @@ function envWithRooms(
     } as unknown as KVNamespace
   } as unknown as Env;
   (env as unknown as { batches: Array<Array<{ query: string; values: unknown[] }>> }).batches = batches;
+  (env as unknown as { runs: Array<{ query: string; values: unknown[] }> }).runs = runs;
   return env;
 }
 
@@ -361,6 +364,24 @@ describe("worker routes", () => {
 
     expect(response.status).toBe(400);
     expect(await response.json()).toEqual({ error: "GM Trip is required" });
+  });
+
+  it("registers Trip identities", async () => {
+    const env = envWithRooms([]);
+    const response = await worker.fetch(
+      new Request("http://example.test/api/trips", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ trip: "ab12CD" })
+      }),
+      env
+    );
+    const runs = (env as unknown as { runs: Array<{ query: string; values: unknown[] }> }).runs;
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ registered: true });
+    expect(runs[0].query).toContain("INSERT INTO registered_trips");
+    expect(String(runs[0].values[0])).toMatch(/^[0-9a-f]{64}$/);
   });
 
   it("returns 404 for formatted room ids missing from D1", async () => {

@@ -6,3 +6,8 @@ export async function tripHashForRoom(roomId: string, trip: string): Promise<str
   const data = new TextEncoder().encode(`${roomId}:${trip}`);
   return bytesToHex(new Uint8Array(await crypto.subtle.digest("SHA-256", data)));
 }
+
+export async function registeredTripHash(trip: string): Promise<string> {
+  const data = new TextEncoder().encode(`registered:${trip}`);
+  return bytesToHex(new Uint8Array(await crypto.subtle.digest("SHA-256", data)));
+}

@@ -208,6 +208,15 @@ export function renderHome(rooms: RoomSummary[], announcement = DEFAULT_ANNOUNCE
       </table>
     </fieldset>
     <fieldset>
+      <legend><strong>Trip登記</strong></legend>
+      <table class="form-table">
+        <tr>
+          <td><label><strong>　Trip：</strong></label></td>
+          <td><input id="registerTrip" maxlength="32" size="28"> <button id="registerTripButton">身份登錄</button> <span id="registerTripStatus" class="muted"></span></td>
+        </tr>
+      </table>
+    </fieldset>
+    <fieldset>
       <legend><strong>建立村子</strong></legend>
       <table class="form-table">
         <tr>
@@ -350,6 +359,19 @@ export function renderHome(rooms: RoomSummary[], announcement = DEFAULT_ANNOUNCE
       }
       const nick = localStorage.getItem("werewolf_cf_nickname") || "";
       document.querySelector("#nickname").value = nick;
+      document.querySelector("#registerTrip").value = localStorage.getItem("werewolf_cf_trip") || "";
+      document.querySelector("#registerTripButton").addEventListener("click", async () => {
+        const trip = document.querySelector("#registerTrip").value;
+        const status = document.querySelector("#registerTripStatus");
+        localStorage.setItem("werewolf_cf_trip", trip);
+        const res = await fetch("/api/trips", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ trip })
+        });
+        const data = await res.json();
+        status.textContent = res.ok ? "登記完成" : data.error || "登記失敗";
+      });
       document.querySelector("#createRoom").addEventListener("click", async () => {
         const nickname = document.querySelector("#nickname").value;
         const name = document.querySelector("#roomName").value;

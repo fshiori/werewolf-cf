@@ -45,6 +45,9 @@ describe("render", () => {
     expect(html).toContain("選單");
     expect(html).toContain("遊戲列表");
     expect(html).toContain("戰績排行榜");
+    expect(html).toContain("Trip登記");
+    expect(html).toContain("registerTripButton");
+    expect(html).toContain("/api/trips");
     expect(html).toContain("建立村子");
     expect(html).toContain("村子說明");
     expect(html).toContain("限時 5/2");
