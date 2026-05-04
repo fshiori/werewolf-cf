@@ -1,6 +1,6 @@
 import { renderHome, renderRoom } from "./render";
 import { RoomDurableObject } from "./room";
-import type { PlayerStats, RoomSummary } from "./types";
+import type { GameRecordSummary, PlayerStats, RoomSummary } from "./types";
 import { isRecord, validateNickname, validatePlayerId, validateRoomId, validateRoomName } from "./validation";
 
 export { RoomDurableObject };
@@ -65,6 +65,38 @@ async function getPlayerStats(env: Env, playerIdParam: string): Promise<Response
     return json({ stats });
   } catch (error) {
     return json({ error: error instanceof Error ? error.message : "Invalid player" }, { status: 400 });
+  }
+}
+
+function parseRecordResult(value: string): unknown {
+  try {
+    return JSON.parse(value);
+  } catch {
+    return null;
+  }
+}
+
+async function getRoomRecords(env: Env, roomIdParam: string): Promise<Response> {
+  try {
+    const roomId = validateRoomId(roomIdParam);
+    if (!(await roomExists(env, roomId))) {
+      return json({ error: "Room not found" }, { status: 404 });
+    }
+
+    const result = await env.DB.prepare(
+      "SELECT id, room_id, result_json, created_at FROM game_records WHERE room_id = ? ORDER BY created_at DESC LIMIT 20"
+    )
+      .bind(roomId)
+      .all<{ id: number; room_id: string; result_json: string; created_at: string }>();
+    const records: GameRecordSummary[] = result.results.map((record) => ({
+      id: record.id,
+      roomId: record.room_id,
+      result: parseRecordResult(record.result_json),
+      createdAt: record.created_at
+    }));
+    return json({ records });
+  } catch (error) {
+    return json({ error: error instanceof Error ? error.message : "Invalid room" }, { status: 400 });
   }
 }
 
@@ -166,6 +198,11 @@ export default {
 
     if (request.method === "GET" && url.pathname === "/api/rooms") {
       return json({ rooms: await listRooms(env) });
+    }
+
+    const roomRecordsMatch = url.pathname.match(/^\/api\/rooms\/([^/]+)\/records$/);
+    if (request.method === "GET" && roomRecordsMatch) {
+      return getRoomRecords(env, roomRecordsMatch[1]);
     }
 
     const statsMatch = url.pathname.match(/^\/api\/players\/([^/]+)\/stats$/);
