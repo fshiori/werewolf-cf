@@ -466,6 +466,40 @@ describe("RoomDurableObject", () => {
     }
   });
 
+  it("rejects last words websocket commands when the room option is disabled", async () => {
+    const game: GameState = {
+      roomId: "room_abc",
+      phase: "day",
+      day: 1,
+      players: [{ playerId: "player_alive", nickname: "Alive", role: "villager", alive: true }],
+      votes: {},
+      openVote: false,
+      commonTalkVisible: false,
+      deadRoleVisible: false,
+      wishRole: false,
+      dummyBoy: false,
+      dayMs: 180_000,
+      nightMs: 90_000,
+      selfVote: false,
+      voteStatus: false,
+      revoteCount: 0,
+      nightKills: {},
+      divinations: {},
+      guards: {},
+      catRevives: {},
+      lastWords: {},
+      log: []
+    };
+    const room = roomObject(game);
+    const messages: SentMessage[] = [];
+    const socket = fakeSocket(messages);
+    connect(room, socket, "player_alive", "Alive");
+
+    await sendRaw(room, socket, JSON.stringify({ type: "set_last_words", text: "remember me" }));
+
+    expect(messages).toEqual([{ type: "error", message: "Last words are not enabled in this room" }]);
+  });
+
   it("sends only each socket's own role message", () => {
     const game: GameState = {
       roomId: "room_abc",
