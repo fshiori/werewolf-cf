@@ -62,10 +62,10 @@ const checks = [
     },
     expected: "rooms array"
   },
-  { path: "/", kind: "html" },
-  { path: "/rules", kind: "html" },
-  { path: "/protocol", kind: "html" },
-  { path: "/version", kind: "html" }
+  { path: "/", kind: "html", expectedText: "汝等是人是狼？" },
+  { path: "/rules", kind: "html", expectedText: "規則" },
+  { path: "/protocol", kind: "html", expectedText: "WebSocket 入口" },
+  { path: "/version", kind: "html", expectedText: "版本資訊" }
 ];
 
 function urlFor(path) {
@@ -100,6 +100,10 @@ for (const check of checks) {
       const text = await response.text();
       if (!text.trim()) {
         failures.push(`${check.path}: empty HTML response`);
+        continue;
+      }
+      if (check.expectedText && !text.includes(check.expectedText)) {
+        failures.push(`${check.path}: expected HTML text ${check.expectedText}`);
         continue;
       }
     }
