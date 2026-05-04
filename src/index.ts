@@ -1,6 +1,6 @@
 import { renderHome, renderRoom } from "./render";
 import { RoomDurableObject } from "./room";
-import type { RoomSummary } from "./types";
+import type { PlayerStats, RoomSummary } from "./types";
 import { isRecord, validateNickname, validatePlayerId, validateRoomId, validateRoomName } from "./validation";
 
 export { RoomDurableObject };
@@ -48,6 +48,24 @@ async function roomExists(env: Env, roomId: string): Promise<boolean> {
 async function getHomeAnnouncement(env: Env): Promise<string | undefined> {
   const announcement = await env.CONFIG.get("home_announcement");
   return announcement?.trim() || undefined;
+}
+
+async function getPlayerStats(env: Env, playerIdParam: string): Promise<Response> {
+  try {
+    const playerId = validatePlayerId(playerIdParam);
+    const row = await env.DB.prepare("SELECT games_played, wins, losses FROM player_stats WHERE player_id = ?")
+      .bind(playerId)
+      .first<{ games_played: number; wins: number; losses: number }>();
+    const stats: PlayerStats = {
+      playerId,
+      gamesPlayed: row?.games_played ?? 0,
+      wins: row?.wins ?? 0,
+      losses: row?.losses ?? 0
+    };
+    return json({ stats });
+  } catch (error) {
+    return json({ error: error instanceof Error ? error.message : "Invalid player" }, { status: 400 });
+  }
 }
 
 async function createRoom(request: Request, env: Env): Promise<Response> {
@@ -148,6 +166,11 @@ export default {
 
     if (request.method === "GET" && url.pathname === "/api/rooms") {
       return json({ rooms: await listRooms(env) });
+    }
+
+    const statsMatch = url.pathname.match(/^\/api\/players\/([^/]+)\/stats$/);
+    if (request.method === "GET" && statsMatch) {
+      return getPlayerStats(env, statsMatch[1]);
     }
 
     if (request.method === "POST" && url.pathname === "/api/rooms") {

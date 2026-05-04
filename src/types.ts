@@ -43,6 +43,13 @@ export interface PlayerStatUpdate {
   won: boolean;
 }
 
+export interface PlayerStats {
+  playerId: string;
+  gamesPlayed: number;
+  wins: number;
+  losses: number;
+}
+
 export interface GameState {
   roomId: string;
   phase: GamePhase;

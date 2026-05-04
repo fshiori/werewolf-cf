@@ -6,17 +6,26 @@ type StoredAsset = {
   contentType: string;
 };
 
-function envWithRooms(roomIds: string[], config: Record<string, string> = {}): Env {
+type MockPlayerStats = {
+  games_played: number;
+  wins: number;
+  losses: number;
+};
+
+function envWithRooms(roomIds: string[], config: Record<string, string> = {}, stats: Record<string, MockPlayerStats> = {}): Env {
   const assets = new Map<string, StoredAsset>();
 
   return {
     DB: {
       prepare(query: string) {
         return {
-          bind(roomId: string) {
+          bind(value: string) {
             return {
               async first() {
-                return roomIds.includes(roomId) ? { id: roomId } : null;
+                if (query.includes("FROM player_stats")) {
+                  return stats[value] ?? null;
+                }
+                return roomIds.includes(value) ? { id: value } : null;
               },
               async run() {
                 return {};
@@ -101,6 +110,37 @@ describe("worker routes", () => {
     const body = await response.text();
     expect(body).toContain("&lt;b&gt;Runtime notice&lt;/b&gt;");
     expect(body).not.toContain("<b>Runtime notice</b>");
+  });
+
+  it("returns player stats from D1", async () => {
+    const response = await worker.fetch(
+      new Request("http://example.test/api/players/player_stats/stats"),
+      envWithRooms([], {}, { player_stats: { games_played: 3, wins: 2, losses: 1 } })
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      stats: {
+        playerId: "player_stats",
+        gamesPlayed: 3,
+        wins: 2,
+        losses: 1
+      }
+    });
+  });
+
+  it("returns zeroed stats for players without records", async () => {
+    const response = await worker.fetch(new Request("http://example.test/api/players/player_new/stats"), envWithRooms([]));
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      stats: {
+        playerId: "player_new",
+        gamesPlayed: 0,
+        wins: 0,
+        losses: 0
+      }
+    });
   });
 
   it("stores uploaded avatar images in R2 and serves them back", async () => {
