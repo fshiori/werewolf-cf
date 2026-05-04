@@ -58,6 +58,9 @@ function envWithRooms(
               query,
               values,
               async first() {
+                if (query.includes("SELECT 1 AS ok")) {
+                  return { ok: 1 };
+                }
                 if (query.includes("SELECT registered_trip_hash FROM players")) {
                   const registered_trip_hash = playerRegisteredTripHashes[String(values[0])];
                   return registered_trip_hash ? { registered_trip_hash } : null;
@@ -643,6 +646,22 @@ describe("worker routes", () => {
       config: {
         homeAnnouncement: null,
         maintenanceMode: false
+      }
+    });
+  });
+
+  it("returns health check status for runtime bindings", async () => {
+    const response = await worker.fetch(new Request("http://example.test/api/health"), envWithRooms([]));
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      ok: true,
+      checks: {
+        worker: true,
+        db: true,
+        kv: true,
+        durableObjects: true,
+        r2: true
       }
     });
   });

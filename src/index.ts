@@ -236,6 +236,30 @@ async function getRuntimeConfig(env: Env): Promise<Response> {
   });
 }
 
+async function getHealth(env: Env): Promise<Response> {
+  try {
+    const dbRow = await env.DB.prepare("SELECT 1 AS ok").bind().first<{ ok: number }>();
+    await env.CONFIG.get("home_announcement");
+    const checks = {
+      worker: true,
+      db: dbRow?.ok === 1,
+      kv: true,
+      durableObjects: Boolean(env.ROOM_DO),
+      r2: Boolean(env.ASSETS)
+    };
+    const ok = Object.values(checks).every(Boolean);
+    return json({ ok, checks }, { status: ok ? 200 : 503 });
+  } catch (error) {
+    return json(
+      {
+        ok: false,
+        error: error instanceof Error ? error.message : "Health check failed"
+      },
+      { status: 503 }
+    );
+  }
+}
+
 async function registerTrip(request: Request, env: Env): Promise<Response> {
   const body: unknown = await request.json().catch(() => null);
   if (!isRecord(body) || typeof body.trip !== "string") {
@@ -643,6 +667,10 @@ export default {
 
     if (request.method === "GET" && url.pathname === "/api/config") {
       return getRuntimeConfig(env);
+    }
+
+    if (request.method === "GET" && url.pathname === "/api/health") {
+      return getHealth(env);
     }
 
     if (request.method === "GET" && url.pathname === "/rules") {
