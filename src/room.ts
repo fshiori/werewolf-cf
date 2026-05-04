@@ -20,6 +20,7 @@ import {
   loversForPlayer,
   mediumReadingForPlayer,
   playerStatUpdates,
+  removeLobbyPlayer,
   setLastWords,
   startGame,
   upsertLobbyPlayer,
@@ -259,6 +260,25 @@ export class RoomDurableObject {
         return;
       }
 
+      if (message.type === "kick_player") {
+        const loadedGame = await this.loadGameState();
+        if (!member.gm && !canStartGame(loadedGame, member.playerId)) {
+          throw new Error("Only the room host or GM can kick players");
+        }
+        const targetPlayerId = validatePlayerId(message.targetPlayerId);
+        if (targetPlayerId === member.playerId) {
+          throw new Error("Cannot kick yourself");
+        }
+        const next = removeLobbyPlayer(loadedGame, targetPlayerId);
+        await this.saveGameState(next);
+        await this.persistRoomEvent(member.playerId, "player_kicked", { targetPlayerId });
+        this.disconnectPlayer(targetPlayerId, "You were kicked from the room");
+        this.send(socket, buildActionAckMessage("kick_player", targetPlayerId));
+        this.broadcast(buildPresenceMessage(this.members()));
+        await this.broadcastGameState(next);
+        return;
+      }
+
       if (message.type === "set_last_words") {
         if (!(await this.loadRoomOptions()).lastWords) {
           throw new Error("Last words are not enabled in this room");
@@ -335,6 +355,16 @@ export class RoomDurableObject {
     const hadSocket = this.sockets.delete(socket);
     if (hadSocket) {
       this.broadcast(buildPresenceMessage(this.members()));
+    }
+  }
+
+  private disconnectPlayer(playerId: string, reason: string): void {
+    for (const [socket, member] of this.sockets) {
+      if (member.playerId === playerId && !member.gm) {
+        this.send(socket, buildErrorMessage(reason));
+        this.sockets.delete(socket);
+        socket.close(1000, reason);
+      }
     }
   }
 

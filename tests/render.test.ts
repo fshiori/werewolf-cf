@@ -156,6 +156,8 @@ describe("render", () => {
     expect(html).toContain("gmWhisperTarget");
     expect(html).toContain("gm_chat");
     expect(html).toContain("gm_whisper");
+    expect(html).toContain("kick_player");
+    expect(html).toContain("踢 ");
     expect(html).toContain("開始遊戲");
     expect(html).toContain("房主");
     expect(html).toContain("戰績");
