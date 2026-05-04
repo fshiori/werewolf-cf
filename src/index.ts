@@ -274,6 +274,42 @@ async function removeTripExclusion(request: Request, env: Env): Promise<Response
   }
 }
 
+async function claimTrip(request: Request, env: Env): Promise<Response> {
+  const body: unknown = await request.json().catch(() => null);
+  if (!isRecord(body) || typeof body.playerId !== "string" || typeof body.trip !== "string") {
+    return json({ error: "Invalid Trip claim" }, { status: 400 });
+  }
+
+  try {
+    const playerId = validatePlayerId(body.playerId);
+    const nickname = typeof body.nickname === "string" && body.nickname.trim() ? validateNickname(body.nickname) : "Trip玩家";
+    const trip = validateTrip(body.trip);
+    const tripHash = await registeredTripHash(trip);
+    const registered = await env.DB.prepare("SELECT trip_hash FROM registered_trips WHERE trip_hash = ? LIMIT 1")
+      .bind(tripHash)
+      .first<{ trip_hash: string }>();
+    if (!registered) {
+      return json({ error: "Trip is not registered" }, { status: 400 });
+    }
+
+    const excluded = await env.DB.prepare("SELECT trip_hash FROM excluded_trips WHERE trip_hash = ? LIMIT 1")
+      .bind(tripHash)
+      .first<{ trip_hash: string }>();
+    if (excluded) {
+      return json({ error: "Trip is excluded" }, { status: 400 });
+    }
+
+    await env.DB.prepare(
+      "INSERT INTO players (id, nickname, registered_trip_hash, last_seen_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP) ON CONFLICT(id) DO UPDATE SET nickname = excluded.nickname, registered_trip_hash = excluded.registered_trip_hash, last_seen_at = CURRENT_TIMESTAMP"
+    )
+      .bind(playerId, nickname, tripHash)
+      .run();
+    return json({ claimed: true });
+  } catch (error) {
+    return json({ error: error instanceof Error ? error.message : "Failed to claim Trip" }, { status: 400 });
+  }
+}
+
 async function getPlayerStats(env: Env, playerIdParam: string): Promise<Response> {
   try {
     const playerId = validatePlayerId(playerIdParam);
@@ -515,6 +551,10 @@ export default {
 
     if (request.method === "POST" && url.pathname === "/api/trips") {
       return registerTrip(request, env);
+    }
+
+    if (request.method === "POST" && url.pathname === "/api/trips/claim") {
+      return claimTrip(request, env);
     }
 
     if (request.method === "POST" && url.pathname === "/api/trips/exclusions") {
