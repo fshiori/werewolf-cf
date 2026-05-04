@@ -28,6 +28,7 @@ export function upsertLobbyPlayer(state: GameState, member: RoomMember): GameSta
   if (existing) {
     return {
       ...state,
+      hostId: state.hostId ?? state.players[0]?.playerId,
       players: state.players.map((player) =>
         player.playerId === member.playerId ? { ...player, nickname: member.nickname } : player
       )
@@ -36,6 +37,7 @@ export function upsertLobbyPlayer(state: GameState, member: RoomMember): GameSta
 
   return {
     ...state,
+    hostId: state.hostId ?? member.playerId,
     players: [...state.players, { ...member, role: "villager", alive: true }]
   };
 }
@@ -47,6 +49,13 @@ export function canJoinRoomState(state: GameState, playerId: string): boolean {
 export function canUseWerewolfChannel(state: GameState, playerId: string): boolean {
   const player = state.players.find((candidate) => candidate.playerId === playerId);
   return state.phase === "night" && player?.alive === true && player.role === "werewolf";
+}
+
+export function canStartGame(state: GameState, playerId: string): boolean {
+  if (state.phase !== "lobby") {
+    return false;
+  }
+  return (state.hostId ?? state.players[0]?.playerId) === playerId;
 }
 
 export function startGame(state: GameState, now = Date.now(), random = Math.random): GameState {

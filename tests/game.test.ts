@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   canJoinRoomState,
+  canStartGame,
   canUseWerewolfChannel,
   castDayVote,
   castNightKill,
@@ -66,6 +67,15 @@ describe("game", () => {
 
   it("requires at least three players to start", () => {
     expect(() => startGame(lobby([["player_1", "Alice"], ["player_2", "Bob"]]))).toThrow("At least 3 players");
+  });
+
+  it("assigns the first lobby player as host and checks start permission", () => {
+    const game = lobby([["player_1", "Alice"], ["player_2", "Bob"], ["player_3", "Carol"]]);
+
+    expect(game.hostId).toBe("player_1");
+    expect(canStartGame(game, "player_1")).toBe(true);
+    expect(canStartGame(game, "player_2")).toBe(false);
+    expect(canStartGame(startGame(game, 0, () => 0), "player_1")).toBe(false);
   });
 
   it("allows lobby joins but only existing players after start", () => {

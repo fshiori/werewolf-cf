@@ -35,6 +35,7 @@ export function buildGameStateMessage(state: GameState): ServerMessage {
     type: "game_state",
     phase: state.phase,
     day: state.day,
+    hostId: state.hostId,
     players: publicPlayers(state.players).map((player) => ({ ...player, nickname: escapeHtml(player.nickname) })),
     votes: state.votes,
     winner: state.winner,
