@@ -110,6 +110,13 @@ export function parseClientMessage(raw: string): ClientMessage {
     return { type: "common_chat", text: parsed.text };
   }
 
+  if (parsed.type === "lovers_chat") {
+    if (typeof parsed.text !== "string") {
+      throw new Error("Invalid lovers chat message");
+    }
+    return { type: "lovers_chat", text: parsed.text };
+  }
+
   if (parsed.type === "start_game") {
     return { type: "start_game" };
   }

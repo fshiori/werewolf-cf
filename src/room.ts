@@ -4,6 +4,7 @@ import {
   canStartGame,
   canUseCommonChannel,
   canUseFoxChannel,
+  canUseLoversChannel,
   canUsePublicChat,
   canUseWerewolfChannel,
   castCatRevive,
@@ -32,6 +33,7 @@ import {
   buildFoxChatMessage,
   buildGameStateMessage,
   buildJoinedMessage,
+  buildLoversChatMessage,
   buildMediumResultMessage,
   buildPresenceMessage,
   buildRoleMessage,
@@ -164,6 +166,16 @@ export class RoomDurableObject {
         return;
       }
 
+      if (message.type === "lovers_chat") {
+        const game = await this.loadGameState();
+        if (!canUseLoversChannel(game, member.playerId)) {
+          throw new Error("Lovers channel is only available to living lovers at night");
+        }
+        const text = validateChatText(message.text);
+        this.broadcastLovers(game, buildLoversChatMessage(member.playerId, member.nickname, text));
+        return;
+      }
+
       if (message.type === "start_game") {
         const loadedGame = await this.loadGameState();
         if (!canStartGame(loadedGame, member.playerId)) {
@@ -286,6 +298,15 @@ export class RoomDurableObject {
     const encoded = JSON.stringify(message);
     for (const [socket, member] of this.sockets) {
       if (canUseCommonChannel(gameState, member.playerId)) {
+        socket.send(encoded);
+      }
+    }
+  }
+
+  private broadcastLovers(gameState: GameState, message: unknown): void {
+    const encoded = JSON.stringify(message);
+    for (const [socket, member] of this.sockets) {
+      if (canUseLoversChannel(gameState, member.playerId)) {
         socket.send(encoded);
       }
     }

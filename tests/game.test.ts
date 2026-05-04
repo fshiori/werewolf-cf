@@ -4,6 +4,7 @@ import {
   canStartGame,
   canUseCommonChannel,
   canUseFoxChannel,
+  canUseLoversChannel,
   canUsePublicChat,
   canUseWerewolfChannel,
   castChildFoxDivination,
@@ -794,6 +795,21 @@ describe("game", () => {
     expect(canUseCommonChannel(night, "player_3")).toBe(false);
     expect(canUseCommonChannel(night, "player_4")).toBe(false);
     expect(canUseCommonChannel({ ...night, phase: "day" }, "player_1")).toBe(false);
+  });
+
+  it("allows only living lovers to use the lovers channel at night", () => {
+    const night = activeState("night", [
+      { playerId: "player_1", nickname: "Lover A", role: "villager", alive: true, lover: true },
+      { playerId: "player_2", nickname: "Lover B", role: "werewolf", alive: true, lover: true },
+      { playerId: "player_3", nickname: "Villager", role: "villager", alive: true },
+      { playerId: "player_4", nickname: "Dead Lover", role: "villager", alive: false, lover: true }
+    ]);
+
+    expect(canUseLoversChannel(night, "player_1")).toBe(true);
+    expect(canUseLoversChannel(night, "player_2")).toBe(true);
+    expect(canUseLoversChannel(night, "player_3")).toBe(false);
+    expect(canUseLoversChannel(night, "player_4")).toBe(false);
+    expect(canUseLoversChannel({ ...night, phase: "day" }, "player_1")).toBe(false);
   });
 
   it("allows public chat in lobby and after end but restricts dead players during active phases", () => {

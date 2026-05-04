@@ -9,6 +9,7 @@ import {
   buildFoxChatMessage,
   buildGameStateMessage,
   buildJoinedMessage,
+  buildLoversChatMessage,
   buildMediumResultMessage,
   buildPresenceMessage,
   buildRoleMessage,
@@ -64,6 +65,15 @@ describe("messages", () => {
       type: "common_chat",
       playerId: "player_1",
       nickname: "&lt;Common&gt;",
+      text: "&lt;secret&gt;"
+    });
+  });
+
+  it("builds escaped lovers chat messages", () => {
+    expect(buildLoversChatMessage("player_1", "<Lover>", "<secret>")).toMatchObject({
+      type: "lovers_chat",
+      playerId: "player_1",
+      nickname: "&lt;Lover&gt;",
       text: "&lt;secret&gt;"
     });
   });
