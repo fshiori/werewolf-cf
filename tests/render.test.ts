@@ -66,6 +66,8 @@ describe("render", () => {
     expect(html).toContain("排行榜 JSON");
     expect(html).toContain("/api/config");
     expect(html).toContain("設定 JSON");
+    expect(html).toContain("/api/health");
+    expect(html).toContain("狀態 JSON");
     expect(html).toContain("/rules");
     expect(html).toContain("/version");
     expect(html).toContain("roomComment");
@@ -291,6 +293,7 @@ describe("render", () => {
     expect(html).toContain("Cloudflare Workers / TypeScript");
     expect(html).toContain("Durable Objects + WebSockets + alarms");
     expect(html).toContain("R2 avatar assets");
+    expect(html).toContain("/api/health");
     expect(html).toContain("目前功能");
     expect(html).toContain("docs/test-results/2026-05-03-core-game-loop.md");
   });
