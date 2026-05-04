@@ -56,7 +56,7 @@ npm run smoke:production -- "$WORKER_HOST"
 npm run smoke:production:write -- "$WORKER_HOST" --yes
 ```
 
-The write smoke creates temporary room/player/avatar data, so run it only when production writes are acceptable.
+The write smoke creates temporary room/player/avatar data, so run it only when production writes are acceptable. It deletes the smoke avatar on the success path and attempts best-effort avatar cleanup after upload failures; smoke room/player rows remain in D1.
 
 ## Cloudflare Bindings
 
