@@ -85,9 +85,13 @@ export function canJoinRoomState(state: GameState, playerId: string): boolean {
   return state.phase === "lobby" || state.players.some((player) => player.playerId === playerId);
 }
 
+export function isWerewolfRole(role: GamePlayer["role"]): boolean {
+  return role === "werewolf" || role === "big_wolf";
+}
+
 export function canUseWerewolfChannel(state: GameState, playerId: string): boolean {
   const player = state.players.find((candidate) => candidate.playerId === playerId);
-  return state.phase === "night" && player?.alive === true && player.role === "werewolf";
+  return state.phase === "night" && player?.alive === true && isWerewolfRole(player.role);
 }
 
 export function canUsePublicChat(state: GameState, playerId: string): boolean {
@@ -105,7 +109,7 @@ export function canStartGame(state: GameState, playerId: string): boolean {
   return (state.hostId ?? state.players[0]?.playerId) === playerId;
 }
 
-export function startGame(state: GameState, now = Date.now(), random = Math.random, options: RoomOptions = { poison: false }): GameState {
+export function startGame(state: GameState, now = Date.now(), random = Math.random, options: RoomOptions = { poison: false, bigWolf: false }): GameState {
   if (state.phase !== "lobby") {
     throw new Error("Game already started");
   }
@@ -189,17 +193,24 @@ export function startGame(state: GameState, now = Date.now(), random = Math.rand
 }
 
 function applyRoomOptions(players: GamePlayer[], options: RoomOptions): GamePlayer[] {
-  if (!options.poison || players.length < 20) {
-    return players;
+  let nextPlayers = players;
+  if (options.bigWolf && nextPlayers.length >= 20) {
+    const wolfIndex = nextPlayers.findIndex((player) => player.role === "werewolf");
+    if (wolfIndex !== -1) {
+      nextPlayers = nextPlayers.map((player, index) => (index === wolfIndex ? { ...player, role: "big_wolf" } : player));
+    }
   }
-  const villagerIndexes = players
+  if (!options.poison || nextPlayers.length < 20) {
+    return nextPlayers;
+  }
+  const villagerIndexes = nextPlayers
     .map((player, index) => ({ player, index }))
     .filter(({ player }) => player.role === "villager")
     .map(({ index }) => index);
   if (villagerIndexes.length < 2) {
-    return players;
+    return nextPlayers;
   }
-  return players.map((player, index) => {
+  return nextPlayers.map((player, index) => {
     if (index === villagerIndexes[0]) {
       return { ...player, role: "poison" };
     }
@@ -246,11 +257,11 @@ export function castNightKill(state: GameState, actorId: string, targetId: strin
     throw new Error("Night actions are only available at night");
   }
   const actor = assertLivingPlayer(state, actorId);
-  if (actor.role !== "werewolf") {
+  if (!isWerewolfRole(actor.role)) {
     throw new Error("Only werewolves can perform night kills");
   }
   const target = assertLivingPlayer(state, targetId);
-  if (target.role === "werewolf") {
+  if (isWerewolfRole(target.role)) {
     throw new Error("Werewolves cannot target each other");
   }
 
@@ -295,7 +306,7 @@ export function castDivination(
       divinations: { ...clearedState.divinations, [actorId]: targetId }
     },
     targetNickname: target.nickname,
-    result: target.role === "werewolf" ? "werewolf" : "human"
+    result: isWerewolfRole(target.role) ? "werewolf" : "human"
   };
 }
 
@@ -331,11 +342,11 @@ export function advancePhaseByAlarm(state: GameState, now = Date.now()): GameSta
 
 export function wolvesForPlayer(state: GameState, playerId: string): RoomMember[] {
   const player = state.players.find((candidate) => candidate.playerId === playerId);
-  if (!player || player.role !== "werewolf") {
+  if (!player || !isWerewolfRole(player.role)) {
     return [];
   }
   return state.players
-    .filter((candidate) => candidate.role === "werewolf")
+    .filter((candidate) => isWerewolfRole(candidate.role))
     .map(({ playerId: wolfId, nickname }) => ({ playerId: wolfId, nickname }));
 }
 
@@ -366,7 +377,7 @@ export function playerStatUpdates(state: GameState): PlayerStatUpdate[] {
     won:
       player.role === "fox"
         ? state.winner === "foxes"
-        : player.role === "werewolf" || player.role === "madman"
+        : isWerewolfRole(player.role) || player.role === "madman"
           ? state.winner === "werewolves"
           : state.winner === "villagers"
   }));
@@ -398,7 +409,7 @@ function resolveDay(state: GameState, now = Date.now()): GameState {
         day: state.day,
         targetPlayerId: executed.playerId,
         targetNickname: executed.nickname,
-        result: executed.role === "werewolf" ? "werewolf" : "human"
+        result: isWerewolfRole(executed.role) ? "werewolf" : "human"
       }
     : undefined;
   const log = [
@@ -419,7 +430,7 @@ function resolveNight(state: GameState, now = Date.now()): GameState {
     ? state.players.map((player) => (player.playerId === killedId ? { ...player, alive: false } : player))
     : state.players;
   const killed = killedId && !protectedKill && !foxAttack ? attacked : undefined;
-  const poisonWolf = killed?.role === "poison" ? firstLivingPlayer(players, (player) => player.role === "werewolf") : undefined;
+  const poisonWolf = killed?.role === "poison" ? firstLivingPlayer(players, (player) => isWerewolfRole(player.role)) : undefined;
   if (poisonWolf) {
     players = players.map((player) => (player.playerId === poisonWolf.playerId ? { ...player, alive: false } : player));
   }
@@ -479,7 +490,7 @@ function endGame(state: GameState, winner: GameWinner): GameState {
 function getWinner(state: GameState): GameWinner | undefined {
   const wolves = livingWerewolves(state).length;
   const foxes = livingFoxes(state).length;
-  const villagers = livingPlayers(state).filter((player) => player.role !== "werewolf" && player.role !== "fox").length;
+  const villagers = livingPlayers(state).filter((player) => !isWerewolfRole(player.role) && player.role !== "fox").length;
   if (wolves === 0) {
     return foxes > 0 ? "foxes" : "villagers";
   }
@@ -498,7 +509,7 @@ function firstLivingPlayer(players: GamePlayer[], predicate: (player: GamePlayer
 }
 
 function livingWerewolves(state: GameState): GamePlayer[] {
-  return livingPlayers(state).filter((player) => player.role === "werewolf");
+  return livingPlayers(state).filter((player) => isWerewolfRole(player.role));
 }
 
 function livingFoxes(state: GameState): GamePlayer[] {

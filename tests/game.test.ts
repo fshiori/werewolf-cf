@@ -179,7 +179,7 @@ describe("game", () => {
 
   it("applies the poison room option in twenty-player games", () => {
     const normal = startGame(numberedLobby(20), 0, () => 0);
-    const withPoison = startGame(numberedLobby(20), 0, () => 0, { poison: true });
+    const withPoison = startGame(numberedLobby(20), 0, () => 0, { poison: true, bigWolf: false });
 
     expect(normal.players.filter((player) => player.role === "poison")).toHaveLength(0);
     expect(normal.players.filter((player) => player.role === "werewolf")).toHaveLength(3);
@@ -188,6 +188,18 @@ describe("game", () => {
     expect(withPoison.players.filter((player) => player.role === "villager")).toHaveLength(
       normal.players.filter((player) => player.role === "villager").length - 2
     );
+  });
+
+  it("applies the big wolf room option in twenty-player games", () => {
+    const game = startGame(numberedLobby(20), 0, () => 0, { poison: false, bigWolf: true });
+
+    expect(game.players.filter((player) => player.role === "big_wolf")).toHaveLength(1);
+    expect(game.players.filter((player) => player.role === "werewolf")).toHaveLength(2);
+    expect(wolvesForPlayer(game, "player_12")).toEqual([
+      { playerId: "player_12", nickname: "Player 12" },
+      { playerId: "player_13", nickname: "Player 13" },
+      { playerId: "player_14", nickname: "Player 14" }
+    ]);
   });
 
   it("moves from completed day vote to night", () => {
@@ -343,6 +355,21 @@ describe("game", () => {
     expect(game.players.find((player) => player.playerId === "player_2")?.alive).toBe(false);
     expect(game.winner).toBe("villagers");
     expect(game.log).toContain("Wolf 被埋毒者牽連死亡。");
+  });
+
+  it("treats big wolves as werewolves for night actions and divination", () => {
+    const game = activeState("night", [
+      { playerId: "player_1", nickname: "Big Wolf", role: "big_wolf", alive: true },
+      { playerId: "player_2", nickname: "Seer", role: "seer", alive: true },
+      { playerId: "player_3", nickname: "Villager", role: "villager", alive: true }
+    ]);
+
+    expect(canUseWerewolfChannel(game, "player_1")).toBe(true);
+    expect(castDivination(game, "player_2", "player_1").result).toBe("werewolf");
+
+    const killed = castNightKill(game, "player_1", "player_3", 0);
+
+    expect(killed.players.find((player) => player.playerId === "player_3")?.alive).toBe(false);
   });
 
   it("builds player stat updates from final winners", () => {
