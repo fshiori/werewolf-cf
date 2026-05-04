@@ -70,8 +70,12 @@ async function sendRaw(room: RoomDurableObject, socket: WebSocket, data: string)
   await (room as unknown as { onMessage(socket: WebSocket, event: MessageEvent): Promise<void> }).onMessage(socket, { data } as MessageEvent);
 }
 
-function connect(room: RoomDurableObject, socket: WebSocket, playerId: string, nickname: string): void {
-  (room as unknown as { sockets: Map<WebSocket, { playerId: string; nickname: string }> }).sockets.set(socket, { playerId, nickname });
+function connect(room: RoomDurableObject, socket: WebSocket, playerId: string, nickname: string, gm = false): void {
+  (room as unknown as { sockets: Map<WebSocket, { playerId: string; nickname: string; gm?: boolean }> }).sockets.set(socket, {
+    playerId,
+    nickname,
+    gm: gm || undefined
+  });
 }
 
 describe("RoomDurableObject", () => {
@@ -266,6 +270,95 @@ describe("RoomDurableObject", () => {
       expect.objectContaining({ type: "chat", playerId: "player_alive", text: "ok" })
     ]);
     expect(aliveMessages).toEqual([expect.objectContaining({ type: "chat", playerId: "player_alive", text: "ok" })]);
+  });
+
+  it("rejects GM websocket commands from non-GM sockets", async () => {
+    const game: GameState = {
+      roomId: "room_abc",
+      phase: "day",
+      day: 1,
+      players: [{ playerId: "player_villager", nickname: "Villager", role: "villager", alive: true }],
+      votes: {},
+      openVote: false,
+      commonTalkVisible: false,
+      deadRoleVisible: false,
+      wishRole: false,
+      dummyBoy: false,
+      dayMs: 180_000,
+      nightMs: 90_000,
+      selfVote: false,
+      voteStatus: false,
+      revoteCount: 0,
+      nightKills: {},
+      divinations: {},
+      guards: {},
+      catRevives: {},
+      lastWords: {},
+      log: []
+    };
+    const cases = [
+      { command: { type: "gm_chat", text: "notice" }, message: "GM chat is only available to the GM" },
+      {
+        command: { type: "gm_whisper", targetPlayerId: "player_villager", text: "secret" },
+        message: "GM whisper is only available to the GM"
+      }
+    ];
+
+    for (const testCase of cases) {
+      const room = roomObject(game);
+      const messages: SentMessage[] = [];
+      const socket = fakeSocket(messages);
+      connect(room, socket, "player_villager", "Villager");
+
+      await sendRaw(room, socket, JSON.stringify(testCase.command));
+
+      expect(messages).toEqual([{ type: "error", message: testCase.message }]);
+    }
+  });
+
+  it("sends GM whisper only to GM and target sockets", async () => {
+    const game: GameState = {
+      roomId: "room_abc",
+      phase: "day",
+      day: 1,
+      players: [
+        { playerId: "player_target", nickname: "Target", role: "villager", alive: true },
+        { playerId: "player_other", nickname: "Other", role: "villager", alive: true }
+      ],
+      votes: {},
+      openVote: false,
+      commonTalkVisible: false,
+      deadRoleVisible: false,
+      wishRole: false,
+      dummyBoy: false,
+      dayMs: 180_000,
+      nightMs: 90_000,
+      selfVote: false,
+      voteStatus: false,
+      revoteCount: 0,
+      nightKills: {},
+      divinations: {},
+      guards: {},
+      catRevives: {},
+      lastWords: {},
+      log: []
+    };
+    const room = roomObject(game);
+    const gmMessages: SentMessage[] = [];
+    const targetMessages: SentMessage[] = [];
+    const otherMessages: SentMessage[] = [];
+    const gmSocket = fakeSocket(gmMessages);
+    const targetSocket = fakeSocket(targetMessages);
+    const otherSocket = fakeSocket(otherMessages);
+    connect(room, gmSocket, "player_gm", "GM", true);
+    connect(room, targetSocket, "player_target", "Target");
+    connect(room, otherSocket, "player_other", "Other");
+
+    await sendRaw(room, gmSocket, JSON.stringify({ type: "gm_whisper", targetPlayerId: "player_target", text: "secret" }));
+
+    expect(gmMessages).toEqual([expect.objectContaining({ type: "gm_whisper", playerId: "player_gm", text: "secret" })]);
+    expect(targetMessages).toEqual([expect.objectContaining({ type: "gm_whisper", playerId: "player_gm", text: "secret" })]);
+    expect(otherMessages).toEqual([]);
   });
 
   it("sends only each socket's own role message", () => {
