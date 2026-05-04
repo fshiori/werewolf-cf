@@ -42,6 +42,7 @@ import {
   buildLoversChatMessage,
   buildMediumResultMessage,
   buildPresenceMessage,
+  buildRevealedRolesMessage,
   buildRoleMessage,
   buildWolfChatMessage
 } from "./messages";
@@ -96,7 +97,7 @@ export class RoomDurableObject {
     const next = advancePhaseByAlarm(game);
     await this.saveGameState(next);
     await this.syncRoomStatus(next);
-    this.broadcastGameState(next);
+    await this.broadcastGameState(next);
     this.sendMediumResults(next);
   }
 
@@ -124,7 +125,7 @@ export class RoomDurableObject {
         await this.persistJoin(playerId, nickname);
         this.send(socket, buildJoinedMessage(this.roomId, playerId, this.members()));
         this.broadcast(buildPresenceMessage(this.members()));
-        this.broadcastGameState(game);
+        await this.broadcastGameState(game);
         this.sendRole(socket, game, playerId);
         this.sendMediumResult(socket, game, playerId);
         return;
@@ -206,7 +207,7 @@ export class RoomDurableObject {
         await this.saveGameState(next);
         await this.syncRoomStatus(next);
         await this.persistRoomEvent(member.playerId, "game_started", { day: next.day, players: next.players.length });
-        this.broadcastGameState(next);
+        await this.broadcastGameState(next);
         this.sendRoles(next);
         return;
       }
@@ -228,7 +229,7 @@ export class RoomDurableObject {
         await this.saveGameState(next);
         await this.syncRoomStatus(next);
         this.send(socket, buildActionAckMessage("vote", targetPlayerId));
-        this.broadcastGameState(next);
+        await this.broadcastGameState(next);
         return;
       }
 
@@ -255,7 +256,7 @@ export class RoomDurableObject {
         await this.saveGameState(next);
         await this.syncRoomStatus(next);
         this.send(socket, buildActionAckMessage("guard", targetPlayerId));
-        this.broadcastGameState(next);
+        await this.broadcastGameState(next);
         this.sendMediumResults(next);
         return;
       }
@@ -266,7 +267,7 @@ export class RoomDurableObject {
         await this.saveGameState(next);
         await this.syncRoomStatus(next);
         this.send(socket, buildActionAckMessage("cat_revive", targetPlayerId));
-        this.broadcastGameState(next);
+        await this.broadcastGameState(next);
         this.sendMediumResults(next);
         return;
       }
@@ -276,7 +277,7 @@ export class RoomDurableObject {
       await this.saveGameState(next);
       await this.syncRoomStatus(next);
       this.send(socket, buildActionAckMessage("night_kill", targetPlayerId));
-      this.broadcastGameState(next);
+      await this.broadcastGameState(next);
       this.sendMediumResults(next);
     } catch (error) {
       this.send(socket, buildErrorMessage(error instanceof Error ? error.message : "Unknown error"));
@@ -380,8 +381,21 @@ export class RoomDurableObject {
     }
   }
 
-  private broadcastGameState(gameState: GameState): void {
+  private async broadcastGameState(gameState: GameState): Promise<void> {
     this.broadcast(buildGameStateMessage(gameState));
+    if ((await this.loadRoomOptions()).deadRoleVisible || gameState.phase === "ended") {
+      this.sendRevealedRoles(gameState);
+    }
+  }
+
+  private sendRevealedRoles(gameState: GameState): void {
+    const message = buildRevealedRolesMessage(gameState);
+    for (const [socket, member] of this.sockets) {
+      const player = gameState.players.find((candidate) => candidate.playerId === member.playerId);
+      if (gameState.phase === "ended" || player?.alive === false) {
+        this.send(socket, message);
+      }
+    }
   }
 
   private sendRoles(gameState: GameState): void {
@@ -470,9 +484,9 @@ export class RoomDurableObject {
   }
 
   private async loadRoomOptions(): Promise<RoomOptions> {
-    const row = await this.env.DB.prepare("SELECT option_role FROM rooms WHERE id = ? LIMIT 1")
+    const row = await this.env.DB.prepare("SELECT option_role, dellook FROM rooms WHERE id = ? LIMIT 1")
       .bind(this.roomId)
-      .first<{ option_role: string }>();
+      .first<{ option_role: string; dellook?: number | null }>();
     const tokens = (row?.option_role ?? "").split(/\s+/).filter(Boolean);
     const roles = new Set(tokens);
     const realTimeToken = tokens.find((token) => token.startsWith("real_time:"));
@@ -490,6 +504,7 @@ export class RoomDurableObject {
       lastWords: roles.has("will"),
       openVote: roles.has("open_vote"),
       commonTalkVisible: roles.has("comoutl"),
+      deadRoleVisible: row?.dellook === 1,
       realTime: Boolean(realTimeToken),
       dayMinutes: readMinutes(dayMinutes, DEFAULT_DAY_MINUTES),
       nightMinutes: readMinutes(nightMinutes, DEFAULT_NIGHT_MINUTES),

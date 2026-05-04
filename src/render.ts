@@ -163,6 +163,7 @@ export function renderHome(rooms: RoomSummary[], announcement = DEFAULT_ANNOUNCE
         room.options.lastWords ? `<span class="option-mark">遺言</span>` : "",
         room.options.openVote ? `<span class="option-mark">公開票</span>` : "",
         room.options.commonTalkVisible ? `<span class="option-mark">共有聲</span>` : "",
+        room.options.deadRoleVisible ? `<span class="option-mark">靈視</span>` : "",
         room.options.selfVote ? `<span class="option-mark">自投</span>` : "",
         room.options.voteStatus ? `<span class="option-mark">投票済</span>` : ""
       ].filter(Boolean).join(" ");
@@ -288,6 +289,10 @@ export function renderHome(rooms: RoomSummary[], announcement = DEFAULT_ANNOUNCE
           <td><label><input id="optionCommonTalkVisible" type="checkbox"> <small>允許晚上顯示共生者悄悄話</small></label></td>
         </tr>
         <tr>
+          <td><label><strong>　幽靈是否可以看角色：</strong></label></td>
+          <td><label><input id="optionDeadRoleVisible" type="checkbox"> <small>允許幽靈觀看角色</small></label></td>
+        </tr>
+        <tr>
           <td><label><strong>　啟用白天自投功能：</strong></label></td>
           <td><label><input id="optionSelfVote" type="checkbox"> <small>允許玩家白天投票給自己</small></label></td>
         </tr>
@@ -325,6 +330,7 @@ export function renderHome(rooms: RoomSummary[], announcement = DEFAULT_ANNOUNCE
         const lastWords = document.querySelector("#optionLastWords").checked;
         const openVote = document.querySelector("#optionOpenVote").checked;
         const commonTalkVisible = document.querySelector("#optionCommonTalkVisible").checked;
+        const deadRoleVisible = document.querySelector("#optionDeadRoleVisible").checked;
         const realTime = document.querySelector("#optionRealTime").checked;
         const dayMinutes = Number(document.querySelector("#optionDayMinutes").value);
         const nightMinutes = Number(document.querySelector("#optionNightMinutes").value);
@@ -334,7 +340,7 @@ export function renderHome(rooms: RoomSummary[], announcement = DEFAULT_ANNOUNCE
         const res = await fetch("/api/rooms", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ name, comment, maxPlayers, playerId: localStorage.getItem(playerKey), nickname, options: { poison, bigWolf, authority, decider, lovers, betrayer, childFox, twoFoxes, cat, lastWords, openVote, commonTalkVisible, realTime, dayMinutes, nightMinutes, selfVote, voteStatus } })
+          body: JSON.stringify({ name, comment, maxPlayers, playerId: localStorage.getItem(playerKey), nickname, options: { poison, bigWolf, authority, decider, lovers, betrayer, childFox, twoFoxes, cat, lastWords, openVote, commonTalkVisible, deadRoleVisible, realTime, dayMinutes, nightMinutes, selfVote, voteStatus } })
         });
         const data = await res.json();
         if (!res.ok) {
@@ -548,6 +554,7 @@ export function renderRoom(roomId: string): string {
       let latestGame;
       let role = "";
       let isLover = false;
+      let revealedRoles = {};
       void refreshStats();
       void refreshRecords();
       void refreshEvents();
@@ -583,6 +590,9 @@ export function renderRoom(roomId: string): string {
           } else if (msg.type === "medium_result") {
             const result = msg.result === "werewolf" ? "狼" : "人";
             append("<font color='#006666'>[靈能]</font> 第 " + msg.day + " 日被處決的 " + msg.targetNickname + " 是「" + result + "」。");
+          } else if (msg.type === "revealed_roles") {
+            revealedRoles = msg.roles || {};
+            if (latestGame) renderGame(latestGame);
           } else if (msg.type === "action_ack") {
             append("<span class='muted'>行動已送出。</span>");
           } else if (msg.type === "last_words_ack") {
@@ -770,6 +780,11 @@ export function renderRoom(roomId: string): string {
           const status = document.createElement("span");
           status.textContent = player.alive ? "(生存中)" : "(死亡)";
           nameCell.append(marker, player.nickname, document.createElement("br"), status);
+          if (revealedRoles[player.playerId]) {
+            const roleText = document.createElement("small");
+            roleText.textContent = " [" + roleLabel(revealedRoles[player.playerId]) + "]";
+            nameCell.append(roleText);
+          }
           if (voteSummary[player.playerId] && voteSummary[player.playerId].length) {
             const votes = document.createElement("small");
             votes.textContent = "投票：" + voteSummary[player.playerId].join(", ");

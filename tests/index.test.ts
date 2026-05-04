@@ -36,7 +36,8 @@ function envWithRooms(
   events: Record<string, MockRoomEvent[]> = {},
   roomOptionRoles: Record<string, string> = {},
   roomComments: Record<string, string> = {},
-  roomCapacities: Record<string, number> = {}
+  roomCapacities: Record<string, number> = {},
+  deadRoleVisibleRooms: Record<string, boolean> = {}
 ): Env {
   const assets = new Map<string, StoredAsset>();
   const batches: Array<Array<{ query: string; values: unknown[] }>> = [];
@@ -84,6 +85,7 @@ function envWithRooms(
                   name: id.replace(/^room_/, ""),
                   room_comment: roomComments[id] ?? "",
                   max_user: roomCapacities[id] ?? 22,
+                  dellook: deadRoleVisibleRooms[id] ? 1 : 0,
                   status: "lobby",
                   created_at: "2026-05-04 04:00:00",
                   option_role: roomOptionRoles[id] ?? ""
@@ -157,7 +159,8 @@ describe("worker routes", () => {
         {},
         { room_poison: "poison wfbig authority decide lovers betr fosi foxs cat will open_vote comoutl real_time:5:2 votedme votedisplay" },
         { room_poison: "<test comment>" },
-        { room_poison: 30 }
+        { room_poison: 30 },
+        { room_poison: true }
       )
     );
 
@@ -184,6 +187,7 @@ describe("worker routes", () => {
             lastWords: false,
             openVote: false,
             commonTalkVisible: false,
+            deadRoleVisible: false,
             realTime: false,
             dayMinutes: 3,
             nightMinutes: 1.5,
@@ -211,6 +215,7 @@ describe("worker routes", () => {
             lastWords: true,
             openVote: true,
             commonTalkVisible: true,
+            deadRoleVisible: true,
             realTime: true,
             dayMinutes: 5,
             nightMinutes: 2,
@@ -247,6 +252,7 @@ describe("worker routes", () => {
             lastWords: true,
             openVote: true,
             commonTalkVisible: true,
+            deadRoleVisible: true,
             realTime: true,
             dayMinutes: 5,
             nightMinutes: 2,
@@ -265,8 +271,10 @@ describe("worker routes", () => {
     expect(roomInsert?.query).toContain("option_role");
     expect(roomInsert?.query).toContain("room_comment");
     expect(roomInsert?.query).toContain("max_user");
+    expect(roomInsert?.query).toContain("dellook");
     expect(roomInsert?.values).toContain("Beginners welcome");
     expect(roomInsert?.values).toContain(16);
+    expect(roomInsert?.values).toContain(1);
     expect(roomInsert?.values.at(-1)).toBe("poison wfbig authority decide lovers betr fosi foxs cat will open_vote comoutl real_time:5:2 votedme votedisplay");
     expect(JSON.parse(String(eventInsert?.values.at(-1)))).toEqual({
       name: "Option Test",
@@ -285,6 +293,7 @@ describe("worker routes", () => {
         lastWords: true,
         openVote: true,
         commonTalkVisible: true,
+        deadRoleVisible: true,
         realTime: true,
         dayMinutes: 5,
         nightMinutes: 2,

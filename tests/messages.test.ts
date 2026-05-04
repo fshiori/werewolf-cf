@@ -14,6 +14,7 @@ import {
   buildLoversChatMessage,
   buildMediumResultMessage,
   buildPresenceMessage,
+  buildRevealedRolesMessage,
   buildRoleMessage,
   buildWolfChatMessage
 } from "../src/messages";
@@ -181,6 +182,24 @@ describe("messages", () => {
       type: "game_state",
       votes: { player_1: "player_2" },
       votedPlayerIds: ["player_1"]
+    });
+  });
+
+  it("builds revealed role maps for dead role visibility", () => {
+    const game = {
+      ...createLobbyState("room_abc"),
+      players: [
+        { playerId: "player_1", nickname: "Alice", role: "werewolf" as const, alive: true },
+        { playerId: "player_2", nickname: "Bob", role: "seer" as const, alive: false }
+      ]
+    };
+
+    expect(buildRevealedRolesMessage(game)).toEqual({
+      type: "revealed_roles",
+      roles: {
+        player_1: "werewolf",
+        player_2: "seer"
+      }
     });
   });
 

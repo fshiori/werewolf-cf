@@ -70,6 +70,13 @@ export function buildDeadChatMessage(playerId: string, nickname: string, text: s
   };
 }
 
+export function buildRevealedRolesMessage(state: GameState): ServerMessage {
+  return {
+    type: "revealed_roles",
+    roles: Object.fromEntries(state.players.map((player) => [player.playerId, player.role]))
+  };
+}
+
 export function buildGameStateMessage(state: GameState): ServerMessage {
   return {
     type: "game_state",

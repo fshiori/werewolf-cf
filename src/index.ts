@@ -30,8 +30,8 @@ function isFileLike(value: unknown): value is File {
 
 async function listRooms(env: Env): Promise<RoomSummary[]> {
   const result = await env.DB.prepare(
-    "SELECT id, name, room_comment, max_user, status, created_at, option_role FROM rooms ORDER BY created_at DESC LIMIT 50"
-  ).all<{ id: string; name: string; room_comment?: string | null; max_user?: number | null; status: RoomSummary["status"]; created_at: string; option_role?: string }>();
+    "SELECT id, name, room_comment, max_user, dellook, status, created_at, option_role FROM rooms ORDER BY created_at DESC LIMIT 50"
+  ).all<{ id: string; name: string; room_comment?: string | null; max_user?: number | null; dellook?: number | null; status: RoomSummary["status"]; created_at: string; option_role?: string }>();
 
   return result.results.map((room) => ({
     id: room.id,
@@ -40,7 +40,7 @@ async function listRooms(env: Env): Promise<RoomSummary[]> {
     maxPlayers: room.max_user ?? 22,
     status: room.status,
     createdAt: room.created_at,
-    options: parseRoomOptions(room.option_role ?? "")
+    options: { ...parseRoomOptions(room.option_role ?? ""), deadRoleVisible: room.dellook === 1 }
   }));
 }
 
@@ -62,6 +62,7 @@ function parseRoomOptions(optionRole: string): RoomOptions {
     lastWords: roles.has("will"),
     openVote: roles.has("open_vote"),
     commonTalkVisible: roles.has("comoutl"),
+    deadRoleVisible: false,
     realTime: Boolean(realTimeToken),
     dayMinutes: readMinutes(dayMinutes, DEFAULT_DAY_MINUTES),
     nightMinutes: readMinutes(nightMinutes, DEFAULT_NIGHT_MINUTES),
@@ -105,6 +106,7 @@ function readRoomOptions(value: unknown): RoomOptions {
       lastWords: false,
       openVote: false,
       commonTalkVisible: false,
+      deadRoleVisible: false,
       realTime: false,
       dayMinutes: DEFAULT_DAY_MINUTES,
       nightMinutes: DEFAULT_NIGHT_MINUTES,
@@ -125,6 +127,7 @@ function readRoomOptions(value: unknown): RoomOptions {
     lastWords: value.lastWords === true,
     openVote: value.openVote === true,
     commonTalkVisible: value.commonTalkVisible === true,
+    deadRoleVisible: value.deadRoleVisible === true,
     realTime: value.realTime === true,
     dayMinutes: readMinutes(value.dayMinutes, DEFAULT_DAY_MINUTES),
     nightMinutes: readMinutes(value.nightMinutes, DEFAULT_NIGHT_MINUTES),
@@ -270,7 +273,7 @@ async function createRoom(request: Request, env: Env): Promise<Response> {
       env.DB.prepare(
         "INSERT INTO players (id, nickname, last_seen_at) VALUES (?, ?, CURRENT_TIMESTAMP) ON CONFLICT(id) DO UPDATE SET nickname = excluded.nickname, last_seen_at = CURRENT_TIMESTAMP"
       ).bind(playerId, nickname),
-      env.DB.prepare("INSERT INTO rooms (id, name, room_comment, max_user, status, option_role) VALUES (?, ?, ?, ?, 'lobby', ?)").bind(roomId, name, comment, maxPlayers, optionRole),
+      env.DB.prepare("INSERT INTO rooms (id, name, room_comment, max_user, dellook, status, option_role) VALUES (?, ?, ?, ?, ?, 'lobby', ?)").bind(roomId, name, comment, maxPlayers, options.deadRoleVisible ? 1 : 0, optionRole),
       env.DB.prepare("INSERT INTO room_events (room_id, player_id, event_type, payload_json) VALUES (?, ?, 'room_created', ?)").bind(
         roomId,
         playerId,
