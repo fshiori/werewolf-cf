@@ -113,6 +113,11 @@ describe("validation", () => {
     });
     expect(parseClientMessage('{"type":"gm_advance_phase"}')).toEqual({ type: "gm_advance_phase" });
     expect(parseClientMessage('{"type":"gm_end_game","winner":"foxes"}')).toEqual({ type: "gm_end_game", winner: "foxes" });
+    expect(parseClientMessage('{"type":"gm_set_alive","targetPlayerId":"player_1","alive":false}')).toEqual({
+      type: "gm_set_alive",
+      targetPlayerId: "player_1",
+      alive: false
+    });
     expect(parseClientMessage('{"type":"set_last_words","text":"bye"}')).toEqual({ type: "set_last_words", text: "bye" });
     expect(parseClientMessage('{"type":"start_game"}')).toEqual({ type: "start_game" });
     expect(parseClientMessage('{"type":"kick_player","targetPlayerId":"player_1"}')).toEqual({

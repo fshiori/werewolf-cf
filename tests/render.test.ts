@@ -165,6 +165,8 @@ describe("render", () => {
     expect(html).toContain("GM換日");
     expect(html).toContain("gm_end_game");
     expect(html).toContain("GM裁定");
+    expect(html).toContain("gm_set_alive");
+    expect(html).toContain("GM復活");
     expect(html).toContain("kick_player");
     expect(html).toContain("踢 ");
     expect(html).toContain("開始遊戲");

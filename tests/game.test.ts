@@ -18,6 +18,7 @@ import {
   createLobbyState,
   foxesForPlayer,
   forceEndGame,
+  forceSetPlayerAlive,
   loversForPlayer,
   mediumReadingForPlayer,
   playerStatUpdates,
@@ -1230,6 +1231,20 @@ describe("game", () => {
     expect(ended.log).toContain("GM 裁定結束遊戲。");
     expect(() => forceEndGame(createLobbyState("room_abc"), "villagers")).toThrow("Cannot adjudicate");
     expect(() => forceEndGame(ended, "werewolves")).toThrow("Game already ended");
+  });
+
+  it("lets GM adjust player life state during active games", () => {
+    const day = startGame(lobby([["player_1", "Alice"], ["player_2", "Bob"], ["player_3", "Carol"], ["player_4", "Dave"]]), 0, () => 0);
+    const voted = castDayVote(day, "player_1", "player_2");
+    const killed = forceSetPlayerAlive(voted, "player_2", false);
+    const revived = forceSetPlayerAlive(killed, "player_2", true);
+
+    expect(killed.players.find((player) => player.playerId === "player_2")?.alive).toBe(false);
+    expect(killed.votes).toEqual({});
+    expect(killed.log).toContain("GM 將 Bob 調整為死亡。");
+    expect(revived.players.find((player) => player.playerId === "player_2")?.alive).toBe(true);
+    expect(() => forceSetPlayerAlive(createLobbyState("room_abc"), "player_1", false)).toThrow("active games");
+    expect(() => forceSetPlayerAlive(day, "player_missing", false)).toThrow("Life control target not found");
   });
 
   it("allows only living werewolves to use the night channel", () => {
