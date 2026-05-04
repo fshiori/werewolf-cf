@@ -516,7 +516,8 @@ export function renderRoom(roomId: string): string {
           madman: "狂人",
           guard: "獵人",
           common: "共有者",
-          fox: "妖狐"
+          fox: "妖狐",
+          poison: "埋毒者"
         }[value] || value;
       }
       function winnerLabel(value) {

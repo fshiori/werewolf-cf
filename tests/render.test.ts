@@ -63,6 +63,7 @@ describe("render", () => {
     expect(html).toContain("function roleLabel(value)");
     expect(html).toContain('werewolf: "人狼"');
     expect(html).toContain('fox: "妖狐"');
+    expect(html).toContain('poison: "埋毒者"');
     expect(html).toContain("roleLabel(msg.role)");
     expect(html).toContain("winnerLabel(game.winner)");
     expect(html).toContain("msg.commons");

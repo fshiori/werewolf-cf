@@ -298,6 +298,40 @@ describe("game", () => {
     expect(divination.state.log.at(-1)).toBe("Fox 被占卜後死亡。");
   });
 
+  it("poisons another living player when a poison player is executed", () => {
+    let game = activeState("day", [
+      { playerId: "player_1", nickname: "Poison", role: "poison", alive: true },
+      { playerId: "player_2", nickname: "Wolf", role: "werewolf", alive: true },
+      { playerId: "player_3", nickname: "Villager", role: "villager", alive: true }
+    ]);
+
+    game = castDayVote(game, "player_1", "player_1");
+    game = castDayVote(game, "player_2", "player_1");
+    game = castDayVote(game, "player_3", "player_1");
+
+    expect(game.players.find((player) => player.playerId === "player_1")?.alive).toBe(false);
+    expect(game.players.find((player) => player.playerId === "player_2")?.alive).toBe(false);
+    expect(game.log).toContain("Wolf 被埋毒者牽連死亡。");
+  });
+
+  it("poisons a living werewolf when wolves kill a poison player", () => {
+    const game = castNightKill(
+      activeState("night", [
+        { playerId: "player_1", nickname: "Wolf", role: "werewolf", alive: true },
+        { playerId: "player_2", nickname: "Poison", role: "poison", alive: true },
+        { playerId: "player_3", nickname: "Villager", role: "villager", alive: true }
+      ]),
+      "player_1",
+      "player_2",
+      0
+    );
+
+    expect(game.players.find((player) => player.playerId === "player_1")?.alive).toBe(false);
+    expect(game.players.find((player) => player.playerId === "player_2")?.alive).toBe(false);
+    expect(game.winner).toBe("villagers");
+    expect(game.log).toContain("Wolf 被埋毒者牽連死亡。");
+  });
+
   it("builds player stat updates from final winners", () => {
     const wolfWin = startGame(
       lobby([
@@ -342,7 +376,7 @@ describe("game", () => {
           { playerId: "player_1", nickname: "Wolf", role: "werewolf", alive: true },
           { playerId: "player_2", nickname: "Mad", role: "madman", alive: true },
           { playerId: "player_3", nickname: "Fox", role: "fox", alive: true },
-          { playerId: "player_4", nickname: "Villager", role: "villager", alive: true }
+          { playerId: "player_4", nickname: "Poison", role: "poison", alive: true }
         ]
       })
     ).toEqual([
