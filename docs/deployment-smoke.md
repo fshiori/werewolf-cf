@@ -49,6 +49,12 @@ npx wrangler d1 migrations apply werewolf-cf --remote
 Confirm core D1 tables exist:
 
 ```bash
+npm run check:d1-schema -- --remote
+```
+
+Or run the equivalent manual query:
+
+```bash
 npx wrangler d1 execute werewolf-cf --remote --command "SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name"
 ```
 
