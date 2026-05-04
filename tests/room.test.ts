@@ -223,6 +223,51 @@ describe("RoomDurableObject", () => {
     }
   });
 
+  it("rejects public chat from dead players during active games", async () => {
+    const game: GameState = {
+      roomId: "room_abc",
+      phase: "day",
+      day: 2,
+      players: [
+        { playerId: "player_alive", nickname: "Alive", role: "villager", alive: true },
+        { playerId: "player_dead", nickname: "Dead", role: "villager", alive: false }
+      ],
+      votes: {},
+      openVote: false,
+      commonTalkVisible: false,
+      deadRoleVisible: false,
+      wishRole: false,
+      dummyBoy: false,
+      dayMs: 180_000,
+      nightMs: 90_000,
+      selfVote: false,
+      voteStatus: false,
+      revoteCount: 0,
+      nightKills: {},
+      divinations: {},
+      guards: {},
+      catRevives: {},
+      lastWords: {},
+      log: []
+    };
+    const room = roomObject(game);
+    const aliveMessages: SentMessage[] = [];
+    const deadMessages: SentMessage[] = [];
+    const aliveSocket = fakeSocket(aliveMessages);
+    const deadSocket = fakeSocket(deadMessages);
+    connect(room, aliveSocket, "player_alive", "Alive");
+    connect(room, deadSocket, "player_dead", "Dead");
+
+    await sendRaw(room, deadSocket, JSON.stringify({ type: "chat", text: "hello" }));
+    await sendRaw(room, aliveSocket, JSON.stringify({ type: "chat", text: "ok" }));
+
+    expect(deadMessages).toEqual([
+      { type: "error", message: "Only living players can chat during the game" },
+      expect.objectContaining({ type: "chat", playerId: "player_alive", text: "ok" })
+    ]);
+    expect(aliveMessages).toEqual([expect.objectContaining({ type: "chat", playerId: "player_alive", text: "ok" })]);
+  });
+
   it("sends only each socket's own role message", () => {
     const game: GameState = {
       roomId: "room_abc",
