@@ -82,6 +82,23 @@ function envWithRooms(
                 if (query.includes("FROM excluded_trips")) {
                   return excludedTripHashes.has(String(values[0])) ? { trip_hash: values[0] } : null;
                 }
+                if (query.includes("FROM rooms") && query.includes("name")) {
+                  const id = String(values[0]);
+                  return roomIds.includes(id)
+                    ? {
+                        id,
+                        name: id.replace(/^room_/, ""),
+                        room_comment: roomComments[id] ?? "",
+                        max_user: roomCapacities[id] ?? 22,
+                        dellook: deadRoleVisibleRooms[id] ? 1 : 0,
+                        dummy_name: roomDummyNames[id] ?? "替身君",
+                        dummy_last_words: roomDummyLastWords[id] ?? "",
+                        status: "lobby",
+                        created_at: "2026-05-04 04:00:00",
+                        option_role: roomOptionRoles[id] ?? ""
+                      }
+                    : null;
+                }
                 return roomIds.includes(String(values[0])) ? { id: values[0] } : null;
               },
               async all() {
@@ -316,6 +333,71 @@ describe("worker routes", () => {
         }
       ]
     });
+  });
+
+  it("returns a single room summary", async () => {
+    const response = await worker.fetch(
+      new Request("http://example.test/api/rooms/room_detail"),
+      envWithRooms(
+        ["room_detail"],
+        {},
+        {},
+        {},
+        {},
+        { room_detail: "poison real_time:4:2 istrip" },
+        { room_detail: "Detail comment" },
+        { room_detail: 16 },
+        { room_detail: true },
+        { room_detail: "Dummy" },
+        { room_detail: "Last words" }
+      )
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      room: {
+        id: "room_detail",
+        name: "detail",
+        comment: "Detail comment",
+        maxPlayers: 16,
+        status: "lobby",
+        createdAt: "2026-05-04 04:00:00",
+        options: {
+          poison: true,
+          bigWolf: false,
+          authority: false,
+          decider: false,
+          lovers: false,
+          betrayer: false,
+          childFox: false,
+          twoFoxes: false,
+          cat: false,
+          lastWords: false,
+          openVote: false,
+          commonTalkVisible: false,
+          deadRoleVisible: true,
+          wishRole: false,
+          tripRequired: true,
+          gmEnabled: false,
+          dummyBoy: false,
+          customDummy: false,
+          dummyName: "Dummy",
+          dummyLastWords: "Last words",
+          realTime: true,
+          dayMinutes: 4,
+          nightMinutes: 2,
+          selfVote: false,
+          voteStatus: false
+        }
+      }
+    });
+  });
+
+  it("returns 404 for missing room summaries", async () => {
+    const response = await worker.fetch(new Request("http://example.test/api/rooms/room_missing"), envWithRooms([]));
+
+    expect(response.status).toBe(404);
+    expect(await response.json()).toEqual({ error: "Room not found" });
   });
 
   it("stores selected room options when creating rooms", async () => {

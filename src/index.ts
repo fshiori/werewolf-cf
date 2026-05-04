@@ -43,20 +43,26 @@ function isFileLike(value: unknown): value is File {
 async function listRooms(env: Env): Promise<RoomSummary[]> {
   const result = await env.DB.prepare(
     "SELECT id, name, room_comment, max_user, dellook, dummy_name, dummy_last_words, status, created_at, option_role FROM rooms ORDER BY created_at DESC LIMIT 50"
-  ).all<{
-    id: string;
-    name: string;
-    room_comment?: string | null;
-    max_user?: number | null;
-    dellook?: number | null;
-    dummy_name?: string | null;
-    dummy_last_words?: string | null;
-    status: RoomSummary["status"];
-    created_at: string;
-    option_role?: string;
-  }>();
+  ).all<RoomRow>();
 
-  return result.results.map((room) => ({
+  return result.results.map(roomRowToSummary);
+}
+
+type RoomRow = {
+  id: string;
+  name: string;
+  room_comment?: string | null;
+  max_user?: number | null;
+  dellook?: number | null;
+  dummy_name?: string | null;
+  dummy_last_words?: string | null;
+  status: RoomSummary["status"];
+  created_at: string;
+  option_role?: string;
+};
+
+function roomRowToSummary(room: RoomRow): RoomSummary {
+  return {
     id: room.id,
     name: room.name,
     comment: room.room_comment ?? "",
@@ -69,7 +75,24 @@ async function listRooms(env: Env): Promise<RoomSummary[]> {
       dummyName: room.dummy_name ?? "替身君",
       dummyLastWords: room.dummy_last_words ?? ""
     }
-  }));
+  };
+}
+
+async function getRoomSummary(env: Env, roomIdParam: string): Promise<Response> {
+  try {
+    const roomId = validateRoomId(roomIdParam);
+    const row = await env.DB.prepare(
+      "SELECT id, name, room_comment, max_user, dellook, dummy_name, dummy_last_words, status, created_at, option_role FROM rooms WHERE id = ? LIMIT 1"
+    )
+      .bind(roomId)
+      .first<RoomRow>();
+    if (!row) {
+      return json({ error: "Room not found" }, { status: 404 });
+    }
+    return json({ room: roomRowToSummary(row) });
+  } catch (error) {
+    return json({ error: error instanceof Error ? error.message : "Invalid room" }, { status: 400 });
+  }
 }
 
 function parseRoomOptions(optionRole: string): RoomOptions {
@@ -687,6 +710,11 @@ export default {
 
     if (request.method === "GET" && url.pathname === "/api/rooms") {
       return json({ rooms: await listRooms(env) });
+    }
+
+    const roomSummaryMatch = url.pathname.match(/^\/api\/rooms\/([^/]+)$/);
+    if (request.method === "GET" && roomSummaryMatch) {
+      return getRoomSummary(env, roomSummaryMatch[1]);
     }
 
     if (request.method === "GET" && url.pathname === "/api/stats/leaderboard") {
