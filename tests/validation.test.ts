@@ -9,6 +9,7 @@ import {
   validateNickname,
   validateOptionalLastWordsText,
   validatePlayerId,
+  validatePlayerFlag,
   validatePlayerRole,
   validateRoomCapacity,
   validateRoomComment,
@@ -65,6 +66,11 @@ describe("validation", () => {
     expect(validatePlayerRole("cat")).toBe("cat");
     expect(validatePlayerRole("big_wolf")).toBe("big_wolf");
     expect(() => validatePlayerRole("gm")).toThrow("Invalid player role");
+  });
+
+  it("validates player flags", () => {
+    expect(validatePlayerFlag("lover")).toBe("lover");
+    expect(() => validatePlayerFlag("gm")).toThrow("Invalid player flag");
   });
 
   it("validates game winners", () => {
@@ -129,6 +135,12 @@ describe("validation", () => {
       type: "gm_set_role",
       targetPlayerId: "player_1",
       role: "seer"
+    });
+    expect(parseClientMessage('{"type":"gm_set_flag","targetPlayerId":"player_1","flag":"lover","enabled":true}')).toEqual({
+      type: "gm_set_flag",
+      targetPlayerId: "player_1",
+      flag: "lover",
+      enabled: true
     });
     expect(parseClientMessage('{"type":"set_last_words","text":"bye"}')).toEqual({ type: "set_last_words", text: "bye" });
     expect(parseClientMessage('{"type":"start_game"}')).toEqual({ type: "start_game" });

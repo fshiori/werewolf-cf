@@ -220,6 +220,15 @@ export type GmSetRoleClientMessage = {
   role: PlayerRole;
 };
 
+export type PlayerFlag = "authority" | "decider" | "lover";
+
+export type GmSetFlagClientMessage = {
+  type: "gm_set_flag";
+  targetPlayerId: string;
+  flag: PlayerFlag;
+  enabled: boolean;
+};
+
 export type StartGameClientMessage = {
   type: "start_game";
 };
@@ -278,6 +287,7 @@ export type ClientMessage =
   | GmEndGameClientMessage
   | GmSetAliveClientMessage
   | GmSetRoleClientMessage
+  | GmSetFlagClientMessage
   | StartGameClientMessage
   | KickPlayerClientMessage
   | VoteClientMessage

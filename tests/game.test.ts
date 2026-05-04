@@ -19,6 +19,7 @@ import {
   foxesForPlayer,
   forceEndGame,
   forceSetPlayerAlive,
+  forceSetPlayerFlag,
   forceSetPlayerRole,
   loversForPlayer,
   mediumReadingForPlayer,
@@ -1256,6 +1257,18 @@ describe("game", () => {
     expect(changed.log).toContain("GM 將 Bob 的角色調整為 seer。");
     expect(() => forceSetPlayerRole(createLobbyState("room_abc"), "player_1", "seer")).toThrow("active games");
     expect(() => forceSetPlayerRole(day, "player_missing", "seer")).toThrow("Role control target not found");
+  });
+
+  it("lets GM adjust player flags during active games", () => {
+    const day = startGame(lobby([["player_1", "Alice"], ["player_2", "Bob"], ["player_3", "Carol"], ["player_4", "Dave"]]), 0, () => 0);
+    const authority = forceSetPlayerFlag(day, "player_2", "authority", true);
+    const cleared = forceSetPlayerFlag(authority, "player_2", "authority", false);
+
+    expect(authority.players.find((player) => player.playerId === "player_2")?.authority).toBe(true);
+    expect(authority.log).toContain("GM 將 Bob 的 authority 調整為啟用。");
+    expect(cleared.players.find((player) => player.playerId === "player_2")?.authority).toBeUndefined();
+    expect(() => forceSetPlayerFlag(createLobbyState("room_abc"), "player_1", "lover", true)).toThrow("active games");
+    expect(() => forceSetPlayerFlag(day, "player_missing", "lover", true)).toThrow("Flag control target not found");
   });
 
   it("allows only living werewolves to use the night channel", () => {

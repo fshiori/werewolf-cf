@@ -18,6 +18,7 @@ import {
   createLobbyState,
   forceEndGame,
   forceSetPlayerAlive,
+  forceSetPlayerFlag,
   forceSetPlayerRole,
   foxesForPlayer,
   loversForPlayer,
@@ -324,6 +325,21 @@ export class RoomDurableObject {
         await this.saveGameState(next);
         await this.syncRoomStatus(next);
         await this.persistRoomEvent(member.playerId, "gm_set_role", { targetPlayerId, role: message.role });
+        await this.broadcastGameState(next);
+        this.sendRoles(next);
+        this.sendMediumResults(next);
+        return;
+      }
+
+      if (message.type === "gm_set_flag") {
+        if (!member.gm) {
+          throw new Error("Only the GM can adjust player flags");
+        }
+        const targetPlayerId = validatePlayerId(message.targetPlayerId);
+        const next = forceSetPlayerFlag(await this.loadGameState(), targetPlayerId, message.flag, message.enabled);
+        await this.saveGameState(next);
+        await this.syncRoomStatus(next);
+        await this.persistRoomEvent(member.playerId, "gm_set_flag", { targetPlayerId, flag: message.flag, enabled: message.enabled });
         await this.broadcastGameState(next);
         this.sendRoles(next);
         this.sendMediumResults(next);
