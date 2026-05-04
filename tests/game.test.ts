@@ -61,6 +61,31 @@ describe("game", () => {
     expect(game.players.find((player) => player.playerId === "player_3")?.role).toBe("medium");
   });
 
+  it("adds a madman in six-player games", () => {
+    let game = startGame(
+      lobby([
+        ["player_1", "Alice"],
+        ["player_2", "Bob"],
+        ["player_3", "Carol"],
+        ["player_4", "Dave"],
+        ["player_5", "Ellen"],
+        ["player_6", "Frank"]
+      ]),
+      0,
+      () => 0
+    );
+
+    expect(game.players.find((player) => player.playerId === "player_4")?.role).toBe("madman");
+    expect(wolvesForPlayer(game, "player_4")).toEqual([]);
+
+    for (const player of game.players) {
+      game = castDayVote(game, player.playerId, "player_6");
+    }
+
+    const divination = castDivination(game, "player_2", "player_4");
+    expect(divination.result).toBe("human");
+  });
+
   it("moves from completed day vote to night", () => {
     let game = startGame(lobby([["player_1", "Alice"], ["player_2", "Bob"], ["player_3", "Carol"], ["player_4", "Dave"]]), 0, () => 0);
 
@@ -135,7 +160,18 @@ describe("game", () => {
   });
 
   it("builds player stat updates from final winners", () => {
-    const wolfWin = startGame(lobby([["player_1", "Alice"], ["player_2", "Bob"], ["player_3", "Carol"], ["player_4", "Dave"]]), 0, () => 0);
+    const wolfWin = startGame(
+      lobby([
+        ["player_1", "Alice"],
+        ["player_2", "Bob"],
+        ["player_3", "Carol"],
+        ["player_4", "Dave"],
+        ["player_5", "Ellen"],
+        ["player_6", "Frank"]
+      ]),
+      0,
+      () => 0
+    );
     const ended = {
       ...wolfWin,
       phase: "ended" as const,
@@ -146,13 +182,17 @@ describe("game", () => {
       { playerId: "player_1", won: true },
       { playerId: "player_2", won: false },
       { playerId: "player_3", won: false },
-      { playerId: "player_4", won: false }
+      { playerId: "player_4", won: true },
+      { playerId: "player_5", won: false },
+      { playerId: "player_6", won: false }
     ]);
     expect(playerStatUpdates({ ...ended, winner: "villagers" })).toEqual([
       { playerId: "player_1", won: false },
       { playerId: "player_2", won: true },
       { playerId: "player_3", won: true },
-      { playerId: "player_4", won: true }
+      { playerId: "player_4", won: false },
+      { playerId: "player_5", won: true },
+      { playerId: "player_6", won: true }
     ]);
     expect(playerStatUpdates({ ...wolfWin, phase: "day" })).toEqual([]);
   });
