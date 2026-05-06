@@ -1200,19 +1200,50 @@ export function renderAdminRooms(rooms: RoomSummary[], statusFilter: AdminRoomSt
     room.options.realTime ? `限時 ${String(room.options.dayMinutes)}/${String(room.options.nightMinutes)}` : "",
     room.options.poison ? "埋毒" : "",
     room.options.bigWolf ? "大狼" : "",
+    room.options.authority ? "權力" : "",
+    room.options.decider ? "決定" : "",
     room.options.lovers ? "戀人" : "",
     room.options.betrayer ? "背德" : "",
     room.options.childFox ? "子狐" : "",
     room.options.twoFoxes ? "雙狐" : "",
     room.options.cat ? "貓又" : "",
+    room.options.lastWords ? "遺言" : "",
     room.options.openVote ? "公開票" : "",
     room.options.commonTalkVisible ? "共有聲" : "",
+    room.options.deadRoleVisible ? "靈視" : "",
+    room.options.wishRole ? "希望" : "",
     channelRestrictionOptionMark(room).replace(/<[^>]+>/g, ""),
     room.options.tripRequired ? "Trip限定" : "",
     room.options.gmEnabled ? "GM制" : "",
     room.options.dummyBoy ? "替身" : "",
+    room.options.customDummy ? "自訂替身" : "",
+    room.options.selfVote ? "自投" : "",
     room.options.voteStatus ? "投票済" : ""
   ].filter(Boolean).join(" / ") || "標準";
+  const optionMarkers = (room: RoomSummary): string => [
+    room.options.realTime ? optionMark(`限時 ${String(room.options.dayMinutes)}/${String(room.options.nightMinutes)}`, "img/room_option_real_time.gif") : "",
+    room.options.poison ? optionMark("埋毒", "img/room_option_poison.gif") : "",
+    room.options.bigWolf ? optionMark("大狼", "img/room_option_wfbig.gif") : "",
+    room.options.authority ? optionMark("權力", "img/room_option_authority.gif") : "",
+    room.options.decider ? optionMark("決定", "img/room_option_decide.gif") : "",
+    room.options.lovers ? optionMark("戀人", "img/room_option_lovers.gif") : "",
+    room.options.betrayer ? optionMark("背德", "img/room_option_betr.gif") : "",
+    room.options.childFox ? optionMark("子狐", "img/room_option_fosi.gif") : "",
+    room.options.twoFoxes ? optionMark("雙狐", "img/room_option_foxs.gif") : "",
+    room.options.cat ? optionMark("貓又", "img/room_option_cat.gif") : "",
+    room.options.lastWords ? optionMark("遺言", "img/room_option_will.gif") : "",
+    room.options.openVote ? optionMark("公開票", "img/room_option_open_vote.gif") : "",
+    room.options.commonTalkVisible ? optionMark("共有聲", "img/room_option_common.gif") : "",
+    room.options.deadRoleVisible ? optionMark("靈視", "img/room_option_rei.gif") : "",
+    room.options.wishRole ? optionMark("希望", "img/room_option_wish_role.gif") : "",
+    room.options.tripRequired ? optionMark("Trip限定", "img/room_option_trip.gif") : "",
+    room.options.gmEnabled ? optionMark("GM制", "img/room_option_gm.gif") : "",
+    channelRestrictionOptionMark(room),
+    room.options.dummyBoy ? optionMark("替身", "img/room_option_dummy_boy.gif") : "",
+    room.options.customDummy ? optionMark("自訂替身", "img/room_option_dummy_boy.gif") : "",
+    room.options.selfVote ? optionMark("自投", "img/room_option_voteme.gif") : "",
+    room.options.voteStatus ? optionMark("投票済", "img/conn_look.gif") : ""
+  ].filter(Boolean).join(" ");
   const filterHref = (filter: AdminRoomStatusFilter): string => {
     const query = `status=${encodeURIComponent(filter)}${adminToken ? `&token=${encodeURIComponent(adminToken)}` : ""}`;
     return `/admin/rooms?${escapeHtml(query)}`;
@@ -1227,7 +1258,7 @@ export function renderAdminRooms(rooms: RoomSummary[], statusFilter: AdminRoomSt
         <td>${escapeHtml(room.comment || "－")}</td>
         <td>${maxPlayersMark(room.maxPlayers)}</td>
         <td>${roomStatusIcon(room.status)}${escapeHtml(federatedStatusLabel(room.status))}</td>
-        <td>${escapeHtml(optionSummary(room))}</td>
+        <td title="${escapeHtml(optionSummary(room))}">${optionMarkers(room) || escapeHtml(optionSummary(room))}</td>
         <td>${escapeHtml(room.createdAt)}</td>
         <td><a href="/room/${escapeHtml(room.id)}/log">紀錄</a> / <a href="/room/${escapeHtml(room.id)}/events">事件</a></td>
         <td>${room.status === "ended" ? `<span class="muted">已結束</span>` : `<button class="adminEndRoom" data-room-id="${escapeHtml(room.id)}">廢村</button>`}</td>
