@@ -1521,7 +1521,11 @@ export default {
           return new Response("Room not found", { status: 404 });
         }
         const [records, events] = await Promise.all([listRoomRecords(env, roomId), listRoomEvents(env, roomId)]);
-        return html(renderRoomTranscript(roomId, records, events));
+        return html(renderRoomTranscript(roomId, records, events, {
+          heavenTalk: url.searchParams.get("heaven_talk") === "on",
+          heavenOnly: url.searchParams.get("heaven_only") === "on",
+          reverseLog: url.searchParams.get("reverse_log") === "on"
+        }));
       } catch (error) {
         return json({ error: error instanceof Error ? error.message : "Invalid room" }, { status: 400 });
       }
