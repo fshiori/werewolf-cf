@@ -2565,7 +2565,7 @@ describe("worker routes", () => {
           {
             id: 1,
             room_id: "room_log",
-            result_json: '{"winner":"villagers","day":3,"players":[{"playerId":"player_wolf_a","nickname":"Wolf A","role":"werewolf","alive":true},{"playerId":"player_wolf_b","nickname":"Wolf B","role":"big_wolf","alive":true},{"playerId":"player_seer","nickname":"Seer","role":"seer","alive":true}]}',
+            result_json: '{"winner":"villagers","day":3,"players":[{"playerId":"player_wolf_a","nickname":"Wolf A","role":"werewolf","alive":true},{"playerId":"player_wolf_b","nickname":"Wolf B","role":"big_wolf","alive":true},{"playerId":"player_fox_a","nickname":"Fox A","role":"fox","alive":true},{"playerId":"player_fox_b","nickname":"Fox B","role":"fox","alive":true},{"playerId":"player_seer","nickname":"Seer","role":"seer","alive":true}]}',
             created_at: "2026-05-06 12:00:00"
           }
         ]
@@ -2579,6 +2579,14 @@ describe("worker routes", () => {
             event_type: "wolf_chat",
             payload_json: '{"visibility":"private","nickname":"Wolf B","text":"pack message","phase":"night","day":2}',
             created_at: "2026-05-06 12:02:00"
+          },
+          {
+            id: 2,
+            room_id: "room_log",
+            player_id: "player_fox_b",
+            event_type: "fox_chat",
+            payload_json: '{"visibility":"private","nickname":"Fox B","text":"fox message","phase":"night","day":2}',
+            created_at: "2026-05-06 12:03:00"
           }
         ]
       }
@@ -2587,11 +2595,18 @@ describe("worker routes", () => {
     const wolfView = await worker.fetch(new Request("http://example.test/room/room_log/log?viewer=player&viewer_player_id=player_wolf_a&heaven_talk=on"), env);
     const wolfBody = await wolfView.text();
     expect(wolfBody).toContain("pack message");
+    expect(wolfBody).not.toContain("fox message");
     expect(wolfBody).toContain("可聽見的同陣營密談");
+
+    const foxView = await worker.fetch(new Request("http://example.test/room/room_log/log?viewer=player&viewer_player_id=player_fox_a&heaven_talk=on"), env);
+    const foxBody = await foxView.text();
+    expect(foxBody).toContain("fox message");
+    expect(foxBody).not.toContain("pack message");
 
     const seerView = await worker.fetch(new Request("http://example.test/room/room_log/log?viewer=player&viewer_player_id=player_seer&heaven_talk=on"), env);
     const seerBody = await seerView.text();
     expect(seerBody).not.toContain("pack message");
+    expect(seerBody).not.toContain("fox message");
   });
 
   it("renders protocol page", async () => {
