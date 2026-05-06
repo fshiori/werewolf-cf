@@ -1746,7 +1746,9 @@ export default {
           return new Response("Room not found", { status: 404 });
         }
         const autoReloadParam = url.searchParams.get("auto_reload");
-        return html(renderRoom(roomId, { autoReloadSeconds: autoReloadParam ? Number(autoReloadParam) : 0 }));
+        const viewModeParam = url.searchParams.get("view");
+        const viewMode = viewModeParam === "spectator" || viewModeParam === "heaven" ? viewModeParam : "player";
+        return html(renderRoom(roomId, { autoReloadSeconds: autoReloadParam ? Number(autoReloadParam) : 0, viewMode }));
       } catch (error) {
         return json({ error: error instanceof Error ? error.message : "Invalid room" }, { status: 400 });
       }

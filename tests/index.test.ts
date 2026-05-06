@@ -825,6 +825,16 @@ describe("worker routes", () => {
     expect(body).toContain("目前：20秒");
   });
 
+  it("passes room view query into the room page", async () => {
+    const response = await worker.fetch(new Request("http://example.test/room/room_exists?view=heaven&auto_reload=20"), envWithRooms(["room_exists"]));
+
+    expect(response.status).toBe(200);
+    const body = await response.text();
+    expect(body).toContain('data-room-view="heaven"');
+    expect(body).toContain("靈界視點");
+    expect(body).toContain("/room/room_exists?view=heaven&amp;auto_reload=15");
+  });
+
   it("serves the external room client script", async () => {
     const response = await worker.fetch(new Request("http://example.test/assets/room-client.js"), envWithRooms([]));
 
