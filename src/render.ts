@@ -2278,7 +2278,7 @@ export function renderBbsTopic(topic: BbsTopicSummary, replies: BbsReplySummary[
       </td></tr>
       <tr><td><label><strong>　標題：</strong></label></td><td><input id="bbsEditTitle" maxlength="50" size="48" value="${escapeHtml(topic.title)}"></td></tr>
       <tr><td><label><strong>　本文：</strong></label></td><td><textarea id="bbsEditMessage" rows="5" cols="64">${escapeHtml(topic.message)}</textarea></td></tr>
-      <tr><td><label><strong>　文章密碼：</strong></label></td><td><input id="bbsEditPassword" type="password" maxlength="128" size="24"> <span class="muted">一般使用者編輯用</span></td></tr>
+      <tr><td><label><strong>　文章密碼：</strong></label></td><td><input id="bbsEditPassword" type="password" maxlength="128" size="24"> <span class="muted">一般使用者編輯/刪除用</span></td></tr>
       <tr><td></td><td><button id="bbsModerateButton">更新狀態</button> <button id="bbsTopicEditButton">編輯本文</button> <button id="bbsDeleteButton">刪除</button> <span id="bbsModerateStatus" class="muted"></span></td></tr>
     </table>
     <script>
@@ -2333,7 +2333,8 @@ export function renderBbsTopic(topic: BbsTopicSummary, replies: BbsReplySummary[
         status.textContent = "刪除中";
         const res = await fetch("/api/bbs/topics/${escapeHtml(String(topic.id))}/moderation", {
           method: "DELETE",
-          headers: { "x-bbs-admin-token": token }
+          headers: { "content-type": "application/json", "x-bbs-admin-token": token },
+          body: JSON.stringify({ password: document.querySelector("#bbsEditPassword").value })
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) {

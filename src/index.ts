@@ -1163,15 +1163,21 @@ async function updateBbsTopicContent(request: Request, env: Env, topicIdParam: s
 }
 
 async function deleteBbsTopic(request: Request, env: Env, topicIdParam: string): Promise<Response> {
-  const unauthorized = await requireBbsAdmin(request, env);
-  if (unauthorized) {
-    return unauthorized;
-  }
+  const body: unknown = await request.json().catch(() => ({}));
   try {
     const topicId = validateBbsTopicId(topicIdParam);
     const topic = await getBbsTopicById(env, topicId);
     if (!topic) {
       return json({ error: "BBS topic not found" }, { status: 404 });
+    }
+    const adminToken = await env.CONFIG.get("bbs_admin_token");
+    const providedAdminToken = request.headers.get("x-bbs-admin-token") ?? "";
+    const providedPassword = isRecord(body) ? validateBbsPassword(body.password) : undefined;
+    const passwordHash = await getBbsTopicPasswordHash(env, topicId);
+    const adminAuthorized = Boolean(adminToken && providedAdminToken === adminToken);
+    const passwordAuthorized = Boolean(passwordHash && providedPassword && await bbsPasswordHash(providedPassword) === passwordHash);
+    if (!adminAuthorized && !passwordAuthorized) {
+      return json({ error: "BBS topic delete password is invalid" }, { status: 403 });
     }
     await env.DB.batch([
       env.DB.prepare("DELETE FROM bbs_replies WHERE topic_id = ?").bind(topicId),
