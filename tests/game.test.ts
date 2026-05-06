@@ -9,6 +9,7 @@ import {
   canUseLoversChannel,
   canUsePublicChat,
   canUseWerewolfChannel,
+  castLobbyKickVote,
   castLobbyStartVote,
   castChildFoxDivination,
   castCatRevive,
@@ -1442,6 +1443,23 @@ describe("game", () => {
 
     expect(removeLobbyPlayer(voted, "player_2").lobbyStartVotes).toEqual({ player_1: true });
     expect(leaveLobbyPlayer(voted, "player_1").lobbyStartVotes).toEqual({ player_2: true });
+  });
+
+  it("tracks lobby kick votes and removes stale kick ballots", () => {
+    let waiting = lobby([["player_1", "Alice"], ["player_2", "Bob"], ["player_3", "Carol"], ["player_4", "Dave"], ["player_5", "Eve"], ["player_6", "Frank"]]);
+    waiting = castLobbyKickVote(waiting, "player_1", "player_6").state;
+    const duplicate = castLobbyKickVote(waiting, "player_1", "player_6");
+    const ready = ["player_2", "player_3", "player_4", "player_5"].reduce((state, playerId) => castLobbyKickVote(state, playerId, "player_6").state, duplicate.state);
+
+    expect(duplicate).toMatchObject({ ready: false, votedPlayerIds: ["player_1"], required: 5, targetNickname: "Frank" });
+    expect(duplicate.state.log).toEqual(waiting.log);
+    expect(castLobbyKickVote(ready, "player_1", "player_6")).toMatchObject({ ready: true, votedPlayerIds: ["player_1", "player_2", "player_3", "player_4", "player_5"] });
+    expect(removeLobbyPlayer(ready, "player_1").lobbyKickVotes).toEqual({ player_6: ["player_2", "player_3", "player_4", "player_5"] });
+    expect(leaveLobbyPlayer(ready, "player_6").lobbyKickVotes).toEqual({});
+    expect(() => castLobbyKickVote(startGame(ready, 0, () => 0), "player_1", "player_6")).toThrow("Kick votes are only available");
+    expect(() => castLobbyKickVote(ready, "player_1", "player_1")).toThrow("Cannot kick vote yourself");
+    expect(() => castLobbyKickVote(ready, "player_missing", "player_6")).toThrow("Kick vote player not found");
+    expect(() => castLobbyKickVote(ready, "player_1", "player_missing")).toThrow("Kick vote target not found");
   });
 
   it("allows lobby joins but only existing players after start", () => {

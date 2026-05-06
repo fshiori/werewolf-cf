@@ -128,6 +128,28 @@ export function buildLobbyStartVoteMessage(playerId: string, nickname: string, v
   };
 }
 
+export function buildLobbyKickVoteMessage(
+  playerId: string,
+  nickname: string,
+  targetPlayerId: string,
+  targetNickname: string,
+  votedPlayerIds: string[],
+  required: number,
+  ready: boolean
+): ServerMessage {
+  return {
+    type: "lobby_kick_vote",
+    playerId,
+    nickname: escapeHtml(nickname),
+    targetPlayerId,
+    targetNickname: escapeHtml(targetNickname),
+    votedPlayerIds,
+    required,
+    ready,
+    sentAt: new Date().toISOString()
+  };
+}
+
 export function buildGameStateMessage(state: GameState): ServerMessage {
   return {
     type: "game_state",

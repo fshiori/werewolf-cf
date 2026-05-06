@@ -163,6 +163,8 @@ document.querySelector("#connect").addEventListener("click", () => {
       append("<font color='#cc0000'>[異議あり]</font> <b>" + msg.nickname + "</b> 提出反對。（剩餘 " + msg.remaining + "）");
     } else if (msg.type === "lobby_start_vote") {
       append("<span class='muted'>" + msg.nickname + " 投下開始遊戲一票。（" + msg.votedPlayerIds.length + "/" + msg.required + "）</span>");
+    } else if (msg.type === "lobby_kick_vote") {
+      append("<span class='muted'>" + msg.nickname + " 對 " + msg.targetNickname + " 投票踢出。（" + msg.votedPlayerIds.length + "/" + msg.required + "）</span>");
     } else if (msg.type === "divination_result") {
       const result = msg.result === "werewolf" ? "狼" : "人";
       append("<font color='#660099'>[占卜]</font> " + msg.targetNickname + " 是「" + result + "」。");
@@ -511,10 +513,11 @@ function renderGame(game) {
     card.appendChild(cardTable);
     row.appendChild(card);
     const button = document.createElement("button");
-    button.textContent = canManageLobby && player.playerId !== currentPlayerId ? "踢 " + player.nickname : (player.alive ? "" : "× ") + player.nickname;
+    const canKickVoteLobby = game.phase === "lobby" && currentPlayer && !isGm && player.playerId !== currentPlayerId;
+    button.textContent = canManageLobby && player.playerId !== currentPlayerId ? "踢 " + player.nickname : canKickVoteLobby ? "踢票 " + player.nickname : (player.alive ? "" : "× ") + player.nickname;
     const catReviveTarget = game.phase === "night" && game.day > 1 && role === "cat" && !player.alive;
     button.disabled =
-      (!actorCanAct && !(canManageLobby && player.playerId !== currentPlayerId)) ||
+      (!actorCanAct && !(canManageLobby && player.playerId !== currentPlayerId) && !canKickVoteLobby) ||
       (game.phase === "night" && role === "cat" && !catReviveTarget) ||
       (!player.alive && !catReviveTarget) ||
       player.playerId === currentPlayerId ||
@@ -525,7 +528,7 @@ function renderGame(game) {
     button.addEventListener("click", () => {
       if (!latestGame) return;
       if (latestGame.phase === "lobby") {
-        sendCommand({ type: "kick_player", targetPlayerId: player.playerId });
+        sendCommand({ type: canManageLobby ? "kick_player" : "kick_vote", targetPlayerId: player.playerId });
       } else if (latestGame.phase === "day") {
         sendCommand({ type: "vote", targetPlayerId: player.playerId });
       } else if (latestGame.phase === "night" && isWolfRole(role)) {

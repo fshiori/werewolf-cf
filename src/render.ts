@@ -262,6 +262,7 @@ function eventTypeLabel(eventType: string): string {
     cat_revive: "貓又復活",
     objection: "提出反對",
     lobby_start_vote: "開始投票",
+    lobby_kick_vote: "踢人投票",
     player_left: "退出",
     game_started: "遊戲開始",
     game_ended: "遊戲結束",
@@ -1393,6 +1394,7 @@ export function renderProtocol(): string {
         <tr><td><strong>　set_last_words：</strong></td><td>遺言啟用時可儲存死亡時公開文字。</td></tr>
         <tr><td><strong>　start_game / kick_player：</strong></td><td>房主或 GM 的大廳控制。</td></tr>
         <tr><td><strong>　start_vote：</strong></td><td>居民投開始遊戲一票；大廳全員投票後自動開始。</td></tr>
+        <tr><td><strong>　kick_vote：</strong></td><td>居民投踢人一票；同一目標達5票後踢出並重置等待室投票。</td></tr>
         <tr><td><strong>　leave_room：</strong></td><td>玩家退出；大廳時從居民列表移除，遊戲中僅關閉目前連線。</td></tr>
         <tr><td><strong>　gm_*：</strong></td><td>GM 聊天、私語、換日、裁定、調整生死、角色與旗標。</td></tr>
       </table>

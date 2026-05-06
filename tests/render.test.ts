@@ -272,6 +272,7 @@ describe("render", () => {
     expect(ROOM_CLIENT_SCRIPT).toContain("gm_set_flag");
     expect(ROOM_CLIENT_SCRIPT).toContain("start_vote");
     expect(ROOM_CLIENT_SCRIPT).toContain("kick_player");
+    expect(ROOM_CLIENT_SCRIPT).toContain("kick_vote");
     expect(ROOM_CLIENT_SCRIPT).toContain("leave_room");
     expect(ROOM_CLIENT_SCRIPT).toContain("void refreshStats();");
     expect(ROOM_CLIENT_SCRIPT).toContain("/api/players/");
@@ -727,6 +728,7 @@ describe("render", () => {
     expect(html).toContain("wolf_chat / fox_chat / common_chat / lovers_chat");
     expect(html).toContain("gm_*");
     expect(html).toContain("start_vote");
+    expect(html).toContain("kick_vote");
     expect(html).toContain("leave_room");
     expect(html).toContain("Server Messages");
     expect(html).toContain("game_state");
