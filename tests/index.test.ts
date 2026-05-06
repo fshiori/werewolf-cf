@@ -1315,7 +1315,7 @@ describe("worker routes", () => {
     expect(body).toContain("討論管理");
     expect(body).toContain("Welcome");
     expect(body).toContain("Alice◆Trip");
-    expect(body).toContain("/bbs?view=1#bbsModerationForm");
+    expect(body).toContain("/bbs/1#bbsModerationForm");
     expect(body).toContain("BBS 管理密碼");
   });
 

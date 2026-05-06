@@ -802,7 +802,7 @@ describe("render", () => {
     expect(html).toContain("Alice◆Trip");
     expect(html).toContain("bbs-topic-pinned");
     expect(html).toContain("bbs-topic-digest");
-    expect(html).toContain("/bbs?view=1#bbsModerationForm");
+    expect(html).toContain("/bbs/1#bbsModerationForm");
     expect(html).toContain("BBS 管理密碼");
   });
 
