@@ -680,6 +680,8 @@ describe("render", () => {
     expect(html).toContain("村No");
     expect(html).toContain("Finished 村");
     expect(html).toContain("/room/room_finished/log");
+    expect(html).toContain("/assets/reference/img/max16.gif");
+    expect(html).toContain("最大16");
     expect(html).toContain("reverse_log=on");
     expect(html).toContain("heaven_talk=on");
     expect(html).toContain("heaven_only=on");
