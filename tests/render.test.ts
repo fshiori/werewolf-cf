@@ -202,6 +202,8 @@ describe("render", () => {
     expect(html).toContain(".player-card { width: 148px; border: 1px solid #b0b0b0; background: #fafafa; table-layout: fixed; }");
     expect(html).toContain(".player-name { padding-left: 5px; max-width: 96px; overflow-wrap: anywhere; word-break: break-word; }");
     expect(html).toContain("#chatLog div, #gameLog div { border-top: 1px dashed silver; padding: 2px 4px; overflow-wrap: anywhere; word-break: break-word; }");
+    expect(html).toContain("body.room-phase-night .player-card.voted { background: #004000; color: snow; }");
+    expect(html).toContain("body.room-phase-night .player-card.voted a { color: #ccffff; }");
     expect(html).toContain("Trip");
     expect(html).toContain("avatarFile");
     expect(html).toContain("defaultIcon");

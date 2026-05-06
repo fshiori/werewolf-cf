@@ -255,6 +255,37 @@ describe("messages", () => {
     });
   });
 
+  it("shows submitted night action actors without exposing action targets", () => {
+    const game = {
+      ...createLobbyState("room_abc"),
+      phase: "night" as const,
+      voteStatus: true,
+      players: [
+        { playerId: "player_wolf", nickname: "Wolf", role: "werewolf" as const, alive: true },
+        { playerId: "player_seer", nickname: "Seer", role: "seer" as const, alive: true },
+        { playerId: "player_guard", nickname: "Guard", role: "guard" as const, alive: true },
+        { playerId: "player_cat", nickname: "Cat", role: "cat" as const, alive: true },
+        { playerId: "player_bystander", nickname: "Bystander", role: "villager" as const, alive: true }
+      ],
+      nightKills: { player_wolf: "target_wolf" },
+      divinations: { player_seer: "target_seer" },
+      guards: { player_guard: "target_guard" },
+      catRevives: { player_cat: "target_cat" }
+    };
+
+    const message = buildGameStateMessage(game);
+
+    expect(message).toMatchObject({
+      type: "game_state",
+      votes: {},
+      votedPlayerIds: ["player_wolf", "player_seer", "player_guard", "player_cat"]
+    });
+    expect(JSON.stringify(message)).not.toContain("target_wolf");
+    expect(JSON.stringify(message)).not.toContain("target_seer");
+    expect(JSON.stringify(message)).not.toContain("target_guard");
+    expect(JSON.stringify(message)).not.toContain("target_cat");
+  });
+
   it("builds revealed role maps for dead role visibility", () => {
     const game = {
       ...createLobbyState("room_abc"),
