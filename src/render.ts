@@ -1,4 +1,4 @@
-import type { BbsReplySummary, BbsTopicSummary, FederatedRoomSummary, GameRecordSummary, LeaderboardEntry, PlayerRole, RoomEventSummary, RoomSummary, WinRateEntry } from "./types";
+import type { BbsReplySummary, BbsTopicSummary, FederatedRoomSummary, FederatedServerStatus, GameRecordSummary, LeaderboardEntry, PlayerRole, RoomEventSummary, RoomSummary, WinRateEntry } from "./types";
 import { escapeHtml } from "./validation";
 
 function page(title: string, body: string, extraHead = ""): string {
@@ -619,7 +619,7 @@ function federatedRoomValue(room: RoomSummary | FederatedRoomSummary): Federated
   return { ...room, serverName: "本伺服器", serverUrl: "/", roomUrl: `/room/${room.id}`, local: true };
 }
 
-export function renderFederatedList(rooms: Array<RoomSummary | FederatedRoomSummary>): string {
+export function renderFederatedList(rooms: Array<RoomSummary | FederatedRoomSummary>, peers: FederatedServerStatus[] = []): string {
   const rows = rooms.length
     ? rooms.map((value) => {
       const room = federatedRoomValue(value);
@@ -636,6 +636,14 @@ export function renderFederatedList(rooms: Array<RoomSummary | FederatedRoomSumm
       </tr>`;
     }).join("")
     : `<tr><td colspan="6" class="muted">目前沒有可列出的村子。</td></tr>`;
+  const peerRows = peers.length
+    ? peers.map((peer) => `<tr>
+        <td><a href="${escapeHtml(peer.url)}">${escapeHtml(peer.name)}</a></td>
+        <td>${peer.ok ? `<font color="#008800">服務中</font>` : `<font color="#cc0000">連線失敗</font>`}</td>
+        <td>${escapeHtml(String(peer.roomCount))}</td>
+        <td>${peer.error ? escapeHtml(peer.error) : `<span class="muted">-</span>`}</td>
+      </tr>`).join("")
+    : `<tr><td colspan="4" class="muted">尚未設定聯合伺服器。</td></tr>`;
 
   return page("Federated List", shell(`
     <fieldset>
@@ -649,6 +657,13 @@ export function renderFederatedList(rooms: Array<RoomSummary | FederatedRoomSumm
           </table>
         </strong>
       </div>
+    </fieldset>
+    <fieldset>
+      <legend><strong>聯合伺服器狀態</strong></legend>
+      <table class="form-table">
+        <tr><td><strong>伺服器</strong></td><td><strong>狀態</strong></td><td><strong>村數</strong></td><td><strong>訊息</strong></td></tr>
+        ${peerRows}
+      </table>
     </fieldset>
   `));
 }

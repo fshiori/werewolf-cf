@@ -3,7 +3,7 @@ import { RoomDurableObject } from "./room";
 import { ROOM_CLIENT_SCRIPT } from "./room-client";
 import { DEFAULT_DAY_MINUTES, DEFAULT_NIGHT_MINUTES } from "./game";
 import { registeredTripHash, tripHashForRoom } from "./identity";
-import type { BbsReplySummary, BbsTopicSummary, ChannelRestrictions, FederatedRoomSummary, GamePlayer, GameRecordSummary, GameWinner, LeaderboardEntry, PlayerGameRecordSummary, PlayerStats, RoomEventSummary, RoomOptions, RoomSummary, WinRateEntry } from "./types";
+import type { BbsReplySummary, BbsTopicSummary, ChannelRestrictions, FederatedRoomSummary, FederatedServerStatus, GamePlayer, GameRecordSummary, GameWinner, LeaderboardEntry, PlayerGameRecordSummary, PlayerStats, RoomEventSummary, RoomOptions, RoomSummary, WinRateEntry } from "./types";
 import {
   isRecord,
   validateNickname,
@@ -188,7 +188,7 @@ function remoteRoomSummary(server: FederatedServerConfig, value: unknown): Feder
   };
 }
 
-async function listFederatedRooms(env: Env): Promise<FederatedRoomSummary[]> {
+async function listFederatedRooms(env: Env): Promise<{ rooms: FederatedRoomSummary[]; peers: FederatedServerStatus[] }> {
   const localRooms = (await listRooms(env)).map((room): FederatedRoomSummary => ({
     ...room,
     serverName: "本伺服器",
@@ -202,23 +202,36 @@ async function listFederatedRooms(env: Env): Promise<FederatedRoomSummary[]> {
   } catch {
     servers = [];
   }
-  const remoteRooms = await Promise.all(servers.map(async (server): Promise<FederatedRoomSummary[]> => {
+  const remoteResults = await Promise.all(servers.map(async (server): Promise<{ rooms: FederatedRoomSummary[]; peer: FederatedServerStatus }> => {
     try {
       const response = await fetch(`${server.url}/api/rooms`, { headers: { accept: "application/json" } });
       if (!response.ok) {
-        return [];
+        return {
+          rooms: [],
+          peer: { name: server.name, url: server.url, ok: false, roomCount: 0, error: `HTTP ${response.status}` }
+        };
       }
       const body: unknown = await response.json();
       const rooms = isRecord(body) && Array.isArray(body.rooms) ? body.rooms : [];
-      return rooms.flatMap((room) => {
+      const summaries = rooms.flatMap((room) => {
         const summary = remoteRoomSummary(server, room);
         return summary ? [summary] : [];
       });
+      return {
+        rooms: summaries,
+        peer: { name: server.name, url: server.url, ok: true, roomCount: summaries.length }
+      };
     } catch {
-      return [];
+      return {
+        rooms: [],
+        peer: { name: server.name, url: server.url, ok: false, roomCount: 0, error: "連線失敗" }
+      };
     }
   }));
-  return [...localRooms, ...remoteRooms.flat()];
+  return {
+    rooms: [...localRooms, ...remoteResults.flatMap((result) => result.rooms)],
+    peers: remoteResults.map((result) => result.peer)
+  };
 }
 
 type RoomRow = {
@@ -1464,7 +1477,8 @@ export default {
     }
 
     if (request.method === "GET" && url.pathname === "/list") {
-      return html(renderFederatedList(await listFederatedRooms(env)));
+      const federatedList = await listFederatedRooms(env);
+      return html(renderFederatedList(federatedList.rooms, federatedList.peers));
     }
 
     if (request.method === "GET" && url.pathname === "/logs") {

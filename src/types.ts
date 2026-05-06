@@ -17,6 +17,14 @@ export interface FederatedRoomSummary extends RoomSummary {
   local: boolean;
 }
 
+export interface FederatedServerStatus {
+  name: string;
+  url: string;
+  ok: boolean;
+  roomCount: number;
+  error?: string;
+}
+
 export interface RoomOptions {
   poison: boolean;
   bigWolf: boolean;
