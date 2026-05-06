@@ -1,4 +1,4 @@
-import type { GameRecordSummary, LeaderboardEntry, PlayerRole, RoomEventSummary, RoomSummary } from "./types";
+import type { BbsTopicSummary, GameRecordSummary, LeaderboardEntry, PlayerRole, RoomEventSummary, RoomSummary } from "./types";
 import { escapeHtml } from "./validation";
 
 function page(title: string, body: string): string {
@@ -138,6 +138,7 @@ function shell(body: string): string {
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/leaderboard">戰績排行榜</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/icons">頭像一覽</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/trips">Trip查詢</a></td></tr>
+            <tr><td><small><font color="#666666">・</font></small></td><td><a href="/bbs">人狼討論</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/status">伺服器狀態</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/rules">規則</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/protocol">通訊協定</a></td></tr>
@@ -1080,6 +1081,74 @@ export function renderTripLookup(): string {
           tripRows.innerHTML = '<tr><td class="muted">查詢失敗。</td></tr>';
           tripStatus.textContent = error instanceof Error ? error.message : "查詢失敗";
         }
+      });
+    </script>
+  `));
+}
+
+export function renderBbs(topics: BbsTopicSummary[]): string {
+  const topicRows = topics.length
+    ? topics.map((topic) => {
+      const title = `${topic.pinned ? "[置頂] " : ""}${topic.locked ? "[鎖定] " : ""}${topic.title}${topic.digest ? " (精華)" : ""}`;
+      return `<tr>
+        <td align="center"><a href="/bbs?view=${escapeHtml(String(topic.id))}">${escapeHtml(String(topic.id))}</a></td>
+        <td><a href="/bbs?view=${escapeHtml(String(topic.id))}">${escapeHtml(title)}</a></td>
+        <td>${escapeHtml(topic.name)}${topic.trip ? "◆Trip" : ""}</td>
+        <td align="center">${escapeHtml(String(topic.replyCount))}</td>
+        <td>${escapeHtml(topic.updatedAt)}</td>
+      </tr>`;
+    }).join("")
+    : `<tr><td colspan="5" class="muted">尚無主題。</td></tr>`;
+
+  return page("BBS", shell(`
+    <p><a href="#bbsPostForm">發表主題</a> <a href="/bbs">全部主題</a></p>
+    <fieldset>
+      <legend><strong>主題列表</strong></legend>
+      <div style="line-height:135%;margin:20px 20px 30px;">
+        <strong>
+          <table class="form-table" style="width:100%">
+            <thead><tr><td><strong>No.</strong></td><td><strong>標題</strong></td><td><strong>作者</strong></td><td><strong>回覆</strong></td><td><strong>更新</strong></td></tr></thead>
+            <tbody>${topicRows}</tbody>
+          </table>
+        </strong>
+      </div>
+    </fieldset>
+    <fieldset id="bbsPostForm">
+      <legend><strong>發表主題</strong></legend>
+      <table class="form-table">
+        <tr><td><label><strong>　名稱：</strong></label></td><td><input id="bbsName" maxlength="32" size="24"></td></tr>
+        <tr><td><label><strong>　Trip：</strong></label></td><td><input id="bbsTrip" maxlength="32" size="24"></td></tr>
+        <tr><td><label><strong>　標題：</strong></label></td><td><input id="bbsTitle" maxlength="50" size="48"></td></tr>
+        <tr><td><label><strong>　內容：</strong></label></td><td><textarea id="bbsMessage" rows="5" cols="64"></textarea></td></tr>
+        <tr><td></td><td><button id="bbsPostButton">發表主題</button> <span id="bbsPostStatus" class="muted"></span></td></tr>
+      </table>
+    </fieldset>
+    <script>
+      document.querySelector("#bbsName").value = localStorage.getItem("werewolf_cf_nickname") || "";
+      document.querySelector("#bbsTrip").value = localStorage.getItem("werewolf_cf_trip") || "";
+      document.querySelector("#bbsPostButton").addEventListener("click", async () => {
+        const status = document.querySelector("#bbsPostStatus");
+        const name = document.querySelector("#bbsName").value;
+        const trip = document.querySelector("#bbsTrip").value;
+        localStorage.setItem("werewolf_cf_nickname", name);
+        localStorage.setItem("werewolf_cf_trip", trip);
+        status.textContent = "送出中";
+        const res = await fetch("/api/bbs/topics", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            name,
+            trip,
+            title: document.querySelector("#bbsTitle").value,
+            message: document.querySelector("#bbsMessage").value
+          })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          status.textContent = data.error || "發表失敗";
+          return;
+        }
+        location.href = "/bbs";
       });
     </script>
   `));

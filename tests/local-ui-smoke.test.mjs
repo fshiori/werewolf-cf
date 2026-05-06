@@ -22,6 +22,9 @@ function responseFor(path, method = "GET") {
   if (path === "/trips" && method === "GET") {
     return { contentType: "text/html", body: "<!doctype html><title>Trip查詢 Trip公開資料</title>" };
   }
+  if (path === "/bbs" && method === "GET") {
+    return { contentType: "text/html", body: "<!doctype html><title>主題列表 發表主題</title>" };
+  }
   if (path === "/status" && method === "GET") {
     return { contentType: "text/html", body: "<!doctype html><title>伺服器狀態 Binding 檢查</title>" };
   }

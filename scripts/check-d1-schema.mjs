@@ -10,7 +10,8 @@ const requiredTables = [
   "game_records",
   "room_events",
   "registered_trips",
-  "excluded_trips"
+  "excluded_trips",
+  "bbs_topics"
 ];
 
 const requiredColumns = {
@@ -20,7 +21,8 @@ const requiredColumns = {
   game_records: ["id", "room_id", "result_json", "created_at"],
   room_events: ["id", "room_id", "player_id", "event_type", "payload_json", "created_at"],
   registered_trips: ["trip_hash", "created_at"],
-  excluded_trips: ["trip_hash", "reason", "created_at"]
+  excluded_trips: ["trip_hash", "reason", "created_at"],
+  bbs_topics: ["id", "name", "title", "message", "trip_hash", "reply_count", "pinned", "locked", "digest", "created_at", "updated_at"]
 };
 
 const args = process.argv.slice(2);

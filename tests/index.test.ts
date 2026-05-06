@@ -29,6 +29,20 @@ type MockRoomEvent = {
   created_at: string;
 };
 
+type MockBbsTopic = {
+  id: number;
+  name: string;
+  title: string;
+  message: string;
+  trip_hash: string | null;
+  reply_count: number;
+  pinned: number;
+  locked: number;
+  digest: number;
+  created_at: string;
+  updated_at: string;
+};
+
 function envWithRooms(
   roomIds: string[],
   config: Record<string, string> = {},
@@ -43,7 +57,8 @@ function envWithRooms(
   roomDummyLastWords: Record<string, string> = {},
   registeredTripHashes: Set<string> = new Set(),
   excludedTripHashes: Set<string> = new Set(),
-  playerRegisteredTripHashes: Record<string, string> = {}
+  playerRegisteredTripHashes: Record<string, string> = {},
+  bbsTopics: MockBbsTopic[] = []
 ): Env {
   const assets = new Map<string, StoredAsset>();
   const batches: Array<Array<{ query: string; values: unknown[] }>> = [];
@@ -134,6 +149,9 @@ function envWithRooms(
                 if (query.includes("FROM room_events")) {
                   return { results: events[String(values[0])] ?? [] };
                 }
+                if (query.includes("FROM bbs_topics")) {
+                  return { results: bbsTopics };
+                }
                 return { results: [] };
               },
               async run() {
@@ -143,6 +161,9 @@ function envWithRooms(
             };
           },
           async all() {
+            if (query.includes("FROM bbs_topics")) {
+              return { results: bbsTopics };
+            }
             if (query.includes("FROM player_stats")) {
               if (query.includes("GROUP BY COALESCE")) {
                 const grouped = new Map<string, { player_id: string; games_played: number; wins: number; losses: number }>();
@@ -818,6 +839,92 @@ describe("worker routes", () => {
     expect(body).toContain("list村");
     expect(body).toContain("Friendly");
     expect(body).toContain("人數22");
+  });
+
+  it("renders BBS topic list page", async () => {
+    const response = await worker.fetch(
+      new Request("http://example.test/bbs"),
+      envWithRooms([], {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, new Set(), new Set(), {}, [
+        {
+          id: 1,
+          name: "Alice",
+          title: "Welcome",
+          message: "Hello",
+          trip_hash: "trip_hash",
+          reply_count: 2,
+          pinned: 1,
+          locked: 0,
+          digest: 1,
+          created_at: "2026-05-06 12:00:00",
+          updated_at: "2026-05-06 12:30:00"
+        }
+      ])
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.text();
+    expect(body).toContain("主題列表");
+    expect(body).toContain("[置頂] Welcome (精華)");
+    expect(body).toContain("Alice◆Trip");
+  });
+
+  it("returns BBS topics", async () => {
+    const response = await worker.fetch(
+      new Request("http://example.test/api/bbs/topics"),
+      envWithRooms([], {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, new Set(), new Set(), {}, [
+        {
+          id: 1,
+          name: "Alice",
+          title: "Welcome",
+          message: "Hello",
+          trip_hash: null,
+          reply_count: 0,
+          pinned: 0,
+          locked: 0,
+          digest: 0,
+          created_at: "2026-05-06 12:00:00",
+          updated_at: "2026-05-06 12:00:00"
+        }
+      ])
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      topics: [
+        {
+          id: 1,
+          name: "Alice",
+          title: "Welcome",
+          message: "Hello",
+          trip: false,
+          replyCount: 0,
+          pinned: false,
+          locked: false,
+          digest: false,
+          createdAt: "2026-05-06 12:00:00",
+          updatedAt: "2026-05-06 12:00:00"
+        }
+      ]
+    });
+  });
+
+  it("creates BBS topics", async () => {
+    const env = envWithRooms([]);
+    const response = await worker.fetch(
+      new Request("http://example.test/api/bbs/topics", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ name: "Alice", title: "Welcome", message: "Hello", trip: "ab12CD" })
+      }),
+      env
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ posted: true });
+    const runs = (env as unknown as { runs: Array<{ query: string; values: unknown[] }> }).runs;
+    expect(runs[0].query).toContain("INSERT INTO bbs_topics");
+    expect(runs[0].values.slice(0, 3)).toEqual(["Alice", "Welcome", "Hello"]);
+    expect(typeof runs[0].values[3]).toBe("string");
   });
 
   it("renders default icon catalog page", async () => {

@@ -77,6 +77,7 @@ try {
   await expectHtml("/leaderboard", ["戰績排行榜"]);
   await expectHtml("/icons", ["頭像一覽", "/assets/reference/user_icon/001.gif"]);
   await expectHtml("/trips", ["Trip查詢", "Trip公開資料"]);
+  await expectHtml("/bbs", ["主題列表", "發表主題"]);
   await expectHtml("/status", ["伺服器狀態", "Binding 檢查"]);
   await expectHtml("/assets/room-client.js", ["new WebSocket", "data-room-id"]);
 
