@@ -46,7 +46,7 @@ Reference files inspected:
 | Room page client script not inline | `/assets/room-client.js`, `src/room-client.ts`, local UI smoke | Implemented |
 | Reference top/menu visual style | Table layout, side menu, fieldsets, colors, and reference top title/background asset URLs in `src/render.ts` | Partial |
 | Reference room player grid visual style | `renderRoom`, `.player-card`, `.player-icon`, role/death/vote styling; client emits reference role icons and colored role text for revealed roles plus grave fallback for dead players | Partial |
-| Reference chat/log/death/vote sections | Room page has chat/game log/records/events; public and private channel/action events, including objection notifications and player leave events, persist to `room_events`; private transcript entries are hidden from `/events` and `/log` until the room status is ended | Partial |
+| Reference chat/log/death/vote sections | Room page has chat/game log/records/events, a live public last-words panel, and public/private channel/action events, including objection notifications and player leave events, persist to `room_events`; private transcript entries are hidden from `/events` and `/log` until the room status is ended | Partial |
 | Reference icons and bitmap assets | R2 upload exists; `docs/reference-asset-inventory.md` classifies 130 reference assets; `/assets/reference/:path` serves vetted copied R2 assets; top chrome, home room-list status/options, rules role rows, live revealed role markers, and game-record victory rows emit reference image URLs with text fallback | Partial |
 | Browser E2E/manual visual verification | Local HTTP UI smoke plus `docs/visual-parity-checklist.md` capture plan; no installed browser detected | Partial |
 | Screenshot/visual parity against ref | `docs/visual-parity-checklist.md` defines the capture matrix and evidence paths; no screenshot baseline has been generated | Missing |
@@ -63,7 +63,7 @@ Reference files inspected:
 
 - Top page uses a reference-like table shell, side menu, fieldsets, room list, announcement, and create-room form.
 - Room creation covers max users, comments, real-time timing, wish role, Trip-required, GM, dummy boy, last words, open vote, common voice, dead role visibility, self-vote, vote-status, and major optional roles; the room join selector and assignment path now support enabled optional-role wishes with PHP-style randomized conflict ordering. `docs/reference-wish-role-extraction.md` records the implemented ordering behavior and the intentional rejection of the PHP loose-comparison quirk.
-- Room page uses retro table panels for header, player list, actions/votes, chat, logs, records, and events.
+- Room page uses retro table panels for header, player list, actions/votes, public last words, chat, logs, records, and events.
 - Room page now loads client logic through `/assets/room-client.js` instead of embedding the whole WebSocket client in the HTML.
 - `/admin/rooms` now provides a KV-token-protected reference-style `廢村管理` list with active/ended/all filters, room comments, capacity, option context, log/event links, ended-room inspection, and D1-backed room-ending action for active rooms.
 

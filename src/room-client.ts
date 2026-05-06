@@ -506,6 +506,23 @@ function appendVoteObserverPanel(container, game, currentPlayer, currentPlayerDe
   });
   container.appendChild(table);
 }
+function renderLastWordsPanel(game) {
+  const lastWordsLog = document.querySelector("#lastWordsLog");
+  if (!lastWordsLog) return;
+  const entries = (game.log || []).filter((line) => line.includes(" 的遺言："));
+  lastWordsLog.innerHTML = "";
+  if (!entries.length) {
+    lastWordsLog.className = "muted";
+    lastWordsLog.textContent = "尚無公開遺言。";
+    return;
+  }
+  lastWordsLog.className = "";
+  entries.slice(-10).forEach((line) => {
+    const entry = document.createElement("div");
+    entry.textContent = line;
+    lastWordsLog.appendChild(entry);
+  });
+}
 function winnerLabel(value) {
   return {
     villagers: "村民",
@@ -674,6 +691,7 @@ function renderGame(game) {
     div.textContent = line;
     log.appendChild(div);
   });
+  renderLastWordsPanel(game);
 }
 
 })();
