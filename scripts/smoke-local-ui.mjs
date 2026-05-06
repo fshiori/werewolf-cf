@@ -75,6 +75,7 @@ try {
   await expectHtml("/", ["汝等是人是狼？", "建立村子", "戰績排行榜"], ["房間 JSON", "排行榜 JSON"]);
   await expectHtml("/leaderboard", ["戰績排行榜"]);
   await expectHtml("/icons", ["頭像一覽", "/assets/reference/user_icon/001.gif"]);
+  await expectHtml("/trips", ["Trip查詢", "Trip公開資料"]);
   await expectHtml("/status", ["伺服器狀態", "Binding 檢查"]);
   await expectHtml("/assets/room-client.js", ["new WebSocket", "data-room-id"]);
 
