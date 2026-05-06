@@ -74,6 +74,7 @@ const playerId = `player_ui_smoke_${Date.now()}_${Math.random().toString(36).sli
 try {
   await expectHtml("/", ["汝等是人是狼？", "建立村子", "戰績排行榜"], ["房間 JSON", "排行榜 JSON"]);
   await expectHtml("/list", ["聯合遊戲列表", "本伺服器"]);
+  await expectHtml("/logs", ["過去紀錄", "村No"]);
   await expectHtml("/leaderboard", ["戰績排行榜"]);
   await expectHtml("/stats", ["勝率分析", "統計場數"]);
   await expectHtml("/icons", ["頭像一覽", "/assets/reference/user_icon/001.gif"]);
