@@ -1,5 +1,6 @@
 import { renderHome, renderLeaderboard, renderPlayerProfile, renderProtocol, renderRoom, renderRoomEvents, renderRoomRecords, renderRules, renderStatus, renderVersion } from "./render";
 import { RoomDurableObject } from "./room";
+import { ROOM_CLIENT_SCRIPT } from "./room-client";
 import { DEFAULT_DAY_MINUTES, DEFAULT_NIGHT_MINUTES } from "./game";
 import { registeredTripHash, tripHashForRoom } from "./identity";
 import type { GamePlayer, GameRecordSummary, GameWinner, LeaderboardEntry, PlayerGameRecordSummary, PlayerStats, RoomEventSummary, RoomOptions, RoomSummary } from "./types";
@@ -26,6 +27,15 @@ function json(data: unknown, init: ResponseInit = {}): Response {
 
 function html(body: string): Response {
   return new Response(body, { headers: { "content-type": "text/html; charset=utf-8" } });
+}
+
+function javascript(body: string): Response {
+  return new Response(body, {
+    headers: {
+      "cache-control": "public, max-age=300",
+      "content-type": "text/javascript; charset=utf-8"
+    }
+  });
 }
 
 function generateRoomId(): string {
@@ -872,6 +882,10 @@ export default {
       } catch (error) {
         return json({ error: error instanceof Error ? error.message : "Status check failed" }, { status: 503 });
       }
+    }
+
+    if (request.method === "GET" && url.pathname === "/assets/room-client.js") {
+      return javascript(ROOM_CLIENT_SCRIPT);
     }
 
     const roomRecordsMatch = url.pathname.match(/^\/api\/rooms\/([^/]+)\/records$/);

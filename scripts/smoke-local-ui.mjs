@@ -75,6 +75,7 @@ try {
   await expectHtml("/", ["汝等是人是狼？", "建立村子", "戰績排行榜"], ["房間 JSON", "排行榜 JSON"]);
   await expectHtml("/leaderboard", ["戰績排行榜"]);
   await expectHtml("/status", ["伺服器狀態", "Binding 檢查"]);
+  await expectHtml("/assets/room-client.js", ["new WebSocket", "data-room-id"]);
 
   const createResult = await expectJson(
     "/api/rooms",
@@ -95,7 +96,7 @@ try {
   );
 
   const roomId = createResult.roomId;
-  await expectHtml(`/room/${roomId}`, [`[${roomId}]`, "進入房間", "玩家列表", "能力發動 / 投票", "對局紀錄", "事件履歷"], ["房間JSON", "對局JSON", "事件JSON"]);
+  await expectHtml(`/room/${roomId}`, [`[${roomId}]`, "進入房間", "玩家列表", "能力發動 / 投票", "對局紀錄", "事件履歷", "/assets/room-client.js"], ["房間JSON", "對局JSON", "事件JSON", "new WebSocket"]);
   await expectHtml(`/room/${roomId}/records`, ["村子對局紀錄", roomId]);
   await expectHtml(`/room/${roomId}/events`, ["村子事件履歷", roomId, "room_created"]);
 

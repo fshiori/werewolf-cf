@@ -16,11 +16,14 @@ function responseFor(path, method = "GET") {
   if (path === "/status" && method === "GET") {
     return { contentType: "text/html", body: "<!doctype html><title>伺服器狀態 Binding 檢查</title>" };
   }
+  if (path === "/assets/room-client.js" && method === "GET") {
+    return { contentType: "text/javascript", body: 'const roomShell = document.querySelector("[data-room-id]"); new WebSocket("ws://example.test");' };
+  }
   if (path === "/api/rooms" && method === "POST") {
     return { contentType: "application/json", body: JSON.stringify({ roomId: "room_ui_smoke" }) };
   }
   if (path === "/room/room_ui_smoke" && method === "GET") {
-    return { contentType: "text/html", body: "<!doctype html><title>[room_ui_smoke] 進入房間 玩家列表 能力發動 / 投票 對局紀錄 事件履歷</title>" };
+    return { contentType: "text/html", body: '<!doctype html><title>[room_ui_smoke] 進入房間 玩家列表 能力發動 / 投票 對局紀錄 事件履歷 /assets/room-client.js</title>' };
   }
   if (path === "/room/room_ui_smoke/records" && method === "GET") {
     return { contentType: "text/html", body: "<!doctype html><title>村子對局紀錄 room_ui_smoke</title>" };
@@ -88,7 +91,7 @@ describe("local UI smoke script", () => {
     const host = await startServer({
       "GET /room/room_ui_smoke": {
         contentType: "text/html",
-        body: "<!doctype html><title>[room_ui_smoke] 進入房間 玩家列表 能力發動 / 投票 對局紀錄 事件履歷 房間JSON</title>"
+        body: '<!doctype html><title>[room_ui_smoke] 進入房間 玩家列表 能力發動 / 投票 對局紀錄 事件履歷 /assets/room-client.js 房間JSON</title>'
       }
     });
     const result = await runScript([host]);
