@@ -2157,7 +2157,8 @@ export function renderBbs(topics: BbsTopicSummary[], options: { digestOnly?: boo
           status.textContent = data.error || "發表失敗";
           return;
         }
-        location.href = "/bbs";
+        const topicId = Number(data.topicId);
+        location.href = Number.isInteger(topicId) && topicId > 0 ? "/bbs/" + encodeURIComponent(String(topicId)) : "/bbs";
       });
     </script>
   `));

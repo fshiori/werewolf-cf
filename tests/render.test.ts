@@ -726,6 +726,7 @@ describe("render", () => {
     expect(html).toContain("Alice◆Trip");
     expect(html).toContain("/api/bbs/topics");
     expect(html).toContain("bbsPostButton");
+    expect(html).toContain('"/bbs/" + encodeURIComponent(String(topicId))');
   });
 
   it("renders BBS digest list as a normal HTML page", () => {

@@ -983,10 +983,11 @@ async function createBbsTopic(request: Request, env: Env): Promise<Response> {
     const message = validateBbsMessage(body.message);
     const trip = typeof body.trip === "string" && body.trip.trim() ? validateTrip(body.trip) : undefined;
     const tripHash = trip ? await registeredTripHash(trip) : null;
-    await env.DB.prepare("INSERT INTO bbs_topics (name, title, message, trip_hash) VALUES (?, ?, ?, ?)")
+    const result = await env.DB.prepare("INSERT INTO bbs_topics (name, title, message, trip_hash) VALUES (?, ?, ?, ?)")
       .bind(name, title, message, tripHash)
       .run();
-    return json({ posted: true });
+    const topicId = typeof result.meta?.last_row_id === "number" && result.meta.last_row_id > 0 ? result.meta.last_row_id : undefined;
+    return json(topicId ? { posted: true, topicId } : { posted: true });
   } catch (error) {
     return json({ error: error instanceof Error ? error.message : "Failed to create BBS topic" }, { status: 400 });
   }

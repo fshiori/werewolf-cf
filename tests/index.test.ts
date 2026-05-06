@@ -172,6 +172,9 @@ function envWithRooms(
               },
               async run() {
                 runs.push({ query, values });
+                if (query.includes("INSERT INTO bbs_topics")) {
+                  return { meta: { last_row_id: bbsTopics.length + 1 } };
+                }
                 return {};
               }
             };
@@ -1543,7 +1546,7 @@ describe("worker routes", () => {
     );
 
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ posted: true });
+    expect(await response.json()).toEqual({ posted: true, topicId: 1 });
     const runs = (env as unknown as { runs: Array<{ query: string; values: unknown[] }> }).runs;
     expect(runs[0].query).toContain("INSERT INTO bbs_topics");
     expect(runs[0].values.slice(0, 3)).toEqual(["Alice", "Welcome", "Hello"]);
