@@ -189,12 +189,34 @@ function winnerLabel(value: unknown): string {
   return "未定";
 }
 
+function winnerIconPath(value: unknown): string {
+  if (value === "villagers") {
+    return "img/victory_role_human.gif";
+  }
+  if (value === "werewolves") {
+    return "img/victory_role_wolf.gif";
+  }
+  if (value === "foxes") {
+    return "img/victory_role_fox.gif";
+  }
+  if (value === "lovers") {
+    return "img/victory_role_lovers.gif";
+  }
+  return "img/victory_role_draw.gif";
+}
+
 function formatGameRecord(record: GameRecordSummary): string {
   const result = recordValue(record.result);
   const winner = winnerLabel(result.winner);
   const day = typeof result.day === "number" ? String(result.day) : "?";
   const players = Array.isArray(result.players) ? result.players.length : 0;
   return `${record.createdAt}　${winner}勝利　第 ${day} 日　${players} 人`;
+}
+
+function formatGameRecordHtml(record: GameRecordSummary): string {
+  const result = recordValue(record.result);
+  const winner = winnerLabel(result.winner);
+  return `${referenceAssetImg(winnerIconPath(result.winner), `${winner}勝利`)}${escapeHtml(formatGameRecord(record))}`;
 }
 
 function formatEventPayload(payload: unknown): string {
@@ -282,7 +304,7 @@ export function renderRoomRecords(roomId: string, records: GameRecordSummary[]):
   const rows = records.length
     ? records.map((record) => `<tr>
         <td>${escapeHtml(record.createdAt)}</td>
-        <td>${escapeHtml(formatGameRecord(record))}</td>
+        <td>${formatGameRecordHtml(record)}</td>
       </tr>`).join("")
     : `<tr><td colspan="2" class="muted">尚無對局紀錄。</td></tr>`;
 
@@ -338,7 +360,7 @@ export function renderRoomTranscript(roomId: string, records: GameRecordSummary[
 
       return `<tr>
         <td colspan="4">
-          <strong>${escapeHtml(formatGameRecord(record))}</strong>
+          <strong>${formatGameRecordHtml(record)}</strong>
           <table class="form-table" style="margin:6px 0 12px 18px;">
             <thead><tr><td><strong>玩家</strong></td><td><strong>職業</strong></td><td><strong>結局</strong></td></tr></thead>
             <tbody>${playerRows}</tbody>
