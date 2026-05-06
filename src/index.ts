@@ -1,4 +1,4 @@
-import { renderHome, renderIconCatalog, renderLeaderboard, renderPlayerProfile, renderProtocol, renderRoom, renderRoomEvents, renderRoomRecords, renderRoomTranscript, renderRules, renderStatus, renderVersion } from "./render";
+import { renderHome, renderIconCatalog, renderLeaderboard, renderPlayerProfile, renderProtocol, renderRoom, renderRoomEvents, renderRoomRecords, renderRoomTranscript, renderRules, renderStatus, renderTripLookup, renderVersion } from "./render";
 import { RoomDurableObject } from "./room";
 import { ROOM_CLIENT_SCRIPT } from "./room-client";
 import { DEFAULT_DAY_MINUTES, DEFAULT_NIGHT_MINUTES } from "./game";
@@ -548,6 +548,48 @@ async function claimTrip(request: Request, env: Env): Promise<Response> {
   }
 }
 
+async function getTripLookup(request: Request, env: Env): Promise<Response> {
+  try {
+    const url = new URL(request.url);
+    const tripValue = url.searchParams.get("trip");
+    if (!tripValue) {
+      return json({ error: "Trip is required" }, { status: 400 });
+    }
+    const trip = validateTrip(tripValue);
+    const tripHash = await registeredTripHash(trip);
+    const [registered, excluded, players, stats] = await Promise.all([
+      env.DB.prepare("SELECT trip_hash FROM registered_trips WHERE trip_hash = ? LIMIT 1")
+        .bind(tripHash)
+        .first<{ trip_hash: string }>(),
+      env.DB.prepare("SELECT trip_hash FROM excluded_trips WHERE trip_hash = ? LIMIT 1")
+        .bind(tripHash)
+        .first<{ trip_hash: string }>(),
+      env.DB.prepare("SELECT id FROM players WHERE registered_trip_hash = ? ORDER BY id LIMIT 50")
+        .bind(tripHash)
+        .all<{ id: string }>(),
+      env.DB.prepare(
+        "SELECT COALESCE(SUM(ps.games_played), 0) AS games_played, COALESCE(SUM(ps.wins), 0) AS wins, COALESCE(SUM(ps.losses), 0) AS losses FROM player_stats ps INNER JOIN players p ON p.id = ps.player_id WHERE p.registered_trip_hash = ?"
+      )
+        .bind(tripHash)
+        .first<{ games_played: number; wins: number; losses: number }>()
+    ]);
+    return json({
+      trip: {
+        registered: Boolean(registered),
+        excluded: Boolean(excluded),
+        players: players.results.map((player) => player.id),
+        stats: {
+          gamesPlayed: stats?.games_played ?? 0,
+          wins: stats?.wins ?? 0,
+          losses: stats?.losses ?? 0
+        }
+      }
+    });
+  } catch (error) {
+    return json({ error: error instanceof Error ? error.message : "Invalid Trip" }, { status: 400 });
+  }
+}
+
 async function getPlayerStats(env: Env, playerIdParam: string): Promise<Response> {
   try {
     const playerId = validatePlayerId(playerIdParam);
@@ -927,6 +969,10 @@ export default {
       return html(renderLeaderboard(await listLeaderboard(env)));
     }
 
+    if (request.method === "GET" && url.pathname === "/trips") {
+      return html(renderTripLookup());
+    }
+
     if (request.method === "GET" && url.pathname === "/icons") {
       return html(renderIconCatalog());
     }
@@ -1038,6 +1084,10 @@ export default {
 
     if (request.method === "POST" && url.pathname === "/api/trips") {
       return registerTrip(request, env);
+    }
+
+    if (request.method === "GET" && url.pathname === "/api/trips/lookup") {
+      return getTripLookup(request, env);
     }
 
     if (request.method === "POST" && url.pathname === "/api/trips/claim") {

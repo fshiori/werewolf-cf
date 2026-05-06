@@ -136,6 +136,7 @@ function shell(body: string): string {
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/">首頁</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/leaderboard">戰績排行榜</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/icons">頭像一覽</a></td></tr>
+            <tr><td><small><font color="#666666">・</font></small></td><td><a href="/trips">Trip查詢</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/status">伺服器狀態</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/rules">規則</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/protocol">通訊協定</a></td></tr>
@@ -983,6 +984,60 @@ export function renderPlayerProfile(playerId: string): string {
         }
       }
       void refreshProfile();
+    </script>
+  `));
+}
+
+export function renderTripLookup(): string {
+  return page("Trip Lookup", shell(`
+    <fieldset>
+      <legend><strong>Trip查詢</strong></legend>
+      <table class="form-table">
+        <tr>
+          <td><label><strong>　Trip：</strong></label></td>
+          <td><input id="tripLookup" maxlength="32" size="28"> <button id="tripLookupButton">查詢</button> <span id="tripLookupStatus" class="muted"></span></td>
+        </tr>
+      </table>
+    </fieldset>
+    <fieldset>
+      <legend><strong>Trip公開資料</strong></legend>
+      <table class="form-table" style="margin:12px 20px 18px;">
+        <tbody id="tripLookupRows"><tr><td class="muted">尚未查詢。</td></tr></tbody>
+      </table>
+    </fieldset>
+    <script>
+      const tripInput = document.querySelector("#tripLookup");
+      const tripStatus = document.querySelector("#tripLookupStatus");
+      const tripRows = document.querySelector("#tripLookupRows");
+      function escapeClientHtml(value) {
+        return String(value).replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
+      }
+      tripInput.value = localStorage.getItem("werewolf_cf_trip") || "";
+      document.querySelector("#tripLookupButton").addEventListener("click", async () => {
+        const trip = tripInput.value;
+        localStorage.setItem("werewolf_cf_trip", trip);
+        tripStatus.textContent = "查詢中";
+        tripRows.innerHTML = '<tr><td class="muted">讀取中...</td></tr>';
+        try {
+          const res = await fetch("/api/trips/lookup?trip=" + encodeURIComponent(trip));
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || "lookup failed");
+          const value = data.trip;
+          const players = value.players.length
+            ? value.players.map((playerId) => '<a href="/player/' + encodeURIComponent(playerId) + '">' + escapeClientHtml(playerId) + '</a>').join("　")
+            : '<span class="muted">尚無認領玩家。</span>';
+          tripRows.innerHTML = [
+            '<tr><td><strong>　登記：</strong></td><td>' + (value.registered ? "已登記" : "未登記") + '</td></tr>',
+            '<tr><td><strong>　排除：</strong></td><td>' + (value.excluded ? '<font color="#990000">已排除</font>' : "未排除") + '</td></tr>',
+            '<tr><td><strong>　玩家：</strong></td><td>' + players + '</td></tr>',
+            '<tr><td><strong>　戰績：</strong></td><td>勝 ' + value.stats.wins + '　敗 ' + value.stats.losses + '　場數 ' + value.stats.gamesPlayed + '</td></tr>'
+          ].join("");
+          tripStatus.textContent = "完成";
+        } catch (error) {
+          tripRows.innerHTML = '<tr><td class="muted">查詢失敗。</td></tr>';
+          tripStatus.textContent = error instanceof Error ? error.message : "查詢失敗";
+        }
+      });
     </script>
   `));
 }

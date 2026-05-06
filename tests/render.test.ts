@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { renderHome, renderIconCatalog, renderLeaderboard, renderPlayerProfile, renderProtocol, renderRoom, renderRoomEvents, renderRoomRecords, renderRoomTranscript, renderRules, renderStatus, renderVersion } from "../src/render";
+import { renderHome, renderIconCatalog, renderLeaderboard, renderPlayerProfile, renderProtocol, renderRoom, renderRoomEvents, renderRoomRecords, renderRoomTranscript, renderRules, renderStatus, renderTripLookup, renderVersion } from "../src/render";
 import { ROOM_CLIENT_SCRIPT } from "../src/room-client";
 
 describe("render", () => {
@@ -78,6 +78,8 @@ describe("render", () => {
     expect(html).toContain("戰績排行榜");
     expect(html).toContain("/icons");
     expect(html).toContain("頭像一覽");
+    expect(html).toContain("/trips");
+    expect(html).toContain("Trip查詢");
     expect(html).toContain("/status");
     expect(html).toContain("伺服器狀態");
     expect(html).toContain("/rules");
@@ -327,6 +329,18 @@ describe("render", () => {
     expect(html).toContain("/api/players/\" + playerId + \"/records");
     expect(html).toContain("最近參戰紀錄");
     expect(html).toContain("function roleLabel(value)");
+  });
+
+  it("renders Trip lookup page", () => {
+    const html = renderTripLookup();
+
+    expect(html).toContain("Trip查詢");
+    expect(html).toContain("Trip公開資料");
+    expect(html).toContain("tripLookupButton");
+    expect(html).toContain("/api/trips/lookup?trip=");
+    expect(html).toContain("werewolf_cf_trip");
+    expect(html).toContain("escapeClientHtml");
+    expect(html).toContain("encodeURIComponent(playerId)");
   });
 
   it("renders leaderboard as a normal HTML page", () => {
