@@ -53,7 +53,7 @@ function responseFor(path, method = "GET") {
     return { contentType: "application/json", body: JSON.stringify({ roomId: "room_ui_smoke" }) };
   }
   if (path === "/room/room_ui_smoke" && method === "GET") {
-    return { contentType: "text/html", body: '<!doctype html><title>[room_ui_smoke] 進入房間 玩家列表 能力發動 / 投票 對局紀錄 事件履歷 完整紀錄 /assets/room-client.js</title>' };
+    return { contentType: "text/html", body: '<!doctype html><title>[room_ui_smoke] 進入房間 玩家列表 能力發動 / 投票 對局紀錄 事件履歷 完整紀錄 /assets/room-client.js 旁觀視點 只觀看公開資訊 靈界視點 死亡後視點入口</title>' };
   }
   if (path === "/room/room_ui_smoke/records" && method === "GET") {
     return { contentType: "text/html", body: "<!doctype html><title>村子對局紀錄 room_ui_smoke</title>" };
