@@ -1033,6 +1033,20 @@ describe("render", () => {
     expect(html.indexOf("second")).toBeLessThan(html.indexOf("first"));
   });
 
+  it("preserves transcript viewer parameters across old-log display links", () => {
+    const html = renderRoomTranscript("room_abc", [], [], {
+      viewerMode: "player",
+      viewerPlayerId: "player_wolf",
+      heavenTalk: true,
+      reverseLog: true
+    });
+
+    expect(html).toContain("/room/room_abc/log?viewer=player&amp;viewer_player_id=player_wolf");
+    expect(html).toContain("/room/room_abc/log?viewer=player&amp;viewer_player_id=player_wolf&amp;reverse_log=on&amp;heaven_talk=on");
+    expect(html).toContain("/room/room_abc/log?reverse_log=on&amp;heaven_talk=on&amp;viewer=public");
+    expect(html).toContain("/room/room_abc/log?reverse_log=on&amp;heaven_talk=on&amp;viewer=gm");
+  });
+
   it("renders implemented rules page", () => {
     const html = renderRules();
 
