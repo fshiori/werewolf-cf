@@ -729,6 +729,32 @@ function playerRecordLabel(player: Record<string, unknown>): string {
   return nickname ? `${nickname} (${playerId})` : playerId;
 }
 
+function transcriptPlayerCandidates(records: GameRecordSummary[], events: RoomEventSummary[]): Array<{ playerId: string; label: string }> {
+  const players = new Map<string, string>();
+  for (const record of records) {
+    for (const player of readRecordPlayers(record)) {
+      const playerId = typeof player.playerId === "string" ? player.playerId : "";
+      if (!playerId || players.has(playerId)) {
+        continue;
+      }
+      players.set(playerId, playerRecordLabel(player));
+    }
+  }
+  for (const event of events) {
+    if (!event.playerId || players.has(event.playerId)) {
+      continue;
+    }
+    const value = recordValue(event.payload);
+    const nickname = typeof value.nickname === "string" && value.nickname ? value.nickname : "";
+    players.set(event.playerId, nickname ? `${nickname} (${event.playerId})` : event.playerId);
+  }
+  return [...players].map(([playerId, label]) => ({ playerId, label }));
+}
+
+function hiddenTranscriptInput(name: string, value: string | undefined): string {
+  return value ? `<input type="hidden" name="${escapeHtml(name)}" value="${escapeHtml(value)}">` : "";
+}
+
 export function renderLeaderboard(entries: LeaderboardEntry[]): string {
   const rows = entries.length
     ? entries.map((entry) => `<tr>
@@ -878,6 +904,13 @@ export function renderRoomTranscript(roomId: string, records: GameRecordSummary[
     ...(options.heavenTalk ? { heaven_talk: "on" } : {}),
     ...(options.heavenOnly ? { heaven_only: "on" } : {})
   };
+  const playerCandidates = transcriptPlayerCandidates(records, events);
+  const playerOptions = playerCandidates.length
+    ? playerCandidates.map((player) => `<option value="${escapeHtml(player.playerId)}"${player.playerId === options.viewerPlayerId ? " selected" : ""}>${escapeHtml(player.label)}</option>`).join("")
+    : `<option value="">玩家資料不足</option>`;
+  const playerLinks = playerCandidates.length
+    ? playerCandidates.map((player) => `<a href="${roomTranscriptHref(roomId, { ...displayParams, viewer: "player", viewer_player_id: player.playerId })}">${escapeHtml(player.label)}</a>`).join("　")
+    : `<span class="muted">尚無可選玩家。</span>`;
 
   return page(`Room ${roomId} Log`, shell(`
     <fieldset>
@@ -886,7 +919,18 @@ export function renderRoomTranscript(roomId: string, records: GameRecordSummary[
         <tr><td><strong>　村子：</strong></td><td><a href="/room/${escapeHtml(roomId)}">${escapeHtml(roomId)}</a></td></tr>
         <tr><td><strong>　索引：</strong></td><td><a href="/room/${escapeHtml(roomId)}/records">對局紀錄</a>　<a href="/room/${escapeHtml(roomId)}/events">事件履歷</a></td></tr>
         <tr><td><strong>　表示：</strong></td><td>${escapeHtml(modeLabel)}　<a href="${roomTranscriptHref(roomId, viewerParams)}">通常</a>　<a href="${roomTranscriptHref(roomId, { ...viewerParams, heaven_talk: "on" })}">靈</a>　<a href="${roomTranscriptHref(roomId, { ...viewerParams, heaven_only: "on" })}">逝</a>　<a href="${roomTranscriptHref(roomId, { ...viewerParams, reverse_log: "on" })}">逆</a>　<a href="${roomTranscriptHref(roomId, { ...viewerParams, reverse_log: "on", heaven_talk: "on" })}">逆&amp;靈</a>　<a href="${roomTranscriptHref(roomId, { ...viewerParams, reverse_log: "on", heaven_only: "on" })}">逆&amp;逝</a></td></tr>
-        <tr><td><strong>　視點：</strong></td><td>${escapeHtml(viewerLabel)}　<a href="${roomTranscriptHref(roomId, { ...displayParams, viewer: "public" })}">旁觀</a>　<a href="${roomTranscriptHref(roomId, { ...displayParams, viewer: "dead", heaven_talk: "on", heaven_only: undefined })}">靈界</a>　<a href="${roomTranscriptHref(roomId, { ...displayParams, viewer: "gm", heaven_talk: "on", heaven_only: undefined })}">GM</a>　<small class="muted">玩家視點需指定 <code>viewer=player&amp;viewer_player_id=player_id</code></small></td></tr>
+        <tr><td><strong>　視點：</strong></td><td>${escapeHtml(viewerLabel)}　<a href="${roomTranscriptHref(roomId, { ...displayParams, viewer: "public" })}">旁觀</a>　<a href="${roomTranscriptHref(roomId, { ...displayParams, viewer: "dead", heaven_talk: "on", heaven_only: undefined })}">靈界</a>　<a href="${roomTranscriptHref(roomId, { ...displayParams, viewer: "gm", heaven_talk: "on", heaven_only: undefined })}">GM</a></td></tr>
+        <tr><td><strong>　玩家視點：</strong></td><td>
+          <form method="get" action="/room/${escapeHtml(roomId)}/log" style="margin:0;">
+            <input type="hidden" name="viewer" value="player">
+            ${hiddenTranscriptInput("reverse_log", displayParams.reverse_log)}
+            ${hiddenTranscriptInput("heaven_talk", displayParams.heaven_talk)}
+            ${hiddenTranscriptInput("heaven_only", displayParams.heaven_only)}
+            <select name="viewer_player_id"${playerCandidates.length ? "" : " disabled"}>${playerOptions}</select>
+            <button type="submit"${playerCandidates.length ? "" : " disabled"}>表示</button>
+          </form>
+          <div style="margin-top:4px;">${playerLinks}</div>
+        </td></tr>
       </table>
     </fieldset>
     <fieldset>
