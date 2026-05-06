@@ -9,6 +9,7 @@ type SentMessage = {
   members?: Array<{ playerId: string; nickname: string; gm?: boolean }>;
   action?: string;
   targetPlayerId?: string;
+  targetNickname?: string;
   playerId?: string;
   votedPlayerIds?: string[];
   lobbyStartVotedPlayerIds?: string[];
@@ -2046,7 +2047,7 @@ describe("RoomDurableObject", () => {
 
     await sendRaw(room, hostSocket, JSON.stringify({ type: "kick_player", targetPlayerId: "player_target" }));
 
-    expect(targetMessages).toEqual([{ type: "error", message: "You were kicked from the room" }]);
+    expect(targetMessages).toContainEqual({ type: "error", message: "You were kicked from the room" });
     expect(targetCloses).toEqual([{ code: 1000, reason: "You were kicked from the room" }]);
     expect(hostMessages).toContainEqual(expect.objectContaining({ type: "action_ack", action: "kick_player", targetPlayerId: "player_target" }));
     expect(hostMessages).toContainEqual(
@@ -2067,6 +2068,131 @@ describe("RoomDurableObject", () => {
         ]
       })
     );
+  });
+
+  it("kicks lobby players when resident kick votes reach the reference threshold", async () => {
+    const game: GameState = {
+      roomId: "room_abc",
+      phase: "lobby",
+      day: 0,
+      hostId: "player_1",
+      players: [
+        { playerId: "player_1", nickname: "One", role: "villager", alive: true },
+        { playerId: "player_2", nickname: "Two", role: "villager", alive: true },
+        { playerId: "player_3", nickname: "Three", role: "villager", alive: true },
+        { playerId: "player_4", nickname: "Four", role: "villager", alive: true },
+        { playerId: "player_5", nickname: "Five", role: "villager", alive: true },
+        { playerId: "player_target", nickname: "Target", role: "villager", alive: true }
+      ],
+      votes: {},
+      openVote: false,
+      commonTalkVisible: false,
+      deadRoleVisible: false,
+      wishRole: false,
+      dummyBoy: false,
+      dayMs: 180_000,
+      nightMs: 90_000,
+      selfVote: false,
+      voteStatus: false,
+      revoteCount: 0,
+      nightKills: {},
+      divinations: {},
+      guards: {},
+      catRevives: {},
+      lastWords: {},
+      lobbyStartVotes: { player_1: true, player_target: true },
+      lobbyKickVotes: {},
+      log: []
+    };
+    const { room, stored, dbRuns } = observableRoomObject(game);
+    const voterMessages: SentMessage[][] = [];
+    const voterSockets: WebSocket[] = [];
+    const targetMessages: SentMessage[] = [];
+    const targetCloses: CloseEvent[] = [];
+    for (const [playerId, nickname] of [["player_1", "One"], ["player_2", "Two"], ["player_3", "Three"], ["player_4", "Four"], ["player_5", "Five"]] as Array<[string, string]>) {
+      const messages: SentMessage[] = [];
+      const socket = fakeSocket(messages);
+      voterMessages.push(messages);
+      voterSockets.push(socket);
+      connect(room, socket, playerId, nickname);
+    }
+    const targetSocket = fakeSocket(targetMessages, targetCloses);
+    connect(room, targetSocket, "player_target", "Target");
+
+    for (const socket of voterSockets) {
+      await sendRaw(room, socket, JSON.stringify({ type: "kick_vote", targetPlayerId: "player_target" }));
+    }
+
+    expect(voterMessages[0]).toContainEqual(expect.objectContaining({ type: "lobby_kick_vote", targetPlayerId: "player_target", votedPlayerIds: ["player_1"], required: 5, ready: false }));
+    for (const messages of voterMessages) {
+      expect(messages).toContainEqual(expect.objectContaining({ type: "lobby_kick_vote", targetPlayerId: "player_target", votedPlayerIds: ["player_1", "player_2", "player_3", "player_4", "player_5"], required: 5, ready: true }));
+      expect(messages).toContainEqual(expect.objectContaining({ type: "presence", members: expect.not.arrayContaining([expect.objectContaining({ playerId: "player_target" })]) }));
+      expect(messages).toContainEqual(expect.objectContaining({ type: "game_state", phase: "lobby" }));
+    }
+    expect(targetMessages).toContainEqual({ type: "error", message: "You were kicked from the room" });
+    expect(targetCloses).toEqual([{ code: 1000, reason: "You were kicked from the room" }]);
+    expect(stored.get("gameState")).toEqual(
+      expect.objectContaining({
+        players: expect.not.arrayContaining([expect.objectContaining({ playerId: "player_target" })]),
+        lobbyStartVotes: {},
+        lobbyKickVotes: {},
+        log: expect.arrayContaining(["Target 人間蒸發、被轉學了。", "＜投票重新開始 請盡速重新投票＞"])
+      })
+    );
+    expect(dbRuns).toContainEqual(
+      expect.objectContaining({
+        query: expect.stringContaining("INSERT INTO room_events"),
+        binds: ["room_abc", "player_5", "player_kicked", JSON.stringify({ targetPlayerId: "player_target", targetNickname: "Target", method: "vote", kickVotes: 5 })]
+      })
+    );
+  });
+
+  it("rejects invalid lobby kick vote websocket states", async () => {
+    const game: GameState = {
+      roomId: "room_abc",
+      phase: "lobby",
+      day: 0,
+      hostId: "player_host",
+      players: [
+        { playerId: "player_host", nickname: "Host", role: "villager", alive: true },
+        { playerId: "player_target", nickname: "Target", role: "villager", alive: true },
+        { playerId: "player_other", nickname: "Other", role: "villager", alive: true }
+      ],
+      votes: {},
+      openVote: false,
+      commonTalkVisible: false,
+      deadRoleVisible: false,
+      wishRole: false,
+      dummyBoy: false,
+      dayMs: 180_000,
+      nightMs: 90_000,
+      selfVote: false,
+      voteStatus: false,
+      revoteCount: 0,
+      nightKills: {},
+      divinations: {},
+      guards: {},
+      catRevives: {},
+      lastWords: {},
+      log: []
+    };
+    const cases = [
+      { game, playerId: "player_host", nickname: "Host", gm: false, targetPlayerId: "player_host", message: "Cannot kick vote yourself" },
+      { game, playerId: "player_host", nickname: "Host", gm: false, targetPlayerId: "player_missing", message: "Kick vote target not found" },
+      { game, playerId: "player_gm", nickname: "GM", gm: true, targetPlayerId: "player_target", message: "GM cannot cast resident kick votes" },
+      { game: { ...game, phase: "day" as const, day: 1 }, playerId: "player_host", nickname: "Host", gm: false, targetPlayerId: "player_target", message: "Kick votes are only available before the game starts" }
+    ];
+
+    for (const testCase of cases) {
+      const room = roomObject(testCase.game);
+      const messages: SentMessage[] = [];
+      const socket = fakeSocket(messages);
+      connect(room, socket, testCase.playerId, testCase.nickname, testCase.gm);
+
+      await sendRaw(room, socket, JSON.stringify({ type: "kick_vote", targetPlayerId: testCase.targetPlayerId }));
+
+      expect(messages).toEqual([{ type: "error", message: testCase.message }]);
+    }
   });
 
   it("lets lobby players leave through the websocket handler", async () => {

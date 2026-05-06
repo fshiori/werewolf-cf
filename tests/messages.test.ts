@@ -13,6 +13,7 @@ import {
   buildGmWhisperMessage,
   buildJoinedMessage,
   buildLastWordsAckMessage,
+  buildLobbyKickVoteMessage,
   buildLobbyStartVoteMessage,
   buildLoversChatMessage,
   buildMediumResultMessage,
@@ -181,6 +182,19 @@ describe("messages", () => {
       nickname: "&lt;Alice&gt;",
       votedPlayerIds: ["player_1"],
       required: 3,
+      ready: false
+    });
+  });
+
+  it("builds escaped lobby kick vote messages", () => {
+    expect(buildLobbyKickVoteMessage("player_1", "<Alice>", "player_2", "<Bob>", ["player_1"], 5, false)).toMatchObject({
+      type: "lobby_kick_vote",
+      playerId: "player_1",
+      nickname: "&lt;Alice&gt;",
+      targetPlayerId: "player_2",
+      targetNickname: "&lt;Bob&gt;",
+      votedPlayerIds: ["player_1"],
+      required: 5,
       ready: false
     });
   });

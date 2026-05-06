@@ -8,6 +8,7 @@ import {
   canUseLoversChannel,
   canUsePublicChat,
   canUseWerewolfChannel,
+  castLobbyKickVote,
   castLobbyStartVote,
   castCatRevive,
   castChildFoxDivination,
@@ -52,6 +53,7 @@ import {
   buildGmWhisperMessage,
   buildJoinedMessage,
   buildLastWordsAckMessage,
+  buildLobbyKickVoteMessage,
   buildLobbyStartVoteMessage,
   buildLoversChatMessage,
   buildMediumResultMessage,
@@ -409,13 +411,49 @@ export class RoomDurableObject {
         if (targetPlayerId === member.playerId) {
           throw new Error("Cannot kick yourself");
         }
-        const next = removeLobbyPlayer(loadedGame, targetPlayerId);
+        const next = { ...removeLobbyPlayer(loadedGame, targetPlayerId), lobbyStartVotes: {}, lobbyKickVotes: {} };
         await this.saveGameState(next);
         await this.persistRoomEvent(member.playerId, "player_kicked", { targetPlayerId });
         this.disconnectPlayer(targetPlayerId, "You were kicked from the room");
         this.send(socket, buildActionAckMessage("kick_player", targetPlayerId));
         this.broadcast(buildPresenceMessage(this.members()));
         await this.broadcastGameState(next);
+        return;
+      }
+
+      if (message.type === "kick_vote") {
+        if (member.gm) {
+          throw new Error("GM cannot cast resident kick votes");
+        }
+        const targetPlayerId = validatePlayerId(message.targetPlayerId);
+        const vote = castLobbyKickVote(await this.loadGameState(), member.playerId, targetPlayerId);
+        await this.persistRoomEvent(member.playerId, "lobby_kick_vote", {
+          nickname: member.nickname,
+          targetPlayerId,
+          targetNickname: vote.targetNickname,
+          votedPlayerIds: vote.votedPlayerIds,
+          required: vote.required,
+          ready: vote.ready
+        });
+        if (vote.ready) {
+          const kicked = removeLobbyPlayer(vote.state, targetPlayerId);
+          const next = {
+            ...kicked,
+            lobbyStartVotes: {},
+            lobbyKickVotes: {},
+            log: [...kicked.log, `${vote.targetNickname} 人間蒸發、被轉學了。`, "＜投票重新開始 請盡速重新投票＞"]
+          };
+          await this.saveGameState(next);
+          await this.persistRoomEvent(member.playerId, "player_kicked", { targetPlayerId, targetNickname: vote.targetNickname, method: "vote", kickVotes: vote.votedPlayerIds.length });
+          this.broadcast(buildLobbyKickVoteMessage(member.playerId, member.nickname, targetPlayerId, vote.targetNickname, vote.votedPlayerIds, vote.required, true));
+          this.disconnectPlayer(targetPlayerId, "You were kicked from the room");
+          this.broadcast(buildPresenceMessage(this.members()));
+          await this.broadcastGameState(next);
+          return;
+        }
+        await this.saveGameState(vote.state);
+        this.broadcast(buildLobbyKickVoteMessage(member.playerId, member.nickname, targetPlayerId, vote.targetNickname, vote.votedPlayerIds, vote.required, false));
+        await this.broadcastGameState(vote.state);
         return;
       }
 

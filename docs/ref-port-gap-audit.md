@@ -95,7 +95,7 @@ Reference files inspected:
 - Reference has "cult" images/options in assets and talk-role handling. Current `PlayerRole` and options do not include cult.
 - Reference has objection/sound/revote SWF paths and cookie-driven sound notifications. Current port implements the objection command, count limit, persisted/broadcast notification, and optional browser beep instead of legacy SWF playback; revote/daybreak sound parity is still not exact.
 - Reference has silence/sudden-death checks in `game_play.php` flow. Current DO state now applies non-realtime silence acceleration when conversation resumes after the silence threshold; the DO alarm emits the reference-style final 2-minute warning, then sudden-deaths timed-out day voters and required night actors, resets action maps, and starts another same-phase deadline.
-- Reference has resident exit/reset vote handling while waiting. Current lobby kick exists, players can voluntarily leave the lobby resident list with host reassignment, and unanimous resident start votes can auto-start the game; vote-based kick/reset semantics are not equivalent.
+- Reference has resident exit/reset vote handling while waiting. Current lobby kick exists, players can voluntarily leave the lobby resident list with host reassignment, unanimous resident start votes can auto-start the game, and 5 resident kick votes remove a target while resetting lobby votes; remaining reset semantics may still differ from PHP.
 - Reference has manual/auto refresh spectator view. Current app is realtime only.
 
 ## Next Concrete Work Items
