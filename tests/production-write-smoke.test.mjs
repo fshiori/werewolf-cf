@@ -183,6 +183,16 @@ describe("production write smoke script", () => {
     expect(result.stdout).toContain("Production write smoke passed");
   });
 
+  it("uses custom smoke labels without treating label arguments as the host", async () => {
+    const host = await startServer({ roomId: "room_smoke" });
+    const result = await runScript(["--label=Local", host, "--yes"]);
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("ok POST /api/rooms room_smoke");
+    expect(result.stdout).toContain("Local smoke passed");
+    expect(result.stdout).not.toContain("Production write smoke passed");
+  });
+
   it("fails when avatar remains readable after delete", async () => {
     const host = await startServer({
       "/api/assets/avatar": async (request) => {

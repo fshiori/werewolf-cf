@@ -1,8 +1,10 @@
 #!/usr/bin/env node
 
 const args = process.argv.slice(2);
+const labelArg = args.find((arg) => arg.startsWith("--label="));
+const smokeLabel = labelArg?.slice("--label=".length) || "Production write";
 const confirmed = args.includes("--yes") || process.env.WRITE_SMOKE_CONFIRM === "true";
-const host = args.find((arg) => arg !== "--yes") ?? process.env.WORKER_HOST;
+const host = args.find((arg) => arg !== "--yes" && !arg.startsWith("--label=")) ?? process.env.WORKER_HOST;
 
 if (!confirmed) {
   console.error("Write smoke creates temporary production data. Pass --yes or set WRITE_SMOKE_CONFIRM=true to continue.");
@@ -223,12 +225,12 @@ if (avatarUploaded) {
 }
 
 if (failures.length > 0) {
-  console.error("Production write smoke failed:");
+  console.error(`${smokeLabel} smoke failed:`);
   for (const failure of failures) {
     console.error(`- ${failure}`);
   }
   process.exit(1);
 }
 
-console.log("Production write smoke passed");
+console.log(`${smokeLabel} smoke passed`);
 process.exit(0);
