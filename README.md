@@ -44,9 +44,10 @@ Smoke check the local Worker:
 
 ```bash
 npm run smoke:local
+npm run smoke:local:write
 ```
 
-This checks the local Worker read-only endpoints and HTML pages at `http://127.0.0.1:8787`.
+The read-only smoke checks local Worker metadata and HTML pages at `http://127.0.0.1:8787`. The write smoke creates a temporary local room, verifies WebSocket join, and checks avatar upload/read/delete against the local R2 binding.
 
 Run production smoke checks after deployment:
 

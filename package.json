@@ -13,6 +13,7 @@
     "check:d1-schema:remote": "node scripts/check-d1-schema.mjs --remote",
     "check:deploy": "npm test && npm run typecheck && npm run check:whitespace && npm run check:wrangler -- --production",
     "smoke:local": "node scripts/smoke-production-readonly.mjs --label=Local http://127.0.0.1:8787",
+    "smoke:local:write": "node scripts/smoke-production-write.mjs --label=Local http://127.0.0.1:8787 --yes",
     "smoke:production": "node scripts/smoke-production-readonly.mjs",
     "smoke:production:write": "node scripts/smoke-production-write.mjs",
     "predeploy": "npm run check:deploy",
