@@ -1178,6 +1178,34 @@ describe("worker routes", () => {
       expect(body).toContain("Remote村");
       expect(body).toContain("遠端伺服器");
       expect(body).toContain("https://remote.example/room/remote_room");
+      expect(body).toContain("聯合伺服器狀態");
+      expect(body).toContain("服務中");
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
+  it("renders configured federated peer failures", async () => {
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = (async () => {
+      throw new Error("network down");
+    }) as typeof fetch;
+    try {
+      const response = await worker.fetch(
+        new Request("http://example.test/list"),
+        envWithRooms(
+          [],
+          { federated_servers: JSON.stringify([{ name: "故障伺服器", url: "https://broken.example/base" }]) }
+        )
+      );
+
+      expect(response.status).toBe(200);
+      const body = await response.text();
+      expect(body).toContain("聯合伺服器狀態");
+      expect(body).toContain("故障伺服器");
+      expect(body).toContain("https://broken.example");
+      expect(body).toContain("連線失敗");
+      expect(body).not.toContain("network down");
     } finally {
       globalThis.fetch = originalFetch;
     }

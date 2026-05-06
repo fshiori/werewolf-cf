@@ -557,49 +557,59 @@ describe("render", () => {
   });
 
   it("renders remote federated room links", () => {
-    const html = renderFederatedList([
-      {
-        id: "remote_room",
-        name: "Remote",
-        comment: "Away",
-        maxPlayers: 16,
-        status: "playing",
-        createdAt: "2026-05-06 12:00:00",
-        options: {
-          poison: false,
-          bigWolf: false,
-          authority: false,
-          decider: false,
-          lovers: false,
-          betrayer: false,
-          childFox: false,
-          twoFoxes: false,
-          cat: false,
-          lastWords: false,
-          openVote: false,
-          commonTalkVisible: false,
-          deadRoleVisible: false,
-          wishRole: false,
-          dummyBoy: false,
-          customDummy: false,
-          dummyName: "替身君",
-          dummyLastWords: "",
-          realTime: false,
-          dayMinutes: 3,
-          nightMinutes: 1.5,
-          selfVote: false,
-          voteStatus: false
-        },
-        serverName: "遠端伺服器",
-        serverUrl: "https://remote.example",
-        roomUrl: "https://remote.example/room/remote_room",
-        local: false
-      }
-    ]);
+    const html = renderFederatedList(
+      [
+        {
+          id: "remote_room",
+          name: "Remote",
+          comment: "Away",
+          maxPlayers: 16,
+          status: "playing",
+          createdAt: "2026-05-06 12:00:00",
+          options: {
+            poison: false,
+            bigWolf: false,
+            authority: false,
+            decider: false,
+            lovers: false,
+            betrayer: false,
+            childFox: false,
+            twoFoxes: false,
+            cat: false,
+            lastWords: false,
+            openVote: false,
+            commonTalkVisible: false,
+            deadRoleVisible: false,
+            wishRole: false,
+            dummyBoy: false,
+            customDummy: false,
+            dummyName: "替身君",
+            dummyLastWords: "",
+            realTime: false,
+            dayMinutes: 3,
+            nightMinutes: 1.5,
+            selfVote: false,
+            voteStatus: false
+          },
+          serverName: "遠端伺服器",
+          serverUrl: "https://remote.example",
+          roomUrl: "https://remote.example/room/remote_room",
+          local: false
+        }
+      ],
+      [
+        { name: "遠端伺服器", url: "https://remote.example", ok: true, roomCount: 1 },
+        { name: "故障伺服器", url: "https://broken.example", ok: false, roomCount: 0, error: "HTTP 503" }
+      ]
+    );
 
     expect(html).toContain("遠端伺服器");
     expect(html).toContain("https://remote.example/room/remote_room");
     expect(html).toContain("Remote村");
+    expect(html).toContain("聯合伺服器狀態");
+    expect(html).toContain("故障伺服器");
+    expect(html).toContain("連線失敗");
+    expect(html).toContain("HTTP 503");
   });
 
   it("renders old log index with reference log links", () => {
