@@ -42,10 +42,10 @@ Reference files inspected:
 | KV runtime config | `/api/config`, `/status`, `getHomeAnnouncement`, `isMaintenanceMode` | Implemented |
 | Rendered non-JSON pages | `/`, `/room/:id`, `/leaderboard`, `/status`, `/room/:id/records`, `/room/:id/events`, `/player/:id`, `/rules`, `/protocol`, `/version` | Implemented |
 | Room page client script not inline | `/assets/room-client.js`, `src/room-client.ts`, local UI smoke | Implemented |
-| Reference top/menu visual style | Table layout, side menu, fieldsets, colors in `src/render.ts` | Partial |
+| Reference top/menu visual style | Table layout, side menu, fieldsets, colors, and reference top title/background asset URLs in `src/render.ts` | Partial |
 | Reference room player grid visual style | `renderRoom`, `.player-card`, `.player-icon`, role/death/vote styling | Partial |
 | Reference chat/log/death/vote sections | Room page has chat/game log/records/events; game functions have log/death/vote handling | Partial |
-| Reference icons and bitmap assets | R2 upload exists; `docs/reference-asset-inventory.md` classifies 130 reference assets; `/assets/reference/:path` serves vetted copied R2 assets; home room-list status/option marks emit reference image URLs with text fallback | Partial |
+| Reference icons and bitmap assets | R2 upload exists; `docs/reference-asset-inventory.md` classifies 130 reference assets; `/assets/reference/:path` serves vetted copied R2 assets; top chrome and home room-list status/option marks emit reference image URLs with text fallback | Partial |
 | Browser E2E/manual visual verification | Local HTTP UI smoke only; no installed browser detected | Missing |
 | Screenshot/visual parity against ref | No screenshot baseline or comparison artifact | Missing |
 | Complete PHP rule parity | Core roles/options implemented, but no line-by-line rule parity manifest | Partial |
@@ -66,7 +66,7 @@ Reference files inspected:
 
 ### Still missing or weak
 
-- Reference uses bitmap title/background/role/status/option images such as `img/top_title.jpg`, `img/top_bg.jpg`, `img/playing.gif`, `img/waiting.gif`, role images, and option icons. Current room list now emits status/option image URLs for copied R2 assets while keeping text fallback; page title/background and role images are still mostly CSS/text.
+- Reference uses bitmap title/background/role/status/option images such as `img/top_title.jpg`, `img/top_bg.jpg`, `img/playing.gif`, `img/waiting.gif`, role images, and option icons. Current top chrome and room list now emit copied R2 asset URLs while keeping text fallback; role images are still mostly CSS/text.
 - Reference menu includes `聯合列表`, script info, old logs, icon view/upload, win-rate analysis, BBS, Trip registration. Current menu has the core app pages but not every legacy page.
 - Reference room view has phase-specific body colors, manual/auto refresh links, login/resident registration links, and different layouts for spectator/player/heaven modes. Current room page is a single realtime WebSocket view.
 - Reference player list includes default icons, hover image swap, Trip links, role reveal text colors, already-voted background, and dead icon handling. Current player cards approximate only part of this.
@@ -100,7 +100,7 @@ Reference files inspected:
 
 ## Next Concrete Work Items
 
-1. Wire copied R2 reference assets into more rendered pages, starting with top title/background and role/result images.
+1. Wire copied R2 reference assets into more rendered pages, starting with role/result images.
 2. Add default icon picker/catalog parity for `icon_view.php` and `user_manager.php` icon registration.
 3. Add full talk/vote/action transcript persistence so `/room/:roomId/log` can replay more than final records and audit events.
 4. Add a visual parity checklist with screenshots once a browser is available in the environment.

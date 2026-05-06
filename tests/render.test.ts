@@ -44,6 +44,9 @@ describe("render", () => {
 
     expect(html).toContain("<fieldset>");
     expect(html).toContain("選單");
+    expect(html).toContain('background-image: url("/assets/reference/img/top_bg.jpg")');
+    expect(html).toContain('/assets/reference/img/top_title.jpg');
+    expect(html).toContain('alt="汝等是人是狼？"');
     expect(html).toContain("遊戲列表");
     expect(html).toContain("戰績排行榜");
     expect(html).toContain("Trip登記");
