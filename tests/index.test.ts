@@ -863,6 +863,29 @@ describe("worker routes", () => {
     expect(body).toContain("/room/room_exists?view=heaven&amp;auto_reload=15");
   });
 
+  it("renders PHP-style live room page aliases", async () => {
+    const env = envWithRooms(["room_exists"]);
+    const cases = [
+      ["/game_view.php?room_no=room_exists&auto_reload=20", "spectator", "旁觀視點"],
+      ["/game_play.php?room_no=room_exists&auto_reload=20", "player", "玩家視點"],
+      ["/game_frame.php?room_no=room_exists&auto_reload=20", "player", "玩家視點"]
+    ] as const;
+
+    for (const [path, viewMode, label] of cases) {
+      const response = await worker.fetch(new Request(`http://example.test${path}`), env);
+      expect(response.status).toBe(200);
+      const body = await response.text();
+      expect(body).toContain("[room_exists]");
+      expect(body).toContain(`data-room-view="${viewMode}"`);
+      expect(body).toContain(label);
+      expect(body).toContain('<meta http-equiv="refresh" content="20">');
+    }
+
+    const missingRoomNo = await worker.fetch(new Request("http://example.test/game_view.php"), env);
+    expect(missingRoomNo.status).toBe(400);
+    expect(await missingRoomNo.json()).toEqual({ error: "game_view.php requires room_no" });
+  });
+
   it("serves the external room client script", async () => {
     const response = await worker.fetch(new Request("http://example.test/assets/room-client.js"), envWithRooms([]));
 
