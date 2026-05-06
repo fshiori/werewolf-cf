@@ -310,6 +310,11 @@ describe("render", () => {
     expect(ROOM_CLIENT_SCRIPT).toContain("currentPlayerDead");
     expect(ROOM_CLIENT_SCRIPT).toContain("voteSummary");
     expect(ROOM_CLIENT_SCRIPT).toContain("votedPlayerIds");
+    expect(ROOM_CLIENT_SCRIPT).toContain("function appendVoteObserverPanel(container, game, currentPlayer, currentPlayerDead, voteSummary, votedPlayerIds)");
+    expect(ROOM_CLIENT_SCRIPT).toContain("旁觀視點");
+    expect(ROOM_CLIENT_SCRIPT).toContain("靈界視點");
+    expect(ROOM_CLIENT_SCRIPT).toContain("投票先非公開");
+    expect(ROOM_CLIENT_SCRIPT).toContain("公開投票先");
     expect(ROOM_CLIENT_SCRIPT).toContain("\" voted\"");
     expect(ROOM_CLIENT_SCRIPT).toContain("投票：");
     expect(ROOM_CLIENT_SCRIPT).toContain("actorCanAct");
