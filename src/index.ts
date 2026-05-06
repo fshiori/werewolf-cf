@@ -1,4 +1,4 @@
-import { renderHome, renderPlayerProfile, renderProtocol, renderRoom, renderRules, renderVersion } from "./render";
+import { renderHome, renderLeaderboard, renderPlayerProfile, renderProtocol, renderRoom, renderRoomEvents, renderRoomRecords, renderRules, renderVersion } from "./render";
 import { RoomDurableObject } from "./room";
 import { DEFAULT_DAY_MINUTES, DEFAULT_NIGHT_MINUTES } from "./game";
 import { registeredTripHash, tripHashForRoom } from "./identity";
@@ -501,17 +501,21 @@ async function getPlayerStats(env: Env, playerIdParam: string): Promise<Response
   }
 }
 
-async function getLeaderboard(env: Env): Promise<Response> {
+async function listLeaderboard(env: Env): Promise<LeaderboardEntry[]> {
   const result = await env.DB.prepare(
     "SELECT MIN(ps.player_id) AS player_id, SUM(ps.games_played) AS games_played, SUM(ps.wins) AS wins, SUM(ps.losses) AS losses FROM player_stats ps LEFT JOIN players p ON p.id = ps.player_id GROUP BY COALESCE(p.registered_trip_hash, ps.player_id) ORDER BY wins DESC, games_played DESC, player_id ASC LIMIT 20"
   ).all<{ player_id: string; games_played: number; wins: number; losses: number }>();
-  const leaderboard: LeaderboardEntry[] = result.results.map((row, index) => ({
+  return result.results.map((row, index) => ({
     rank: index + 1,
     playerId: row.player_id,
     gamesPlayed: row.games_played,
     wins: row.wins,
     losses: row.losses
   }));
+}
+
+async function getLeaderboard(env: Env): Promise<Response> {
+  const leaderboard = await listLeaderboard(env);
   return json({ leaderboard });
 }
 
@@ -611,6 +615,20 @@ async function getPlayerRecords(env: Env, playerIdParam: string): Promise<Respon
   }
 }
 
+async function listRoomRecords(env: Env, roomId: string): Promise<GameRecordSummary[]> {
+  const result = await env.DB.prepare(
+    "SELECT id, room_id, result_json, created_at FROM game_records WHERE room_id = ? ORDER BY created_at DESC LIMIT 20"
+  )
+    .bind(roomId)
+    .all<{ id: number; room_id: string; result_json: string; created_at: string }>();
+  return result.results.map((record) => ({
+    id: record.id,
+    roomId: record.room_id,
+    result: parseRecordResult(record.result_json),
+    createdAt: record.created_at
+  }));
+}
+
 async function getRoomRecords(env: Env, roomIdParam: string): Promise<Response> {
   try {
     const roomId = validateRoomId(roomIdParam);
@@ -618,21 +636,26 @@ async function getRoomRecords(env: Env, roomIdParam: string): Promise<Response> 
       return json({ error: "Room not found" }, { status: 404 });
     }
 
-    const result = await env.DB.prepare(
-      "SELECT id, room_id, result_json, created_at FROM game_records WHERE room_id = ? ORDER BY created_at DESC LIMIT 20"
-    )
-      .bind(roomId)
-      .all<{ id: number; room_id: string; result_json: string; created_at: string }>();
-    const records: GameRecordSummary[] = result.results.map((record) => ({
-      id: record.id,
-      roomId: record.room_id,
-      result: parseRecordResult(record.result_json),
-      createdAt: record.created_at
-    }));
-    return json({ records });
+    return json({ records: await listRoomRecords(env, roomId) });
   } catch (error) {
     return json({ error: error instanceof Error ? error.message : "Invalid room" }, { status: 400 });
   }
+}
+
+async function listRoomEvents(env: Env, roomId: string): Promise<RoomEventSummary[]> {
+  const result = await env.DB.prepare(
+    "SELECT id, room_id, player_id, event_type, payload_json, created_at FROM room_events WHERE room_id = ? ORDER BY created_at DESC LIMIT 50"
+  )
+    .bind(roomId)
+    .all<{ id: number; room_id: string; player_id: string | null; event_type: string; payload_json: string; created_at: string }>();
+  return result.results.map((event) => ({
+    id: event.id,
+    roomId: event.room_id,
+    playerId: event.player_id ?? undefined,
+    eventType: event.event_type,
+    payload: parseJsonOrNull(event.payload_json),
+    createdAt: event.created_at
+  }));
 }
 
 async function getRoomEvents(env: Env, roomIdParam: string): Promise<Response> {
@@ -642,20 +665,7 @@ async function getRoomEvents(env: Env, roomIdParam: string): Promise<Response> {
       return json({ error: "Room not found" }, { status: 404 });
     }
 
-    const result = await env.DB.prepare(
-      "SELECT id, room_id, player_id, event_type, payload_json, created_at FROM room_events WHERE room_id = ? ORDER BY created_at DESC LIMIT 50"
-    )
-      .bind(roomId)
-      .all<{ id: number; room_id: string; player_id: string | null; event_type: string; payload_json: string; created_at: string }>();
-    const events: RoomEventSummary[] = result.results.map((event) => ({
-      id: event.id,
-      roomId: event.room_id,
-      playerId: event.player_id ?? undefined,
-      eventType: event.event_type,
-      payload: parseJsonOrNull(event.payload_json),
-      createdAt: event.created_at
-    }));
-    return json({ events });
+    return json({ events: await listRoomEvents(env, roomId) });
   } catch (error) {
     return json({ error: error instanceof Error ? error.message : "Invalid room" }, { status: 400 });
   }
@@ -808,6 +818,10 @@ export default {
       return getLeaderboard(env);
     }
 
+    if (request.method === "GET" && url.pathname === "/leaderboard") {
+      return html(renderLeaderboard(await listLeaderboard(env)));
+    }
+
     if (request.method === "GET" && url.pathname === "/api/config") {
       return getRuntimeConfig(env);
     }
@@ -844,6 +858,32 @@ export default {
     const roomEventsMatch = url.pathname.match(/^\/api\/rooms\/([^/]+)\/events$/);
     if (request.method === "GET" && roomEventsMatch) {
       return getRoomEvents(env, roomEventsMatch[1]);
+    }
+
+    const roomRecordsPageMatch = url.pathname.match(/^\/room\/([^/]+)\/records$/);
+    if (request.method === "GET" && roomRecordsPageMatch) {
+      try {
+        const roomId = validateRoomId(roomRecordsPageMatch[1]);
+        if (!(await roomExists(env, roomId))) {
+          return new Response("Room not found", { status: 404 });
+        }
+        return html(renderRoomRecords(roomId, await listRoomRecords(env, roomId)));
+      } catch (error) {
+        return json({ error: error instanceof Error ? error.message : "Invalid room" }, { status: 400 });
+      }
+    }
+
+    const roomEventsPageMatch = url.pathname.match(/^\/room\/([^/]+)\/events$/);
+    if (request.method === "GET" && roomEventsPageMatch) {
+      try {
+        const roomId = validateRoomId(roomEventsPageMatch[1]);
+        if (!(await roomExists(env, roomId))) {
+          return new Response("Room not found", { status: 404 });
+        }
+        return html(renderRoomEvents(roomId, await listRoomEvents(env, roomId)));
+      } catch (error) {
+        return json({ error: error instanceof Error ? error.message : "Invalid room" }, { status: 400 });
+      }
     }
 
     const statsMatch = url.pathname.match(/^\/api\/players\/([^/]+)\/stats$/);
