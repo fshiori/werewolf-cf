@@ -200,3 +200,4 @@ curl -i https://<worker-host>/api/config
 
 Use `docs/deployment-smoke.md` for the full production checklist, including remote D1 verification, automated read-only/write smoke checks, maintenance mode, and optional manual R2 avatar checks.
 Use `docs/production-handoff.md` when Cloudflare production resource IDs still need to be created or copied into `wrangler.toml`.
+Use `docs/ref-port-gap-audit.md` to track remaining UI/rule parity gaps against `ref/diam1.3.61.kz_Build0912`.
