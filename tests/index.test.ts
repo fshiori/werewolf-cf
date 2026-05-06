@@ -897,18 +897,43 @@ describe("worker routes", () => {
   it("renders active rooms on the room admin page with a valid token", async () => {
     const response = await worker.fetch(
       new Request("http://example.test/admin/rooms?token=secret"),
-      envWithRooms(["room_admin"], { room_admin_token: "secret" })
+      envWithRooms(["room_admin", "room_ended"], { room_admin_token: "secret", "room_status:room_ended": "ended" })
     );
 
     expect(response.status).toBe(200);
     const body = await response.text();
     expect(body).toContain("請選擇要廢除的村");
+    expect(body).toContain("表示：");
     expect(body).toContain("room_admin");
+    expect(body).not.toContain("room_ended村");
     expect(body).toContain("參照");
     expect(body).toContain("/room/room_admin/log");
     expect(body).toContain("/room/room_admin/events");
     expect(body).toContain("adminEndRoom");
     expect(body).toContain("/api/admin/rooms/");
+  });
+
+  it("filters room admin pages by room status", async () => {
+    const ended = await worker.fetch(
+      new Request("http://example.test/admin/rooms?token=secret&status=ended"),
+      envWithRooms(["room_admin", "room_ended"], { room_admin_token: "secret", "room_status:room_ended": "ended" })
+    );
+
+    expect(ended.status).toBe(200);
+    const endedBody = await ended.text();
+    expect(endedBody).toContain("room_ended");
+    expect(endedBody).toContain("已結束");
+    expect(endedBody).not.toContain("room_admin村");
+
+    const all = await worker.fetch(
+      new Request("http://example.test/admin/rooms?token=secret&status=all"),
+      envWithRooms(["room_admin", "room_ended"], { room_admin_token: "secret", "room_status:room_ended": "ended" })
+    );
+
+    expect(all.status).toBe(200);
+    const allBody = await all.text();
+    expect(allBody).toContain("room_admin");
+    expect(allBody).toContain("room_ended");
   });
 
   it("lets room admins mark rooms ended", async () => {

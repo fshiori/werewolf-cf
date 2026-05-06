@@ -950,7 +950,9 @@ export function renderAdminRoomsLogin(): string {
   `));
 }
 
-export function renderAdminRooms(rooms: RoomSummary[]): string {
+type AdminRoomStatusFilter = "active" | "ended" | "all";
+
+export function renderAdminRooms(rooms: RoomSummary[], statusFilter: AdminRoomStatusFilter = "active", adminToken = ""): string {
   const optionSummary = (room: RoomSummary): string => [
     room.options.realTime ? `限時 ${String(room.options.dayMinutes)}/${String(room.options.nightMinutes)}` : "",
     room.options.poison ? "埋毒" : "",
@@ -968,6 +970,13 @@ export function renderAdminRooms(rooms: RoomSummary[]): string {
     room.options.dummyBoy ? "替身" : "",
     room.options.voteStatus ? "投票済" : ""
   ].filter(Boolean).join(" / ") || "標準";
+  const filterHref = (filter: AdminRoomStatusFilter): string => {
+    const query = `status=${encodeURIComponent(filter)}${adminToken ? `&token=${encodeURIComponent(adminToken)}` : ""}`;
+    return `/admin/rooms?${escapeHtml(query)}`;
+  };
+  const filterLink = (filter: AdminRoomStatusFilter, label: string): string => (
+    filter === statusFilter ? `<strong>${escapeHtml(label)}</strong>` : `<a href="${filterHref(filter)}">${escapeHtml(label)}</a>`
+  );
   const rows = rooms.length
     ? rooms.map((room) => `<tr>
         <td><a href="/room/${escapeHtml(room.id)}">${escapeHtml(room.id)}</a></td>
@@ -978,7 +987,7 @@ export function renderAdminRooms(rooms: RoomSummary[]): string {
         <td>${escapeHtml(optionSummary(room))}</td>
         <td>${escapeHtml(room.createdAt)}</td>
         <td><a href="/room/${escapeHtml(room.id)}/log">紀錄</a> / <a href="/room/${escapeHtml(room.id)}/events">事件</a></td>
-        <td><button class="adminEndRoom" data-room-id="${escapeHtml(room.id)}">廢村</button></td>
+        <td>${room.status === "ended" ? `<span class="muted">已結束</span>` : `<button class="adminEndRoom" data-room-id="${escapeHtml(room.id)}">廢村</button>`}</td>
       </tr>`).join("")
     : `<tr><td colspan="9" class="muted">目前沒有可廢除的村。</td></tr>`;
 
@@ -986,6 +995,7 @@ export function renderAdminRooms(rooms: RoomSummary[]): string {
     <fieldset>
       <legend><strong>廢村管理</strong></legend>
       <p class="muted">請選擇要廢除的村。注意！一旦選擇將無法復原。</p>
+      <p>表示：${filterLink("active", "進行中")}　${filterLink("ended", "已結束")}　${filterLink("all", "全部")}</p>
       <table class="form-table" style="margin:12px 20px 18px;width:100%">
         <thead><tr><td><strong>村ID</strong></td><td><strong>村名</strong></td><td><strong>說明</strong></td><td><strong>人數</strong></td><td><strong>狀態</strong></td><td><strong>選項</strong></td><td><strong>建立時間</strong></td><td><strong>參照</strong></td><td><strong>操作</strong></td></tr></thead>
         <tbody>${rows}</tbody>

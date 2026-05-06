@@ -1116,6 +1116,39 @@ describe("render", () => {
     expect(login).toContain("roomAdminToken");
     expect(login).toContain("werewolf_cf_room_admin_token");
 
+    const roomOptions = {
+      poison: true,
+      bigWolf: true,
+      authority: false,
+      decider: false,
+      lovers: true,
+      betrayer: false,
+      childFox: false,
+      twoFoxes: false,
+      cat: false,
+      lastWords: false,
+      openVote: false,
+      commonTalkVisible: false,
+      channelRestrictions: {
+        wolf: true,
+        common: false,
+        lovers: false,
+        fox: true
+      },
+      deadRoleVisible: false,
+      wishRole: false,
+      tripRequired: true,
+      gmEnabled: true,
+      dummyBoy: false,
+      customDummy: false,
+      dummyName: "替身君",
+      dummyLastWords: "",
+      realTime: false,
+      dayMinutes: 3,
+      nightMinutes: 1.5,
+      selfVote: false,
+      voteStatus: false
+    };
     const html = renderAdminRooms([
       {
         id: "room_abc",
@@ -1124,45 +1157,28 @@ describe("render", () => {
         maxPlayers: 30,
         status: "playing",
         createdAt: "2026-05-06 12:00:00",
-        options: {
-          poison: true,
-          bigWolf: true,
-          authority: false,
-          decider: false,
-          lovers: true,
-          betrayer: false,
-          childFox: false,
-          twoFoxes: false,
-          cat: false,
-          lastWords: false,
-          openVote: false,
-          commonTalkVisible: false,
-          channelRestrictions: {
-            wolf: true,
-            common: false,
-            lovers: false,
-            fox: true
-          },
-          deadRoleVisible: false,
-          wishRole: false,
-          tripRequired: true,
-          gmEnabled: true,
-          dummyBoy: false,
-          customDummy: false,
-          dummyName: "替身君",
-          dummyLastWords: "",
-          realTime: false,
-          dayMinutes: 3,
-          nightMinutes: 1.5,
-          selfVote: false,
-          voteStatus: false
-        }
+        options: roomOptions
+      },
+      {
+        id: "room_ended",
+        name: "Ended",
+        comment: "",
+        maxPlayers: 22,
+        status: "ended",
+        createdAt: "2026-05-06 11:00:00",
+        options: roomOptions
       }
-    ]);
+    ], "all", "secret token");
 
     expect(html).toContain("請選擇要廢除的村");
+    expect(html).toContain("表示：");
+    expect(html).toContain("<strong>全部</strong>");
+    expect(html).toContain("/admin/rooms?status=active&amp;token=secret%20token");
+    expect(html).toContain("/admin/rooms?status=ended&amp;token=secret%20token");
     expect(html).toContain("room_abc");
     expect(html).toContain("Need review");
+    expect(html).toContain("room_ended");
+    expect(html).toContain("已結束");
     expect(html).toContain("/assets/reference/img/max30.gif");
     expect(html).toContain("埋毒 / 大狼 / 戀人");
     expect(html).toContain("頻道限:狼/狐");
