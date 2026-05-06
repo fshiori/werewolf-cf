@@ -2048,12 +2048,17 @@ export function renderRoom(roomId: string): string {
                   <option value="none" selected>無</option>
                   <option value="villager">村民</option>
                   <option value="werewolf">人狼</option>
+                  <option value="big_wolf">大狼</option>
                   <option value="seer">占卜師</option>
                   <option value="medium">靈能者</option>
                   <option value="madman">狂人</option>
                   <option value="guard">獵人</option>
                   <option value="common">共有者</option>
                   <option value="fox">妖狐</option>
+                  <option value="poison">埋毒者</option>
+                  <option value="betrayer">背德者</option>
+                  <option value="child_fox">子狐</option>
+                  <option value="cat">貓又</option>
                 </select>
               </td>
             </tr>

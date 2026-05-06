@@ -20,7 +20,21 @@ const PLAYER_ROLES = [
   "child_fox",
   "cat"
 ] as const;
-const WISH_ROLES = ["villager", "werewolf", "seer", "medium", "madman", "guard", "common", "fox"] as const;
+const WISH_ROLES = [
+  "villager",
+  "werewolf",
+  "big_wolf",
+  "seer",
+  "medium",
+  "madman",
+  "guard",
+  "common",
+  "fox",
+  "poison",
+  "betrayer",
+  "child_fox",
+  "cat"
+] as const;
 const GAME_WINNERS = ["villagers", "werewolves", "foxes", "lovers"] as const;
 const PLAYER_FLAGS = ["authority", "decider", "lover"] as const;
 

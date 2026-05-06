@@ -728,6 +728,59 @@ describe("game", () => {
     expect(game.players.find((player) => player.playerId === "player_4")?.role).not.toBe("seer");
   });
 
+  it("honors enabled optional role wishes before assigning remaining roles", () => {
+    const state = numberedLobby(20);
+    const game = startGame(
+      {
+        ...state,
+        players: state.players.map((player) => {
+          const wishes: Record<string, GameState["players"][number]["role"]> = {
+            player_1: "big_wolf",
+            player_2: "poison",
+            player_3: "betrayer",
+            player_4: "child_fox",
+            player_5: "cat"
+          };
+          return wishes[player.playerId] ? { ...player, wishRole: wishes[player.playerId] } : player;
+        })
+      },
+      0,
+      () => 0,
+      {
+        poison: true,
+        bigWolf: true,
+        authority: false,
+        decider: false,
+        lovers: false,
+        betrayer: true,
+        childFox: true,
+        twoFoxes: false,
+        cat: true,
+        lastWords: false,
+        openVote: false,
+        commonTalkVisible: false,
+        deadRoleVisible: false,
+        wishRole: true,
+        dummyBoy: false,
+        customDummy: false,
+        dummyName: "替身君",
+        dummyLastWords: "",
+        realTime: false,
+        dayMinutes: 3,
+        nightMinutes: 1.5,
+        selfVote: false,
+        voteStatus: false
+      }
+    );
+
+    expect(game.players.find((player) => player.playerId === "player_1")?.role).toBe("big_wolf");
+    expect(game.players.find((player) => player.playerId === "player_2")?.role).toBe("poison");
+    expect(game.players.find((player) => player.playerId === "player_3")?.role).toBe("betrayer");
+    expect(game.players.find((player) => player.playerId === "player_4")?.role).toBe("child_fox");
+    expect(game.players.find((player) => player.playerId === "player_5")?.role).toBe("cat");
+    expect(roleCounts(game)).toMatchObject({ big_wolf: 1, poison: 1, betrayer: 1, child_fox: 1, cat: 1 });
+  });
+
   it("starts dummy boy rooms on the first night and forces the dummy target", () => {
     let game = startGame(
       lobby([
