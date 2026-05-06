@@ -491,6 +491,7 @@ function getProtocol(): Response {
         "common_chat",
         "lovers_chat",
         "dead_chat",
+        "self_talk",
         "gm_chat",
         "gm_whisper",
         "gm_advance_phase",
@@ -521,6 +522,7 @@ function getProtocol(): Response {
         "common_chat",
         "lovers_chat",
         "dead_chat",
+        "self_talk",
         "gm_chat",
         "gm_whisper",
         "lobby_start_vote",
@@ -536,7 +538,7 @@ function getProtocol(): Response {
         "role",
         "error"
       ],
-      privateChannels: ["wolf_chat", "fox_chat", "common_chat", "lovers_chat", "dead_chat", "gm_chat", "gm_whisper"],
+      privateChannels: ["wolf_chat", "fox_chat", "common_chat", "lovers_chat", "dead_chat", "self_talk", "gm_chat", "gm_whisper"],
       channelVariants: {
         common_chat: {
           publicVoicePlayerId: "common_voice",

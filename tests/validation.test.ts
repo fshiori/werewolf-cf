@@ -129,6 +129,7 @@ describe("validation", () => {
     expect(parseClientMessage('{"type":"common_chat","text":"secret"}')).toEqual({ type: "common_chat", text: "secret" });
     expect(parseClientMessage('{"type":"lovers_chat","text":"secret"}')).toEqual({ type: "lovers_chat", text: "secret" });
     expect(parseClientMessage('{"type":"dead_chat","text":"secret"}')).toEqual({ type: "dead_chat", text: "secret" });
+    expect(parseClientMessage('{"type":"self_talk","text":"mutter"}')).toEqual({ type: "self_talk", text: "mutter" });
     expect(parseClientMessage('{"type":"gm_chat","text":"notice"}')).toEqual({ type: "gm_chat", text: "notice" });
     expect(parseClientMessage('{"type":"gm_whisper","targetPlayerId":"player_1","text":"secret"}')).toEqual({
       type: "gm_whisper",

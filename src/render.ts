@@ -146,6 +146,7 @@ function page(title: string, body: string): string {
     .transcript-location-system td, .transcript-location-game td { background: #efefef; font-weight: bold; }
     .transcript-location-wolf td { background: #000030; color: #ffccff; }
     .transcript-location-common td, .transcript-location-fox td, .transcript-location-lovers td { background: #000030; color: #ccffcc; }
+    .transcript-location-self td { background: #000030; color: snow; }
     .transcript-location-dead td { background: #cccccc; color: #000000; }
     .transcript-location-gm td, .transcript-location-gm-whisper td { color: #cc0000; }
     .transcript-location-vote td { background: #999900; color: snow; font-weight: bold; }
@@ -293,6 +294,7 @@ function eventTypeLabel(eventType: string): string {
     common_chat: "共有密談",
     lovers_chat: "戀人密談",
     dead_chat: "靈界發言",
+    self_talk: "自言自語",
     gm_chat: "GM 發言",
     gm_whisper: "GM 密語",
     day_vote: "白天投票",
@@ -343,6 +345,7 @@ function transcriptLocation(event: RoomEventSummary): { className: string; label
     common_chat: { className: "transcript-location-common", label: "共有密談" },
     lovers_chat: { className: "transcript-location-lovers", label: "戀人密談" },
     dead_chat: { className: "transcript-location-dead", label: "靈界" },
+    self_talk: { className: "transcript-location-self", label: "自言自語" },
     gm_chat: { className: "transcript-location-gm", label: "GM廣播" },
     gm_whisper: { className: "transcript-location-gm-whisper", label: "GM密語" },
     day_vote: { className: "transcript-location-vote", label: "處刑投票" },
@@ -1467,6 +1470,7 @@ export function renderProtocol(): string {
         <tr><td><strong>　join：</strong></td><td><code>{ type, playerId, nickname, trip, wishRole, iconPath }</code></td></tr>
         <tr><td><strong>　chat：</strong></td><td>公開發言。遊戲中限生存玩家與 GM 使用。</td></tr>
         <tr><td><strong>　wolf_chat / fox_chat / common_chat / lovers_chat：</strong></td><td>夜晚私有頻道，限對應陣營或關係的生存玩家。</td></tr>
+        <tr><td><strong>　self_talk：</strong></td><td>夜晚生存玩家的自言自語，只回送給本人並作為私有紀錄保存。</td></tr>
         <tr><td><strong>　dead_chat：</strong></td><td>遊戲進行中死亡玩家的靈界頻道。</td></tr>
         <tr><td><strong>　vote：</strong></td><td>白天投票，payload 含 <code>targetPlayerId</code>。</td></tr>
         <tr><td><strong>　objection：</strong></td><td>提出反對，白天或大廳可用，每人最多2次，伺服器會廣播音效通知事件。</td></tr>
@@ -1704,6 +1708,7 @@ export function renderRoom(roomId: string): string {
                 <button id="sendCommonChat" disabled>共有頻</button>
                 <button id="sendLoversChat" disabled>戀頻</button>
                 <button id="sendDeadChat" disabled>靈界</button>
+                <button id="sendSelfTalk" disabled>自言</button>
                 <button id="sendObjection" disabled>提出反對</button>
                 <label><input id="soundNotify" type="checkbox"> 音效</label>
                 <button id="sendGmChat" disabled>GM</button>

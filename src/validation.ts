@@ -266,6 +266,13 @@ export function parseClientMessage(raw: string): ClientMessage {
     return { type: "dead_chat", text: parsed.text };
   }
 
+  if (parsed.type === "self_talk") {
+    if (typeof parsed.text !== "string") {
+      throw new Error("Invalid self talk message");
+    }
+    return { type: "self_talk", text: parsed.text };
+  }
+
   if (parsed.type === "gm_chat") {
     if (typeof parsed.text !== "string") {
       throw new Error("Invalid GM chat message");

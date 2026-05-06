@@ -247,6 +247,11 @@ export type DeadChatClientMessage = {
   text: string;
 };
 
+export type SelfTalkClientMessage = {
+  type: "self_talk";
+  text: string;
+};
+
 export type GmChatClientMessage = {
   type: "gm_chat";
   text: string;
@@ -357,6 +362,7 @@ export type ClientMessage =
   | CommonChatClientMessage
   | LoversChatClientMessage
   | DeadChatClientMessage
+  | SelfTalkClientMessage
   | GmChatClientMessage
   | GmWhisperClientMessage
   | GmAdvancePhaseClientMessage
@@ -387,6 +393,7 @@ export type ServerMessage =
   | { type: "common_chat"; playerId: string; nickname: string; text: string; sentAt: string }
   | { type: "lovers_chat"; playerId: string; nickname: string; text: string; sentAt: string }
   | { type: "dead_chat"; playerId: string; nickname: string; text: string; sentAt: string }
+  | { type: "self_talk"; playerId: string; nickname: string; text: string; sentAt: string }
   | { type: "gm_chat"; playerId: string; nickname: string; text: string; sentAt: string }
   | { type: "gm_whisper"; playerId: string; nickname: string; targetPlayerId: string; targetNickname: string; text: string; sentAt: string }
   | { type: "objection"; playerId: string; nickname: string; remaining: number; sentAt: string }

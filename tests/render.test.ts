@@ -254,6 +254,7 @@ describe("render", () => {
     expect(html).toContain("startVote");
     expect(html).toContain("leaveRoom");
     expect(html).toContain("sendDeadChat");
+    expect(html).toContain("sendSelfTalk");
     expect(html).toContain("sendObjection");
     expect(html).toContain("soundNotify");
     expect(html).toContain("lastWordsText");
@@ -346,6 +347,9 @@ describe("render", () => {
     expect(ROOM_CLIENT_SCRIPT).toContain("common_chat");
     expect(ROOM_CLIENT_SCRIPT).toContain("lovers_chat");
     expect(ROOM_CLIENT_SCRIPT).toContain("dead_chat");
+    expect(ROOM_CLIENT_SCRIPT).toContain("self_talk");
+    expect(ROOM_CLIENT_SCRIPT).toContain("#sendSelfTalk");
+    expect(ROOM_CLIENT_SCRIPT).toContain("[自言自語]");
     expect(ROOM_CLIENT_SCRIPT).toContain("revealed_roles");
     expect(ROOM_CLIENT_SCRIPT).toContain("set_last_words");
     expect(ROOM_CLIENT_SCRIPT).toContain("last_words_ack");
@@ -672,6 +676,14 @@ describe("render", () => {
           eventType: "gm_whisper",
           payload: { visibility: "private", nickname: "GM", text: "secret", phase: "night", day: 2 },
           createdAt: "2026-05-06 12:05:00"
+        },
+        {
+          id: 6,
+          roomId: "room_abc",
+          playerId: "player_a",
+          eventType: "self_talk",
+          payload: { visibility: "private", nickname: "Alice", text: "mutter", phase: "night", day: 2 },
+          createdAt: "2026-05-06 12:06:00"
         }
       ]
     );
@@ -697,10 +709,13 @@ describe("render", () => {
     expect(html).toContain("襲擊行動");
     expect(html).toContain("人狼密談");
     expect(html).toContain("GM密語");
+    expect(html).toContain("自言自語");
     expect(html).toContain('class="transcript-row transcript-location-kill"');
     expect(html).toContain('class="transcript-row transcript-location-wolf"');
     expect(html).toContain('class="transcript-row transcript-location-gm-whisper"');
+    expect(html).toContain('class="transcript-row transcript-location-self"');
     expect(html).toContain(".transcript-location-wolf td { background: #000030; color: #ffccff; }");
+    expect(html).toContain(".transcript-location-self td { background: #000030; color: snow; }");
     expect(html).toContain(".transcript-location-kill td { background: #cc3300; color: snow; font-weight: bold; }");
     expect(html).toContain("對象名:Bob");
   });
@@ -773,6 +788,7 @@ describe("render", () => {
     expect(html).toContain("iconPath");
     expect(html).toContain("Client Messages");
     expect(html).toContain("wolf_chat / fox_chat / common_chat / lovers_chat");
+    expect(html).toContain("self_talk");
     expect(html).toContain("gm_*");
     expect(html).toContain("start_vote");
     expect(html).toContain("kick_vote");

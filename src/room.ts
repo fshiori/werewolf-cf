@@ -7,6 +7,7 @@ import {
   canUseFoxChannel,
   canUseLoversChannel,
   canUsePublicChat,
+  canUseSelfTalk,
   canUseWerewolfChannel,
   castLobbyKickVote,
   castLobbyStartVote,
@@ -61,6 +62,7 @@ import {
   buildPresenceMessage,
   buildRevealedRolesMessage,
   buildRoleMessage,
+  buildSelfTalkMessage,
   buildWolfChatMessage
 } from "./messages";
 import type { GameState, RoomMember, RoomOptions } from "./types";
@@ -252,6 +254,18 @@ export class RoomDurableObject {
         const text = validateChatText(message.text);
         await this.persistRoomEvent(member.playerId, "dead_chat", { visibility: "private", nickname: member.nickname, text, phase: game.phase, day: game.day });
         this.broadcastDead(game, buildDeadChatMessage(member.playerId, member.nickname, text));
+        return;
+      }
+
+      if (message.type === "self_talk") {
+        const game = await this.loadGameState();
+        if (!canUseSelfTalk(game, member.playerId)) {
+          throw new Error("Self talk is only available to living players at night");
+        }
+        const text = validateChatText(message.text);
+        const next = await this.recordConversationActivity(game);
+        await this.persistRoomEvent(member.playerId, "self_talk", { visibility: "private", nickname: member.nickname, text, phase: next.phase, day: next.day });
+        this.send(socket, buildSelfTalkMessage(member.playerId, member.nickname, text));
         return;
       }
 
