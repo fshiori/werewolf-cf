@@ -602,6 +602,11 @@ function isViewerOwnedTranscriptEvent(event: RoomEventSummary, viewerPlayerId?: 
   return Boolean(viewerPlayerId && event.playerId === viewerPlayerId);
 }
 
+function isViewerAddressedTranscriptEvent(event: RoomEventSummary, viewerPlayerId?: string): boolean {
+  const value = recordValue(event.payload);
+  return Boolean(viewerPlayerId && event.eventType === "gm_whisper" && value.targetPlayerId === viewerPlayerId);
+}
+
 function filterTranscriptEventsByViewer(events: RoomEventSummary[], options: RoomTranscriptViewOptions): RoomEventSummary[] {
   const mode = options.viewerMode ?? "legacy";
   if (mode === "legacy" || mode === "gm") {
@@ -615,7 +620,7 @@ function filterTranscriptEventsByViewer(events: RoomEventSummary[], options: Roo
       return isHeavenTranscriptEvent(event) || isSystemTranscriptEvent(event);
     }
     if (mode === "player") {
-      return isViewerOwnedTranscriptEvent(event, options.viewerPlayerId);
+      return isViewerOwnedTranscriptEvent(event, options.viewerPlayerId) || isViewerAddressedTranscriptEvent(event, options.viewerPlayerId);
     }
     return isSystemTranscriptEvent(event);
   });
