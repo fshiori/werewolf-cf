@@ -273,6 +273,9 @@ document.querySelector("#setLastWords").addEventListener("click", () => {
 document.querySelector("#startGame").addEventListener("click", () => {
   sendCommand({ type: "start_game" });
 });
+document.querySelector("#leaveRoom").addEventListener("click", () => {
+  sendCommand({ type: "leave_room" });
+});
 document.querySelector("#gmAdvancePhase").addEventListener("click", () => {
   sendCommand({ type: "gm_advance_phase" });
 });
@@ -405,6 +408,7 @@ function renderGame(game) {
   const canManageLobby = game.phase === "lobby" && (game.hostId === currentPlayerId || isGm);
   document.querySelector("#host").textContent = host ? host.nickname : "未定";
   document.querySelector("#startGame").disabled = game.phase !== "lobby" || (game.hostId !== currentPlayerId && !isGm);
+  document.querySelector("#leaveRoom").disabled = !ws || ws.readyState !== WebSocket.OPEN;
   document.querySelector("#sendWolfChat").disabled = !(game.phase === "night" && isWolfRole(role) && currentPlayerAlive);
   document.querySelector("#sendFoxChat").disabled = !(game.phase === "night" && role === "fox" && currentPlayerAlive);
   document.querySelector("#sendCommonChat").disabled = !(game.phase === "night" && role === "common" && currentPlayerAlive);

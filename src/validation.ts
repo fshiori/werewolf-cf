@@ -320,6 +320,10 @@ export function parseClientMessage(raw: string): ClientMessage {
     return { type: "kick_player", targetPlayerId: parsed.targetPlayerId };
   }
 
+  if (parsed.type === "leave_room") {
+    return { type: "leave_room" };
+  }
+
   if (parsed.type === "vote") {
     if (typeof parsed.targetPlayerId !== "string") {
       throw new Error("Invalid vote message");

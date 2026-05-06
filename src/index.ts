@@ -500,6 +500,7 @@ function getProtocol(): Response {
         "gm_set_flag",
         "start_game",
         "kick_player",
+        "leave_room",
         "vote",
         "night_kill",
         "divine",

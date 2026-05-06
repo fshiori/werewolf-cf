@@ -160,6 +160,7 @@ describe("validation", () => {
       type: "kick_player",
       targetPlayerId: "player_1"
     });
+    expect(parseClientMessage('{"type":"leave_room"}')).toEqual({ type: "leave_room" });
     expect(parseClientMessage('{"type":"vote","targetPlayerId":"player_1"}')).toEqual({ type: "vote", targetPlayerId: "player_1" });
     expect(parseClientMessage('{"type":"night_kill","targetPlayerId":"player_2"}')).toEqual({
       type: "night_kill",

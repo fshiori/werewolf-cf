@@ -261,6 +261,7 @@ function eventTypeLabel(eventType: string): string {
     guard: "護衛",
     cat_revive: "貓又復活",
     objection: "提出反對",
+    player_left: "退出",
     game_started: "遊戲開始",
     game_ended: "遊戲結束",
     gm_advanced_phase: "GM 推進",
@@ -1390,6 +1391,7 @@ export function renderProtocol(): string {
         <tr><td><strong>　night_kill / divine / child_fox_divine / guard / cat_revive：</strong></td><td>夜晚或角色能力行動，payload 含 <code>targetPlayerId</code>。</td></tr>
         <tr><td><strong>　set_last_words：</strong></td><td>遺言啟用時可儲存死亡時公開文字。</td></tr>
         <tr><td><strong>　start_game / kick_player：</strong></td><td>房主或 GM 的大廳控制。</td></tr>
+        <tr><td><strong>　leave_room：</strong></td><td>玩家退出；大廳時從居民列表移除，遊戲中僅關閉目前連線。</td></tr>
         <tr><td><strong>　gm_*：</strong></td><td>GM 聊天、私語、換日、裁定、調整生死、角色與旗標。</td></tr>
       </table>
     </fieldset>
@@ -1401,7 +1403,7 @@ export function renderProtocol(): string {
         <tr><td><strong>　role：</strong></td><td>私密角色訊息，包含可見同伴與權力者資訊。</td></tr>
         <tr><td><strong>　chat family：</strong></td><td>公開、狼、狐、共有、戀人、靈界、GM 與 GM 私語訊息。</td></tr>
         <tr><td><strong>　common voice：</strong></td><td><code>commonTalkVisible</code> 啟用時，非共有者會收到匿名 <code>common_chat</code>，<code>playerId</code> 為 <code>common_voice</code>。</td></tr>
-        <tr><td><strong>　action_ack：</strong></td><td>確認投票、襲擊、護衛、子狐占卜、貓又復活或踢人。</td></tr>
+        <tr><td><strong>　action_ack：</strong></td><td>確認投票、襲擊、護衛、子狐占卜、貓又復活、踢人或退出。</td></tr>
         <tr><td><strong>　divination_result / child_fox_result / medium_result：</strong></td><td>私密角色結果。</td></tr>
         <tr><td><strong>　revealed_roles：</strong></td><td>幽靈視角啟用時給死亡玩家；遊戲結束後給所有人。</td></tr>
         <tr><td><strong>　last_words_ack / error：</strong></td><td>遺言確認與驗證、權限、階段或規則錯誤。</td></tr>
@@ -1531,7 +1533,7 @@ export function renderRoom(roomId: string): string {
             </tr>
             <tr>
               <td>玩家暱稱</td>
-              <td><input id="nickname" maxlength="32" size="28"> <button id="connect">進入房間</button> <button id="startGame">開始遊戲</button></td>
+              <td><input id="nickname" maxlength="32" size="28"> <button id="connect">進入房間</button> <button id="startGame">開始遊戲</button> <button id="leaveRoom" disabled>退出</button></td>
             </tr>
             <tr>
               <td>Trip</td>

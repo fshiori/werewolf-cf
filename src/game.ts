@@ -188,6 +188,21 @@ export function removeLobbyPlayer(state: GameState, targetPlayerId: string): Gam
   };
 }
 
+export function leaveLobbyPlayer(state: GameState, playerId: string): GameState {
+  if (state.phase !== "lobby") {
+    throw new Error("Players can only leave the resident list before the game starts");
+  }
+  const nextPlayers = state.players.filter((player) => player.playerId !== playerId);
+  if (nextPlayers.length === state.players.length) {
+    throw new Error("Leave target not found");
+  }
+  return {
+    ...state,
+    hostId: state.hostId === playerId ? nextPlayers[0]?.playerId : state.hostId,
+    players: nextPlayers
+  };
+}
+
 export function startGame(
   state: GameState,
   now = Date.now(),
