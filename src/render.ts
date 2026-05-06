@@ -929,6 +929,54 @@ export function renderIconCatalog(): string {
         <tbody>${rows}</tbody>
       </table>
     </fieldset>
+    <fieldset>
+      <legend><strong>上傳頭像</strong></legend>
+      <table class="form-table">
+        <tr>
+          <td><label><strong>　玩家ID：</strong></label></td>
+          <td><input id="iconUploadPlayerId" maxlength="64" size="28"> <span id="iconUploadStatus" class="muted"></span></td>
+        </tr>
+        <tr>
+          <td><label><strong>　頭像：</strong></label></td>
+          <td><input id="iconUploadFile" type="file" accept="image/png,image/jpeg,image/gif,image/webp" size="28"> <button id="iconUploadButton">上傳</button> <button id="iconRemoveButton">刪頭像</button> <small class="muted">PNG/JPEG/GIF/WebP 512KiB以下</small></td>
+        </tr>
+      </table>
+    </fieldset>
+    <script>
+      const iconUploadPlayerId = document.querySelector("#iconUploadPlayerId");
+      const iconUploadFile = document.querySelector("#iconUploadFile");
+      const iconUploadStatus = document.querySelector("#iconUploadStatus");
+      const playerKey = "werewolf_cf_player_id";
+      if (!localStorage.getItem(playerKey)) {
+        localStorage.setItem(playerKey, "player_" + crypto.randomUUID().replaceAll("-", ""));
+      }
+      iconUploadPlayerId.value = localStorage.getItem(playerKey);
+      document.querySelector("#iconUploadButton").addEventListener("click", async () => {
+        if (!iconUploadFile.files.length) {
+          iconUploadStatus.textContent = "請選擇檔案";
+          return;
+        }
+        if (iconUploadFile.files[0].size > 512 * 1024) {
+          iconUploadStatus.textContent = "頭像需小於 512KiB";
+          return;
+        }
+        const form = new FormData();
+        form.set("playerId", iconUploadPlayerId.value);
+        form.set("avatar", iconUploadFile.files[0]);
+        const res = await fetch("/api/assets/avatar", { method: "POST", body: form });
+        const data = await res.json();
+        iconUploadStatus.textContent = res.ok ? "上傳完成" : data.error || "上傳失敗";
+      });
+      document.querySelector("#iconRemoveButton").addEventListener("click", async () => {
+        const res = await fetch("/api/assets/avatar", {
+          method: "DELETE",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ playerId: iconUploadPlayerId.value })
+        });
+        const data = await res.json();
+        iconUploadStatus.textContent = res.ok ? "刪除完成" : data.error || "刪除失敗";
+      });
+    </script>
   `));
 }
 

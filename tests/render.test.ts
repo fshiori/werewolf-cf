@@ -445,6 +445,12 @@ describe("render", () => {
     expect(html).toContain("#DDDDDD");
     expect(html).toContain("#FF9999");
     expect(html).toContain("32 x 32");
+    expect(html).toContain("上傳頭像");
+    expect(html).toContain("iconUploadFile");
+    expect(html).toContain("iconUploadButton");
+    expect(html).toContain("iconRemoveButton");
+    expect(html).toContain("/api/assets/avatar");
+    expect(html).toContain("頭像需小於 512KiB");
   });
 
   it("renders federated list as a normal HTML page", () => {
