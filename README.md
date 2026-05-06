@@ -44,10 +44,11 @@ Smoke check the local Worker:
 
 ```bash
 npm run smoke:local
+npm run smoke:local:ui
 npm run smoke:local:write
 ```
 
-The read-only smoke checks local Worker metadata and HTML pages at `http://127.0.0.1:8787`. The write smoke creates a temporary local room, verifies WebSocket join, and checks avatar upload/read/delete against the local R2 binding.
+The read-only smoke checks local Worker metadata and HTML pages at `http://127.0.0.1:8787`. The UI smoke creates a temporary local room and verifies the rendered room, record, and event pages. The write smoke creates a temporary local room, verifies WebSocket join, and checks avatar upload/read/delete against the local R2 binding.
 
 Run production smoke checks after deployment:
 
