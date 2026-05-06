@@ -11,3 +11,8 @@ export async function registeredTripHash(trip: string): Promise<string> {
   const data = new TextEncoder().encode(`registered:${trip}`);
   return bytesToHex(new Uint8Array(await crypto.subtle.digest("SHA-256", data)));
 }
+
+export async function bbsPasswordHash(password: string): Promise<string> {
+  const data = new TextEncoder().encode(`bbs:${password}`);
+  return bytesToHex(new Uint8Array(await crypto.subtle.digest("SHA-256", data)));
+}

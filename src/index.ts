@@ -2,7 +2,7 @@ import { renderAdminConfig, renderAdminConfigLogin, renderAdminIndex, renderAdmi
 import { RoomDurableObject } from "./room";
 import { ROOM_CLIENT_SCRIPT } from "./room-client";
 import { DEFAULT_DAY_MINUTES, DEFAULT_NIGHT_MINUTES } from "./game";
-import { registeredTripHash, tripHashForRoom } from "./identity";
+import { bbsPasswordHash, registeredTripHash, tripHashForRoom } from "./identity";
 import type { BbsReplySummary, BbsTopicSummary, ChannelRestrictions, FederatedRoomSummary, FederatedServerStatus, GamePlayer, GameRecordSummary, GameWinner, LeaderboardEntry, PlayerGameRecordSummary, PlayerStats, RoomEventSummary, RoomOptions, RoomSummary, WinRateEntry } from "./types";
 import {
   isRecord,
@@ -821,6 +821,20 @@ function validateBbsMessage(value: unknown): string {
   return message;
 }
 
+function validateBbsPassword(value: unknown): string | undefined {
+  if (typeof value !== "string") {
+    return undefined;
+  }
+  const password = value.trim();
+  if (!password) {
+    return undefined;
+  }
+  if (password.length > 128) {
+    throw new Error("BBS password is too long");
+  }
+  return password;
+}
+
 function validateBbsTopicId(value: string): number {
   if (!/^\d+$/.test(value)) {
     throw new Error("Invalid BBS topic");
@@ -1020,8 +1034,10 @@ async function createBbsTopic(request: Request, env: Env): Promise<Response> {
     const message = validateBbsMessage(body.message);
     const trip = typeof body.trip === "string" && body.trip.trim() ? validateTrip(body.trip) : undefined;
     const tripHash = trip ? await registeredTripHash(trip) : null;
-    const result = await env.DB.prepare("INSERT INTO bbs_topics (name, title, message, trip_hash) VALUES (?, ?, ?, ?)")
-      .bind(name, title, message, tripHash)
+    const password = validateBbsPassword(body.password);
+    const passwordHash = password ? await bbsPasswordHash(password) : null;
+    const result = await env.DB.prepare("INSERT INTO bbs_topics (name, title, message, trip_hash, password_hash) VALUES (?, ?, ?, ?, ?)")
+      .bind(name, title, message, tripHash, passwordHash)
       .run();
     const topicId = typeof result.meta?.last_row_id === "number" && result.meta.last_row_id > 0 ? result.meta.last_row_id : undefined;
     return json(topicId ? { posted: true, topicId } : { posted: true });
@@ -1048,8 +1064,10 @@ async function createBbsReply(request: Request, env: Env, topicIdParam: string):
     const message = validateBbsMessage(body.message);
     const trip = typeof body.trip === "string" && body.trip.trim() ? validateTrip(body.trip) : undefined;
     const tripHash = trip ? await registeredTripHash(trip) : null;
+    const password = validateBbsPassword(body.password);
+    const passwordHash = password ? await bbsPasswordHash(password) : null;
     await env.DB.batch([
-      env.DB.prepare("INSERT INTO bbs_replies (topic_id, name, message, trip_hash) VALUES (?, ?, ?, ?)").bind(topicId, name, message, tripHash),
+      env.DB.prepare("INSERT INTO bbs_replies (topic_id, name, message, trip_hash, password_hash) VALUES (?, ?, ?, ?, ?)").bind(topicId, name, message, tripHash, passwordHash),
       env.DB.prepare("UPDATE bbs_topics SET reply_count = reply_count + 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?").bind(topicId)
     ]);
     const replyCount = topic.replyCount + 1;

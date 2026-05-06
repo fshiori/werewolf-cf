@@ -2155,6 +2155,7 @@ export function renderBbs(topics: BbsTopicSummary[], options: { digestOnly?: boo
       <table class="form-table">
         <tr><td><label><strong>　名稱：</strong></label></td><td><input id="bbsName" maxlength="32" size="24"></td></tr>
         <tr><td><label><strong>　Trip：</strong></label></td><td><input id="bbsTrip" maxlength="32" size="24"></td></tr>
+        <tr><td><label><strong>　密碼：</strong></label></td><td><input id="bbsPassword" type="password" maxlength="128" size="24"> <span class="muted">編輯/刪除用</span></td></tr>
         <tr><td><label><strong>　標題：</strong></label></td><td><input id="bbsTitle" maxlength="50" size="48"></td></tr>
         <tr><td><label><strong>　內容：</strong></label></td><td><textarea id="bbsMessage" rows="5" cols="64"></textarea></td></tr>
         <tr><td></td><td><button id="bbsPostButton">發表主題</button> <span id="bbsPostStatus" class="muted"></span></td></tr>
@@ -2176,6 +2177,7 @@ export function renderBbs(topics: BbsTopicSummary[], options: { digestOnly?: boo
           body: JSON.stringify({
             name,
             trip,
+            password: document.querySelector("#bbsPassword").value,
             title: document.querySelector("#bbsTitle").value,
             message: document.querySelector("#bbsMessage").value
           })
@@ -2233,6 +2235,7 @@ export function renderBbsTopic(topic: BbsTopicSummary, replies: BbsReplySummary[
     : `<table class="form-table">
         <tr><td><label><strong>　名稱：</strong></label></td><td><input id="bbsReplyName" maxlength="32" size="24"></td></tr>
         <tr><td><label><strong>　Trip：</strong></label></td><td><input id="bbsReplyTrip" maxlength="32" size="24"></td></tr>
+        <tr><td><label><strong>　密碼：</strong></label></td><td><input id="bbsReplyPassword" type="password" maxlength="128" size="24"> <span class="muted">編輯/刪除用</span></td></tr>
         <tr><td><label><strong>　內容：</strong></label></td><td><textarea id="bbsReplyMessage" rows="5" cols="64"></textarea></td></tr>
         <tr><td></td><td><button id="bbsReplyButton">回覆</button> <span id="bbsReplyStatus" class="muted"></span></td></tr>
       </table>
@@ -2252,6 +2255,7 @@ export function renderBbsTopic(topic: BbsTopicSummary, replies: BbsReplySummary[
             body: JSON.stringify({
               name,
               trip,
+              password: document.querySelector("#bbsReplyPassword").value,
               message: document.querySelector("#bbsReplyMessage").value
             })
           });
