@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { renderBbs, renderBbsTopic, renderFederatedList, renderHome, renderIconCatalog, renderLeaderboard, renderPlayerProfile, renderProtocol, renderRoom, renderRoomEvents, renderRoomRecords, renderRoomTranscript, renderRules, renderScriptInfo, renderStatus, renderTripLookup, renderVersion } from "../src/render";
+import { renderBbs, renderBbsTopic, renderFederatedList, renderHome, renderIconCatalog, renderLeaderboard, renderPlayerProfile, renderProtocol, renderRoom, renderRoomEvents, renderRoomRecords, renderRoomTranscript, renderRules, renderScriptInfo, renderStatus, renderTripLookup, renderVersion, renderWinRateAnalysis } from "../src/render";
 import { ROOM_CLIENT_SCRIPT } from "../src/room-client";
 
 describe("render", () => {
@@ -78,6 +78,8 @@ describe("render", () => {
     expect(html).toContain("聯合列表");
     expect(html).toContain("/leaderboard");
     expect(html).toContain("戰績排行榜");
+    expect(html).toContain("/stats");
+    expect(html).toContain("勝率分析");
     expect(html).toContain("/icons");
     expect(html).toContain("頭像一覽");
     expect(html).toContain("/trips");
@@ -359,6 +361,21 @@ describe("render", () => {
     expect(html).toContain("player_top");
     expect(html).toContain("<td>5</td>");
     expect(html).not.toContain("排行榜 JSON");
+  });
+
+  it("renders win-rate analysis as a normal HTML page", () => {
+    const html = renderWinRateAnalysis([
+      { winner: "villagers", label: "人勝", wins: 2, total: 4, rate: 50 },
+      { winner: "werewolves", label: "狼勝", wins: 1, total: 4, rate: 25 },
+      { winner: "foxes", label: "狐勝", wins: 1, total: 4, rate: 25 },
+      { winner: "lovers", label: "戀勝", wins: 0, total: 4, rate: 0 }
+    ]);
+
+    expect(html).toContain("勝率分析");
+    expect(html).toContain("－人勝－");
+    expect(html).toContain("2 / 4");
+    expect(html).toContain("勝率 50.00 %");
+    expect(html).toContain("/api/stats/win-rate");
   });
 
   it("renders default icon catalog as a normal HTML page", () => {

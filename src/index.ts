@@ -1,9 +1,9 @@
-import { renderBbs, renderBbsTopic, renderFederatedList, renderHome, renderIconCatalog, renderLeaderboard, renderPlayerProfile, renderProtocol, renderRoom, renderRoomEvents, renderRoomRecords, renderRoomTranscript, renderRules, renderScriptInfo, renderStatus, renderTripLookup, renderVersion } from "./render";
+import { renderBbs, renderBbsTopic, renderFederatedList, renderHome, renderIconCatalog, renderLeaderboard, renderPlayerProfile, renderProtocol, renderRoom, renderRoomEvents, renderRoomRecords, renderRoomTranscript, renderRules, renderScriptInfo, renderStatus, renderTripLookup, renderVersion, renderWinRateAnalysis } from "./render";
 import { RoomDurableObject } from "./room";
 import { ROOM_CLIENT_SCRIPT } from "./room-client";
 import { DEFAULT_DAY_MINUTES, DEFAULT_NIGHT_MINUTES } from "./game";
 import { registeredTripHash, tripHashForRoom } from "./identity";
-import type { BbsReplySummary, BbsTopicSummary, FederatedRoomSummary, GamePlayer, GameRecordSummary, GameWinner, LeaderboardEntry, PlayerGameRecordSummary, PlayerStats, RoomEventSummary, RoomOptions, RoomSummary } from "./types";
+import type { BbsReplySummary, BbsTopicSummary, FederatedRoomSummary, GamePlayer, GameRecordSummary, GameWinner, LeaderboardEntry, PlayerGameRecordSummary, PlayerStats, RoomEventSummary, RoomOptions, RoomSummary, WinRateEntry } from "./types";
 import {
   isRecord,
   validateNickname,
@@ -958,6 +958,41 @@ async function getLeaderboard(env: Env): Promise<Response> {
   return json({ leaderboard });
 }
 
+function winnerDisplayLabel(winner: GameWinner): string {
+  if (winner === "villagers") {
+    return "人勝";
+  }
+  if (winner === "werewolves") {
+    return "狼勝";
+  }
+  if (winner === "foxes") {
+    return "狐勝";
+  }
+  return "戀勝";
+}
+
+async function listWinRateAnalysis(env: Env): Promise<WinRateEntry[]> {
+  const result = await env.DB.prepare("SELECT result_json FROM game_records ORDER BY created_at DESC LIMIT 500")
+    .all<{ result_json: string }>();
+  const winners = result.results.map((record) => readRecordWinner(parseRecordResult(record.result_json))).filter((winner): winner is GameWinner => Boolean(winner));
+  const total = winners.length;
+  const order: GameWinner[] = ["villagers", "werewolves", "foxes", "lovers"];
+  return order.map((winner) => {
+    const wins = winners.filter((value) => value === winner).length;
+    return {
+      winner,
+      label: winnerDisplayLabel(winner),
+      wins,
+      total,
+      rate: total > 0 ? Math.round((wins / total) * 10000) / 100 : 0
+    };
+  });
+}
+
+async function getWinRateAnalysis(env: Env): Promise<Response> {
+  return json({ winRates: await listWinRateAnalysis(env) });
+}
+
 function parseRecordResult(value: string): unknown {
   try {
     return JSON.parse(value);
@@ -1288,8 +1323,16 @@ export default {
       return getLeaderboard(env);
     }
 
+    if (request.method === "GET" && url.pathname === "/api/stats/win-rate") {
+      return getWinRateAnalysis(env);
+    }
+
     if (request.method === "GET" && url.pathname === "/leaderboard") {
       return html(renderLeaderboard(await listLeaderboard(env)));
+    }
+
+    if (request.method === "GET" && url.pathname === "/stats") {
+      return html(renderWinRateAnalysis(await listWinRateAnalysis(env)));
     }
 
     if (request.method === "GET" && url.pathname === "/list") {

@@ -115,6 +115,14 @@ export interface LeaderboardEntry extends PlayerStats {
   rank: number;
 }
 
+export interface WinRateEntry {
+  winner: GameWinner;
+  label: string;
+  wins: number;
+  total: number;
+  rate: number;
+}
+
 export interface GameRecordSummary {
   id: number;
   roomId: string;

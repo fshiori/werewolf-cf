@@ -13,6 +13,9 @@ function responseFor(path, method = "GET") {
   if (path === "/leaderboard" && method === "GET") {
     return { contentType: "text/html", body: "<!doctype html><title>戰績排行榜</title>" };
   }
+  if (path === "/stats" && method === "GET") {
+    return { contentType: "text/html", body: "<!doctype html><title>勝率分析 統計場數</title>" };
+  }
   if (path === "/list" && method === "GET") {
     return { contentType: "text/html", body: "<!doctype html><title>聯合遊戲列表 本伺服器</title>" };
   }

@@ -183,6 +183,9 @@ function envWithRooms(
             if (query.includes("FROM bbs_topics")) {
               return { results: bbsTopics };
             }
+            if (query.includes("FROM game_records")) {
+              return { results: Object.values(records).flat().sort((a, b) => b.created_at.localeCompare(a.created_at)) };
+            }
             if (query.includes("FROM player_stats")) {
               if (query.includes("GROUP BY COALESCE")) {
                 const grouped = new Map<string, { player_id: string; games_played: number; wins: number; losses: number }>();
@@ -851,6 +854,26 @@ describe("worker routes", () => {
     expect(body).toContain("戰績排行榜");
     expect(body).toContain("/player/player_top");
     expect(body).toContain("player_top");
+  });
+
+  it("renders win-rate analysis page", async () => {
+    const response = await worker.fetch(
+      new Request("http://example.test/stats"),
+      envWithRooms([], {}, {}, {
+        room_a: [
+          { id: 1, room_id: "room_a", result_json: "{\"winner\":\"villagers\"}", created_at: "2026-05-06 12:00:00" },
+          { id: 2, room_id: "room_a", result_json: "{\"winner\":\"werewolves\"}", created_at: "2026-05-06 12:01:00" },
+          { id: 3, room_id: "room_a", result_json: "{\"winner\":\"villagers\"}", created_at: "2026-05-06 12:02:00" }
+        ]
+      })
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.text();
+    expect(body).toContain("勝率分析");
+    expect(body).toContain("－人勝－");
+    expect(body).toContain("2 / 3");
+    expect(body).toContain("勝率 66.67 %");
   });
 
   it("renders federated list page from local rooms", async () => {
@@ -1609,6 +1632,30 @@ describe("worker routes", () => {
         { rank: 1, playerId: "player_a", gamesPlayed: 6, wins: 3, losses: 3 },
         { rank: 2, playerId: "player_b", gamesPlayed: 5, wins: 3, losses: 2 },
         { rank: 3, playerId: "player_c", gamesPlayed: 4, wins: 1, losses: 3 }
+      ]
+    });
+  });
+
+  it("returns win-rate analysis from game records", async () => {
+    const response = await worker.fetch(
+      new Request("http://example.test/api/stats/win-rate"),
+      envWithRooms([], {}, {}, {
+        room_a: [
+          { id: 1, room_id: "room_a", result_json: "{\"winner\":\"villagers\"}", created_at: "2026-05-06 12:00:00" },
+          { id: 2, room_id: "room_a", result_json: "{\"winner\":\"werewolves\"}", created_at: "2026-05-06 12:01:00" },
+          { id: 3, room_id: "room_a", result_json: "{\"winner\":\"villagers\"}", created_at: "2026-05-06 12:02:00" },
+          { id: 4, room_id: "room_a", result_json: "{\"winner\":\"foxes\"}", created_at: "2026-05-06 12:03:00" }
+        ]
+      })
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      winRates: [
+        { winner: "villagers", label: "人勝", wins: 2, total: 4, rate: 50 },
+        { winner: "werewolves", label: "狼勝", wins: 1, total: 4, rate: 25 },
+        { winner: "foxes", label: "狐勝", wins: 1, total: 4, rate: 25 },
+        { winner: "lovers", label: "戀勝", wins: 0, total: 4, rate: 0 }
       ]
     });
   });
