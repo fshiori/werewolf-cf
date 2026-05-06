@@ -19,6 +19,7 @@ Implemented Cloudflare artifacts:
 - Local rendered UI smoke: `scripts/smoke-local-ui.mjs`
 - Reference asset inventory: `docs/reference-asset-inventory.md`, `scripts/inventory-reference-assets.mjs`
 - Rule parity manifest: `docs/rule-parity-manifest.md`
+- Visual parity checklist: `docs/visual-parity-checklist.md`
 - Automated tests: `tests/`
 
 Reference files inspected:
@@ -47,8 +48,8 @@ Reference files inspected:
 | Reference room player grid visual style | `renderRoom`, `.player-card`, `.player-icon`, role/death/vote styling; client emits reference role icons and colored role text for revealed roles plus grave fallback for dead players | Partial |
 | Reference chat/log/death/vote sections | Room page has chat/game log/records/events; public and private channel/action events, including objection notifications and player leave events, persist to `room_events`; private transcript entries are hidden from `/events` and `/log` until the room status is ended | Partial |
 | Reference icons and bitmap assets | R2 upload exists; `docs/reference-asset-inventory.md` classifies 130 reference assets; `/assets/reference/:path` serves vetted copied R2 assets; top chrome, home room-list status/options, rules role rows, live revealed role markers, and game-record victory rows emit reference image URLs with text fallback | Partial |
-| Browser E2E/manual visual verification | Local HTTP UI smoke only; no installed browser detected | Missing |
-| Screenshot/visual parity against ref | No screenshot baseline or comparison artifact | Missing |
+| Browser E2E/manual visual verification | Local HTTP UI smoke plus `docs/visual-parity-checklist.md` capture plan; no installed browser detected | Partial |
+| Screenshot/visual parity against ref | `docs/visual-parity-checklist.md` defines the capture matrix and evidence paths; no screenshot baseline has been generated | Missing |
 | Complete PHP rule parity | `docs/rule-parity-manifest.md` maps PHP rule areas to TypeScript artifacts and focused tests; core roles/options implemented; focused tests cover lover-only normal wins, one-lover non-wins, big-wolf win counting, child-fox fox wins, vote visibility, non-realtime silence acceleration, timed sudden-death warning windows, and timed sudden-death alarm handling | Partial |
 | Federated room list (`list.php`) | `/list` renders a reference-style federated list from local D1 rooms and optional remote peers configured by KV `federated_servers`; failed peers are ignored | Partial |
 | Discussion board (`bbs.php`) | `/bbs` renders a reference-style topic list, digest-topic list, topic detail view, post form, reply form, and topic moderation panel backed by D1 `bbs_topics`/`bbs_replies`; token-protected moderation can pin, lock, and mark digest topics | Partial |
@@ -106,11 +107,11 @@ Reference files inspected:
 
 1. Continue improving `/room/:roomId/log` toward PHP-compatible viewer-specific transcript masking; day/phase grouping, historical vote tables, private talk/action transcript persistence, self-talk, old-log heaven/reverse display modes, and major per-location styling are now in place.
 2. Continue converting the remaining partial/missing rows in `docs/rule-parity-manifest.md` into focused tests and implementation slices.
-3. Add a visual parity checklist with screenshots once a browser is available in the environment.
+3. Run `docs/visual-parity-checklist.md` and attach screenshots once a browser is available in the environment.
 4. Continue reducing remaining legacy menu/page gaps; the room-admin end screen exists, but other PHP-era server management pages are still not mapped.
 
 ## Current Verification Gaps
 
 - No Playwright/browser E2E is installed or runnable in the current environment; `chromium`, `chromium-browser`, `google-chrome`, and `chrome` were not found.
 - Local rendered UI smoke verifies HTTP-rendered pages but does not execute browser JavaScript.
-- No screenshot baseline exists against the reference PHP UI.
+- `docs/visual-parity-checklist.md` now defines the manual/browser evidence pass, but no screenshot baseline exists against the reference PHP UI.

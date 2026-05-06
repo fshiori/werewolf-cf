@@ -38,7 +38,7 @@ Purpose: map the PHP rule surface to the current Cloudflare TypeScript implement
 | D1 records and player stats | `game_functions.php` old log/stat paths | `src/room.ts` `syncRoomStatus`, `src/index.ts` record/stat routes | `tests/room.test.ts` final record/stat sync; `tests/index.test.ts` records/profile/leaderboard tests | Implemented | Database writes are batched at game end as required by the Cloudflare port constraints. |
 | Betrayer/cult asset naming | `setting.php`, `index.php`, `game_functions.php`, `game_vote.php`, `lang/jpn/rule.php` | `src/types.ts` `betrayer`; `src/game.ts` `applyRoomOptions`, linked deaths; `src/render.ts`, `src/room-client.ts` role icon/label | `tests/game.test.ts` betrayer option and linked-death tests; `tests/render.test.ts` betrayer label/icon tests; `docs/reference-betrayer-cult-extraction.md` | Implemented | Reference `role_cult.gif`/`role_cult_partner.gif` are assigned to `$role_betr_image`; no separate cult rule path was found in this build. |
 | Viewer-specific transcript masking | `game_functions.php` talk output branches | `src/index.ts` private-event filtering and transcript viewer query validation; `src/render.ts` transcript grouping/styling plus `viewer=public/player/dead/gm` masks | `tests/index.test.ts` private event hidden until ended and transcript viewer query tests; `tests/render.test.ts` transcript location styling and viewer-mode filtering | Partial | Additive viewer modes now cover public, own-player private, dead/heaven, and GM transcript perspectives; exact PHP layout/identity authentication remains partial. |
-| Visual/browser parity | `game_view.php`, `game_play.php`, `index.php` | `src/render.ts`, `src/room-client.ts` | `scripts/smoke-local-ui.mjs`, `tests/local-ui-smoke.test.mjs` | Partial | No browser or screenshot baseline is available in this environment. |
+| Visual/browser parity | `game_view.php`, `game_play.php`, `index.php` | `src/render.ts`, `src/room-client.ts`, `docs/visual-parity-checklist.md` | `scripts/smoke-local-ui.mjs`, `tests/local-ui-smoke.test.mjs` | Partial | Manual/browser capture matrix exists; no browser or screenshot baseline is available in this environment. |
 
 ## Verification Gates
 
@@ -54,4 +54,4 @@ Current parity work should continue to pass:
 
 1. Add focused tests for any newly discovered victory edge cases from `game_functions.php`.
 2. Decide whether viewer-specific old-log masking should be implemented as separate endpoints/modes or as parameters on `/room/:roomId/log`.
-3. Add screenshot-based UI parity once a browser is available.
+3. Run `docs/visual-parity-checklist.md` and add screenshot-based UI parity once a browser is available.
