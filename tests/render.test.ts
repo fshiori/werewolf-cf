@@ -529,6 +529,8 @@ describe("render", () => {
     const html = renderIconCatalog();
 
     expect(html).toContain("頭像一覽");
+    expect(html).toContain("/assets/reference/img/icon_view_title.jpg");
+    expect(html).toContain("/assets/reference/img/icon_view_bg.jpg");
     expect(html).toContain("/assets/reference/user_icon/001.gif");
     expect(html).toContain("/assets/reference/user_icon/010.gif");
     expect(html).toContain("#DDDDDD");
@@ -539,6 +541,8 @@ describe("render", () => {
     expect(html).toContain('data-icon-path="user_icon/001.gif"');
     expect(html).toContain('localStorage.setItem("werewolf_cf_default_icon", iconPath)');
     expect(html).toContain("上傳頭像");
+    expect(html).toContain("/assets/reference/img/icon_upload_title.jpg");
+    expect(html).toContain("/assets/reference/img/icon_upload_bg.jpg");
     expect(html).toContain('id="upload"');
     expect(html).toContain("iconUploadFile");
     expect(html).toContain("iconUploadButton");

@@ -1410,8 +1410,9 @@ export function renderIconCatalog(): string {
   }).join("");
 
   return page("Icons", shell(`
-    <fieldset>
+    <fieldset style="background-image:url('/assets/reference/img/icon_view_bg.jpg'); background-repeat: repeat;">
       <legend><strong>頭像一覽</strong></legend>
+      <p><img class="title-img" src="/assets/reference/img/icon_view_title.jpg" alt="頭像一覽"></p>
       <table class="form-table">
         <tr><td><strong>　來源：</strong></td><td>Reference default icons copied to R2 under <code>reference/user_icon/</code>.</td></tr>
         <tr><td><strong>　尺寸：</strong></td><td>32 x 32</td></tr>
@@ -1422,8 +1423,9 @@ export function renderIconCatalog(): string {
         <tbody>${rows}</tbody>
       </table>
     </fieldset>
-    <fieldset id="upload">
+    <fieldset id="upload" style="background-image:url('/assets/reference/img/icon_upload_bg.jpg'); background-repeat: repeat;">
       <legend><strong>上傳頭像</strong></legend>
+      <p><img class="title-img" src="/assets/reference/img/icon_upload_title.jpg" alt="上傳頭像"></p>
       <table class="form-table">
         <tr>
           <td><label><strong>　玩家ID：</strong></label></td>
