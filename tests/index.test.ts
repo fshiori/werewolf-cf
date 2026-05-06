@@ -1657,11 +1657,48 @@ describe("worker routes", () => {
     );
 
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ posted: true });
+    expect(await response.json()).toEqual({ posted: true, replyCount: 1, page: 1 });
     const batches = (env as unknown as { batches: Array<Array<{ query: string; values: unknown[] }>> }).batches;
     expect(batches[0][0].query).toContain("INSERT INTO bbs_replies");
     expect(batches[0][0].values.slice(0, 3)).toEqual([1, "Bob", "Reply body"]);
     expect(batches[0][1].query).toContain("UPDATE bbs_topics SET reply_count = reply_count + 1");
+  });
+
+  it("returns the target BBS reply page after creating replies", async () => {
+    const replies = Array.from({ length: 11 }, (_, index) => ({
+      id: index + 1,
+      topic_id: 1,
+      name: "Bob",
+      message: `Reply ${index + 1}`,
+      trip_hash: null,
+      created_at: "2026-05-06 12:10:00"
+    }));
+    const env = envWithRooms([], {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, new Set(), new Set(), {}, [
+      {
+        id: 1,
+        name: "Alice",
+        title: "Welcome",
+        message: "Topic body",
+        trip_hash: null,
+        reply_count: 10,
+        pinned: 0,
+        locked: 0,
+        digest: 0,
+        created_at: "2026-05-06 12:00:00",
+        updated_at: "2026-05-06 12:00:00"
+      }
+    ], replies);
+    const response = await worker.fetch(
+      new Request("http://example.test/api/bbs/topics/1/replies", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ name: "Bob", message: "Reply body" })
+      }),
+      env
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ posted: true, replyCount: 11, page: 2 });
   });
 
   it("rejects replies to locked BBS topics", async () => {
