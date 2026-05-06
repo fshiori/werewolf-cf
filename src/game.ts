@@ -71,12 +71,17 @@ export function createLobbyState(roomId: string): GameState {
 }
 
 export function publicPlayers(players: GamePlayer[]): PublicGamePlayer[] {
-  return players.map(({ playerId, nickname, alive }) => ({ playerId, nickname, alive }));
+  return players.map(({ playerId, nickname, alive, iconPath }) => ({
+    playerId,
+    nickname,
+    alive,
+    ...(iconPath ? { iconPath } : {})
+  }));
 }
 
 export function upsertLobbyPlayer(
   state: GameState,
-  member: RoomMember & { tripHash?: string; wishRole?: GamePlayer["role"] },
+  member: RoomMember & { tripHash?: string; wishRole?: GamePlayer["role"]; iconPath?: string },
   maxPlayers = Number.POSITIVE_INFINITY
 ): GameState {
   if (state.phase !== "lobby") {
@@ -93,7 +98,7 @@ export function upsertLobbyPlayer(
       hostId: state.hostId ?? state.players[0]?.playerId,
       players: state.players.map((player) =>
         player.playerId === member.playerId
-          ? { ...player, nickname: member.nickname, tripHash: member.tripHash ?? player.tripHash, wishRole: member.wishRole }
+          ? { ...player, nickname: member.nickname, tripHash: member.tripHash ?? player.tripHash, wishRole: member.wishRole, iconPath: member.iconPath ?? player.iconPath }
           : player
       )
     };

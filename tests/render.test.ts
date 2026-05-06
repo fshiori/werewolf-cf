@@ -190,6 +190,9 @@ describe("render", () => {
     expect(html).toContain("#chatLog div, #gameLog div { border-top: 1px dashed silver; padding: 2px 4px; overflow-wrap: anywhere; word-break: break-word; }");
     expect(html).toContain("Trip");
     expect(html).toContain("avatarFile");
+    expect(html).toContain("defaultIcon");
+    expect(html).toContain("user_icon/001.gif");
+    expect(html).toContain("頭像一覽");
     expect(html).toContain("image/png,image/jpeg,image/gif,image/webp");
     expect(html).toContain("PNG/JPEG/GIF/WebP 512KiB以下");
     expect(html).toContain("removeAvatar");
@@ -236,11 +239,15 @@ describe("render", () => {
     expect(ROOM_CLIENT_SCRIPT).toContain('document.querySelector("[data-room-id]")');
     expect(ROOM_CLIENT_SCRIPT).toContain("new WebSocket");
     expect(ROOM_CLIENT_SCRIPT).toContain("werewolf_cf_trip");
+    expect(ROOM_CLIENT_SCRIPT).toContain("werewolf_cf_default_icon");
     expect(ROOM_CLIENT_SCRIPT).toContain("512 * 1024");
     expect(ROOM_CLIENT_SCRIPT).toContain("頭像需小於 512KiB");
     expect(ROOM_CLIENT_SCRIPT).toContain("/api/assets/avatar");
     expect(ROOM_CLIENT_SCRIPT).toContain('method: "DELETE"');
     expect(ROOM_CLIENT_SCRIPT).toContain("/assets/avatar/");
+    expect(ROOM_CLIENT_SCRIPT).toContain("iconPath");
+    expect(ROOM_CLIENT_SCRIPT).toContain("player.iconPath");
+    expect(ROOM_CLIENT_SCRIPT).toContain("referenceImage(player.iconPath, player.nickname)");
     expect(ROOM_CLIENT_SCRIPT).toContain('profileLink.href = "/player/" + player.playerId;');
     expect(ROOM_CLIENT_SCRIPT).toContain("gm_chat");
     expect(ROOM_CLIENT_SCRIPT).toContain("gm_whisper");
@@ -475,6 +482,7 @@ describe("render", () => {
 
     expect(html).toContain("WebSocket 入口");
     expect(html).toContain("GET /ws/room/:roomId");
+    expect(html).toContain("iconPath");
     expect(html).toContain("Client Messages");
     expect(html).toContain("wolf_chat / fox_chat / common_chat / lovers_chat");
     expect(html).toContain("gm_*");

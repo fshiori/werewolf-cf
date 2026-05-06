@@ -51,7 +51,7 @@ Reference files inspected:
 | Complete PHP rule parity | Core roles/options implemented, but no line-by-line rule parity manifest | Partial |
 | Federated room list (`list.php`) | No cross-server/federated list equivalent | Missing |
 | Discussion board (`bbs.php`) | No forum equivalent | Missing |
-| Icon catalog/upload parity | `/icons` renders the reference default icon catalog; avatar upload exists; join-time default icon picker is still missing | Partial |
+| Icon catalog/upload parity | `/icons` renders the reference default icon catalog; room join can send a vetted default `iconPath`; avatar upload exists | Partial |
 | Old logs (`old_log.php`) | `/room/:roomId/log` renders the D1 game-record and audit-event transcript summary; full talk/vote replay persistence is still missing | Partial |
 | Trip identity parity | Trip register/claim/exclusion exists, but no full reference-style Trip public lookup UI | Partial |
 
@@ -69,7 +69,7 @@ Reference files inspected:
 - Reference uses bitmap title/background/role/status/option/victory images such as `img/top_title.jpg`, `img/top_bg.jpg`, `img/playing.gif`, `img/waiting.gif`, role images, option icons, and victory result images. Current top chrome, room list, rules role rows, revealed live-room role markers, dead fallback, and game-record victory rows now emit copied R2 asset URLs while keeping text fallback.
 - Reference menu includes `聯合列表`, script info, old logs, icon view/upload, win-rate analysis, BBS, Trip registration. Current menu has the core app pages and a default icon catalog, but not every legacy page.
 - Reference room view has phase-specific body colors, manual/auto refresh links, login/resident registration links, and different layouts for spectator/player/heaven modes. Current room page is a single realtime WebSocket view.
-- Reference player list includes default icons, hover image swap, Trip links, role reveal text colors, already-voted background, and dead icon handling. Current player cards now emit reference role icons for revealed roles and a grave fallback for dead players, but still lack join-time default icon selection, hover image swap, and Trip links.
+- Reference player list includes default icons, hover image swap, Trip links, role reveal text colors, already-voted background, and dead icon handling. Current player cards now emit selected default icons, reference role icons for revealed roles, and a grave fallback for dead players, but still lack hover image swap and Trip links.
 - Reference talk log has many location-specific render paths: public day, night wolf, common, lovers, fox, self talk, heaven, GM broadcast/whisper, system action visibility, and post-game/dead visibility. Current WebSocket channels cover the major private channels, but the visual transcript is simpler.
 - Reference vote output renders per-day vote tables, open-vote visibility, revote messages, and dead/spectator differences. Current UI shows summary/action state, but not full historical vote-table rendering.
 
@@ -100,12 +100,10 @@ Reference files inspected:
 
 ## Next Concrete Work Items
 
-1. Wire copied R2 reference assets into remaining live-room markers and join-time default icon selection.
-2. Add join-time default icon picker parity for `user_manager.php` icon registration.
-3. Add full talk/vote/action transcript persistence so `/room/:roomId/log` can replay more than final records and audit events.
-4. Add a visual parity checklist with screenshots once a browser is available in the environment.
-5. Add focused parity tests for lover-only victory, heavy wolf/fox edge cases, silence/sudden death, and vote table visibility.
-6. Decide whether to implement or explicitly defer federated room list and BBS features.
+1. Add full talk/vote/action transcript persistence so `/room/:roomId/log` can replay more than final records and audit events.
+2. Add focused parity tests for lover-only victory, heavy wolf/fox edge cases, silence/sudden death, and vote table visibility.
+3. Add a visual parity checklist with screenshots once a browser is available in the environment.
+4. Decide whether to implement or explicitly defer federated room list and BBS features.
 
 ## Current Verification Gaps
 

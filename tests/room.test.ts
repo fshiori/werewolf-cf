@@ -379,6 +379,34 @@ describe("RoomDurableObject", () => {
     }
   });
 
+  it("publishes vetted default icon choices from websocket joins", async () => {
+    const room = roomObject();
+    const messages: SentMessage[] = [];
+    const socket = fakeSocket(messages);
+
+    await sendRaw(
+      room,
+      socket,
+      JSON.stringify({ type: "join", playerId: "player_icon", nickname: "Icon", iconPath: "user_icon/001.gif" })
+    );
+
+    expect(messages).toContainEqual(
+      expect.objectContaining({
+        type: "game_state",
+        players: [expect.objectContaining({ playerId: "player_icon", nickname: "Icon", alive: true, iconPath: "user_icon/001.gif" })]
+      })
+    );
+
+    const invalidMessages: SentMessage[] = [];
+    await sendRaw(
+      roomObject(),
+      fakeSocket(invalidMessages),
+      JSON.stringify({ type: "join", playerId: "player_icon", nickname: "Icon", iconPath: "img/grave.gif" })
+    );
+
+    expect(invalidMessages).toEqual([{ type: "error", message: "Invalid icon path" }]);
+  });
+
   it("reports websocket validation errors without crashing", async () => {
     const invalidPlayerMessages: SentMessage[] = [];
     await sendRaw(

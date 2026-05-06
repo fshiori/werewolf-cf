@@ -176,6 +176,16 @@ export function validateOptionalLastWordsText(value: string): string {
   return text;
 }
 
+export function validateIconPath(value: unknown): string | undefined {
+  if (value === undefined || value === null || value === "") {
+    return undefined;
+  }
+  if (typeof value !== "string" || !/^user_icon\/00[1-9]\.gif$|^user_icon\/010\.gif$/.test(value)) {
+    throw new Error("Invalid icon path");
+  }
+  return value;
+}
+
 export function escapeHtml(value: string): string {
   return value
     .replaceAll("&", "&amp;")
@@ -201,12 +211,16 @@ export function parseClientMessage(raw: string): ClientMessage {
     if (typeof parsed.playerId !== "string" || typeof parsed.nickname !== "string") {
       throw new Error("Invalid join message");
     }
+    const trip = typeof parsed.trip === "string" && parsed.trip.trim() ? validateTrip(parsed.trip) : undefined;
+    const wishRole = validateWishRole(parsed.wishRole);
+    const iconPath = validateIconPath(parsed.iconPath);
     return {
       type: "join",
       playerId: parsed.playerId,
       nickname: parsed.nickname,
-      trip: typeof parsed.trip === "string" && parsed.trip.trim() ? validateTrip(parsed.trip) : undefined,
-      wishRole: validateWishRole(parsed.wishRole)
+      ...(trip ? { trip } : {}),
+      ...(wishRole ? { wishRole } : {}),
+      ...(iconPath ? { iconPath } : {})
     };
   }
 
