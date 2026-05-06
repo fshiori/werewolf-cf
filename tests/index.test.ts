@@ -955,6 +955,9 @@ describe("worker routes", () => {
       ["/icon_upload.php", "上傳頭像"],
       ["/rule.php", "基本流程"],
       ["/script_info.php", "Script Info"],
+      ["/stats.php", "勝率分析"],
+      ["/trip.php", "身份登錄"],
+      ["/version.php", "Version"],
       ["/admin.php", "管理選單"],
       ["/game_log.php?room_no=room_finished", "村子完整紀錄"]
     ] as const;
