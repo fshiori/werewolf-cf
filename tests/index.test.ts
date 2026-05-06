@@ -2555,6 +2555,45 @@ describe("worker routes", () => {
     expect(invalidPlayerView.status).toBe(400);
   });
 
+  it("shows teammate private channel rows in player transcript view", async () => {
+    const env = envWithRooms(
+      ["room_log"],
+      { "room_status:room_log": "ended" },
+      {},
+      {
+        room_log: [
+          {
+            id: 1,
+            room_id: "room_log",
+            result_json: '{"winner":"villagers","day":3,"players":[{"playerId":"player_wolf_a","nickname":"Wolf A","role":"werewolf","alive":true},{"playerId":"player_wolf_b","nickname":"Wolf B","role":"big_wolf","alive":true},{"playerId":"player_seer","nickname":"Seer","role":"seer","alive":true}]}',
+            created_at: "2026-05-06 12:00:00"
+          }
+        ]
+      },
+      {
+        room_log: [
+          {
+            id: 1,
+            room_id: "room_log",
+            player_id: "player_wolf_b",
+            event_type: "wolf_chat",
+            payload_json: '{"visibility":"private","nickname":"Wolf B","text":"pack message","phase":"night","day":2}',
+            created_at: "2026-05-06 12:02:00"
+          }
+        ]
+      }
+    );
+
+    const wolfView = await worker.fetch(new Request("http://example.test/room/room_log/log?viewer=player&viewer_player_id=player_wolf_a&heaven_talk=on"), env);
+    const wolfBody = await wolfView.text();
+    expect(wolfBody).toContain("pack message");
+    expect(wolfBody).toContain("可聽見的同陣營密談");
+
+    const seerView = await worker.fetch(new Request("http://example.test/room/room_log/log?viewer=player&viewer_player_id=player_seer&heaven_talk=on"), env);
+    const seerBody = await seerView.text();
+    expect(seerBody).not.toContain("pack message");
+  });
+
   it("renders protocol page", async () => {
     const response = await worker.fetch(new Request("http://example.test/protocol"), envWithRooms([]));
 
