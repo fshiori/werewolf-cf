@@ -1010,6 +1010,9 @@ describe("render", () => {
 
     const playerView = renderRoomTranscript("room_abc", [], events, { viewerMode: "player", viewerPlayerId: "player_wolf", heavenTalk: true });
     expect(playerView).toContain("玩家 player_wolf");
+    expect(playerView).toContain("玩家視點");
+    expect(playerView).toContain('<option value="player_wolf" selected>Wolf (player_wolf)</option>');
+    expect(playerView).toContain("/room/room_abc/log?heaven_talk=on&amp;viewer=player&amp;viewer_player_id=player_wolf");
     expect(playerView).toContain("howl");
     expect(playerView).not.toContain("內容:heaven");
     expect(playerView).not.toContain("內容:mutter");
@@ -1053,11 +1056,20 @@ describe("render", () => {
     );
 
     expect(html).toContain("reverse_log=on");
-    expect(html.indexOf("second")).toBeLessThan(html.indexOf("first"));
+    expect(html.indexOf("內容:second")).toBeLessThan(html.indexOf("內容:first"));
   });
 
   it("preserves transcript viewer parameters across old-log display links", () => {
-    const html = renderRoomTranscript("room_abc", [], [], {
+    const html = renderRoomTranscript("room_abc", [], [
+      {
+        id: 1,
+        roomId: "room_abc",
+        playerId: "player_wolf",
+        eventType: "wolf_chat",
+        payload: { visibility: "private", nickname: "Wolf", text: "howl", phase: "night", day: 2 },
+        createdAt: "2026-05-06 12:01:00"
+      }
+    ], {
       viewerMode: "player",
       viewerPlayerId: "player_wolf",
       heavenTalk: true,
@@ -1068,6 +1080,9 @@ describe("render", () => {
     expect(html).toContain("/room/room_abc/log?viewer=player&amp;viewer_player_id=player_wolf&amp;reverse_log=on&amp;heaven_talk=on");
     expect(html).toContain("/room/room_abc/log?reverse_log=on&amp;heaven_talk=on&amp;viewer=public");
     expect(html).toContain("/room/room_abc/log?reverse_log=on&amp;heaven_talk=on&amp;viewer=gm");
+    expect(html).toContain('<input type="hidden" name="reverse_log" value="on">');
+    expect(html).toContain('<input type="hidden" name="heaven_talk" value="on">');
+    expect(html).toContain('<option value="player_wolf" selected>Wolf (player_wolf)</option>');
   });
 
   it("renders implemented rules page", () => {
