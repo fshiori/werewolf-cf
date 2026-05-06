@@ -59,6 +59,13 @@ describe("render", () => {
     expect(html).toContain("建立村子");
     expect(html).toContain("村子說明");
     expect(html).toContain("限時 5/2");
+    expect(html).toContain('/assets/reference/img/waiting.gif');
+    expect(html).toContain('/assets/reference/img/max30.gif');
+    expect(html).toContain('/assets/reference/img/room_option_real_time.gif');
+    expect(html).toContain('/assets/reference/img/room_option_poison.gif');
+    expect(html).toContain('/assets/reference/img/room_option_wfbig.gif');
+    expect(html).toContain('/assets/reference/img/room_option_trip.gif');
+    expect(html).toContain('class="ref-icon"');
     expect(html).toContain("&lt;Test&gt;");
     expect(html).toContain("&lt;Friendly&gt;");
     expect(html).toContain("最大30");

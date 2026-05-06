@@ -63,6 +63,7 @@ function page(title: string, body: string): string {
       padding: 0 3px;
       margin-left: 2px;
     }
+    .ref-icon { width: 16px; height: 16px; border: 0; vertical-align: text-bottom; margin-right: 2px; }
     .form-table td { padding: 4px 2px; vertical-align: top; }
     .game-shell { width: 800px; margin: 8px auto 18px; }
     .game-shell > tbody > tr > td { padding: 0 0 8px; }
@@ -206,6 +207,29 @@ function formatEventPayload(payload: unknown): string {
     typeof value.role === "string" ? `角色:${roleLabel(value.role)}` : ""
   ].filter(Boolean);
   return fields.length ? fields.join("　") : "";
+}
+
+function referenceAssetImg(path: string, alt: string): string {
+  return `<img class="ref-icon" src="/assets/reference/${escapeHtml(path)}" alt="${escapeHtml(alt)}" title="${escapeHtml(alt)}">`;
+}
+
+function optionMark(label: string, iconPath?: string): string {
+  return `<span class="option-mark">${iconPath ? referenceAssetImg(iconPath, label) : ""}${escapeHtml(label)}</span>`;
+}
+
+function roomStatusIcon(status: RoomSummary["status"]): string {
+  if (status === "lobby") {
+    return referenceAssetImg("img/waiting.gif", "募集中");
+  }
+  if (status === "playing") {
+    return referenceAssetImg("img/playing.gif", "遊戲中");
+  }
+  return referenceAssetImg("img/endroom.gif", "終了");
+}
+
+function maxPlayersMark(maxPlayers: number): string {
+  const iconPath = [8, 16, 22, 23, 30].includes(maxPlayers) ? `img/max${maxPlayers}.gif` : undefined;
+  return optionMark(`最大${String(maxPlayers)}`, iconPath);
 }
 
 function readRecordPlayers(record: GameRecordSummary): Record<string, unknown>[] {
@@ -398,32 +422,32 @@ export function renderHome(rooms: RoomSummary[], announcement = DEFAULT_ANNOUNCE
     : rooms.map((room) => {
       const status = escapeHtml(room.status);
       const optionMarks = [
-        room.options.realTime ? `<span class="option-mark">限時 ${escapeHtml(String(room.options.dayMinutes))}/${escapeHtml(String(room.options.nightMinutes))}</span>` : `<span class="option-mark">即時</span>`,
-        room.options.poison ? `<span class="option-mark">埋毒</span>` : "",
-        room.options.bigWolf ? `<span class="option-mark">大狼</span>` : "",
-        room.options.authority ? `<span class="option-mark">權力</span>` : "",
-        room.options.decider ? `<span class="option-mark">決定</span>` : "",
-        room.options.lovers ? `<span class="option-mark">戀人</span>` : "",
-        room.options.betrayer ? `<span class="option-mark">背德</span>` : "",
-        room.options.childFox ? `<span class="option-mark">子狐</span>` : "",
-        room.options.twoFoxes ? `<span class="option-mark">雙狐</span>` : "",
-        room.options.cat ? `<span class="option-mark">貓又</span>` : "",
-        room.options.lastWords ? `<span class="option-mark">遺言</span>` : "",
-        room.options.openVote ? `<span class="option-mark">公開票</span>` : "",
-        room.options.commonTalkVisible ? `<span class="option-mark">共有聲</span>` : "",
-        room.options.deadRoleVisible ? `<span class="option-mark">靈視</span>` : "",
-        room.options.wishRole ? `<span class="option-mark">希望</span>` : "",
-        room.options.tripRequired ? `<span class="option-mark">Trip限定</span>` : "",
-        room.options.gmEnabled ? `<span class="option-mark">GM制</span>` : "",
-        room.options.dummyBoy ? `<span class="option-mark">替身</span>` : "",
-        room.options.customDummy ? `<span class="option-mark">自訂替身</span>` : "",
-        room.options.selfVote ? `<span class="option-mark">自投</span>` : "",
-        room.options.voteStatus ? `<span class="option-mark">投票済</span>` : ""
+        room.options.realTime ? optionMark(`限時 ${String(room.options.dayMinutes)}/${String(room.options.nightMinutes)}`, "img/room_option_real_time.gif") : optionMark("即時", "img/room_option_real_time.gif"),
+        room.options.poison ? optionMark("埋毒", "img/room_option_poison.gif") : "",
+        room.options.bigWolf ? optionMark("大狼", "img/room_option_wfbig.gif") : "",
+        room.options.authority ? optionMark("權力", "img/room_option_authority.gif") : "",
+        room.options.decider ? optionMark("決定", "img/room_option_decide.gif") : "",
+        room.options.lovers ? optionMark("戀人", "img/room_option_lovers.gif") : "",
+        room.options.betrayer ? optionMark("背德", "img/room_option_betr.gif") : "",
+        room.options.childFox ? optionMark("子狐", "img/room_option_fosi.gif") : "",
+        room.options.twoFoxes ? optionMark("雙狐", "img/room_option_foxs.gif") : "",
+        room.options.cat ? optionMark("貓又", "img/room_option_cat.gif") : "",
+        room.options.lastWords ? optionMark("遺言", "img/room_option_will.gif") : "",
+        room.options.openVote ? optionMark("公開票", "img/room_option_open_vote.gif") : "",
+        room.options.commonTalkVisible ? optionMark("共有聲", "img/room_option_common.gif") : "",
+        room.options.deadRoleVisible ? optionMark("靈視", "img/rei.gif") : "",
+        room.options.wishRole ? optionMark("希望", "img/room_option_wish_role.gif") : "",
+        room.options.tripRequired ? optionMark("Trip限定", "img/room_option_trip.gif") : "",
+        room.options.gmEnabled ? optionMark("GM制", "img/room_option_gm.gif") : "",
+        room.options.dummyBoy ? optionMark("替身", "img/room_option_dummy_boy.gif") : "",
+        room.options.customDummy ? optionMark("自訂替身", "img/room_option_dummy_boy.gif") : "",
+        room.options.selfVote ? optionMark("自投", "img/room_option_voteme.gif") : "",
+        room.options.voteStatus ? optionMark("投票済", "img/conn_look.gif") : ""
       ].filter(Boolean).join(" ");
       return `<div class="room-link">
-        <a href="/room/${escapeHtml(room.id)}"><span class="room-line"><span class="status status-${status}">${status}</span><small>[${escapeHtml(room.id)}]</small> ${escapeHtml(room.name)}村</span></a>
+        <a href="/room/${escapeHtml(room.id)}"><span class="room-line"><span class="status status-${status}">${roomStatusIcon(room.status)}${status}</span><small>[${escapeHtml(room.id)}]</small> ${escapeHtml(room.name)}村</span></a>
         <small> <a href="/room/${escapeHtml(room.id)}">入村</a></small>
-        <small class="room-comment">${room.comment ? `～${escapeHtml(room.comment)}～ ` : ""}<span class="option-mark">最大${escapeHtml(String(room.maxPlayers))}</span> ～建立時間：${escapeHtml(room.createdAt)}～ ${optionMarks}</small>
+        <small class="room-comment">${room.comment ? `～${escapeHtml(room.comment)}～ ` : ""}${maxPlayersMark(room.maxPlayers)} ～建立時間：${escapeHtml(room.createdAt)}～ ${optionMarks}</small>
       </div>`;
     }).join("");
 
