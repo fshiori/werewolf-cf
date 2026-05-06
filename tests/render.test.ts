@@ -97,6 +97,8 @@ describe("render", () => {
     expect(html).toContain("頭像上傳");
     expect(html).toContain("/bbs");
     expect(html).toContain("人狼討論");
+    expect(html).toContain("/bbs?digest=1");
+    expect(html).toContain("精華文章");
     expect(html).toContain("/status");
     expect(html).toContain("伺服器狀態");
     expect(html).toContain("/rules");
