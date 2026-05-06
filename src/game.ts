@@ -244,7 +244,11 @@ function removeLobbyKickVotes(votes: Record<string, string[]> | undefined, playe
   );
 }
 
-export function castLobbyStartVote(state: GameState, playerId: string): { state: GameState; ready: boolean; votedPlayerIds: string[]; required: number } {
+export function castLobbyStartVote(
+  state: GameState,
+  playerId: string,
+  options: Pick<RoomOptions, "dummyBoy"> = { dummyBoy: false }
+): { state: GameState; ready: boolean; votedPlayerIds: string[]; required: number } {
   if (state.phase !== "lobby") {
     throw new Error("Start votes are only available before the game starts");
   }
@@ -258,14 +262,16 @@ export function castLobbyStartVote(state: GameState, playerId: string): { state:
     Object.entries({ ...(state.lobbyStartVotes ?? {}), [playerId]: true }).filter(([voterId]) => currentPlayerIds.has(voterId))
   );
   const votedPlayerIds = state.players.filter((player) => nextVotes[player.playerId]).map((player) => player.playerId);
-  const required = Math.max(state.players.length, LOBBY_START_VOTE_MIN_PLAYERS);
+  const dummyCredit = options.dummyBoy ? 1 : 0;
+  const required = Math.max(state.players.length + dummyCredit, LOBBY_START_VOTE_MIN_PLAYERS);
+  const effectiveVoteCount = votedPlayerIds.length + dummyCredit;
   return {
     state: {
       ...state,
       lobbyStartVotes: nextVotes,
       log: alreadyVoted ? state.log : [...state.log, `${voter.nickname} 投下開始遊戲一票。`]
     },
-    ready: votedPlayerIds.length >= required,
+    ready: effectiveVoteCount >= required,
     votedPlayerIds,
     required
   };
