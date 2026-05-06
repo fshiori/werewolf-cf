@@ -1040,6 +1040,8 @@ describe("worker routes", () => {
     expect(body).toContain("Bob");
     expect(body).toContain("Reply body");
     expect(body).toContain("/api/bbs/topics/1/replies");
+    expect(body).toContain("主題管理");
+    expect(body).toContain("/api/bbs/topics/1/moderation");
   });
 
   it("returns BBS topic details", async () => {

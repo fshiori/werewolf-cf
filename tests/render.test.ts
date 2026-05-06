@@ -577,6 +577,14 @@ describe("render", () => {
     expect(html).toContain("Reply body");
     expect(html).toContain("/api/bbs/topics/1/replies");
     expect(html).toContain("狀態");
+    expect(html).toContain("主題管理");
+    expect(html).toContain("bbsAdminToken");
+    expect(html).toContain("werewolf_cf_bbs_admin_token");
+    expect(html).toContain("/api/bbs/topics/1/moderation");
+    expect(html).toContain('"x-bbs-admin-token": token');
+    expect(html).toContain("bbsModeratePinned");
+    expect(html).toContain("bbsModerateLocked");
+    expect(html).toContain("bbsModerateDigest");
   });
 
   it("renders room records as a normal HTML page", () => {
