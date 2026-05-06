@@ -235,6 +235,8 @@ describe("render", () => {
     expect(html).toContain("/room/room_abc/log");
     expect(html).toContain("完整紀錄");
     expect(html).toContain(".player-card.voted");
+    expect(html).toContain(".revealed-role");
+    expect(html).toContain(".role-werewolf");
     expect(html).toContain("權力者");
     expect(html).toContain("玩家列表");
     expect(html).toContain("能力發動 / 投票");
@@ -305,6 +307,7 @@ describe("render", () => {
     expect(ROOM_CLIENT_SCRIPT).toContain('referenceImage("img/grave.gif", "死亡")');
     expect(ROOM_CLIENT_SCRIPT).toContain('image.src = "/assets/reference/" + path;');
     expect(ROOM_CLIENT_SCRIPT).toContain("roleLabel(msg.role)");
+    expect(ROOM_CLIENT_SCRIPT).toContain('roleText.className = "revealed-role role-" + revealedRole;');
     expect(ROOM_CLIENT_SCRIPT).toContain("winnerLabel(game.winner)");
     expect(ROOM_CLIENT_SCRIPT).toContain("isWolfRole(role)");
     expect(ROOM_CLIENT_SCRIPT).toContain("msg.authority");

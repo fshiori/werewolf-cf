@@ -102,6 +102,13 @@ function page(title: string, body: string): string {
     }
     .player-icon img { width: 42px; height: 42px; object-fit: cover; display: block; }
     .player-name { padding-left: 5px; max-width: 96px; overflow-wrap: anywhere; word-break: break-word; }
+    .revealed-role { font-weight: bold; }
+    .role-villager, .role-medium, .role-common { color: #0066cc; }
+    .role-werewolf, .role-big_wolf { color: #cc0000; }
+    .role-seer, .role-guard { color: #660099; }
+    .role-madman, .role-betrayer { color: #cc6600; }
+    .role-fox, .role-child_fox { color: #990099; }
+    .role-poison, .role-cat { color: #008800; }
     .dead { background: #303030; color: #dddddd; text-decoration: line-through; }
     #chatLog {
       height: 280px;
