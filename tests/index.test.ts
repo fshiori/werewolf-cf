@@ -1236,6 +1236,29 @@ describe("worker routes", () => {
     expect(body).toContain("人數22");
   });
 
+  it("serves PHP-style federated api feed", async () => {
+    const response = await worker.fetch(
+      new Request("http://example.test/api.php"),
+      envWithRooms(
+        ["room_waiting", "room_playing", "room_finished"],
+        { "room_status:room_playing": "playing", "room_status:room_finished": "ended" },
+        {},
+        {},
+        {},
+        {},
+        { room_waiting: "Friendly\tTabbed", room_playing: "Running\nNow" },
+        { room_waiting: 16, room_playing: 30 }
+      )
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toContain("text/plain");
+    const body = await response.text();
+    expect(body).toContain("werewolf-cf room_waiting\twaiting\tFriendly Tabbed\twaiting\t16\thttp://example.test/");
+    expect(body).toContain("werewolf-cf room_playing\tplaying\tRunning Now\tplaying\t30\thttp://example.test/");
+    expect(body).not.toContain("room_finished");
+  });
+
   it("renders old log index with ended rooms", async () => {
     const response = await worker.fetch(
       new Request("http://example.test/logs"),
