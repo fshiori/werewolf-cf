@@ -673,6 +673,11 @@ function maxPlayersMark(maxPlayers: number): string {
   return optionMark(`最大${String(maxPlayers)}`, iconPath);
 }
 
+function healthMark(label: string, state: "ok" | "error" | "idle"): string {
+  const className = state === "ok" ? "health-ok" : state === "error" ? "health-error" : "health-idle";
+  return `<span class="health-mark ${className}">${escapeHtml(label)}</span>`;
+}
+
 function federatedStatusLabel(status: RoomSummary["status"]): string {
   if (status === "playing") {
     return "遊戲中";
@@ -710,7 +715,7 @@ export function renderFederatedList(rooms: Array<RoomSummary | FederatedRoomSumm
   const peerRows = peers.length
     ? peers.map((peer) => `<tr>
         <td><a href="${escapeHtml(peer.url)}">${escapeHtml(peer.name)}</a></td>
-        <td>${peer.ok ? `<font color="#008800">服務中</font>` : `<font color="#cc0000">連線失敗</font>`}</td>
+        <td>${peer.ok ? `${healthMark("服務中", "ok")}<font color="#008800">服務中</font>` : `${healthMark("失敗", "error")}<font color="#cc0000">連線失敗</font>`}</td>
         <td>${escapeHtml(String(peer.roomCount))}</td>
         <td>${peer.error ? escapeHtml(peer.error) : `<span class="muted">-</span>`}</td>
       </tr>`).join("")
@@ -1061,10 +1066,6 @@ export function renderStatus(status: {
   homeAnnouncement?: string | null;
   maintenanceMode: boolean;
 }): string {
-  const healthMark = (label: string, state: "ok" | "error" | "idle"): string => {
-    const className = state === "ok" ? "health-ok" : state === "error" ? "health-error" : "health-idle";
-    return `<span class="health-mark ${className}">${escapeHtml(label)}</span>`;
-  };
   const checkRows = Object.entries(status.checks).map(([name, ok]) => `<tr>
     <td><strong>　${escapeHtml(name)}：</strong></td>
     <td>${ok ? `${healthMark("正常", "ok")}<font color="#008800">正常</font>` : `${healthMark("異常", "error")}<font color="#cc0000">異常</font>`}</td>
