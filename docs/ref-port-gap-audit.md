@@ -62,7 +62,7 @@ Reference files inspected:
 ### Implemented or close
 
 - Top page uses a reference-like table shell, side menu, fieldsets, room list, announcement, and create-room form.
-- Room creation covers max users, comments, real-time timing, wish role, Trip-required, GM, dummy boy, last words, open vote, common voice, dead role visibility, self-vote, vote-status, and major optional roles; the room join selector and assignment path now support enabled optional-role wishes.
+- Room creation covers max users, comments, real-time timing, wish role, Trip-required, GM, dummy boy, last words, open vote, common voice, dead role visibility, self-vote, vote-status, and major optional roles; the room join selector and assignment path now support enabled optional-role wishes. `docs/reference-wish-role-extraction.md` records the remaining exact-ordering decision for PHP-style randomized wish processing.
 - Room page uses retro table panels for header, player list, actions/votes, chat, logs, records, and events.
 - Room page now loads client logic through `/assets/room-client.js` instead of embedding the whole WebSocket client in the HTML.
 - `/admin/rooms` now provides a KV-token-protected reference-style `廢村管理` list with room comments, capacity, option context, log/event links, and D1-backed room-ending action for active rooms.
