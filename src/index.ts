@@ -1158,6 +1158,8 @@ async function readLegacyBbsForm(request: Request): Promise<Record<string, unkno
   const form = await request.formData();
   return {
     id: readFormString(form, "id"),
+    editis: readFormString(form, "editis"),
+    bbst: readFormString(form, "bbst"),
     name: readFormString(form, "bname") ?? readFormString(form, "name"),
     title: readFormString(form, "title"),
     message: readFormString(form, "mess") ?? readFormString(form, "message"),
@@ -1215,6 +1217,103 @@ async function createLegacyBbsReply(request: Request, env: Env): Promise<Respons
     });
   } catch (error) {
     return json({ error: error instanceof Error ? error.message : "Failed to create BBS reply" }, { status: errorStatus(error, 400) });
+  }
+}
+
+async function authorizeLegacyBbsTopic(env: Env, topicId: number, passwordValue: unknown, action: "edit" | "delete"): Promise<{ topic: BbsTopicSummary; adminAuthorized: boolean }> {
+  const topic = await getBbsTopicById(env, topicId);
+  if (!topic) {
+    const error = new Error("BBS topic not found") as Error & { status: number };
+    error.status = 404;
+    throw error;
+  }
+  const providedPassword = validateBbsPassword(passwordValue);
+  const adminToken = await env.CONFIG.get("bbs_admin_token");
+  const passwordHash = await getBbsTopicPasswordHash(env, topicId);
+  const adminAuthorized = Boolean(adminToken && providedPassword === adminToken);
+  const passwordAuthorized = Boolean(passwordHash && providedPassword && await bbsPasswordHash(providedPassword) === passwordHash);
+  if (!adminAuthorized && !passwordAuthorized) {
+    const error = new Error(action === "edit" ? "BBS edit password is invalid" : "BBS topic delete password is invalid") as Error & { status: number };
+    error.status = 403;
+    throw error;
+  }
+  return { topic, adminAuthorized };
+}
+
+async function requireLegacyBbsAdmin(env: Env, passwordValue: unknown): Promise<void> {
+  const adminToken = await env.CONFIG.get("bbs_admin_token");
+  if (!adminToken) {
+    const error = new Error("BBS moderation is not configured") as Error & { status: number };
+    error.status = 403;
+    throw error;
+  }
+  const providedPassword = validateBbsPassword(passwordValue);
+  if (providedPassword !== adminToken) {
+    const error = new Error("BBS moderation token is invalid") as Error & { status: number };
+    error.status = 403;
+    throw error;
+  }
+}
+
+async function updateLegacyBbsTopicFlags(env: Env, topic: BbsTopicSummary, editis: string): Promise<void> {
+  const pinned = editis === "totop" ? true : editis === "notop" ? false : topic.pinned;
+  const locked = editis === "tolock" ? true : editis === "nolock" ? false : topic.locked;
+  const digest = editis === "todige" ? true : editis === "nodige" ? false : topic.digest;
+  await env.DB.prepare("UPDATE bbs_topics SET pinned = ?, locked = ?, digest = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?")
+    .bind(pinned ? 1 : 0, locked ? 1 : 0, digest ? 1 : 0, topic.id)
+    .run();
+}
+
+async function editLegacyBbsTopic(request: Request, env: Env, topicIdParam: string): Promise<Response> {
+  try {
+    const topicId = validateBbsTopicId(topicIdParam);
+    const body = await readLegacyBbsForm(request);
+    const editis = typeof body.editis === "string" ? body.editis : "";
+    if (editis === "edit") {
+      await authorizeLegacyBbsTopic(env, topicId, body.password, "edit");
+      return new Response(null, {
+        status: 303,
+        headers: { Location: `/bbs.php?go=edit&id=${topicId}` }
+      });
+    }
+    if (editis === "editok") {
+      const { topic } = await authorizeLegacyBbsTopic(env, topicId, body.password, "edit");
+      const title = typeof body.title === "string" ? validateBbsTitle(body.title) : topic.title;
+      const message = validateBbsMessage(body.message);
+      await env.DB.prepare("UPDATE bbs_topics SET title = ?, message = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?")
+        .bind(title, message, topicId)
+        .run();
+      return new Response(null, {
+        status: 303,
+        headers: { Location: `/bbs/${topicId}` }
+      });
+    }
+    if (editis === "del") {
+      await authorizeLegacyBbsTopic(env, topicId, body.password, "delete");
+      await env.DB.batch([
+        env.DB.prepare("DELETE FROM bbs_replies WHERE topic_id = ?").bind(topicId),
+        env.DB.prepare("DELETE FROM bbs_topics WHERE id = ?").bind(topicId)
+      ]);
+      return new Response(null, {
+        status: 303,
+        headers: { Location: "/bbs" }
+      });
+    }
+    if (["tolock", "nolock", "totop", "notop", "todige", "nodige"].includes(editis)) {
+      await requireLegacyBbsAdmin(env, body.password);
+      const topic = await getBbsTopicById(env, topicId);
+      if (!topic) {
+        return json({ error: "BBS topic not found" }, { status: 404 });
+      }
+      await updateLegacyBbsTopicFlags(env, topic, editis);
+      return new Response(null, {
+        status: 303,
+        headers: { Location: `/bbs/${topicId}` }
+      });
+    }
+    return json({ error: "Invalid BBS edit operation" }, { status: 400 });
+  } catch (error) {
+    return json({ error: error instanceof Error ? error.message : "Failed to edit BBS topic" }, { status: errorStatus(error, 400) });
   }
 }
 
@@ -2076,6 +2175,10 @@ export default {
 
     if (request.method === "POST" && url.pathname === "/bbs.php" && url.searchParams.get("go") === "postre") {
       return createLegacyBbsReply(request, env);
+    }
+
+    if (request.method === "POST" && url.pathname === "/bbs.php" && url.searchParams.get("go") === "edit") {
+      return editLegacyBbsTopic(request, env, url.searchParams.get("id") ?? "");
     }
 
     const bbsReplyApiMatch = url.pathname.match(/^\/api\/bbs\/topics\/(\d+)\/replies$/);
