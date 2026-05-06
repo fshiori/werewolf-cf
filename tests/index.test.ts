@@ -3402,6 +3402,30 @@ describe("worker routes", () => {
     expect(await download.text()).toBe("avatar-bytes");
   });
 
+  it("supports legacy avatar upload.php field names", async () => {
+    const env = envWithRooms([]);
+    const form = new FormData();
+    form.set("player_id", "player_avatar");
+    form.set("icon_file", new File(["legacy-avatar"], "legacy.gif", { type: "image/gif" }));
+
+    const upload = await worker.fetch(
+      new Request("http://example.test/upload.php", {
+        method: "POST",
+        body: form
+      }),
+      env
+    );
+
+    expect(upload.status).toBe(200);
+    expect(await upload.json()).toEqual({ key: "avatars/player_avatar" });
+
+    const download = await worker.fetch(new Request("http://example.test/assets/avatar/player_avatar"), env);
+
+    expect(download.status).toBe(200);
+    expect(download.headers.get("content-type")).toBe("image/gif");
+    expect(await download.text()).toBe("legacy-avatar");
+  });
+
   it("serves copied reference assets from R2", async () => {
     const env = envWithRooms([]);
     await env.ASSETS.put("reference/img/top_title.jpg", new Blob(["title-bytes"]).stream(), {
@@ -3448,6 +3472,36 @@ describe("worker routes", () => {
         method: "DELETE",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ playerId: "player_avatar" })
+      }),
+      env
+    );
+    const download = await worker.fetch(new Request("http://example.test/assets/avatar/player_avatar"), env);
+
+    expect(removal.status).toBe(200);
+    expect(await removal.json()).toEqual({ removed: true });
+    expect(download.status).toBe(404);
+  });
+
+  it("supports legacy avatar upload2.php removal forms", async () => {
+    const env = envWithRooms([]);
+    const form = new FormData();
+    form.set("playerId", "player_avatar");
+    form.set("avatar", new File(["avatar-bytes"], "avatar.png", { type: "image/png" }));
+
+    await worker.fetch(
+      new Request("http://example.test/api/assets/avatar", {
+        method: "POST",
+        body: form
+      }),
+      env
+    );
+
+    const removalForm = new FormData();
+    removalForm.set("player_id", "player_avatar");
+    const removal = await worker.fetch(
+      new Request("http://example.test/upload2.php", {
+        method: "POST",
+        body: removalForm
       }),
       env
     );
