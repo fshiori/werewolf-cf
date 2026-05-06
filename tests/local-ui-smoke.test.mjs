@@ -23,7 +23,7 @@ function responseFor(path, method = "GET") {
     return { contentType: "text/html", body: "<!doctype html><title>過去紀錄 村No</title>" };
   }
   if (path === "/icons" && method === "GET") {
-    return { contentType: "text/html", body: '<!doctype html><title>頭像一覽 /assets/reference/user_icon/001.gif</title>' };
+    return { contentType: "text/html", body: '<!doctype html><title>頭像一覽 上傳頭像 /assets/reference/user_icon/001.gif</title>' };
   }
   if (path === "/trips" && method === "GET") {
     return { contentType: "text/html", body: "<!doctype html><title>Trip查詢 Trip公開資料</title>" };

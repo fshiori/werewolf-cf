@@ -1438,6 +1438,9 @@ describe("worker routes", () => {
     expect(body).toContain("頭像一覽");
     expect(body).toContain("/assets/reference/user_icon/001.gif");
     expect(body).toContain("32 x 32");
+    expect(body).toContain("上傳頭像");
+    expect(body).toContain("iconUploadButton");
+    expect(body).toContain("/api/assets/avatar");
   });
 
   it("renders room records page", async () => {

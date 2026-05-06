@@ -77,7 +77,7 @@ try {
   await expectHtml("/logs", ["過去紀錄", "村No"]);
   await expectHtml("/leaderboard", ["戰績排行榜"]);
   await expectHtml("/stats", ["勝率分析", "統計場數"]);
-  await expectHtml("/icons", ["頭像一覽", "/assets/reference/user_icon/001.gif"]);
+  await expectHtml("/icons", ["頭像一覽", "上傳頭像", "/assets/reference/user_icon/001.gif"]);
   await expectHtml("/trip", ["身份登錄", "Trip公開資料"]);
   await expectHtml("/trips", ["Trip查詢", "Trip公開資料"]);
   await expectHtml("/bbs", ["主題列表", "發表主題"]);
