@@ -22,6 +22,7 @@ import {
   forceSetPlayerAlive,
   forceSetPlayerFlag,
   forceSetPlayerRole,
+  leaveLobbyPlayer,
   loversForPlayer,
   mediumReadingForPlayer,
   playerStatUpdates,
@@ -1473,6 +1474,19 @@ describe("game", () => {
     expect(withoutHost.hostId).toBe("player_2");
     expect(() => removeLobbyPlayer(startGame(waiting, 0, () => 0), "player_2")).toThrow("Players can only be kicked");
     expect(() => removeLobbyPlayer(waiting, "player_missing")).toThrow("Kick target not found");
+  });
+
+  it("lets lobby players leave and reassigns host", () => {
+    const waiting = lobby([["player_1", "Alice"], ["player_2", "Bob"], ["player_3", "Carol"]]);
+    const withoutGuest = leaveLobbyPlayer(waiting, "player_3");
+    const withoutHost = leaveLobbyPlayer(withoutGuest, "player_1");
+
+    expect(withoutGuest.players.map((player) => player.playerId)).toEqual(["player_1", "player_2"]);
+    expect(withoutGuest.hostId).toBe("player_1");
+    expect(withoutHost.players.map((player) => player.playerId)).toEqual(["player_2"]);
+    expect(withoutHost.hostId).toBe("player_2");
+    expect(() => leaveLobbyPlayer(startGame(waiting, 0, () => 0), "player_2")).toThrow("Players can only leave");
+    expect(() => leaveLobbyPlayer(waiting, "player_missing")).toThrow("Leave target not found");
   });
 
   it("lets GM adjudication force a winner", () => {

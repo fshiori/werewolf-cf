@@ -21,6 +21,7 @@ import {
   forceSetPlayerFlag,
   forceSetPlayerRole,
   foxesForPlayer,
+  leaveLobbyPlayer,
   loversForPlayer,
   mediumReadingForPlayer,
   playerStatUpdates,
@@ -384,6 +385,27 @@ export class RoomDurableObject {
         await this.persistRoomEvent(member.playerId, "player_kicked", { targetPlayerId });
         this.disconnectPlayer(targetPlayerId, "You were kicked from the room");
         this.send(socket, buildActionAckMessage("kick_player", targetPlayerId));
+        this.broadcast(buildPresenceMessage(this.members()));
+        await this.broadcastGameState(next);
+        return;
+      }
+
+      if (message.type === "leave_room") {
+        const loadedGame = await this.loadGameState();
+        if (member.gm || loadedGame.phase !== "lobby") {
+          await this.persistRoomEvent(member.playerId, "player_left", { nickname: member.nickname, phase: loadedGame.phase, day: loadedGame.day });
+          this.sockets.delete(socket);
+          this.send(socket, buildActionAckMessage("leave_room", member.playerId));
+          socket.close(1000, "You left the room");
+          this.broadcast(buildPresenceMessage(this.members()));
+          return;
+        }
+        const next = leaveLobbyPlayer(loadedGame, member.playerId);
+        await this.saveGameState(next);
+        await this.persistRoomEvent(member.playerId, "player_left", { nickname: member.nickname, phase: loadedGame.phase, day: loadedGame.day });
+        this.sockets.delete(socket);
+        this.send(socket, buildActionAckMessage("leave_room", member.playerId));
+        socket.close(1000, "You left the room");
         this.broadcast(buildPresenceMessage(this.members()));
         await this.broadcastGameState(next);
         return;

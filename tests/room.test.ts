@@ -1956,6 +1956,130 @@ describe("RoomDurableObject", () => {
     );
   });
 
+  it("lets lobby players leave through the websocket handler", async () => {
+    const game: GameState = {
+      roomId: "room_abc",
+      phase: "lobby",
+      day: 0,
+      hostId: "player_host",
+      players: [
+        { playerId: "player_host", nickname: "Host", role: "villager", alive: true },
+        { playerId: "player_guest", nickname: "Guest", role: "villager", alive: true },
+        { playerId: "player_other", nickname: "Other", role: "villager", alive: true }
+      ],
+      votes: {},
+      openVote: false,
+      commonTalkVisible: false,
+      deadRoleVisible: false,
+      wishRole: false,
+      dummyBoy: false,
+      dayMs: 180_000,
+      nightMs: 90_000,
+      selfVote: false,
+      voteStatus: false,
+      revoteCount: 0,
+      nightKills: {},
+      divinations: {},
+      guards: {},
+      catRevives: {},
+      lastWords: {},
+      log: []
+    };
+    const { room, stored, dbRuns } = observableRoomObject(game);
+    const hostMessages: SentMessage[] = [];
+    const guestMessages: SentMessage[] = [];
+    const otherMessages: SentMessage[] = [];
+    const guestCloses: CloseEvent[] = [];
+    const hostSocket = fakeSocket(hostMessages);
+    const guestSocket = fakeSocket(guestMessages, guestCloses);
+    const otherSocket = fakeSocket(otherMessages);
+    connect(room, hostSocket, "player_host", "Host");
+    connect(room, guestSocket, "player_guest", "Guest");
+    connect(room, otherSocket, "player_other", "Other");
+
+    await sendRaw(room, guestSocket, JSON.stringify({ type: "leave_room" }));
+
+    expect(stored.get("gameState")).toEqual(
+      expect.objectContaining({
+        hostId: "player_host",
+        players: [
+          { playerId: "player_host", nickname: "Host", role: "villager", alive: true },
+          { playerId: "player_other", nickname: "Other", role: "villager", alive: true }
+        ]
+      })
+    );
+    expect(guestMessages).toEqual([{ type: "action_ack", action: "leave_room", targetPlayerId: "player_guest" }]);
+    expect(guestCloses).toEqual([{ code: 1000, reason: "You left the room" }]);
+    expect(hostMessages).toContainEqual(
+      expect.objectContaining({
+        type: "presence",
+        members: [
+          { playerId: "player_host", nickname: "Host" },
+          { playerId: "player_other", nickname: "Other" }
+        ]
+      })
+    );
+    expect(otherMessages).toContainEqual(expect.objectContaining({ type: "game_state", phase: "lobby" }));
+    expect(dbRuns).toContainEqual(
+      expect.objectContaining({
+        query: expect.stringContaining("INSERT INTO room_events"),
+        binds: ["room_abc", "player_guest", "player_left", JSON.stringify({ nickname: "Guest", phase: "lobby", day: 0 })]
+      })
+    );
+  });
+
+  it("treats active-game leave as socket logout without removing the player", async () => {
+    const game: GameState = {
+      roomId: "room_abc",
+      phase: "day",
+      day: 1,
+      hostId: "player_host",
+      players: [
+        { playerId: "player_host", nickname: "Host", role: "villager", alive: true },
+        { playerId: "player_guest", nickname: "Guest", role: "villager", alive: true },
+        { playerId: "player_wolf", nickname: "Wolf", role: "werewolf", alive: true }
+      ],
+      votes: {},
+      openVote: false,
+      commonTalkVisible: false,
+      deadRoleVisible: false,
+      wishRole: false,
+      dummyBoy: false,
+      dayMs: 180_000,
+      nightMs: 90_000,
+      selfVote: false,
+      voteStatus: false,
+      revoteCount: 0,
+      nightKills: {},
+      divinations: {},
+      guards: {},
+      catRevives: {},
+      lastWords: {},
+      log: []
+    };
+    const { room, stored } = observableRoomObject(game);
+    const hostMessages: SentMessage[] = [];
+    const guestMessages: SentMessage[] = [];
+    const guestCloses: CloseEvent[] = [];
+    const hostSocket = fakeSocket(hostMessages);
+    const guestSocket = fakeSocket(guestMessages, guestCloses);
+    connect(room, hostSocket, "player_host", "Host");
+    connect(room, guestSocket, "player_guest", "Guest");
+
+    await sendRaw(room, guestSocket, JSON.stringify({ type: "leave_room" }));
+
+    expect(stored.get("gameState")).toBe(game);
+    expect(guestMessages).toEqual([{ type: "action_ack", action: "leave_room", targetPlayerId: "player_guest" }]);
+    expect(guestCloses).toEqual([{ code: 1000, reason: "You left the room" }]);
+    expect(hostMessages).toContainEqual(
+      expect.objectContaining({
+        type: "presence",
+        members: [{ playerId: "player_host", nickname: "Host" }]
+      })
+    );
+    expect(hostMessages).not.toContainEqual(expect.objectContaining({ type: "game_state" }));
+  });
+
   it("rejects last words websocket commands when the room option is disabled", async () => {
     const game: GameState = {
       roomId: "room_abc",

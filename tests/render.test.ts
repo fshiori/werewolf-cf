@@ -240,6 +240,7 @@ describe("render", () => {
     expect(html).toContain("能力發動 / 投票");
     expect(html).toContain("wishRole");
     expect(html).toContain("<option value=\"seer\">占卜師</option>");
+    expect(html).toContain("leaveRoom");
     expect(html).toContain("sendDeadChat");
     expect(html).toContain("sendObjection");
     expect(html).toContain("soundNotify");
@@ -269,6 +270,7 @@ describe("render", () => {
     expect(ROOM_CLIENT_SCRIPT).toContain("gm_set_role");
     expect(ROOM_CLIENT_SCRIPT).toContain("gm_set_flag");
     expect(ROOM_CLIENT_SCRIPT).toContain("kick_player");
+    expect(ROOM_CLIENT_SCRIPT).toContain("leave_room");
     expect(ROOM_CLIENT_SCRIPT).toContain("void refreshStats();");
     expect(ROOM_CLIENT_SCRIPT).toContain("/api/players/");
     expect(ROOM_CLIENT_SCRIPT).toContain("/stats");
@@ -313,6 +315,7 @@ describe("render", () => {
     expect(ROOM_CLIENT_SCRIPT).toContain("objection");
     expect(ROOM_CLIENT_SCRIPT).toContain("playNotifySound");
     expect(ROOM_CLIENT_SCRIPT).toContain("werewolf_cf_sound");
+    expect(ROOM_CLIENT_SCRIPT).toContain("#leaveRoom");
     expect(ROOM_CLIENT_SCRIPT).toContain("fox_chat");
     expect(ROOM_CLIENT_SCRIPT).toContain("common_chat");
     expect(ROOM_CLIENT_SCRIPT).toContain("lovers_chat");
@@ -720,6 +723,7 @@ describe("render", () => {
     expect(html).toContain("Client Messages");
     expect(html).toContain("wolf_chat / fox_chat / common_chat / lovers_chat");
     expect(html).toContain("gm_*");
+    expect(html).toContain("leave_room");
     expect(html).toContain("Server Messages");
     expect(html).toContain("game_state");
     expect(html).toContain("revealed_roles");

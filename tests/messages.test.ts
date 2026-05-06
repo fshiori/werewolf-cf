@@ -166,6 +166,11 @@ describe("messages", () => {
       action: "kick_player",
       targetPlayerId: "player_2"
     });
+    expect(buildActionAckMessage("leave_room", "player_3")).toEqual({
+      type: "action_ack",
+      action: "leave_room",
+      targetPlayerId: "player_3"
+    });
   });
 
   it("builds last words acknowledgement messages", () => {

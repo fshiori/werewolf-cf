@@ -192,7 +192,7 @@ export function buildLastWordsAckMessage(): ServerMessage {
 }
 
 export function buildActionAckMessage(
-  action: "vote" | "night_kill" | "guard" | "child_fox_divine" | "cat_revive" | "kick_player",
+  action: "vote" | "night_kill" | "guard" | "child_fox_divine" | "cat_revive" | "kick_player" | "leave_room",
   targetPlayerId: string
 ): ServerMessage {
   return { type: "action_ack", action, targetPlayerId };
