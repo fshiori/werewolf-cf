@@ -1668,7 +1668,8 @@ export default {
         if (!(await roomExists(env, roomId))) {
           return new Response("Room not found", { status: 404 });
         }
-        return html(renderRoom(roomId));
+        const autoReloadParam = url.searchParams.get("auto_reload");
+        return html(renderRoom(roomId, { autoReloadSeconds: autoReloadParam ? Number(autoReloadParam) : 0 }));
       } catch (error) {
         return json({ error: error instanceof Error ? error.message : "Invalid room" }, { status: 400 });
       }
