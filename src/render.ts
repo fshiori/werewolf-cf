@@ -1908,6 +1908,10 @@ export function renderTripLookup(): string {
       function escapeClientHtml(value) {
         return String(value).replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
       }
+      function tripStateMark(label, state) {
+        const className = state === "ok" ? "health-ok" : state === "error" ? "health-error" : "health-idle";
+        return '<span class="health-mark ' + className + '">' + escapeClientHtml(label) + '</span>';
+      }
       tripInput.value = localStorage.getItem("werewolf_cf_trip") || "";
       document.querySelector("#tripLookupButton").addEventListener("click", async () => {
         const trip = tripInput.value;
@@ -1923,8 +1927,8 @@ export function renderTripLookup(): string {
             ? value.players.map((playerId) => '<a href="/player/' + encodeURIComponent(playerId) + '">' + escapeClientHtml(playerId) + '</a>').join("　")
             : '<span class="muted">尚無認領玩家。</span>';
           tripRows.innerHTML = [
-            '<tr><td><strong>　登記：</strong></td><td>' + (value.registered ? "已登記" : "未登記") + '</td></tr>',
-            '<tr><td><strong>　排除：</strong></td><td>' + (value.excluded ? '<font color="#990000">已排除</font>' : "未排除") + '</td></tr>',
+            '<tr><td><strong>　登記：</strong></td><td>' + (value.registered ? tripStateMark("已登記", "ok") + "已登記" : tripStateMark("未登記", "idle") + "未登記") + '</td></tr>',
+            '<tr><td><strong>　排除：</strong></td><td>' + (value.excluded ? tripStateMark("已排除", "error") + '<font color="#990000">已排除</font>' : tripStateMark("未排除", "ok") + "未排除") + '</td></tr>',
             '<tr><td><strong>　玩家：</strong></td><td>' + players + '</td></tr>',
             '<tr><td><strong>　戰績：</strong></td><td>勝 ' + value.stats.wins + '　敗 ' + value.stats.losses + '　場數 ' + value.stats.gamesPlayed + '</td></tr>'
           ].join("");
@@ -1982,6 +1986,10 @@ export function renderTripRegistration(): string {
       tripLookupInput.value = savedTrip;
       function escapeClientHtml(value) {
         return String(value).replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
+      }
+      function tripStateMark(label, state) {
+        const className = state === "ok" ? "health-ok" : state === "error" ? "health-error" : "health-idle";
+        return '<span class="health-mark ' + className + '">' + escapeClientHtml(label) + '</span>';
       }
       document.querySelector("#registerTripButton").addEventListener("click", async () => {
         const trip = registerTripInput.value;
@@ -2048,8 +2056,8 @@ export function renderTripRegistration(): string {
             ? value.players.map((playerId) => '<a href="/player/' + encodeURIComponent(playerId) + '">' + escapeClientHtml(playerId) + '</a>').join("　")
             : '<span class="muted">尚無認領玩家。</span>';
           tripRows.innerHTML = [
-            '<tr><td><strong>　登記：</strong></td><td>' + (value.registered ? "已登記" : "未登記") + '</td></tr>',
-            '<tr><td><strong>　排除：</strong></td><td>' + (value.excluded ? '<font color="#990000">已排除</font>' : "未排除") + '</td></tr>',
+            '<tr><td><strong>　登記：</strong></td><td>' + (value.registered ? tripStateMark("已登記", "ok") + "已登記" : tripStateMark("未登記", "idle") + "未登記") + '</td></tr>',
+            '<tr><td><strong>　排除：</strong></td><td>' + (value.excluded ? tripStateMark("已排除", "error") + '<font color="#990000">已排除</font>' : tripStateMark("未排除", "ok") + "未排除") + '</td></tr>',
             '<tr><td><strong>　玩家：</strong></td><td>' + players + '</td></tr>',
             '<tr><td><strong>　戰績：</strong></td><td>勝 ' + value.stats.wins + '　敗 ' + value.stats.losses + '　場數 ' + value.stats.gamesPlayed + '</td></tr>'
           ].join("");
