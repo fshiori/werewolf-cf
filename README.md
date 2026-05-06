@@ -37,7 +37,7 @@ npm run dev
 Apply local D1 migrations before local smoke testing:
 
 ```bash
-npx wrangler d1 migrations apply werewolf-cf --local
+npx wrangler d1 migrations apply werewolf-cf-db --local
 ```
 
 Smoke check the local Worker:
@@ -161,7 +161,7 @@ npm run check:deploy
 Apply remote D1 migrations before deploying code that depends on new columns or tables:
 
 ```bash
-npx wrangler d1 migrations apply werewolf-cf --remote
+npx wrangler d1 migrations apply werewolf-cf-db --remote --config wrangler.production.toml
 npm run check:d1-schema:remote
 ```
 
@@ -171,7 +171,7 @@ Deploy:
 npm run deploy
 ```
 
-`npm run deploy` runs `npm run check:deploy` first and fails while production resource IDs still use `local-dev-placeholder`.
+`npm run deploy` uses `wrangler.production.toml`, which is intentionally ignored by git. Copy `wrangler.production.toml.example` to `wrangler.production.toml`, fill in the Cloudflare account id plus D1/KV resource ids, and keep the API token in `CLOUDFLARE_API_TOKEN` or CI secrets.
 
 After deploy, smoke check the production Worker:
 

@@ -120,4 +120,41 @@ process.stdout.write(JSON.stringify([{ results: rows }]));
       rmSync(cwd, { recursive: true, force: true });
     }
   });
+
+  it("passes an explicit wrangler config file to remote schema introspection", () => {
+    const cwd = mkdtempSync(join(tmpdir(), "werewolf-cf-d1-schema-"));
+    const binDir = join(cwd, "bin");
+    const fakeNpx = join(binDir, "npx");
+    const commandCapture = join(cwd, "command.txt");
+    mkdirSync(binDir);
+    writeFileSync(
+      fakeNpx,
+      `#!/usr/bin/env node
+import { writeFileSync } from "node:fs";
+writeFileSync(${JSON.stringify(commandCapture)}, process.argv.join("\\n"));
+const schema = ${JSON.stringify(requiredColumns)};
+const rows = [
+  ...Object.keys(schema).map((name) => ({ name, table_name: null, column_name: null })),
+  ...Object.entries(schema).flatMap(([tableName, columns]) => columns.map((columnName) => ({ name: null, table_name: tableName, column_name: columnName })))
+];
+process.stdout.write(JSON.stringify([{ results: rows }]));
+`
+    );
+    chmodSync(fakeNpx, 0o755);
+    try {
+      const result = spawnSync(process.execPath, [scriptPath, "--remote", "--config", "wrangler.production.toml"], {
+        encoding: "utf8",
+        env: { ...process.env, PATH: `${binDir}:${process.env.PATH}` }
+      });
+      const command = readFileSync(commandCapture, "utf8");
+
+      expect(result.status).toBe(0);
+      expect(result.stdout).toContain("D1 remote schema verification passed");
+      expect(command).toContain("--remote");
+      expect(command).toContain("--config");
+      expect(command).toContain("wrangler.production.toml");
+    } finally {
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  });
 });

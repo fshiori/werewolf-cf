@@ -24,3 +24,5 @@ node_modules/
 dist/
 .wrangler/
 .dev.vars
+.env
+wrangler.production.toml
