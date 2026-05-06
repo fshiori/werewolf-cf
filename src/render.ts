@@ -1226,7 +1226,7 @@ export function renderAdminRooms(rooms: RoomSummary[], statusFilter: AdminRoomSt
         <td>${escapeHtml(room.name)}村</td>
         <td>${escapeHtml(room.comment || "－")}</td>
         <td>${maxPlayersMark(room.maxPlayers)}</td>
-        <td>${escapeHtml(room.status)}</td>
+        <td>${roomStatusIcon(room.status)}${escapeHtml(federatedStatusLabel(room.status))}</td>
         <td>${escapeHtml(optionSummary(room))}</td>
         <td>${escapeHtml(room.createdAt)}</td>
         <td><a href="/room/${escapeHtml(room.id)}/log">紀錄</a> / <a href="/room/${escapeHtml(room.id)}/events">事件</a></td>
