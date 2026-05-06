@@ -2189,6 +2189,7 @@ export function renderBbsTopic(topic: BbsTopicSummary, replies: BbsReplySummary[
         <td>
           <div><strong>${bbsAuthorLabel(reply.name, reply.trip)}</strong> <span class="muted">${escapeHtml(reply.createdAt)}</span></div>
           <div style="white-space:pre-wrap;margin:6px 0 10px;">${escapeHtml(reply.message)}</div>
+          <div><button class="bbsReplyDeleteButton" data-reply-id="${escapeHtml(String(reply.id))}">刪除回覆</button></div>
         </td>
       </tr>`).join("")
     : `<tr><td colspan="2" class="muted">尚無回覆。</td></tr>`;
@@ -2277,6 +2278,26 @@ export function renderBbsTopic(topic: BbsTopicSummary, replies: BbsReplySummary[
           return;
         }
         location.href = "/bbs";
+      });
+      document.querySelectorAll(".bbsReplyDeleteButton").forEach((button) => {
+        button.addEventListener("click", async () => {
+          const status = document.querySelector("#bbsModerateStatus");
+          const token = document.querySelector("#bbsAdminToken").value;
+          const replyId = button.getAttribute("data-reply-id");
+          localStorage.setItem("werewolf_cf_bbs_admin_token", token);
+          if (!replyId || !confirm("刪除此回覆？")) return;
+          status.textContent = "刪除回覆中";
+          const res = await fetch("/api/bbs/topics/${escapeHtml(String(topic.id))}/replies/" + encodeURIComponent(replyId) + "/moderation", {
+            method: "DELETE",
+            headers: { "x-bbs-admin-token": token }
+          });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) {
+            status.textContent = data.error || "刪除回覆失敗";
+            return;
+          }
+          location.href = "${topicPath}";
+        });
       });
     </script>`;
 

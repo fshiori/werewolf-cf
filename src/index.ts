@@ -932,6 +932,13 @@ async function listBbsReplies(env: Env, topicId: number): Promise<BbsReplySummar
   }));
 }
 
+async function bbsReplyExists(env: Env, topicId: number, replyId: number): Promise<boolean> {
+  const reply = await env.DB.prepare("SELECT id FROM bbs_replies WHERE id = ? AND topic_id = ? LIMIT 1")
+    .bind(replyId, topicId)
+    .first<{ id: number }>();
+  return Boolean(reply);
+}
+
 async function getBbsTopics(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
   return json({ topics: await listBbsTopics(env, url.searchParams.get("digest") === "1") });
@@ -1073,6 +1080,31 @@ async function deleteBbsTopic(request: Request, env: Env, topicIdParam: string):
     return json({ deleted: true, topicId });
   } catch (error) {
     return json({ error: error instanceof Error ? error.message : "Failed to delete BBS topic" }, { status: 400 });
+  }
+}
+
+async function deleteBbsReply(request: Request, env: Env, topicIdParam: string, replyIdParam: string): Promise<Response> {
+  const unauthorized = await requireBbsAdmin(request, env);
+  if (unauthorized) {
+    return unauthorized;
+  }
+  try {
+    const topicId = validateBbsTopicId(topicIdParam);
+    const replyId = validateBbsTopicId(replyIdParam);
+    const topic = await getBbsTopicById(env, topicId);
+    if (!topic) {
+      return json({ error: "BBS topic not found" }, { status: 404 });
+    }
+    if (!(await bbsReplyExists(env, topicId, replyId))) {
+      return json({ error: "BBS reply not found" }, { status: 404 });
+    }
+    await env.DB.batch([
+      env.DB.prepare("DELETE FROM bbs_replies WHERE id = ? AND topic_id = ?").bind(replyId, topicId),
+      env.DB.prepare("UPDATE bbs_topics SET reply_count = MAX(reply_count - 1, 0), updated_at = CURRENT_TIMESTAMP WHERE id = ?").bind(topicId)
+    ]);
+    return json({ deleted: true, topicId, replyId });
+  } catch (error) {
+    return json({ error: error instanceof Error ? error.message : "Failed to delete BBS reply" }, { status: 400 });
   }
 }
 
@@ -1729,6 +1761,11 @@ export default {
     const bbsReplyApiMatch = url.pathname.match(/^\/api\/bbs\/topics\/(\d+)\/replies$/);
     if (request.method === "POST" && bbsReplyApiMatch) {
       return createBbsReply(request, env, bbsReplyApiMatch[1]);
+    }
+
+    const bbsReplyModerationApiMatch = url.pathname.match(/^\/api\/bbs\/topics\/(\d+)\/replies\/(\d+)\/moderation$/);
+    if (request.method === "DELETE" && bbsReplyModerationApiMatch) {
+      return deleteBbsReply(request, env, bbsReplyModerationApiMatch[1], bbsReplyModerationApiMatch[2]);
     }
 
     const bbsModerationApiMatch = url.pathname.match(/^\/api\/bbs\/topics\/(\d+)\/moderation$/);

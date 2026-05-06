@@ -769,6 +769,9 @@ describe("render", () => {
     expect(html).toContain("Bob");
     expect(html).toContain("Reply body");
     expect(html).toContain("/api/bbs/topics/1/replies");
+    expect(html).toContain("bbsReplyDeleteButton");
+    expect(html).toContain("/replies/\" + encodeURIComponent(replyId) + \"/moderation");
+    expect(html).toContain("刪除此回覆？");
     expect(html).toContain("狀態");
     expect(html).toContain('<span class="bbs-status-mark">一般</span>');
     expect(html).toContain("主題管理");
