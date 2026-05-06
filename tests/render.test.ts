@@ -1233,9 +1233,21 @@ describe("render", () => {
 
     expect(html).toContain("伺服器狀態");
     expect(html).toContain("正常運作");
+    expect(html).toContain("health-ok");
+    expect(html).toContain("health-idle");
     expect(html).toContain("Binding 檢查");
     expect(html).toContain("durableObjects");
     expect(html).toContain("&lt;Runtime&gt;");
+
+    const degraded = renderStatus({
+      ok: false,
+      checks: { worker: true, db: false },
+      homeAnnouncement: null,
+      maintenanceMode: true
+    });
+    expect(degraded).toContain("需要確認");
+    expect(degraded).toContain("異常");
+    expect(degraded).toContain("health-error");
   });
 
   it("renders room admin pages", () => {
