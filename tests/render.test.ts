@@ -358,6 +358,7 @@ describe("render", () => {
     expect(html).toContain("村子對局紀錄");
     expect(html).toContain("/room/room_abc");
     expect(html).toContain("人狼勝利");
+    expect(html).toContain("/assets/reference/img/victory_role_wolf.gif");
     expect(html).toContain("第 2 日");
     expect(html).toContain("2 人");
   });
@@ -413,6 +414,7 @@ describe("render", () => {
 
     expect(html).toContain("村子完整紀錄");
     expect(html).toContain("村民勝利");
+    expect(html).toContain("/assets/reference/img/victory_role_human.gif");
     expect(html).toContain("Alice (player_a)");
     expect(html).toContain("占卜師");
     expect(html).toContain("Bob (player_b)");
