@@ -209,6 +209,45 @@ function remoteRoomSummary(server: FederatedServerConfig, value: unknown): Feder
   };
 }
 
+function legacyFederatedRoomSummary(server: FederatedServerConfig, line: string): FederatedRoomSummary | undefined {
+  const columns = line.split("\t");
+  if (columns.length < 6 || !columns[0] || !columns[1]) {
+    return undefined;
+  }
+  const [, roomId = ""] = columns[0].split(" ");
+  if (!roomId) {
+    return undefined;
+  }
+  const status = columns[3] === "playing" ? "playing" : "lobby";
+  const maxPlayers = Number.parseInt(columns[4] ?? "", 10);
+  const baseUrl = columns[5]?.trim() || server.url;
+  return {
+    id: roomId,
+    name: columns[1],
+    comment: columns[2] ?? "",
+    maxPlayers: Number.isFinite(maxPlayers) ? maxPlayers : 22,
+    status,
+    createdAt: "",
+    options: parseRoomOptions(""),
+    serverName: server.name,
+    serverUrl: server.url,
+    roomUrl: `${baseUrl}${baseUrl.endsWith("/") ? "" : "/"}login.php?room_no=${encodeURIComponent(roomId)}`,
+    local: false
+  };
+}
+
+async function fetchLegacyFederatedRooms(server: FederatedServerConfig): Promise<FederatedRoomSummary[]> {
+  const response = await fetch(`${server.url}/api.php`, { headers: { accept: "text/plain" } });
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}`);
+  }
+  const body = await response.text();
+  return body.split(/\r?\n/).flatMap((line) => {
+    const summary = legacyFederatedRoomSummary(server, line);
+    return summary ? [summary] : [];
+  });
+}
+
 async function listFederatedRooms(env: Env): Promise<{ rooms: FederatedRoomSummary[]; peers: FederatedServerStatus[] }> {
   const localRooms = (await listRooms(env)).map((room): FederatedRoomSummary => ({
     ...room,
@@ -226,18 +265,19 @@ async function listFederatedRooms(env: Env): Promise<{ rooms: FederatedRoomSumma
   const remoteResults = await Promise.all(servers.map(async (server): Promise<{ rooms: FederatedRoomSummary[]; peer: FederatedServerStatus }> => {
     try {
       const response = await fetch(`${server.url}/api/rooms`, { headers: { accept: "application/json" } });
-      if (!response.ok) {
+      if (response.ok) {
+        const body: unknown = await response.json();
+        const rooms = isRecord(body) && Array.isArray(body.rooms) ? body.rooms : [];
+        const summaries = rooms.flatMap((room) => {
+          const summary = remoteRoomSummary(server, room);
+          return summary ? [summary] : [];
+        });
         return {
-          rooms: [],
-          peer: { name: server.name, url: server.url, ok: false, roomCount: 0, error: `HTTP ${response.status}` }
+          rooms: summaries,
+          peer: { name: server.name, url: server.url, ok: true, roomCount: summaries.length }
         };
       }
-      const body: unknown = await response.json();
-      const rooms = isRecord(body) && Array.isArray(body.rooms) ? body.rooms : [];
-      const summaries = rooms.flatMap((room) => {
-        const summary = remoteRoomSummary(server, room);
-        return summary ? [summary] : [];
-      });
+      const summaries = await fetchLegacyFederatedRooms(server);
       return {
         rooms: summaries,
         peer: { name: server.name, url: server.url, ok: true, roomCount: summaries.length }
