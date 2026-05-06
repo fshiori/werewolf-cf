@@ -333,7 +333,8 @@ export class RoomDurableObject {
         if (member.gm) {
           throw new Error("GM cannot cast resident start votes");
         }
-        const vote = castLobbyStartVote(await this.loadGameState(), member.playerId);
+        const roomOptions = await this.loadRoomOptions();
+        const vote = castLobbyStartVote(await this.loadGameState(), member.playerId, roomOptions);
         await this.persistRoomEvent(member.playerId, "lobby_start_vote", {
           nickname: member.nickname,
           votedPlayerIds: vote.votedPlayerIds,
@@ -341,7 +342,7 @@ export class RoomDurableObject {
           ready: vote.ready
         });
         if (vote.ready) {
-          const next = startGame(vote.state, Date.now(), Math.random, await this.loadRoomOptions());
+          const next = startGame(vote.state, Date.now(), Math.random, roomOptions);
           await this.saveGameState(next);
           await this.syncRoomStatus(next);
           await this.persistRoomEvent(member.playerId, "game_started", { day: next.day, players: next.players.length, startVotes: vote.votedPlayerIds.length });

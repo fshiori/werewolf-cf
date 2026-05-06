@@ -1583,6 +1583,29 @@ describe("game", () => {
     expect(result).toMatchObject({ ready: false, votedPlayerIds: ["player_1", "player_2", "player_3"], required: 8 });
   });
 
+  it("credits dummy boy as one resident start vote like the reference", () => {
+    const waiting = lobby([
+      ["player_1", "Alice"],
+      ["player_2", "Bob"],
+      ["player_3", "Carol"],
+      ["player_4", "Dave"],
+      ["player_5", "Eve"],
+      ["player_6", "Frank"],
+      ["player_7", "Grace"]
+    ]);
+    const almostReady = ["player_1", "player_2", "player_3", "player_4", "player_5", "player_6"].reduce(
+      (state, playerId) => castLobbyStartVote(state, playerId, { dummyBoy: true }).state,
+      waiting
+    );
+    const final = castLobbyStartVote(almostReady, "player_7", { dummyBoy: true });
+
+    expect(final).toMatchObject({
+      ready: true,
+      votedPlayerIds: ["player_1", "player_2", "player_3", "player_4", "player_5", "player_6", "player_7"],
+      required: 8
+    });
+  });
+
   it("removes lobby start votes when players leave or are kicked", () => {
     const waiting = lobby([["player_1", "Alice"], ["player_2", "Bob"], ["player_3", "Carol"]]);
     const voted = castLobbyStartVote(castLobbyStartVote(waiting, "player_1").state, "player_2").state;
