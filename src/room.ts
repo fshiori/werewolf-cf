@@ -189,6 +189,7 @@ export class RoomDurableObject {
           throw new Error("Werewolf channel is only available to living werewolves at night");
         }
         const text = validateChatText(message.text);
+        await this.persistRoomEvent(member.playerId, "wolf_chat", { visibility: "private", nickname: member.nickname, text, phase: game.phase, day: game.day });
         this.broadcastWerewolf(game, buildWolfChatMessage(member.playerId, member.nickname, text));
         return;
       }
@@ -199,6 +200,7 @@ export class RoomDurableObject {
           throw new Error("Fox channel is only available to living foxes at night");
         }
         const text = validateChatText(message.text);
+        await this.persistRoomEvent(member.playerId, "fox_chat", { visibility: "private", nickname: member.nickname, text, phase: game.phase, day: game.day });
         this.broadcastFox(game, buildFoxChatMessage(member.playerId, member.nickname, text));
         return;
       }
@@ -209,6 +211,7 @@ export class RoomDurableObject {
           throw new Error("Common channel is only available to living common partners at night");
         }
         const text = validateChatText(message.text);
+        await this.persistRoomEvent(member.playerId, "common_chat", { visibility: "private", nickname: member.nickname, text, phase: game.phase, day: game.day });
         this.broadcastCommon(game, buildCommonChatMessage(member.playerId, member.nickname, text));
         if ((await this.loadRoomOptions()).commonTalkVisible) {
           this.broadcastCommonVoice(game, buildCommonChatMessage("common_voice", "共有者的聲音", text));
@@ -222,6 +225,7 @@ export class RoomDurableObject {
           throw new Error("Lovers channel is only available to living lovers at night");
         }
         const text = validateChatText(message.text);
+        await this.persistRoomEvent(member.playerId, "lovers_chat", { visibility: "private", nickname: member.nickname, text, phase: game.phase, day: game.day });
         this.broadcastLovers(game, buildLoversChatMessage(member.playerId, member.nickname, text));
         return;
       }
@@ -232,6 +236,7 @@ export class RoomDurableObject {
           throw new Error("Dead channel is only available to dead players during the game");
         }
         const text = validateChatText(message.text);
+        await this.persistRoomEvent(member.playerId, "dead_chat", { visibility: "private", nickname: member.nickname, text, phase: game.phase, day: game.day });
         this.broadcastDead(game, buildDeadChatMessage(member.playerId, member.nickname, text));
         return;
       }
@@ -255,6 +260,13 @@ export class RoomDurableObject {
           throw new Error("GM whisper target not found");
         }
         const text = validateChatText(message.text);
+        await this.persistRoomEvent(member.playerId, "gm_whisper", {
+          visibility: "private",
+          nickname: member.nickname,
+          targetPlayerId,
+          targetNickname: target.nickname,
+          text
+        });
         this.sendGmWhisper(buildGmWhisperMessage(member.playerId, member.nickname, target, text), targetPlayerId);
         return;
       }
@@ -380,9 +392,19 @@ export class RoomDurableObject {
 
       if (message.type === "vote") {
         const targetPlayerId = validatePlayerId(message.targetPlayerId);
-        const next = castDayVote(await this.loadGameState(), member.playerId, targetPlayerId);
+        const game = await this.loadGameState();
+        const target = game.players.find((player) => player.playerId === targetPlayerId);
+        const next = castDayVote(game, member.playerId, targetPlayerId);
         await this.saveGameState(next);
         await this.syncRoomStatus(next);
+        await this.persistRoomEvent(member.playerId, "day_vote", {
+          visibility: game.openVote ? "public" : "private",
+          nickname: member.nickname,
+          targetPlayerId,
+          targetNickname: target?.nickname,
+          phase: game.phase,
+          day: game.day
+        });
         this.send(socket, buildActionAckMessage("vote", targetPlayerId));
         await this.broadcastGameState(next);
         return;
@@ -390,9 +412,19 @@ export class RoomDurableObject {
 
       if (message.type === "divine") {
         const targetPlayerId = validatePlayerId(message.targetPlayerId);
-        const result = castDivination(await this.loadGameState(), member.playerId, targetPlayerId);
+        const game = await this.loadGameState();
+        const result = castDivination(game, member.playerId, targetPlayerId);
         await this.saveGameState(result.state);
         await this.syncRoomStatus(result.state);
+        await this.persistRoomEvent(member.playerId, "divination", {
+          visibility: "private",
+          nickname: member.nickname,
+          targetPlayerId,
+          targetNickname: result.targetNickname,
+          result: result.result,
+          phase: game.phase,
+          day: game.day
+        });
         this.send(socket, buildDivinationResultMessage(targetPlayerId, result.targetNickname, result.result));
         await this.broadcastGameState(result.state);
         this.sendMediumResults(result.state);
@@ -401,9 +433,19 @@ export class RoomDurableObject {
 
       if (message.type === "child_fox_divine") {
         const targetPlayerId = validatePlayerId(message.targetPlayerId);
-        const result = castChildFoxDivination(await this.loadGameState(), member.playerId, targetPlayerId, Math.random);
+        const game = await this.loadGameState();
+        const result = castChildFoxDivination(game, member.playerId, targetPlayerId, Math.random);
         await this.saveGameState(result.state);
         await this.syncRoomStatus(result.state);
+        await this.persistRoomEvent(member.playerId, "child_fox_divination", {
+          visibility: "private",
+          nickname: member.nickname,
+          targetPlayerId,
+          targetNickname: result.targetNickname,
+          result: result.result,
+          phase: game.phase,
+          day: game.day
+        });
         this.send(socket, buildChildFoxResultMessage(targetPlayerId, result.targetNickname, result.result));
         this.send(socket, buildActionAckMessage("child_fox_divine", targetPlayerId));
         await this.broadcastGameState(result.state);
@@ -413,9 +455,19 @@ export class RoomDurableObject {
 
       if (message.type === "guard") {
         const targetPlayerId = validatePlayerId(message.targetPlayerId);
-        const next = castGuard(await this.loadGameState(), member.playerId, targetPlayerId);
+        const game = await this.loadGameState();
+        const target = game.players.find((player) => player.playerId === targetPlayerId);
+        const next = castGuard(game, member.playerId, targetPlayerId);
         await this.saveGameState(next);
         await this.syncRoomStatus(next);
+        await this.persistRoomEvent(member.playerId, "guard", {
+          visibility: "private",
+          nickname: member.nickname,
+          targetPlayerId,
+          targetNickname: target?.nickname,
+          phase: game.phase,
+          day: game.day
+        });
         this.send(socket, buildActionAckMessage("guard", targetPlayerId));
         await this.broadcastGameState(next);
         this.sendMediumResults(next);
@@ -424,9 +476,19 @@ export class RoomDurableObject {
 
       if (message.type === "cat_revive") {
         const targetPlayerId = validatePlayerId(message.targetPlayerId);
-        const next = castCatRevive(await this.loadGameState(), member.playerId, targetPlayerId);
+        const game = await this.loadGameState();
+        const target = game.players.find((player) => player.playerId === targetPlayerId);
+        const next = castCatRevive(game, member.playerId, targetPlayerId);
         await this.saveGameState(next);
         await this.syncRoomStatus(next);
+        await this.persistRoomEvent(member.playerId, "cat_revive", {
+          visibility: "private",
+          nickname: member.nickname,
+          targetPlayerId,
+          targetNickname: target?.nickname,
+          phase: game.phase,
+          day: game.day
+        });
         this.send(socket, buildActionAckMessage("cat_revive", targetPlayerId));
         await this.broadcastGameState(next);
         this.sendMediumResults(next);
@@ -434,9 +496,19 @@ export class RoomDurableObject {
       }
 
       const targetPlayerId = validatePlayerId(message.targetPlayerId);
-      const next = castNightKill(await this.loadGameState(), member.playerId, targetPlayerId);
+      const game = await this.loadGameState();
+      const target = game.players.find((player) => player.playerId === targetPlayerId);
+      const next = castNightKill(game, member.playerId, targetPlayerId);
       await this.saveGameState(next);
       await this.syncRoomStatus(next);
+      await this.persistRoomEvent(member.playerId, "night_kill", {
+        visibility: "private",
+        nickname: member.nickname,
+        targetPlayerId,
+        targetNickname: target?.nickname,
+        phase: game.phase,
+        day: game.day
+      });
       this.send(socket, buildActionAckMessage("night_kill", targetPlayerId));
       await this.broadcastGameState(next);
       this.sendMediumResults(next);

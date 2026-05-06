@@ -230,6 +230,8 @@ function formatEventPayload(payload: unknown): string {
     typeof value.day === "number" ? `第${value.day}日` : "",
     typeof value.players === "number" ? `${value.players}人` : "",
     typeof value.targetPlayerId === "string" ? `對象:${value.targetPlayerId}` : "",
+    typeof value.targetNickname === "string" ? `對象名:${value.targetNickname}` : "",
+    typeof value.result === "string" ? `結果:${value.result}` : "",
     typeof value.phase === "string" ? `階段:${value.phase}` : "",
     typeof value.role === "string" ? `角色:${roleLabel(value.role)}` : ""
   ].filter(Boolean);
