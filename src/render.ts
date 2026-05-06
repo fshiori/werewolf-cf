@@ -111,6 +111,8 @@ function page(title: string, body: string): string {
     .player-grid { border-spacing: 5px; border-collapse: separate; font-size: 10pt; }
     .player-card { width: 148px; border: 1px solid #b0b0b0; background: #fafafa; table-layout: fixed; }
     .player-card.voted { background: #d0ffff; }
+    body.room-phase-night .player-card.voted { background: #004000; color: snow; }
+    body.room-phase-night .player-card.voted a { color: #ccffff; }
     .player-icon {
       width: 42px;
       height: 42px;

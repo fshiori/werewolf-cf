@@ -150,6 +150,26 @@ export function buildLobbyKickVoteMessage(
   };
 }
 
+function nightActionActorIds(state: GameState): string[] {
+  const actorIds = new Set([
+    ...Object.keys(state.nightKills ?? {}),
+    ...Object.keys(state.divinations ?? {}),
+    ...Object.keys(state.guards ?? {}),
+    ...Object.keys(state.catRevives ?? {})
+  ]);
+  return state.players.filter((player) => actorIds.has(player.playerId)).map((player) => player.playerId);
+}
+
+function votedPlayerIdsForState(state: GameState): string[] {
+  if (!state.voteStatus) {
+    return [];
+  }
+  if (state.phase === "night") {
+    return nightActionActorIds(state);
+  }
+  return Object.keys(state.votes);
+}
+
 export function buildGameStateMessage(state: GameState): ServerMessage {
   return {
     type: "game_state",
@@ -159,7 +179,7 @@ export function buildGameStateMessage(state: GameState): ServerMessage {
     revoteCount: state.revoteCount ?? 0,
     players: publicPlayers(state.players).map((player) => ({ ...player, nickname: escapeHtml(player.nickname) })),
     votes: state.openVote ? state.votes : {},
-    votedPlayerIds: state.voteStatus ? Object.keys(state.votes) : [],
+    votedPlayerIds: votedPlayerIdsForState(state),
     lobbyStartVotedPlayerIds: state.phase === "lobby" ? state.players.filter((player) => state.lobbyStartVotes?.[player.playerId]).map((player) => player.playerId) : undefined,
     winner: state.winner,
     phaseEndsAt: state.phaseEndsAt,
