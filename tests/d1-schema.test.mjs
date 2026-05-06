@@ -1,4 +1,4 @@
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { chmodSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
@@ -77,6 +77,45 @@ describe("D1 schema verifier", () => {
 
       expect(result.status).toBe(1);
       expect(result.stderr).toContain("Unable to parse D1 schema query output as JSON");
+    } finally {
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  });
+
+  it("excludes Cloudflare internal tables from live schema introspection", () => {
+    const cwd = mkdtempSync(join(tmpdir(), "werewolf-cf-d1-schema-"));
+    const binDir = join(cwd, "bin");
+    const fakeNpx = join(binDir, "npx");
+    const commandCapture = join(cwd, "command.txt");
+    mkdirSync(binDir);
+    writeFileSync(
+      fakeNpx,
+      `#!/usr/bin/env node
+import { writeFileSync } from "node:fs";
+writeFileSync(${JSON.stringify(commandCapture)}, process.argv.join("\\n"));
+const schema = ${JSON.stringify({
+  ...requiredColumns,
+  _cf_KV: ["key", "value"]
+})};
+const rows = [
+  ...Object.keys(schema).map((name) => ({ name, table_name: null, column_name: null })),
+  ...Object.entries(schema).flatMap(([tableName, columns]) => columns.map((columnName) => ({ name: null, table_name: tableName, column_name: columnName })))
+];
+process.stdout.write(JSON.stringify([{ results: rows }]));
+`
+    );
+    chmodSync(fakeNpx, 0o755);
+    try {
+      const result = spawnSync(process.execPath, [scriptPath], {
+        encoding: "utf8",
+        env: { ...process.env, PATH: `${binDir}:${process.env.PATH}` }
+      });
+      const command = readFileSync(commandCapture, "utf8");
+
+      expect(result.status).toBe(0);
+      expect(result.stdout).toContain("D1 local schema verification passed");
+      expect(command).toContain("lower(name) NOT GLOB '_cf_*'");
+      expect(command).toContain("pragma_table_info(app_tables.name)");
     } finally {
       rmSync(cwd, { recursive: true, force: true });
     }

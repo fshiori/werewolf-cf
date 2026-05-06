@@ -86,9 +86,10 @@ function parseSchema(output) {
 
 function readSchemaFromWrangler() {
   const command = [
-    "SELECT name, NULL AS table_name, NULL AS column_name FROM sqlite_master WHERE type = 'table'",
+    "WITH app_tables AS (SELECT name FROM sqlite_master WHERE type = 'table' AND lower(name) NOT GLOB '_cf_*')",
+    "SELECT name, NULL AS table_name, NULL AS column_name FROM app_tables",
     "UNION ALL",
-    "SELECT NULL AS name, m.name AS table_name, p.name AS column_name FROM sqlite_master AS m JOIN pragma_table_info(m.name) AS p WHERE m.type = 'table'",
+    "SELECT NULL AS name, app_tables.name AS table_name, p.name AS column_name FROM app_tables JOIN pragma_table_info(app_tables.name) AS p",
     "ORDER BY name, table_name, column_name"
   ].join(" ");
   const wranglerArgs = ["wrangler", "d1", "execute", "werewolf-cf", remote ? "--remote" : "--local", "--command", command, "--json"];
