@@ -50,6 +50,13 @@ function numberedLobby(count: number): GameState {
   return lobby(Array.from({ length: count }, (_, index) => [`player_${index + 1}`, `Player ${index + 1}`]));
 }
 
+function roleCounts(game: GameState): Record<string, number> {
+  return game.players.reduce<Record<string, number>>((counts, player) => {
+    counts[player.role] = (counts[player.role] ?? 0) + 1;
+    return counts;
+  }, {});
+}
+
 function activeState(phase: "day" | "night", players: GameState["players"]): GameState {
   return {
     roomId: "room_abc",
@@ -189,6 +196,69 @@ describe("game", () => {
       "werewolf",
       "seer"
     ]);
+  });
+
+  it("uses reference large-player role deck counts", () => {
+    expect(roleCounts(startGame(numberedLobby(16), 0, () => 0))).toEqual({
+      villager: 6,
+      werewolf: 3,
+      seer: 1,
+      medium: 1,
+      madman: 1,
+      guard: 1,
+      common: 2,
+      fox: 1
+    });
+    expect(roleCounts(startGame(numberedLobby(20), 0, () => 0))).toEqual({
+      villager: 10,
+      fox: 1,
+      werewolf: 3,
+      seer: 1,
+      medium: 1,
+      madman: 1,
+      guard: 1,
+      common: 2
+    });
+    expect(roleCounts(startGame(numberedLobby(23), 0, () => 0))).toEqual({
+      villager: 12,
+      fox: 1,
+      werewolf: 4,
+      seer: 1,
+      medium: 1,
+      madman: 1,
+      guard: 1,
+      common: 2
+    });
+    expect(roleCounts(startGame(numberedLobby(25), 0, () => 0))).toEqual({
+      villager: 12,
+      fox: 1,
+      werewolf: 5,
+      seer: 1,
+      medium: 1,
+      madman: 1,
+      guard: 2,
+      common: 2
+    });
+    expect(roleCounts(startGame(numberedLobby(28), 0, () => 0))).toEqual({
+      villager: 13,
+      fox: 1,
+      werewolf: 5,
+      seer: 2,
+      medium: 1,
+      madman: 1,
+      guard: 2,
+      common: 3
+    });
+    expect(roleCounts(startGame(numberedLobby(30), 0, () => 0))).toEqual({
+      villager: 13,
+      fox: 1,
+      werewolf: 6,
+      seer: 2,
+      medium: 2,
+      madman: 1,
+      guard: 2,
+      common: 3
+    });
   });
 
   it("adds common partners in thirteen-player games", () => {
