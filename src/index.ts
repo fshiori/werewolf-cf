@@ -1768,7 +1768,7 @@ export default {
     }
 
     if (request.method === "GET" && (url.pathname === "/bbs" || url.pathname === "/bbs.php")) {
-      const view = url.searchParams.get("view");
+      const view = url.searchParams.get("view") ?? (url.searchParams.get("go") === "postre" ? url.searchParams.get("id") : null);
       const digestOnly = url.searchParams.get("digest") === "1" || url.searchParams.get("go") === "dige";
       const page = readPositivePage(url.searchParams.get("page"));
       if (view) {
