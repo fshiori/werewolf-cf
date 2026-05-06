@@ -836,6 +836,17 @@ function readBooleanFlag(value: unknown): boolean {
   return value === true || value === 1 || value === "1" || value === "true";
 }
 
+function readPositivePage(value: string | null): number {
+  if (!value) {
+    return 1;
+  }
+  if (!/^\d+$/.test(value)) {
+    return 1;
+  }
+  const page = Number(value);
+  return Number.isSafeInteger(page) && page > 0 ? page : 1;
+}
+
 async function requireBbsAdmin(request: Request, env: Env): Promise<Response | undefined> {
   const adminToken = await env.CONFIG.get("bbs_admin_token");
   if (!adminToken) {
@@ -876,10 +887,22 @@ function bbsTopicFromRow(topic: {
   };
 }
 
-async function listBbsTopics(env: Env, digestOnly = false): Promise<BbsTopicSummary[]> {
+const BBS_TOPIC_PAGE_SIZE = 15;
+const BBS_REPLY_PAGE_SIZE = 10;
+
+async function countBbsTopics(env: Env, digestOnly = false): Promise<number> {
+  const row = await env.DB.prepare(`SELECT COUNT(*) AS count FROM bbs_topics${digestOnly ? " WHERE digest = 1" : ""}`)
+    .bind()
+    .first<{ count: number }>();
+  return row?.count ?? 0;
+}
+
+async function listBbsTopics(env: Env, digestOnly = false, limit = 50, offset = 0): Promise<BbsTopicSummary[]> {
   const result = await env.DB.prepare(
-    `SELECT id, name, title, message, trip_hash, reply_count, pinned, locked, digest, created_at, updated_at FROM bbs_topics${digestOnly ? " WHERE digest = 1" : ""} ORDER BY pinned DESC, updated_at DESC LIMIT 50`
-  ).all<{
+    `SELECT id, name, title, message, trip_hash, reply_count, pinned, locked, digest, created_at, updated_at FROM bbs_topics${digestOnly ? " WHERE digest = 1" : ""} ORDER BY pinned DESC, updated_at DESC LIMIT ? OFFSET ?`
+  )
+    .bind(limit, offset)
+    .all<{
     id: number;
     name: string;
     title: string;
@@ -916,11 +939,18 @@ async function getBbsTopicById(env: Env, topicId: number): Promise<BbsTopicSumma
   return topic ? bbsTopicFromRow(topic) : undefined;
 }
 
-async function listBbsReplies(env: Env, topicId: number): Promise<BbsReplySummary[]> {
-  const result = await env.DB.prepare(
-    "SELECT id, topic_id, name, message, trip_hash, created_at FROM bbs_replies WHERE topic_id = ? ORDER BY created_at ASC, id ASC LIMIT 200"
-  )
+async function countBbsReplies(env: Env, topicId: number): Promise<number> {
+  const row = await env.DB.prepare("SELECT COUNT(*) AS count FROM bbs_replies WHERE topic_id = ?")
     .bind(topicId)
+    .first<{ count: number }>();
+  return row?.count ?? 0;
+}
+
+async function listBbsReplies(env: Env, topicId: number, limit = 200, offset = 0): Promise<BbsReplySummary[]> {
+  const result = await env.DB.prepare(
+    "SELECT id, topic_id, name, message, trip_hash, created_at FROM bbs_replies WHERE topic_id = ? ORDER BY created_at ASC, id ASC LIMIT ? OFFSET ?"
+  )
+    .bind(topicId, limit, offset)
     .all<{ id: number; topic_id: number; name: string; message: string; trip_hash: string | null; created_at: string }>();
   return result.results.map((reply) => ({
     id: reply.id,
@@ -1611,6 +1641,7 @@ export default {
     if (request.method === "GET" && url.pathname === "/bbs") {
       const view = url.searchParams.get("view");
       const digestOnly = url.searchParams.get("digest") === "1" || url.searchParams.get("go") === "dige";
+      const page = readPositivePage(url.searchParams.get("page"));
       if (view) {
         try {
           const topicId = validateBbsTopicId(view);
@@ -1618,22 +1649,36 @@ export default {
           if (!topic) {
             return new Response("BBS topic not found", { status: 404 });
           }
-          return html(renderBbsTopic(topic, await listBbsReplies(env, topicId)));
+          return html(renderBbsTopic(topic, await listBbsReplies(env, topicId, BBS_REPLY_PAGE_SIZE, (page - 1) * BBS_REPLY_PAGE_SIZE), {
+            page,
+            pageSize: BBS_REPLY_PAGE_SIZE,
+            totalReplies: await countBbsReplies(env, topicId)
+          }));
         } catch (error) {
           return json({ error: error instanceof Error ? error.message : "Invalid BBS topic" }, { status: 400 });
         }
       }
-      return html(renderBbs(await listBbsTopics(env, digestOnly), { digestOnly }));
+      return html(renderBbs(await listBbsTopics(env, digestOnly, BBS_TOPIC_PAGE_SIZE, (page - 1) * BBS_TOPIC_PAGE_SIZE), {
+        digestOnly,
+        page,
+        pageSize: BBS_TOPIC_PAGE_SIZE,
+        totalTopics: await countBbsTopics(env, digestOnly)
+      }));
     }
 
     const bbsTopicPageMatch = url.pathname.match(/^\/bbs\/(\d+)$/);
     if (request.method === "GET" && bbsTopicPageMatch) {
       const topicId = validateBbsTopicId(bbsTopicPageMatch[1]);
+      const page = readPositivePage(url.searchParams.get("page"));
       const topic = await getBbsTopicById(env, topicId);
       if (!topic) {
         return new Response("BBS topic not found", { status: 404 });
       }
-      return html(renderBbsTopic(topic, await listBbsReplies(env, topicId)));
+      return html(renderBbsTopic(topic, await listBbsReplies(env, topicId, BBS_REPLY_PAGE_SIZE, (page - 1) * BBS_REPLY_PAGE_SIZE), {
+        page,
+        pageSize: BBS_REPLY_PAGE_SIZE,
+        totalReplies: await countBbsReplies(env, topicId)
+      }));
     }
 
     if (request.method === "GET" && url.pathname === "/icons") {

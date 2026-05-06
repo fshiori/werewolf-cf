@@ -107,6 +107,12 @@ function envWithRooms(
                 if (query.includes("FROM excluded_trips")) {
                   return excludedTripHashes.has(String(values[0])) ? { trip_hash: values[0] } : null;
                 }
+                if (query.includes("COUNT(*) AS count") && query.includes("FROM bbs_topics")) {
+                  return { count: query.includes("WHERE digest = 1") ? bbsTopics.filter((topic) => topic.digest === 1).length : bbsTopics.length };
+                }
+                if (query.includes("COUNT(*) AS count") && query.includes("FROM bbs_replies")) {
+                  return { count: bbsReplies.filter((reply) => reply.topic_id === Number(values[0])).length };
+                }
                 if (query.includes("FROM bbs_replies")) {
                   return bbsReplies.find((reply) => reply.id === Number(values[0]) && reply.topic_id === Number(values[1])) ?? null;
                 }
@@ -166,10 +172,16 @@ function envWithRooms(
                   return { results: events[String(values[0])] ?? [] };
                 }
                 if (query.includes("FROM bbs_replies")) {
-                  return { results: bbsReplies.filter((reply) => reply.topic_id === Number(values[0])) };
+                  const rows = bbsReplies.filter((reply) => reply.topic_id === Number(values[0]));
+                  const limit = typeof values[1] === "number" ? values[1] : rows.length;
+                  const offset = typeof values[2] === "number" ? values[2] : 0;
+                  return { results: rows.slice(offset, offset + limit) };
                 }
                 if (query.includes("FROM bbs_topics")) {
-                  return { results: query.includes("WHERE digest = 1") ? bbsTopics.filter((topic) => topic.digest === 1) : bbsTopics };
+                  const rows = query.includes("WHERE digest = 1") ? bbsTopics.filter((topic) => topic.digest === 1) : bbsTopics;
+                  const limit = typeof values[0] === "number" ? values[0] : rows.length;
+                  const offset = typeof values[1] === "number" ? values[1] : 0;
+                  return { results: rows.slice(offset, offset + limit) };
                 }
                 return { results: [] };
               },
@@ -1296,6 +1308,33 @@ describe("worker routes", () => {
     expect(body).not.toContain("Normal");
   });
 
+  it("renders paginated BBS topic list pages", async () => {
+    const topics = Array.from({ length: 16 }, (_, index) => ({
+      id: index + 1,
+      name: "Alice",
+      title: `Topic ${index + 1}`,
+      message: "Topic body",
+      trip_hash: null,
+      reply_count: 0,
+      pinned: 0,
+      locked: 0,
+      digest: 0,
+      created_at: "2026-05-06 12:00:00",
+      updated_at: "2026-05-06 12:00:00"
+    }));
+    const response = await worker.fetch(
+      new Request("http://example.test/bbs?page=2"),
+      envWithRooms([], {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, new Set(), new Set(), {}, topics)
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.text();
+    expect(body).toContain("Topic 16");
+    expect(body).not.toContain("Topic 1</a>");
+    expect(body).toContain('<a href="/bbs?page=1">[1]</a>');
+    expect(body).toContain("<strong>[2]</strong>");
+  });
+
   it("renders BBS admin topic index", async () => {
     const response = await worker.fetch(
       new Request("http://example.test/admin/bbs"),
@@ -1478,6 +1517,42 @@ describe("worker routes", () => {
     expect(body).toContain("Reply body");
     expect(body).toContain("bbs-topic-pinned");
     expect(body).toContain("bbs-topic-digest");
+  });
+
+  it("renders paginated BBS topic replies from path route", async () => {
+    const replies = Array.from({ length: 11 }, (_, index) => ({
+      id: index + 1,
+      topic_id: 1,
+      name: "Bob",
+      message: `Reply ${index + 1}`,
+      trip_hash: null,
+      created_at: "2026-05-06 12:10:00"
+    }));
+    const response = await worker.fetch(
+      new Request("http://example.test/bbs/1?page=2"),
+      envWithRooms([], {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, new Set(), new Set(), {}, [
+        {
+          id: 1,
+          name: "Alice",
+          title: "Welcome",
+          message: "Topic body",
+          trip_hash: null,
+          reply_count: 11,
+          pinned: 0,
+          locked: 0,
+          digest: 0,
+          created_at: "2026-05-06 12:00:00",
+          updated_at: "2026-05-06 12:10:00"
+        }
+      ], replies)
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.text();
+    expect(body).toContain("Reply 11");
+    expect(body).not.toContain("Reply 1</div>");
+    expect(body).toContain('<a href="/bbs/1?page=1">[1]</a>');
+    expect(body).toContain("<strong>[2]</strong>");
   });
 
   it("returns BBS topic details", async () => {
