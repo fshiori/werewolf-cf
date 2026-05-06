@@ -534,6 +534,10 @@ describe("render", () => {
     expect(html).toContain("#DDDDDD");
     expect(html).toContain("#FF9999");
     expect(html).toContain("32 x 32");
+    expect(html).toContain("iconPickStatus");
+    expect(html).toContain("iconPickButton");
+    expect(html).toContain('data-icon-path="user_icon/001.gif"');
+    expect(html).toContain('localStorage.setItem("werewolf_cf_default_icon", iconPath)');
     expect(html).toContain("上傳頭像");
     expect(html).toContain('id="upload"');
     expect(html).toContain("iconUploadFile");
