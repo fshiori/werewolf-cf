@@ -1098,23 +1098,81 @@ async function getBbsTopic(env: Env, topicIdParam: string): Promise<Response> {
   }
 }
 
+function errorStatus(error: unknown, fallback: number): number {
+  if (typeof error === "object" && error !== null && "status" in error) {
+    const status = (error as { status?: unknown }).status;
+    if (typeof status === "number" && status >= 400 && status < 600) {
+      return status;
+    }
+  }
+  return fallback;
+}
+
+async function insertBbsTopic(env: Env, body: Record<string, unknown>): Promise<number | undefined> {
+  const name = typeof body.name === "string" && body.name.trim() ? validateNickname(body.name) : "匿名";
+  const title = validateBbsTitle(body.title);
+  const message = validateBbsMessage(body.message);
+  const trip = typeof body.trip === "string" && body.trip.trim() ? validateTrip(body.trip) : undefined;
+  const tripHash = trip ? await registeredTripHash(trip) : null;
+  const password = validateBbsPassword(body.password);
+  const passwordHash = password ? await bbsPasswordHash(password) : null;
+  const result = await env.DB.prepare("INSERT INTO bbs_topics (name, title, message, trip_hash, password_hash) VALUES (?, ?, ?, ?, ?)")
+    .bind(name, title, message, tripHash, passwordHash)
+    .run();
+  return typeof result.meta?.last_row_id === "number" && result.meta.last_row_id > 0 ? result.meta.last_row_id : undefined;
+}
+
+async function insertBbsReply(env: Env, topicIdParam: string, body: Record<string, unknown>): Promise<{ replyCount: number; page: number }> {
+  const topicId = validateBbsTopicId(topicIdParam);
+  const topic = await getBbsTopicById(env, topicId);
+  if (!topic) {
+    const error = new Error("BBS topic not found") as Error & { status: number };
+    error.status = 404;
+    throw error;
+  }
+  if (topic.locked) {
+    const error = new Error("BBS topic is locked") as Error & { status: number };
+    error.status = 403;
+    throw error;
+  }
+  const name = typeof body.name === "string" && body.name.trim() ? validateNickname(body.name) : "匿名";
+  const message = validateBbsMessage(body.message);
+  const trip = typeof body.trip === "string" && body.trip.trim() ? validateTrip(body.trip) : undefined;
+  const tripHash = trip ? await registeredTripHash(trip) : null;
+  const password = validateBbsPassword(body.password);
+  const passwordHash = password ? await bbsPasswordHash(password) : null;
+  await env.DB.batch([
+    env.DB.prepare("INSERT INTO bbs_replies (topic_id, name, message, trip_hash, password_hash) VALUES (?, ?, ?, ?, ?)").bind(topicId, name, message, tripHash, passwordHash),
+    env.DB.prepare("UPDATE bbs_topics SET reply_count = reply_count + 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?").bind(topicId)
+  ]);
+  const replyCount = topic.replyCount + 1;
+  return { replyCount, page: Math.max(1, Math.ceil(replyCount / BBS_REPLY_PAGE_SIZE)) };
+}
+
+function readFormString(form: FormData, name: string): string | undefined {
+  const value = form.get(name);
+  return typeof value === "string" ? value : undefined;
+}
+
+async function readLegacyBbsForm(request: Request): Promise<Record<string, unknown>> {
+  const form = await request.formData();
+  return {
+    id: readFormString(form, "id"),
+    name: readFormString(form, "bname") ?? readFormString(form, "name"),
+    title: readFormString(form, "title"),
+    message: readFormString(form, "mess") ?? readFormString(form, "message"),
+    password: readFormString(form, "bpass") ?? readFormString(form, "password"),
+    trip: readFormString(form, "trip")
+  };
+}
+
 async function createBbsTopic(request: Request, env: Env): Promise<Response> {
   const body: unknown = await request.json().catch(() => null);
   if (!isRecord(body)) {
     return json({ error: "Invalid BBS topic" }, { status: 400 });
   }
   try {
-    const name = typeof body.name === "string" && body.name.trim() ? validateNickname(body.name) : "匿名";
-    const title = validateBbsTitle(body.title);
-    const message = validateBbsMessage(body.message);
-    const trip = typeof body.trip === "string" && body.trip.trim() ? validateTrip(body.trip) : undefined;
-    const tripHash = trip ? await registeredTripHash(trip) : null;
-    const password = validateBbsPassword(body.password);
-    const passwordHash = password ? await bbsPasswordHash(password) : null;
-    const result = await env.DB.prepare("INSERT INTO bbs_topics (name, title, message, trip_hash, password_hash) VALUES (?, ?, ?, ?, ?)")
-      .bind(name, title, message, tripHash, passwordHash)
-      .run();
-    const topicId = typeof result.meta?.last_row_id === "number" && result.meta.last_row_id > 0 ? result.meta.last_row_id : undefined;
+    const topicId = await insertBbsTopic(env, body);
     return json(topicId ? { posted: true, topicId } : { posted: true });
   } catch (error) {
     return json({ error: error instanceof Error ? error.message : "Failed to create BBS topic" }, { status: 400 });
@@ -1127,28 +1185,36 @@ async function createBbsReply(request: Request, env: Env, topicIdParam: string):
     return json({ error: "Invalid BBS reply" }, { status: 400 });
   }
   try {
-    const topicId = validateBbsTopicId(topicIdParam);
-    const topic = await getBbsTopicById(env, topicId);
-    if (!topic) {
-      return json({ error: "BBS topic not found" }, { status: 404 });
-    }
-    if (topic.locked) {
-      return json({ error: "BBS topic is locked" }, { status: 403 });
-    }
-    const name = typeof body.name === "string" && body.name.trim() ? validateNickname(body.name) : "匿名";
-    const message = validateBbsMessage(body.message);
-    const trip = typeof body.trip === "string" && body.trip.trim() ? validateTrip(body.trip) : undefined;
-    const tripHash = trip ? await registeredTripHash(trip) : null;
-    const password = validateBbsPassword(body.password);
-    const passwordHash = password ? await bbsPasswordHash(password) : null;
-    await env.DB.batch([
-      env.DB.prepare("INSERT INTO bbs_replies (topic_id, name, message, trip_hash, password_hash) VALUES (?, ?, ?, ?, ?)").bind(topicId, name, message, tripHash, passwordHash),
-      env.DB.prepare("UPDATE bbs_topics SET reply_count = reply_count + 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?").bind(topicId)
-    ]);
-    const replyCount = topic.replyCount + 1;
-    return json({ posted: true, replyCount, page: Math.max(1, Math.ceil(replyCount / BBS_REPLY_PAGE_SIZE)) });
+    const result = await insertBbsReply(env, topicIdParam, body);
+    return json({ posted: true, ...result });
   } catch (error) {
-    return json({ error: error instanceof Error ? error.message : "Failed to create BBS reply" }, { status: 400 });
+    return json({ error: error instanceof Error ? error.message : "Failed to create BBS reply" }, { status: errorStatus(error, 400) });
+  }
+}
+
+async function createLegacyBbsTopic(request: Request, env: Env): Promise<Response> {
+  try {
+    const topicId = await insertBbsTopic(env, await readLegacyBbsForm(request));
+    return new Response(null, {
+      status: 303,
+      headers: { Location: topicId ? `/bbs/${topicId}` : "/bbs" }
+    });
+  } catch (error) {
+    return json({ error: error instanceof Error ? error.message : "Failed to create BBS topic" }, { status: 400 });
+  }
+}
+
+async function createLegacyBbsReply(request: Request, env: Env): Promise<Response> {
+  try {
+    const body = await readLegacyBbsForm(request);
+    const topicId = validateBbsTopicId(typeof body.id === "string" ? body.id : "");
+    const result = await insertBbsReply(env, String(topicId), body);
+    return new Response(null, {
+      status: 303,
+      headers: { Location: `/bbs/${topicId}?page=${result.page}` }
+    });
+  } catch (error) {
+    return json({ error: error instanceof Error ? error.message : "Failed to create BBS reply" }, { status: errorStatus(error, 400) });
   }
 }
 
@@ -2002,6 +2068,14 @@ export default {
 
     if (request.method === "POST" && url.pathname === "/api/bbs/topics") {
       return createBbsTopic(request, env);
+    }
+
+    if (request.method === "POST" && url.pathname === "/bbs.php" && url.searchParams.get("go") === "post") {
+      return createLegacyBbsTopic(request, env);
+    }
+
+    if (request.method === "POST" && url.pathname === "/bbs.php" && url.searchParams.get("go") === "postre") {
+      return createLegacyBbsReply(request, env);
     }
 
     const bbsReplyApiMatch = url.pathname.match(/^\/api\/bbs\/topics\/(\d+)\/replies$/);
