@@ -40,6 +40,9 @@ function page(title: string, body: string, extraHead = ""): string {
       background-image: none;
       color: black;
     }
+    body.room-view-spectator .view-player-only,
+    body.room-view-heaven .view-player-only { color: #666666; }
+    body.room-view-heaven .panel th { background: #cccccc; }
     table { border-collapse: collapse; }
     input, button, select {
       font: inherit;
@@ -2314,6 +2317,7 @@ export function renderScriptInfo(): string {
 
 export type RenderRoomOptions = {
   autoReloadSeconds?: number;
+  viewMode?: "player" | "spectator" | "heaven";
 };
 
 function normalizeAutoReloadSeconds(value: number | undefined): 0 | 15 | 20 | 30 {
@@ -2326,13 +2330,31 @@ function normalizeAutoReloadSeconds(value: number | undefined): 0 | 15 | 20 | 30
   return 0;
 }
 
+function normalizeRoomViewMode(value: string | undefined | null): "player" | "spectator" | "heaven" {
+  return value === "spectator" || value === "heaven" ? value : "player";
+}
+
+function roomViewHref(roomPath: string, viewMode: "player" | "spectator" | "heaven", autoReloadSeconds: 0 | 15 | 20 | 30): string {
+  const params = [
+    viewMode === "player" ? "" : `view=${encodeURIComponent(viewMode)}`,
+    autoReloadSeconds > 0 ? `auto_reload=${autoReloadSeconds}` : ""
+  ].filter(Boolean).join("&");
+  return `${roomPath}${params ? `?${escapeHtml(params)}` : ""}`;
+}
+
+function roomReloadHref(roomPath: string, viewMode: "player" | "spectator" | "heaven", autoReloadSeconds: 0 | 15 | 20 | 30): string {
+  return roomViewHref(roomPath, viewMode, autoReloadSeconds);
+}
+
 export function renderRoom(roomId: string, options: RenderRoomOptions = {}): string {
   const autoReloadSeconds = normalizeAutoReloadSeconds(options.autoReloadSeconds);
+  const viewMode = normalizeRoomViewMode(options.viewMode);
   const roomPath = `/room/${escapeHtml(roomId)}`;
+  const viewLabel = viewMode === "spectator" ? "旁觀視點" : viewMode === "heaven" ? "靈界視點" : "玩家視點";
   const autoReloadMeta = autoReloadSeconds > 0 ? `<meta http-equiv="refresh" content="${autoReloadSeconds}">` : "";
   return page(`Room ${roomId}`, `
-    <script>document.body.classList.add("room-phase-lobby");</script>
-    <table class="game-shell" data-room-id="${escapeHtml(roomId)}">
+    <script>document.body.classList.add("room-phase-lobby", "room-view-${viewMode}");</script>
+    <table class="game-shell" data-room-id="${escapeHtml(roomId)}" data-room-view="${viewMode}">
       <tr>
         <td>
           <table class="game-header">
@@ -2352,13 +2374,23 @@ export function renderRoom(roomId: string, options: RenderRoomOptions = {}): str
             <tr>
               <td>更新</td>
               <td>
-                [<a href="${roomPath}">手動更新</a>]
+                [<a href="${roomReloadHref(roomPath, viewMode, 0)}">手動更新</a>]
                 [自動更新:
-                <a href="${roomPath}?auto_reload=15">15秒</a>
-                <a href="${roomPath}?auto_reload=20">20秒</a>
-                <a href="${roomPath}?auto_reload=30">30秒</a>
-                <a href="${roomPath}?auto_reload=0">停止</a>]
+                <a href="${roomReloadHref(roomPath, viewMode, 15)}">15秒</a>
+                <a href="${roomReloadHref(roomPath, viewMode, 20)}">20秒</a>
+                <a href="${roomReloadHref(roomPath, viewMode, 30)}">30秒</a>
+                <a href="${roomReloadHref(roomPath, viewMode, 0)}">停止</a>]
                 <small class="muted">目前：${autoReloadSeconds > 0 ? `${autoReloadSeconds}秒` : "手動"}</small>
+              </td>
+            </tr>
+            <tr>
+              <td>視點</td>
+              <td>
+                <strong>${viewLabel}</strong>
+                [<a href="${roomViewHref(roomPath, "player", autoReloadSeconds)}">玩家</a>]
+                [<a href="${roomViewHref(roomPath, "spectator", autoReloadSeconds)}">旁觀</a>]
+                [<a href="${roomViewHref(roomPath, "heaven", autoReloadSeconds)}">靈界</a>]
+                <small class="muted">PHP 版 game_play / game_view / heaven 入口對應</small>
               </td>
             </tr>
             <tr>
@@ -2378,7 +2410,7 @@ export function renderRoom(roomId: string, options: RenderRoomOptions = {}): str
                 　<a href="/">[返回]</a>
               </td>
             </tr>
-            <tr>
+            <tr class="view-player-only">
               <td>玩家暱稱</td>
               <td><input id="nickname" maxlength="32" size="28"> <button id="connect">進入房間</button> <button id="startVote" disabled>投開始一票</button> <button id="startGame">開始遊戲</button> <button id="leaveRoom" disabled>退出</button></td>
             </tr>

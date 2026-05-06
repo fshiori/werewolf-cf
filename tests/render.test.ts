@@ -213,7 +213,7 @@ describe("render", () => {
     expect(html).not.toContain("new WebSocket");
     expect(html).toContain("room-phase-lobby");
     expect(html).toContain("room-phase-night");
-    expect(html).toContain('document.body.classList.add("room-phase-lobby");');
+    expect(html).toContain('document.body.classList.add("room-phase-lobby", "room-view-player");');
     expect(html).toContain("進入房間");
     expect(html).toContain(".player-card { width: 148px; border: 1px solid #b0b0b0; background: #fafafa; table-layout: fixed; }");
     expect(html).toContain(".player-name { padding-left: 5px; max-width: 96px; overflow-wrap: anywhere; word-break: break-word; }");
@@ -265,6 +265,10 @@ describe("render", () => {
     expect(html).toContain("<a href=\"/room/room_abc?auto_reload=20\">20秒</a>");
     expect(html).toContain("<a href=\"/room/room_abc?auto_reload=30\">30秒</a>");
     expect(html).toContain("目前：手動");
+    expect(html).toContain("玩家視點");
+    expect(html).toContain('data-room-view="player"');
+    expect(html).toContain("<a href=\"/room/room_abc?view=spectator\">旁觀</a>");
+    expect(html).toContain("<a href=\"/room/room_abc?view=heaven\">靈界</a>");
     expect(html).toContain("/events");
     expect(html).toContain("事件履歷");
     expect(html).toContain("/room/room_abc/log");
@@ -298,6 +302,21 @@ describe("render", () => {
 
     expect(html).toContain('<meta http-equiv="refresh" content="20">');
     expect(html).toContain("目前：20秒");
+  });
+
+  it("renders room spectator and heaven view links", () => {
+    const spectator = renderRoom("room_abc", { viewMode: "spectator", autoReloadSeconds: 20 });
+    expect(spectator).toContain('document.body.classList.add("room-phase-lobby", "room-view-spectator");');
+    expect(spectator).toContain('data-room-view="spectator"');
+    expect(spectator).toContain("旁觀視點");
+    expect(spectator).toContain('<a href="/room/room_abc?view=spectator&amp;auto_reload=15">15秒</a>');
+    expect(spectator).toContain('<a href="/room/room_abc?view=heaven&amp;auto_reload=20">靈界</a>');
+
+    const heaven = renderRoom("room_abc", { viewMode: "heaven" });
+    expect(heaven).toContain("room-view-heaven");
+    expect(heaven).toContain('data-room-view="heaven"');
+    expect(heaven).toContain("靈界視點");
+    expect(heaven).toContain("game_play / game_view / heaven");
   });
 
   it("serves room client behavior from a separate script artifact", () => {
