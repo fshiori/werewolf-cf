@@ -52,6 +52,9 @@ function responseFor(path) {
   if (path === "/") {
     return { contentType: "text/html", body: "<!doctype html><title>汝等是人是狼？</title>" };
   }
+  if (path === "/leaderboard") {
+    return { contentType: "text/html", body: "<!doctype html><title>戰績排行榜</title>" };
+  }
   if (path === "/rules") {
     return { contentType: "text/html", body: "<!doctype html><title>規則</title>" };
   }
