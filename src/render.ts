@@ -1121,15 +1121,18 @@ export function renderAdminIndex(): string {
 
 export function renderBbsAdmin(topics: BbsTopicSummary[]): string {
   const rows = topics.length
-    ? topics.map((topic) => `<tr>
+    ? topics.map((topic) => {
+      const topicPath = bbsTopicPath(topic.id);
+      return `<tr>
         <td align="center">${escapeHtml(String(topic.id))}</td>
-        <td><a href="/bbs?view=${escapeHtml(String(topic.id))}">${escapeHtml(topic.title)}</a></td>
+        <td><a href="${topicPath}">${escapeHtml(topic.title)}</a></td>
         <td>${escapeHtml(topic.name)}${topic.trip ? "◆Trip" : ""}</td>
         <td>${bbsStatusMarks(topic)}</td>
         <td align="center">${escapeHtml(String(topic.replyCount))}</td>
         <td>${escapeHtml(topic.updatedAt)}</td>
-        <td><a href="/bbs?view=${escapeHtml(String(topic.id))}#bbsModerationForm">管理</a></td>
-      </tr>`).join("")
+        <td><a href="${topicPath}#bbsModerationForm">管理</a></td>
+      </tr>`;
+    }).join("")
     : `<tr><td colspan="7" class="muted">尚無主題。</td></tr>`;
 
   return page("BBS Admin", shell(`
@@ -2094,9 +2097,10 @@ export function renderBbs(topics: BbsTopicSummary[], options: { digestOnly?: boo
   const topicRows = topics.length
     ? topics.map((topic) => {
       const legacyTitle = `${topic.pinned ? "[置頂] " : ""}${topic.locked ? "[鎖定] " : ""}${topic.title}${topic.digest ? " (精華)" : ""}`;
+      const topicPath = bbsTopicPath(topic.id);
       return `<tr>
-        <td align="center"><a href="/bbs?view=${escapeHtml(String(topic.id))}">${escapeHtml(String(topic.id))}</a></td>
-        <td><a href="/bbs?view=${escapeHtml(String(topic.id))}" title="${escapeHtml(legacyTitle)}">${bbsStatusMarks(topic, true)}${escapeHtml(topic.title)}</a></td>
+        <td align="center"><a href="${topicPath}">${escapeHtml(String(topic.id))}</a></td>
+        <td><a href="${topicPath}" title="${escapeHtml(legacyTitle)}">${bbsStatusMarks(topic, true)}${escapeHtml(topic.title)}</a></td>
         <td>${escapeHtml(topic.name)}${topic.trip ? "◆Trip" : ""}</td>
         <td align="center">${escapeHtml(String(topic.replyCount))}</td>
         <td>${escapeHtml(topic.updatedAt)}</td>
@@ -2163,6 +2167,10 @@ function bbsAuthorLabel(name: string, trip: boolean): string {
   return `${escapeHtml(name)}${trip ? "◆Trip" : ""}`;
 }
 
+function bbsTopicPath(topicId: number | string): string {
+  return `/bbs/${escapeHtml(String(topicId))}`;
+}
+
 function bbsStatusMarks(topic: Pick<BbsTopicSummary, "pinned" | "locked" | "digest">, bracketed = false): string {
   const marks = [
     topic.pinned ? `<span class="bbs-status-mark bbs-topic-pinned">${bracketed ? "[置頂]" : "置頂"}</span>` : "",
@@ -2173,6 +2181,7 @@ function bbsStatusMarks(topic: Pick<BbsTopicSummary, "pinned" | "locked" | "dige
 }
 
 export function renderBbsTopic(topic: BbsTopicSummary, replies: BbsReplySummary[]): string {
+  const topicPath = bbsTopicPath(topic.id);
   const replyRows = replies.length
     ? replies.map((reply, index) => `<tr>
         <td valign="top" align="right"><strong>${escapeHtml(String(index + 1))}</strong></td>
@@ -2216,7 +2225,7 @@ export function renderBbsTopic(topic: BbsTopicSummary, replies: BbsReplySummary[
             status.textContent = data.error || "回覆失敗";
             return;
           }
-          location.href = "/bbs?view=${escapeHtml(String(topic.id))}";
+          location.href = "${topicPath}";
         });
       </script>`;
   const moderationPanel = `<table class="form-table">
@@ -2249,7 +2258,7 @@ export function renderBbsTopic(topic: BbsTopicSummary, replies: BbsReplySummary[
           status.textContent = data.error || "更新失敗";
           return;
         }
-        location.href = "/bbs?view=${escapeHtml(String(topic.id))}";
+        location.href = "${topicPath}";
       });
     </script>`;
 
