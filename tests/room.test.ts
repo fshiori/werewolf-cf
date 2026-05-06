@@ -195,20 +195,21 @@ describe("RoomDurableObject", () => {
       players: [
         { playerId: "player_host", nickname: "Host", role: "villager", alive: true },
         { playerId: "player_other", nickname: "Other", role: "villager", alive: true },
-        { playerId: "player_wolf", nickname: "Wolf", role: "werewolf", alive: true }
+        { playerId: "player_wolf", nickname: "Wolf", role: "werewolf", alive: true },
+        { playerId: "player_dummy_boy", nickname: "替身君", role: "villager", alive: true }
       ],
       votes: {},
       openVote: false,
       commonTalkVisible: false,
       deadRoleVisible: false,
       wishRole: false,
-      dummyBoy: false,
+      dummyBoy: true,
       dayMs: 180_000,
       nightMs: 90_000,
       selfVote: false,
       voteStatus: false,
       revoteCount: 0,
-      nightKills: {},
+      nightKills: { player_wolf: "player_dummy_boy" },
       divinations: {},
       guards: {},
       catRevives: {},
@@ -226,7 +227,7 @@ describe("RoomDurableObject", () => {
 
     const saved = stored.get("gameState") as GameState;
     expect(saved).toEqual(expect.objectContaining({ phase: "day", day: 1 }));
-    expect(saved.log).toContain("夜晚平安過去。");
+    expect(saved.log).toContain("替身君 在夜晚死亡。");
     expect(saved.log).toContain("第 1 日白天開始。");
     expect(puts).toContainEqual({ key: "gameState", value: saved });
     expect(alarms).toHaveLength(1);
