@@ -2109,14 +2109,23 @@ function paginationLinks(totalItems: number | undefined, page: number | undefine
   return `<center class="bbs-pagination">${links.join(" ")}</center>`;
 }
 
+const BBS_REPLY_PAGE_SIZE = 10;
+
+function bbsTopicLatestReplyPath(topic: BbsTopicSummary): string {
+  const topicPath = bbsTopicPath(topic.id);
+  const lastPage = Math.max(1, Math.ceil(topic.replyCount / BBS_REPLY_PAGE_SIZE));
+  return lastPage > 1 ? `${topicPath}?page=${lastPage}` : topicPath;
+}
+
 export function renderBbs(topics: BbsTopicSummary[], options: { digestOnly?: boolean; page?: number; pageSize?: number; totalTopics?: number } = {}): string {
   const topicRows = topics.length
     ? topics.map((topic) => {
       const legacyTitle = `${topic.pinned ? "[置頂] " : ""}${topic.locked ? "[鎖定] " : ""}${topic.title}${topic.digest ? " (精華)" : ""}`;
       const topicPath = bbsTopicPath(topic.id);
+      const latestReplyPath = bbsTopicLatestReplyPath(topic);
       return `<tr>
         <td align="center"><a href="${topicPath}">${escapeHtml(String(topic.id))}</a></td>
-        <td><a href="${topicPath}" title="${escapeHtml(legacyTitle)}">${bbsStatusMarks(topic, true)}${escapeHtml(topic.title)}</a></td>
+        <td><a href="${latestReplyPath}" title="${escapeHtml(legacyTitle)}">${bbsStatusMarks(topic, true)}${escapeHtml(topic.title)}</a></td>
         <td>${escapeHtml(topic.name)}${topic.trip ? "◆Trip" : ""}</td>
         <td align="center">${escapeHtml(String(topic.replyCount))}</td>
         <td>${escapeHtml(topic.updatedAt)}</td>

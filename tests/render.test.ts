@@ -759,6 +759,27 @@ describe("render", () => {
     expect(html).toContain('<a href="/bbs?page=3">[3]</a>');
   });
 
+  it("links BBS topic titles to the latest reply page", () => {
+    const html = renderBbs([
+      {
+        id: 1,
+        name: "Alice",
+        title: "Long topic",
+        message: "Hello",
+        trip: false,
+        replyCount: 11,
+        pinned: false,
+        locked: false,
+        digest: false,
+        createdAt: "2026-05-06 12:00:00",
+        updatedAt: "2026-05-06 12:30:00"
+      }
+    ]);
+
+    expect(html).toContain('<a href="/bbs/1">1</a>');
+    expect(html).toContain('<a href="/bbs/1?page=2" title="Long topic">');
+  });
+
   it("renders BBS topic detail with replies", () => {
     const html = renderBbsTopic(
       {
