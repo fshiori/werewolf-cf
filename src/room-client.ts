@@ -410,6 +410,35 @@ function referenceImage(path, alt) {
   image.className = "ref-icon";
   return image;
 }
+function appendPlayerIcon(iconCell, player, initial) {
+  if (!player.alive) {
+    const grave = referenceImage("img/grave.gif", "死亡");
+    if (player.iconPath) {
+      const graveSrc = grave.src;
+      const liveSrc = "/assets/reference/" + player.iconPath;
+      grave.addEventListener("mouseover", () => {
+        grave.src = liveSrc;
+      });
+      grave.addEventListener("mouseout", () => {
+        grave.src = graveSrc;
+      });
+    }
+    iconCell.appendChild(grave);
+    return;
+  }
+  const avatar = document.createElement("img");
+  avatar.src = "/assets/avatar/" + player.playerId + "?v=" + Date.now();
+  avatar.alt = "";
+  avatar.addEventListener("error", () => {
+    avatar.remove();
+    if (player.iconPath) {
+      iconCell.appendChild(referenceImage(player.iconPath, player.nickname));
+    } else {
+      iconCell.textContent = initial;
+    }
+  });
+  iconCell.appendChild(avatar);
+}
 function winnerLabel(value) {
   return {
     villagers: "村民",
@@ -487,22 +516,7 @@ function renderGame(game) {
     const cardRow = document.createElement("tr");
     const iconCell = document.createElement("td");
     iconCell.className = "player-icon";
-    const avatar = document.createElement("img");
-    avatar.src = "/assets/avatar/" + player.playerId + "?v=" + Date.now();
-    avatar.alt = "";
-    avatar.addEventListener("error", () => {
-      avatar.remove();
-      if (player.alive) {
-        if (player.iconPath) {
-          iconCell.appendChild(referenceImage(player.iconPath, player.nickname));
-        } else {
-          iconCell.textContent = initial;
-        }
-      } else {
-        iconCell.appendChild(referenceImage("img/grave.gif", "死亡"));
-      }
-    });
-    iconCell.appendChild(avatar);
+    appendPlayerIcon(iconCell, player, initial);
     const nameCell = document.createElement("td");
     nameCell.className = "player-name";
     const marker = document.createElement("font");

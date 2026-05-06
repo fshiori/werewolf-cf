@@ -273,6 +273,10 @@ describe("render", () => {
     expect(ROOM_CLIENT_SCRIPT).toContain("iconPath");
     expect(ROOM_CLIENT_SCRIPT).toContain("player.iconPath");
     expect(ROOM_CLIENT_SCRIPT).toContain("referenceImage(player.iconPath, player.nickname)");
+    expect(ROOM_CLIENT_SCRIPT).toContain('referenceImage("img/grave.gif", "死亡")');
+    expect(ROOM_CLIENT_SCRIPT).toContain('grave.addEventListener("mouseover"');
+    expect(ROOM_CLIENT_SCRIPT).toContain('grave.addEventListener("mouseout"');
+    expect(ROOM_CLIENT_SCRIPT).toContain("appendPlayerIcon(iconCell, player, initial)");
     expect(ROOM_CLIENT_SCRIPT).toContain('profileLink.href = "/player/" + player.playerId;');
     expect(ROOM_CLIENT_SCRIPT).toContain("gm_chat");
     expect(ROOM_CLIENT_SCRIPT).toContain("gm_whisper");
