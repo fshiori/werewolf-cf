@@ -40,7 +40,7 @@ Reference files inspected:
 | DO alarms for day/night | `RoomDurableObject.alarm`, `advancePhaseByAlarm`, alarm tests | Implemented |
 | R2 avatar storage | `/api/assets/avatar`, `/assets/avatar/:playerId`, write smoke | Implemented |
 | KV runtime config | `/api/config`, `/status`, `getHomeAnnouncement`, `isMaintenanceMode` | Implemented |
-| Rendered non-JSON pages | `/`, `/room/:id`, `/leaderboard`, `/status`, `/room/:id/records`, `/room/:id/events`, `/player/:id`, `/rules`, `/protocol`, `/version` | Implemented |
+| Rendered non-JSON pages | `/`, `/room/:id`, `/leaderboard`, `/icons`, `/status`, `/room/:id/records`, `/room/:id/events`, `/player/:id`, `/rules`, `/protocol`, `/version` | Implemented |
 | Room page client script not inline | `/assets/room-client.js`, `src/room-client.ts`, local UI smoke | Implemented |
 | Reference top/menu visual style | Table layout, side menu, fieldsets, colors, and reference top title/background asset URLs in `src/render.ts` | Partial |
 | Reference room player grid visual style | `renderRoom`, `.player-card`, `.player-icon`, role/death/vote styling | Partial |
@@ -51,7 +51,7 @@ Reference files inspected:
 | Complete PHP rule parity | Core roles/options implemented, but no line-by-line rule parity manifest | Partial |
 | Federated room list (`list.php`) | No cross-server/federated list equivalent | Missing |
 | Discussion board (`bbs.php`) | No forum equivalent | Missing |
-| Icon catalog/upload parity | Avatar upload exists, but no reference-style icon catalog/default icon picker | Partial |
+| Icon catalog/upload parity | `/icons` renders the reference default icon catalog; avatar upload exists; join-time default icon picker is still missing | Partial |
 | Old logs (`old_log.php`) | `/room/:roomId/log` renders the D1 game-record and audit-event transcript summary; full talk/vote replay persistence is still missing | Partial |
 | Trip identity parity | Trip register/claim/exclusion exists, but no full reference-style Trip public lookup UI | Partial |
 
@@ -67,7 +67,7 @@ Reference files inspected:
 ### Still missing or weak
 
 - Reference uses bitmap title/background/role/status/option images such as `img/top_title.jpg`, `img/top_bg.jpg`, `img/playing.gif`, `img/waiting.gif`, role images, and option icons. Current top chrome, room list, and rules role rows now emit copied R2 asset URLs while keeping text fallback; live room player cards are still mostly CSS/text.
-- Reference menu includes `聯合列表`, script info, old logs, icon view/upload, win-rate analysis, BBS, Trip registration. Current menu has the core app pages but not every legacy page.
+- Reference menu includes `聯合列表`, script info, old logs, icon view/upload, win-rate analysis, BBS, Trip registration. Current menu has the core app pages and a default icon catalog, but not every legacy page.
 - Reference room view has phase-specific body colors, manual/auto refresh links, login/resident registration links, and different layouts for spectator/player/heaven modes. Current room page is a single realtime WebSocket view.
 - Reference player list includes default icons, hover image swap, Trip links, role reveal text colors, already-voted background, and dead icon handling. Current player cards approximate only part of this.
 - Reference talk log has many location-specific render paths: public day, night wolf, common, lovers, fox, self talk, heaven, GM broadcast/whisper, system action visibility, and post-game/dead visibility. Current WebSocket channels cover the major private channels, but the visual transcript is simpler.
@@ -101,7 +101,7 @@ Reference files inspected:
 ## Next Concrete Work Items
 
 1. Wire copied R2 reference assets into more rendered pages, starting with live room player-card role/death markers and postgame result images.
-2. Add default icon picker/catalog parity for `icon_view.php` and `user_manager.php` icon registration.
+2. Add join-time default icon picker parity for `user_manager.php` icon registration.
 3. Add full talk/vote/action transcript persistence so `/room/:roomId/log` can replay more than final records and audit events.
 4. Add a visual parity checklist with screenshots once a browser is available in the environment.
 5. Add focused parity tests for lover-only victory, heavy wolf/fox edge cases, silence/sudden death, and vote table visibility.

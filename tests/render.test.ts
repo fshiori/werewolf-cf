@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { renderHome, renderLeaderboard, renderPlayerProfile, renderProtocol, renderRoom, renderRoomEvents, renderRoomRecords, renderRoomTranscript, renderRules, renderStatus, renderVersion } from "../src/render";
+import { renderHome, renderIconCatalog, renderLeaderboard, renderPlayerProfile, renderProtocol, renderRoom, renderRoomEvents, renderRoomRecords, renderRoomTranscript, renderRules, renderStatus, renderVersion } from "../src/render";
 import { ROOM_CLIENT_SCRIPT } from "../src/room-client";
 
 describe("render", () => {
@@ -76,6 +76,8 @@ describe("render", () => {
     expect(html).toContain("入村");
     expect(html).toContain("/leaderboard");
     expect(html).toContain("戰績排行榜");
+    expect(html).toContain("/icons");
+    expect(html).toContain("頭像一覽");
     expect(html).toContain("/status");
     expect(html).toContain("伺服器狀態");
     expect(html).toContain("/rules");
@@ -323,6 +325,17 @@ describe("render", () => {
     expect(html).toContain("player_top");
     expect(html).toContain("<td>5</td>");
     expect(html).not.toContain("排行榜 JSON");
+  });
+
+  it("renders default icon catalog as a normal HTML page", () => {
+    const html = renderIconCatalog();
+
+    expect(html).toContain("頭像一覽");
+    expect(html).toContain("/assets/reference/user_icon/001.gif");
+    expect(html).toContain("/assets/reference/user_icon/010.gif");
+    expect(html).toContain("#DDDDDD");
+    expect(html).toContain("#FF9999");
+    expect(html).toContain("32 x 32");
   });
 
   it("renders room records as a normal HTML page", () => {

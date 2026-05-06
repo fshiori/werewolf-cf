@@ -135,6 +135,7 @@ function shell(body: string): string {
           <table class="menu-list">
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/">首頁</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/leaderboard">戰績排行榜</a></td></tr>
+            <tr><td><small><font color="#666666">・</font></small></td><td><a href="/icons">頭像一覽</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/status">伺服器狀態</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/rules">規則</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/protocol">通訊協定</a></td></tr>
@@ -413,6 +414,45 @@ export function renderStatus(status: {
       <legend><strong>Binding 檢查</strong></legend>
       <table class="form-table">
         ${checkRows}
+      </table>
+    </fieldset>
+  `));
+}
+
+export function renderIconCatalog(): string {
+  const icons = [
+    { file: "001.gif", name: "明灰", color: "#DDDDDD" },
+    { file: "002.gif", name: "暗灰", color: "#999999" },
+    { file: "003.gif", name: "黃色", color: "#FFD700" },
+    { file: "004.gif", name: "橙色", color: "#FF9900" },
+    { file: "005.gif", name: "紅色", color: "#FF0000" },
+    { file: "006.gif", name: "水色", color: "#99CCFF" },
+    { file: "007.gif", name: "藍色", color: "#0066FF" },
+    { file: "008.gif", name: "綠色", color: "#00EE00" },
+    { file: "009.gif", name: "紫色", color: "#CC00CC" },
+    { file: "010.gif", name: "櫻色", color: "#FF9999" }
+  ];
+  const rows = icons.map((icon, index) => {
+    const path = `user_icon/${icon.file}`;
+    return `<tr>
+      <td>${escapeHtml(String(index + 1))}</td>
+      <td><img src="/assets/reference/${escapeHtml(path)}" alt="${escapeHtml(icon.name)}" title="${escapeHtml(icon.name)}" width="32" height="32"></td>
+      <td>${escapeHtml(icon.name)}</td>
+      <td><font color="${escapeHtml(icon.color)}">◆</font> ${escapeHtml(icon.color)}</td>
+      <td><code>${escapeHtml(path)}</code></td>
+    </tr>`;
+  }).join("");
+
+  return page("Icons", shell(`
+    <fieldset>
+      <legend><strong>頭像一覽</strong></legend>
+      <table class="form-table">
+        <tr><td><strong>　來源：</strong></td><td>Reference default icons copied to R2 under <code>reference/user_icon/</code>.</td></tr>
+        <tr><td><strong>　尺寸：</strong></td><td>32 x 32</td></tr>
+      </table>
+      <table class="form-table" style="margin:12px 20px 18px;">
+        <thead><tr><td><strong>No.</strong></td><td><strong>圖</strong></td><td><strong>名稱</strong></td><td><strong>色碼</strong></td><td><strong>R2 path</strong></td></tr></thead>
+        <tbody>${rows}</tbody>
       </table>
     </fieldset>
   `));
