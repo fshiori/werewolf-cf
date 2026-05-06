@@ -106,6 +106,10 @@ async function listRooms(env: Env): Promise<RoomSummary[]> {
   return result.results.map(roomRowToSummary);
 }
 
+function adminRoomStatusFilter(value: string | null): "active" | "ended" | "all" {
+  return value === "ended" || value === "all" ? value : "active";
+}
+
 async function requireRoomAdmin(request: Request, env: Env): Promise<Response | undefined> {
   const adminToken = await env.CONFIG.get("room_admin_token");
   if (!adminToken) {
@@ -1526,7 +1530,11 @@ export default {
       if (authError) {
         return html(renderAdminRoomsLogin());
       }
-      return html(renderAdminRooms((await listRooms(env)).filter((room) => room.status !== "ended")));
+      const statusFilter = adminRoomStatusFilter(url.searchParams.get("status"));
+      const rooms = (await listRooms(env)).filter((room) => (
+        statusFilter === "all" ? true : statusFilter === "ended" ? room.status === "ended" : room.status !== "ended"
+      ));
+      return html(renderAdminRooms(rooms, statusFilter, url.searchParams.get("token") ?? ""));
     }
 
     if (request.method === "GET" && url.pathname === "/assets/room-client.js") {
