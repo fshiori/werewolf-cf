@@ -1,13 +1,14 @@
 import type { BbsReplySummary, BbsTopicSummary, FederatedRoomSummary, GameRecordSummary, LeaderboardEntry, PlayerRole, RoomEventSummary, RoomSummary, WinRateEntry } from "./types";
 import { escapeHtml } from "./validation";
 
-function page(title: string, body: string): string {
+function page(title: string, body: string, extraHead = ""): string {
   return `<!doctype html>
 <html lang="zh-Hant">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>${escapeHtml(title)}</title>
+  ${extraHead}
   <style>
     a { color: blue; text-decoration: none; }
     a:visited { color: blue; }
@@ -2066,7 +2067,24 @@ export function renderScriptInfo(): string {
   `));
 }
 
-export function renderRoom(roomId: string): string {
+export type RenderRoomOptions = {
+  autoReloadSeconds?: number;
+};
+
+function normalizeAutoReloadSeconds(value: number | undefined): 0 | 15 | 20 | 30 {
+  if (value !== undefined && value > 0 && value < 15) {
+    return 15;
+  }
+  if (value === 15 || value === 20 || value === 30) {
+    return value;
+  }
+  return 0;
+}
+
+export function renderRoom(roomId: string, options: RenderRoomOptions = {}): string {
+  const autoReloadSeconds = normalizeAutoReloadSeconds(options.autoReloadSeconds);
+  const roomPath = `/room/${escapeHtml(roomId)}`;
+  const autoReloadMeta = autoReloadSeconds > 0 ? `<meta http-equiv="refresh" content="${autoReloadSeconds}">` : "";
   return page(`Room ${roomId}`, `
     <script>document.body.classList.add("room-phase-lobby");</script>
     <table class="game-shell" data-room-id="${escapeHtml(roomId)}">
@@ -2079,11 +2097,23 @@ export function renderRoom(roomId: string): string {
               <td>
                 勝利：<span id="winner" class="muted">未定</span>
                 　<a href="/">首頁</a>
-                　<a href="/room/${escapeHtml(roomId)}/records">對局紀錄</a>
-                　<a href="/room/${escapeHtml(roomId)}/events">事件履歷</a>
-                　<a href="/room/${escapeHtml(roomId)}/log">完整紀錄</a>
+                　<a href="${roomPath}/records">對局紀錄</a>
+                　<a href="${roomPath}/events">事件履歷</a>
+                　<a href="${roomPath}/log">完整紀錄</a>
                 　<button id="manualRefresh" type="button">手動更新</button>
                 <label><input id="autoRefresh" type="checkbox"> 自動更新</label>
+              </td>
+            </tr>
+            <tr>
+              <td>更新</td>
+              <td>
+                [<a href="${roomPath}">手動更新</a>]
+                [自動更新:
+                <a href="${roomPath}?auto_reload=15">15秒</a>
+                <a href="${roomPath}?auto_reload=20">20秒</a>
+                <a href="${roomPath}?auto_reload=30">30秒</a>
+                <a href="${roomPath}?auto_reload=0">停止</a>]
+                <small class="muted">目前：${autoReloadSeconds > 0 ? `${autoReloadSeconds}秒` : "手動"}</small>
               </td>
             </tr>
             <tr>
@@ -2270,5 +2300,5 @@ export function renderRoom(roomId: string): string {
       </tr>
     </table>
     <script src="/assets/room-client.js" defer></script>
-  `);
+  `, autoReloadMeta);
 }

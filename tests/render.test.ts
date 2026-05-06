@@ -248,6 +248,11 @@ describe("render", () => {
     expect(html).toContain("manualRefresh");
     expect(html).toContain("autoRefresh");
     expect(html).toContain("自動更新");
+    expect(html).toContain("[<a href=\"/room/room_abc\">手動更新</a>]");
+    expect(html).toContain("<a href=\"/room/room_abc?auto_reload=15\">15秒</a>");
+    expect(html).toContain("<a href=\"/room/room_abc?auto_reload=20\">20秒</a>");
+    expect(html).toContain("<a href=\"/room/room_abc?auto_reload=30\">30秒</a>");
+    expect(html).toContain("目前：手動");
     expect(html).toContain("/events");
     expect(html).toContain("事件履歷");
     expect(html).toContain("/room/room_abc/log");
@@ -273,6 +278,13 @@ describe("render", () => {
     expect(html).toContain("soundNotify");
     expect(html).toContain("lastWordsText");
     expect(html).toContain("setLastWords");
+  });
+
+  it("renders room page meta refresh for PHP-style auto reload", () => {
+    const html = renderRoom("room_abc", { autoReloadSeconds: 20 });
+
+    expect(html).toContain('<meta http-equiv="refresh" content="20">');
+    expect(html).toContain("目前：20秒");
   });
 
   it("serves room client behavior from a separate script artifact", () => {
