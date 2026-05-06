@@ -93,6 +93,8 @@ describe("render", () => {
     expect(html).toContain("身份登錄");
     expect(html).toContain("/trips");
     expect(html).toContain("Trip查詢");
+    expect(html).toContain("/icons#upload");
+    expect(html).toContain("頭像上傳");
     expect(html).toContain("/bbs");
     expect(html).toContain("人狼討論");
     expect(html).toContain("/status");
@@ -490,6 +492,7 @@ describe("render", () => {
     expect(html).toContain("#FF9999");
     expect(html).toContain("32 x 32");
     expect(html).toContain("上傳頭像");
+    expect(html).toContain('id="upload"');
     expect(html).toContain("iconUploadFile");
     expect(html).toContain("iconUploadButton");
     expect(html).toContain("iconRemoveButton");

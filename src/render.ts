@@ -182,6 +182,7 @@ function shell(body: string): string {
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/leaderboard">戰績排行榜</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/stats">勝率分析</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/icons">頭像一覽</a></td></tr>
+            <tr><td><small><font color="#666666">・</font></small></td><td><a href="/icons#upload">頭像上傳</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/trip">身份登錄</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/trips">Trip查詢</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/bbs">人狼討論</a></td></tr>
@@ -1030,7 +1031,7 @@ export function renderIconCatalog(): string {
         <tbody>${rows}</tbody>
       </table>
     </fieldset>
-    <fieldset>
+    <fieldset id="upload">
       <legend><strong>上傳頭像</strong></legend>
       <table class="form-table">
         <tr>
