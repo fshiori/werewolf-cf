@@ -163,6 +163,10 @@ describe("validation", () => {
       type: "gm_set_common_voice",
       enabled: true
     });
+    expect(parseClientMessage('{"type":"gm_set_channel_restrictions","restrictions":{"wolf":true,"common":false,"lovers":true,"fox":false}}')).toEqual({
+      type: "gm_set_channel_restrictions",
+      restrictions: { wolf: true, common: false, lovers: true, fox: false }
+    });
     expect(parseClientMessage('{"type":"set_last_words","text":"bye"}')).toEqual({ type: "set_last_words", text: "bye" });
     expect(parseClientMessage('{"type":"objection"}')).toEqual({ type: "objection" });
     expect(parseClientMessage('{"type":"start_game"}')).toEqual({ type: "start_game" });

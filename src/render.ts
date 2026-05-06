@@ -1880,7 +1880,7 @@ export function renderProtocol(): string {
       <table class="form-table">
         <tr><td><strong>　join：</strong></td><td><code>{ type, playerId, nickname, trip, wishRole, iconPath }</code></td></tr>
         <tr><td><strong>　chat：</strong></td><td>公開發言。遊戲中限生存玩家與 GM 使用。</td></tr>
-        <tr><td><strong>　wolf_chat / fox_chat / common_chat / lovers_chat：</strong></td><td>夜晚私有頻道，限對應陣營或關係的生存玩家。</td></tr>
+        <tr><td><strong>　wolf_chat / fox_chat / common_chat / lovers_chat：</strong></td><td>夜晚私有頻道，限對應陣營或關係的生存玩家；GM 可用 <code>gm_set_channel_restrictions</code> 寫入 <code>chdis</code> 限制矩陣暫停各頻道。</td></tr>
         <tr><td><strong>　self_talk：</strong></td><td>夜晚生存玩家的自言自語，只回送給本人並作為私有紀錄保存。</td></tr>
         <tr><td><strong>　dead_chat：</strong></td><td>遊戲進行中死亡玩家的靈界頻道。</td></tr>
         <tr><td><strong>　vote：</strong></td><td>白天投票，payload 含 <code>targetPlayerId</code>。</td></tr>
@@ -1891,7 +1891,7 @@ export function renderProtocol(): string {
         <tr><td><strong>　start_vote：</strong></td><td>居民投開始遊戲一票；大廳全員投票後自動開始。</td></tr>
         <tr><td><strong>　kick_vote：</strong></td><td>居民投踢人一票；同一目標達5票後踢出並重置等待室投票。</td></tr>
         <tr><td><strong>　leave_room：</strong></td><td>玩家退出；大廳時從居民列表移除，遊戲中僅關閉目前連線。</td></tr>
-        <tr><td><strong>　gm_*：</strong></td><td>GM 聊天、私語、換日、裁定、調整生死、角色與旗標。</td></tr>
+        <tr><td><strong>　gm_*：</strong></td><td>GM 聊天、私語、換日、裁定、調整生死、角色、旗標、共有公開與頻道限制。</td></tr>
       </table>
     </fieldset>
     <fieldset>
@@ -1901,7 +1901,7 @@ export function renderProtocol(): string {
         <tr><td><strong>　game_state：</strong></td><td>公開階段、日期、玩家生死、投票可見狀態、勝者、計時與系統 log。</td></tr>
         <tr><td><strong>　role：</strong></td><td>私密角色訊息，包含可見同伴與權力者資訊。</td></tr>
         <tr><td><strong>　chat family：</strong></td><td>公開、狼、狐、共有、戀人、靈界、GM 與 GM 私語訊息。</td></tr>
-        <tr><td><strong>　common voice：</strong></td><td><code>commonTalkVisible</code> 啟用時，非共有者會收到匿名 <code>common_chat</code>，<code>playerId</code> 為 <code>common_voice</code>。</td></tr>
+        <tr><td><strong>　common voice：</strong></td><td><code>commonTalkVisible</code> 啟用時，非共有者會收到匿名 <code>common_chat</code>，<code>playerId</code> 為 <code>common_voice</code>；GM 可用 <code>gm_set_common_voice</code> 即時切換。</td></tr>
         <tr><td><strong>　action_ack：</strong></td><td>確認投票、襲擊、護衛、子狐占卜、貓又復活、踢人或退出。</td></tr>
         <tr><td><strong>　divination_result / child_fox_result / medium_result：</strong></td><td>私密角色結果。</td></tr>
         <tr><td><strong>　revealed_roles：</strong></td><td>幽靈視角啟用時給死亡玩家；遊戲結束後給所有人。</td></tr>
@@ -2165,6 +2165,11 @@ export function renderRoom(roomId: string): string {
                 <button id="gmDisableFlag" disabled>GM解除</button>
                 <button id="gmEnableCommonVoice" disabled>共有公開</button>
                 <button id="gmDisableCommonVoice" disabled>共有非公開</button>
+                <label><input id="gmRestrictWolf" type="checkbox"> 關狼頻</label>
+                <label><input id="gmRestrictCommon" type="checkbox"> 關共有</label>
+                <label><input id="gmRestrictLovers" type="checkbox"> 關戀頻</label>
+                <label><input id="gmRestrictFox" type="checkbox"> 關狐頻</label>
+                <button id="gmSetChannelRestrictions" disabled>GM頻道</button>
               </td>
             </tr>
           </table>

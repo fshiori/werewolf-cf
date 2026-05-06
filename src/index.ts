@@ -512,6 +512,7 @@ function getProtocol(): Response {
         "gm_set_alive",
         "gm_set_role",
         "gm_set_flag",
+        "gm_set_channel_restrictions",
         "start_game",
         "start_vote",
         "kick_player",
@@ -559,6 +560,7 @@ function getProtocol(): Response {
           description: "When commonTalkVisible is enabled, living non-common players and dead common partners receive an anonymous common_chat voice."
         }
       },
+      channelRestrictionOption: "chdis:ch_wolf:ch_common:ch_lovers:ch_fox",
       enforcedBy: "RoomDurableObject"
     }
   });

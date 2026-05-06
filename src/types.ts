@@ -30,6 +30,7 @@ export interface RoomOptions {
   lastWords: boolean;
   openVote: boolean;
   commonTalkVisible: boolean;
+  channelRestrictions?: ChannelRestrictions;
   deadRoleVisible: boolean;
   wishRole: boolean;
   tripRequired?: boolean;
@@ -51,6 +52,10 @@ export interface RoomMember {
   nickname: string;
   gm?: boolean;
 }
+
+export type ChannelRestriction = "wolf" | "common" | "lovers" | "fox";
+
+export type ChannelRestrictions = Record<ChannelRestriction, boolean>;
 
 export type PlayerRole =
   | "villager"
@@ -183,6 +188,7 @@ export interface GameState {
   votes: Record<string, string>;
   openVote: boolean;
   commonTalkVisible: boolean;
+  channelRestrictions?: ChannelRestrictions;
   deadRoleVisible: boolean;
   wishRole: boolean;
   dummyBoy: boolean;
@@ -298,6 +304,11 @@ export type GmSetCommonVoiceClientMessage = {
   enabled: boolean;
 };
 
+export type GmSetChannelRestrictionsClientMessage = {
+  type: "gm_set_channel_restrictions";
+  restrictions: ChannelRestrictions;
+};
+
 export type StartGameClientMessage = {
   type: "start_game";
 };
@@ -376,6 +387,7 @@ export type ClientMessage =
   | GmSetRoleClientMessage
   | GmSetFlagClientMessage
   | GmSetCommonVoiceClientMessage
+  | GmSetChannelRestrictionsClientMessage
   | StartGameClientMessage
   | StartVoteClientMessage
   | KickPlayerClientMessage
@@ -410,7 +422,7 @@ export type ServerMessage =
   | { type: "child_fox_result"; targetPlayerId: string; targetNickname: string; result: ChildFoxDivinationResult }
   | { type: "medium_result"; day: number; targetPlayerId: string; targetNickname: string; result: MediumResult }
   | { type: "last_words_ack" }
-  | { type: "action_ack"; action: "vote" | "night_kill" | "guard" | "child_fox_divine" | "cat_revive" | "kick_player" | "leave_room" | "gm_set_common_voice"; targetPlayerId: string }
+  | { type: "action_ack"; action: "vote" | "night_kill" | "guard" | "child_fox_divine" | "cat_revive" | "kick_player" | "leave_room" | "gm_set_common_voice" | "gm_set_channel_restrictions"; targetPlayerId: string }
   | {
       type: "game_state";
       phase: GamePhase;
@@ -418,6 +430,7 @@ export type ServerMessage =
       hostId?: string;
       revoteCount: number;
       commonTalkVisible: boolean;
+      channelRestrictions: ChannelRestrictions;
       players: PublicGamePlayer[];
       votes: Record<string, string>;
       votedPlayerIds: string[];
