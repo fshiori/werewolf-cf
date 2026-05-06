@@ -1112,6 +1112,8 @@ describe("render", () => {
     const playerView = renderRoomTranscript("room_abc", [], events, { viewerMode: "player", viewerPlayerId: "player_wolf", heavenTalk: true });
     expect(playerView).toContain("玩家 player_wolf");
     expect(playerView).toContain("玩家視點");
+    expect(playerView).toContain("可見範圍");
+    expect(playerView).toContain("顯示 player_wolf 的私人發言/行動與指向該玩家的GM密語");
     expect(playerView).toContain('<option value="player_wolf" selected>Wolf (player_wolf)</option>');
     expect(playerView).toContain("/room/room_abc/log?heaven_talk=on&amp;viewer=player&amp;viewer_player_id=player_wolf");
     expect(playerView).toContain("howl");
@@ -1122,12 +1124,14 @@ describe("render", () => {
 
     const deadView = renderRoomTranscript("room_abc", [], events, { viewerMode: "dead", heavenTalk: true });
     expect(deadView).toContain("靈界");
+    expect(deadView).toContain("顯示公開、系統與靈界紀錄");
     expect(deadView).toContain("heaven");
     expect(deadView).not.toContain("內容:howl");
     expect(deadView).not.toContain("內容:mutter");
 
     const gmView = renderRoomTranscript("room_abc", [], events, { viewerMode: "gm", heavenTalk: true });
     expect(gmView).toContain("GM");
+    expect(gmView).toContain("顯示全部保存紀錄");
     expect(gmView).toContain("howl");
     expect(gmView).toContain("heaven");
     expect(gmView).toContain("mutter");

@@ -985,6 +985,15 @@ export function renderRoomTranscript(roomId: string, records: GameRecordSummary[
     dead: "靈界",
     gm: "GM"
   }[viewerMode];
+  const viewerScopeLabel = {
+    legacy: "結束後全公開：顯示保存的公開、私有、系統與GM紀錄。",
+    public: "旁觀：只顯示公開與系統紀錄，隱藏私人頻道與個人能力內容。",
+    player: options.viewerPlayerId
+      ? `玩家：顯示 ${options.viewerPlayerId} 的私人發言/行動與指向該玩家的GM密語。`
+      : "玩家：請選擇玩家後顯示該玩家可見的私人紀錄。",
+    dead: "靈界：顯示公開、系統與靈界紀錄。",
+    gm: "GM：顯示全部保存紀錄。"
+  }[viewerMode];
   const viewerParams = {
     ...(viewerMode !== "legacy" ? { viewer: viewerMode } : {}),
     ...(viewerMode === "player" ? { viewer_player_id: options.viewerPlayerId } : {})
@@ -1010,6 +1019,7 @@ export function renderRoomTranscript(roomId: string, records: GameRecordSummary[
         <tr><td><strong>　索引：</strong></td><td><a href="/room/${escapeHtml(roomId)}/records">對局紀錄</a>　<a href="/room/${escapeHtml(roomId)}/events">事件履歷</a></td></tr>
         <tr><td><strong>　表示：</strong></td><td>${escapeHtml(modeLabel)}　<a href="${roomTranscriptHref(roomId, viewerParams)}">通常</a>　<a href="${roomTranscriptHref(roomId, { ...viewerParams, heaven_talk: "on" })}">靈</a>　<a href="${roomTranscriptHref(roomId, { ...viewerParams, heaven_only: "on" })}">逝</a>　<a href="${roomTranscriptHref(roomId, { ...viewerParams, reverse_log: "on" })}">逆</a>　<a href="${roomTranscriptHref(roomId, { ...viewerParams, reverse_log: "on", heaven_talk: "on" })}">逆&amp;靈</a>　<a href="${roomTranscriptHref(roomId, { ...viewerParams, reverse_log: "on", heaven_only: "on" })}">逆&amp;逝</a></td></tr>
         <tr><td><strong>　視點：</strong></td><td>${escapeHtml(viewerLabel)}　<a href="${roomTranscriptHref(roomId, { ...displayParams, viewer: "public" })}">旁觀</a>　<a href="${roomTranscriptHref(roomId, { ...displayParams, viewer: "dead", heaven_talk: "on", heaven_only: undefined })}">靈界</a>　<a href="${roomTranscriptHref(roomId, { ...displayParams, viewer: "gm", heaven_talk: "on", heaven_only: undefined })}">GM</a></td></tr>
+        <tr><td><strong>　可見範圍：</strong></td><td><span class="muted">${escapeHtml(viewerScopeLabel)}</span></td></tr>
         <tr><td><strong>　玩家視點：</strong></td><td>
           <form method="get" action="/room/${escapeHtml(roomId)}/log" style="margin:0;">
             <input type="hidden" name="viewer" value="player">
