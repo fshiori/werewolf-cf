@@ -1357,6 +1357,41 @@ describe("worker routes", () => {
     }
   });
 
+  it("renders configured legacy federated api.php peers", async () => {
+    const originalFetch = globalThis.fetch;
+    const requestedUrls: string[] = [];
+    globalThis.fetch = (async (input: RequestInfo | URL) => {
+      requestedUrls.push(String(input));
+      if (String(input).endsWith("/api/rooms")) {
+        return new Response("not found", { status: 404 });
+      }
+      return new Response("legacy 123\tLegacy\tOld peer\tplaying\t16\thttps://legacy.example/base/\n", {
+        headers: { "content-type": "text/plain" }
+      });
+    }) as typeof fetch;
+    try {
+      const response = await worker.fetch(
+        new Request("http://example.test/list"),
+        envWithRooms(
+          [],
+          { federated_servers: JSON.stringify([{ name: "舊式伺服器", url: "https://legacy.example/base" }]) }
+        )
+      );
+
+      expect(response.status).toBe(200);
+      const body = await response.text();
+      expect(requestedUrls).toEqual(["https://legacy.example/api/rooms", "https://legacy.example/api.php"]);
+      expect(body).toContain("[123]");
+      expect(body).toContain("Legacy村");
+      expect(body).toContain("Old peer");
+      expect(body).toContain("舊式伺服器");
+      expect(body).toContain("https://legacy.example/base/login.php?room_no=123");
+      expect(body).toContain("服務中");
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
   it("renders BBS topic list page", async () => {
     const response = await worker.fetch(
       new Request("http://example.test/bbs"),
