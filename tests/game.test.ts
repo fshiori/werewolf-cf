@@ -21,6 +21,7 @@ import {
   createLobbyState,
   foxesForPlayer,
   forceEndGame,
+  forceSetCommonTalkVisible,
   forceSetPlayerAlive,
   forceSetPlayerFlag,
   forceSetPlayerRole,
@@ -1700,6 +1701,18 @@ describe("game", () => {
     expect(cleared.players.find((player) => player.playerId === "player_2")?.authority).toBeUndefined();
     expect(() => forceSetPlayerFlag(createLobbyState("room_abc"), "player_1", "lover", true)).toThrow("active games");
     expect(() => forceSetPlayerFlag(day, "player_missing", "lover", true)).toThrow("Flag control target not found");
+  });
+
+  it("lets GM adjust common voice visibility during active games", () => {
+    const day = startGame(lobby([["player_1", "Alice"], ["player_2", "Bob"], ["player_3", "Carol"], ["player_4", "Dave"]]), 0, () => 0);
+    const enabled = forceSetCommonTalkVisible(day, true);
+    const disabled = forceSetCommonTalkVisible(enabled, false);
+
+    expect(enabled.commonTalkVisible).toBe(true);
+    expect(enabled.log).toContain("GM 調整共有頻道公開：開啟。");
+    expect(disabled.commonTalkVisible).toBe(false);
+    expect(disabled.log).toContain("GM 調整共有頻道公開：關閉。");
+    expect(() => forceSetCommonTalkVisible(createLobbyState("room_abc"), true)).toThrow("active games");
   });
 
   it("allows only living werewolves to use the night channel", () => {

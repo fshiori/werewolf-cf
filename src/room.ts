@@ -20,6 +20,7 @@ import {
   commonsForPlayer,
   createLobbyState,
   forceEndGame,
+  forceSetCommonTalkVisible,
   forceSetPlayerAlive,
   forceSetPlayerFlag,
   forceSetPlayerRole,
@@ -412,6 +413,20 @@ export class RoomDurableObject {
         await this.persistRoomEvent(member.playerId, "gm_set_flag", { targetPlayerId, flag: message.flag, enabled: message.enabled });
         await this.broadcastGameState(next);
         this.sendRoles(next);
+        this.sendMediumResults(next);
+        return;
+      }
+
+      if (message.type === "gm_set_common_voice") {
+        if (!member.gm) {
+          throw new Error("Only the GM can adjust channels");
+        }
+        const next = forceSetCommonTalkVisible(await this.loadGameState(), message.enabled);
+        await this.saveGameState(next);
+        await this.setRoomOptionToken("comoutl", message.enabled);
+        await this.persistRoomEvent(member.playerId, "gm_set_common_voice", { enabled: message.enabled, phase: next.phase, day: next.day });
+        this.send(socket, buildActionAckMessage("gm_set_common_voice", member.playerId));
+        await this.broadcastGameState(next);
         this.sendMediumResults(next);
         return;
       }
@@ -928,6 +943,19 @@ export class RoomDurableObject {
       selfVote: roles.has("votedme"),
       voteStatus: roles.has("votedisplay")
     };
+  }
+
+  private async setRoomOptionToken(token: string, enabled: boolean): Promise<void> {
+    const row = await this.env.DB.prepare("SELECT option_role FROM rooms WHERE id = ? LIMIT 1")
+      .bind(this.roomId)
+      .first<{ option_role: string | null }>();
+    const tokens = (row?.option_role ?? "").split(/\s+/).filter(Boolean);
+    const nextTokens = enabled
+      ? Array.from(new Set([...tokens, token]))
+      : tokens.filter((value) => value !== token);
+    await this.env.DB.prepare("UPDATE rooms SET option_role = ? WHERE id = ?")
+      .bind(nextTokens.join(" "), this.roomId)
+      .run();
   }
 
   private async loadRoomCapacity(): Promise<number> {

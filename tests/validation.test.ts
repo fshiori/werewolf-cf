@@ -159,6 +159,10 @@ describe("validation", () => {
       flag: "lover",
       enabled: true
     });
+    expect(parseClientMessage('{"type":"gm_set_common_voice","enabled":true}')).toEqual({
+      type: "gm_set_common_voice",
+      enabled: true
+    });
     expect(parseClientMessage('{"type":"set_last_words","text":"bye"}')).toEqual({ type: "set_last_words", text: "bye" });
     expect(parseClientMessage('{"type":"objection"}')).toEqual({ type: "objection" });
     expect(parseClientMessage('{"type":"start_game"}')).toEqual({ type: "start_game" });

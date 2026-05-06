@@ -1132,6 +1132,17 @@ function dedupePlayers(players: GamePlayer[]): GamePlayer[] {
   });
 }
 
+export function forceSetCommonTalkVisible(state: GameState, enabled: boolean): GameState {
+  if (state.phase !== "day" && state.phase !== "night") {
+    throw new Error("Can only adjust channels during active games");
+  }
+  return {
+    ...state,
+    commonTalkVisible: enabled,
+    log: [...state.log, `GM 調整共有頻道公開：${enabled ? "開啟" : "關閉"}。`]
+  };
+}
+
 function withWinOrNextNight(state: GameState, now: number): GameState {
   const winner = getWinner(state);
   if (winner) {

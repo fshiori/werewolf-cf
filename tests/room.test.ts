@@ -20,6 +20,7 @@ type SentMessage = {
   sentAt?: string;
   phase?: string;
   day?: number;
+  commonTalkVisible?: boolean;
   log?: string[];
   role?: string;
   wolves?: Array<{ playerId: string; nickname: string }>;
@@ -1108,6 +1109,10 @@ describe("RoomDurableObject", () => {
       {
         command: { type: "gm_set_flag", targetPlayerId: "player_target", flag: "lover", enabled: true },
         message: "Only the GM can adjust player flags"
+      },
+      {
+        command: { type: "gm_set_common_voice", enabled: true },
+        message: "Only the GM can adjust channels"
       }
     ];
 
@@ -2890,6 +2895,55 @@ describe("RoomDurableObject", () => {
     expect(childFoxMessages).toEqual([]);
     expect(villagerMessages).toEqual([]);
     expect(deadFoxMessages).toEqual([]);
+  });
+
+  it("lets GM toggle common voice through the websocket handler", async () => {
+    const game: GameState = {
+      roomId: "room_abc",
+      phase: "night",
+      day: 1,
+      players: [
+        { playerId: "player_gm", nickname: "GM", role: "villager", alive: true },
+        { playerId: "player_common", nickname: "Common", role: "common", alive: true },
+        { playerId: "player_villager", nickname: "Villager", role: "villager", alive: true }
+      ],
+      votes: {},
+      openVote: false,
+      commonTalkVisible: false,
+      deadRoleVisible: false,
+      wishRole: false,
+      dummyBoy: false,
+      dayMs: 180_000,
+      nightMs: 90_000,
+      selfVote: false,
+      voteStatus: false,
+      revoteCount: 0,
+      nightKills: {},
+      divinations: {},
+      guards: {},
+      catRevives: {},
+      lastWords: {},
+      log: []
+    };
+    const { room, stored, dbRuns } = observableRoomObject(game, { option_role: "will" });
+    const gmMessages: SentMessage[] = [];
+    const villagerMessages: SentMessage[] = [];
+    const gmSocket = fakeSocket(gmMessages);
+    const villagerSocket = fakeSocket(villagerMessages);
+    connect(room, gmSocket, "player_gm", "GM", true);
+    connect(room, villagerSocket, "player_villager", "Villager");
+
+    await sendRaw(room, gmSocket, JSON.stringify({ type: "gm_set_common_voice", enabled: true }));
+
+    const saved = stored.get("gameState") as GameState;
+    expect(saved.commonTalkVisible).toBe(true);
+    expect(saved.log).toContain("GM 調整共有頻道公開：開啟。");
+    expect(dbRuns).toContainEqual({
+      query: "UPDATE rooms SET option_role = ? WHERE id = ?",
+      binds: ["will comoutl", "room_abc"]
+    });
+    expect(gmMessages).toContainEqual(expect.objectContaining({ type: "action_ack", action: "gm_set_common_voice" }));
+    expect(villagerMessages).toContainEqual(expect.objectContaining({ type: "game_state", commonTalkVisible: true }));
   });
 
   it("sends common chat only to living common sockets", () => {

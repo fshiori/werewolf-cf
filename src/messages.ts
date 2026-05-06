@@ -187,6 +187,7 @@ export function buildGameStateMessage(state: GameState): ServerMessage {
     day: state.day,
     hostId: state.hostId,
     revoteCount: state.revoteCount ?? 0,
+    commonTalkVisible: state.commonTalkVisible,
     players: publicPlayers(state.players).map((player) => ({ ...player, nickname: escapeHtml(player.nickname) })),
     votes: state.openVote ? state.votes : {},
     votedPlayerIds: votedPlayerIdsForState(state),
@@ -258,7 +259,7 @@ export function buildLastWordsAckMessage(): ServerMessage {
 }
 
 export function buildActionAckMessage(
-  action: "vote" | "night_kill" | "guard" | "child_fox_divine" | "cat_revive" | "kick_player" | "leave_room",
+  action: "vote" | "night_kill" | "guard" | "child_fox_divine" | "cat_revive" | "kick_player" | "leave_room" | "gm_set_common_voice",
   targetPlayerId: string
 ): ServerMessage {
   return { type: "action_ack", action, targetPlayerId };
