@@ -1672,7 +1672,7 @@ export default {
       return html(renderLeaderboard(await listLeaderboard(env)));
     }
 
-    if (request.method === "GET" && url.pathname === "/stats") {
+    if (request.method === "GET" && (url.pathname === "/stats" || url.pathname === "/stats.php")) {
       return html(renderWinRateAnalysis(await listWinRateAnalysis(env)));
     }
 
@@ -1685,7 +1685,7 @@ export default {
       return html(renderOldLogs((await listRooms(env)).filter((room) => room.status === "ended")));
     }
 
-    if (request.method === "GET" && url.pathname === "/trip") {
+    if (request.method === "GET" && (url.pathname === "/trip" || url.pathname === "/trip.php")) {
       return html(renderTripRegistration());
     }
 
@@ -1790,7 +1790,7 @@ export default {
       return html(renderProtocol());
     }
 
-    if (request.method === "GET" && url.pathname === "/version") {
+    if (request.method === "GET" && (url.pathname === "/version" || url.pathname === "/version.php")) {
       return html(renderVersion());
     }
 
