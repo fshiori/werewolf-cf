@@ -148,6 +148,11 @@ function page(title: string, body: string, extraHead = ""): string {
     #lastWordsLog { max-height: 120px; overflow: auto; background: #ffffff; }
     #lastWordsLog div { border-top: 1px dotted silver; padding: 2px 4px; overflow-wrap: anywhere; word-break: break-word; }
     #players button { margin: 2px 4px 2px 0; min-width: 7em; text-align: left; }
+    .vote-table { border: 1px solid #999900; background: #ffffee; }
+    .vote-table td { border: 1px solid #d0d080; padding: 2px 6px; }
+    .vote-round-header td { background: #999900; color: snow; font-weight: bold; }
+    .vote-total-row td { background: #ffffcc; color: #666600; }
+    .vote-ballot-row td { background: #ffffff; }
     .transcript-row td { border-top: 1px dashed silver; }
     .transcript-location-system td, .transcript-location-game td { background: #efefef; font-weight: bold; }
     .transcript-location-wolf td { background: #000030; color: #ffccff; }
@@ -442,7 +447,7 @@ function renderTranscriptVoteTables(events: RoomEventSummary[]): string {
       const voter = typeof value.nickname === "string" && value.nickname ? value.nickname : event.playerId ?? "不明";
       const target = voteTargetLabel(event);
       const targetTotal = targetTotals.get(target) ?? 0;
-      return `<tr>
+      return `<tr class="vote-ballot-row">
         <td>${escapeHtml(voter)}</td>
         <td>→</td>
         <td>${escapeHtml(target)}</td>
@@ -451,10 +456,10 @@ function renderTranscriptVoteTables(events: RoomEventSummary[]): string {
       </tr>`;
     }).join("");
     return `
-      <tr><td colspan="5"><strong>${escapeHtml(label)}</strong></td></tr>
-      <tr><td colspan="5"><span class="muted">得票：${renderVoteTargetTotals(groupEvents)}</span></td></tr>
+      <tr class="vote-round-header"><td colspan="5">${escapeHtml(label)}</td></tr>
+      <tr class="vote-total-row"><td colspan="5">得票：${renderVoteTargetTotals(groupEvents)}</td></tr>
       <tr><td colspan="5">
-        <table class="form-table" style="margin:6px 0 12px 18px;">
+        <table class="form-table vote-table" cellspacing="1" style="margin:6px 0 12px 18px;">
           <thead><tr><td><strong>投票者</strong></td><td></td><td><strong>投票先</strong></td><td><strong>得票</strong></td><td><strong>時間</strong></td></tr></thead>
           <tbody>${rows}</tbody>
         </table>

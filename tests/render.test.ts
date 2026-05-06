@@ -921,6 +921,11 @@ describe("render", () => {
     expect(html).toContain("投票紀錄");
     expect(html).toContain("第 2 日 再投票 1");
     expect(html).toContain("得票：Bob：2票　Alice：1票");
+    expect(html).toContain("vote-table");
+    expect(html).toContain("vote-round-header");
+    expect(html).toContain("vote-total-row");
+    expect(html).toContain("vote-ballot-row");
+    expect(html).toContain(".vote-table { border: 1px solid #999900; background: #ffffee; }");
     expect(html).toContain("投票者");
     expect(html).toContain("投票先");
     expect(html).toContain("<strong>得票</strong>");
