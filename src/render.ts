@@ -181,6 +181,7 @@ function shell(body: string): string {
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/leaderboard">戰績排行榜</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/stats">勝率分析</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/icons">頭像一覽</a></td></tr>
+            <tr><td><small><font color="#666666">・</font></small></td><td><a href="/trip">身份登錄</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/trips">Trip查詢</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/bbs">人狼討論</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/status">伺服器狀態</a></td></tr>
@@ -1402,6 +1403,131 @@ export function renderTripLookup(): string {
       tripInput.value = localStorage.getItem("werewolf_cf_trip") || "";
       document.querySelector("#tripLookupButton").addEventListener("click", async () => {
         const trip = tripInput.value;
+        localStorage.setItem("werewolf_cf_trip", trip);
+        tripStatus.textContent = "查詢中";
+        tripRows.innerHTML = '<tr><td class="muted">讀取中...</td></tr>';
+        try {
+          const res = await fetch("/api/trips/lookup?trip=" + encodeURIComponent(trip));
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || "lookup failed");
+          const value = data.trip;
+          const players = value.players.length
+            ? value.players.map((playerId) => '<a href="/player/' + encodeURIComponent(playerId) + '">' + escapeClientHtml(playerId) + '</a>').join("　")
+            : '<span class="muted">尚無認領玩家。</span>';
+          tripRows.innerHTML = [
+            '<tr><td><strong>　登記：</strong></td><td>' + (value.registered ? "已登記" : "未登記") + '</td></tr>',
+            '<tr><td><strong>　排除：</strong></td><td>' + (value.excluded ? '<font color="#990000">已排除</font>' : "未排除") + '</td></tr>',
+            '<tr><td><strong>　玩家：</strong></td><td>' + players + '</td></tr>',
+            '<tr><td><strong>　戰績：</strong></td><td>勝 ' + value.stats.wins + '　敗 ' + value.stats.losses + '　場數 ' + value.stats.gamesPlayed + '</td></tr>'
+          ].join("");
+          tripStatus.textContent = "完成";
+        } catch (error) {
+          tripRows.innerHTML = '<tr><td class="muted">查詢失敗。</td></tr>';
+          tripStatus.textContent = error instanceof Error ? error.message : "查詢失敗";
+        }
+      });
+    </script>
+  `));
+}
+
+export function renderTripRegistration(): string {
+  return page("Trip Registration", shell(`
+    <fieldset>
+      <legend><strong>身份登錄</strong></legend>
+      <table class="form-table">
+        <tr>
+          <td><label><strong>　玩家暱稱：</strong></label></td>
+          <td><input id="tripNickname" maxlength="32" size="28"></td>
+        </tr>
+        <tr>
+          <td><label><strong>　Trip：</strong></label></td>
+          <td><input id="registerTrip" maxlength="32" size="28"> <button id="registerTripButton">身份登錄</button> <button id="claimTripButton">認領身份</button> <span id="registerTripStatus" class="muted"></span></td>
+        </tr>
+        <tr>
+          <td><label><strong>　排除Trip：</strong></label></td>
+          <td><input id="excludeTrip" maxlength="32" size="12"> <input id="excludeTripReason" maxlength="120" size="28"> <button id="excludeTripButton">排除紀錄</button> <button id="removeTripExclusionButton">解除排除</button> <span id="excludeTripStatus" class="muted"></span></td>
+        </tr>
+      </table>
+    </fieldset>
+    <fieldset>
+      <legend><strong>Trip公開資料</strong></legend>
+      <table class="form-table">
+        <tr>
+          <td><label><strong>　Trip：</strong></label></td>
+          <td><input id="tripLookup" maxlength="32" size="28"> <button id="tripLookupButton">查詢</button> <span id="tripLookupStatus" class="muted"></span></td>
+        </tr>
+      </table>
+      <table class="form-table" style="margin:12px 20px 18px;">
+        <tbody id="tripLookupRows"><tr><td class="muted">尚未查詢。</td></tr></tbody>
+      </table>
+    </fieldset>
+    <script>
+      const playerKey = "werewolf_cf_player_id";
+      if (!localStorage.getItem(playerKey)) {
+        localStorage.setItem(playerKey, "player_" + crypto.randomUUID().replaceAll("-", ""));
+      }
+      const registerTripInput = document.querySelector("#registerTrip");
+      const tripLookupInput = document.querySelector("#tripLookup");
+      const savedTrip = localStorage.getItem("werewolf_cf_trip") || "";
+      document.querySelector("#tripNickname").value = localStorage.getItem("werewolf_cf_nickname") || "";
+      registerTripInput.value = savedTrip;
+      tripLookupInput.value = savedTrip;
+      function escapeClientHtml(value) {
+        return String(value).replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
+      }
+      document.querySelector("#registerTripButton").addEventListener("click", async () => {
+        const trip = registerTripInput.value;
+        const status = document.querySelector("#registerTripStatus");
+        localStorage.setItem("werewolf_cf_trip", trip);
+        const res = await fetch("/api/trips", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ trip })
+        });
+        const data = await res.json();
+        status.textContent = res.ok ? "登記完成" : data.error || "登記失敗";
+      });
+      document.querySelector("#claimTripButton").addEventListener("click", async () => {
+        const trip = registerTripInput.value;
+        const nickname = document.querySelector("#tripNickname").value || "Trip玩家";
+        const status = document.querySelector("#registerTripStatus");
+        localStorage.setItem("werewolf_cf_trip", trip);
+        localStorage.setItem("werewolf_cf_nickname", nickname);
+        const res = await fetch("/api/trips/claim", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ playerId: localStorage.getItem(playerKey), nickname, trip })
+        });
+        const data = await res.json();
+        status.textContent = res.ok ? "認領完成" : data.error || "認領失敗";
+      });
+      document.querySelector("#excludeTripButton").addEventListener("click", async () => {
+        const trip = document.querySelector("#excludeTrip").value;
+        const reason = document.querySelector("#excludeTripReason").value;
+        const status = document.querySelector("#excludeTripStatus");
+        const res = await fetch("/api/trips/exclusions", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ trip, reason })
+        });
+        const data = await res.json();
+        status.textContent = res.ok ? "排除完成" : data.error || "排除失敗";
+      });
+      document.querySelector("#removeTripExclusionButton").addEventListener("click", async () => {
+        const trip = document.querySelector("#excludeTrip").value;
+        const status = document.querySelector("#excludeTripStatus");
+        const res = await fetch("/api/trips/exclusions", {
+          method: "DELETE",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ trip })
+        });
+        const data = await res.json();
+        status.textContent = res.ok ? "解除完成" : data.error || "解除失敗";
+      });
+      document.querySelector("#tripLookupButton").addEventListener("click", async () => {
+        const trip = tripLookupInput.value;
+        const tripStatus = document.querySelector("#tripLookupStatus");
+        const tripRows = document.querySelector("#tripLookupRows");
         localStorage.setItem("werewolf_cf_trip", trip);
         tripStatus.textContent = "查詢中";
         tripRows.innerHTML = '<tr><td class="muted">讀取中...</td></tr>';

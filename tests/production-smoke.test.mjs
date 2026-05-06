@@ -58,6 +58,9 @@ function responseFor(path) {
   if (path === "/logs") {
     return { contentType: "text/html", body: "<!doctype html><title>過去紀錄 村No</title>" };
   }
+  if (path === "/trip") {
+    return { contentType: "text/html", body: "<!doctype html><title>身份登錄 Trip公開資料</title>" };
+  }
   if (path === "/status") {
     return { contentType: "text/html", body: "<!doctype html><title>伺服器狀態 Binding 檢查</title>" };
   }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { renderAdminRooms, renderAdminRoomsLogin, renderBbs, renderBbsTopic, renderFederatedList, renderHome, renderIconCatalog, renderLeaderboard, renderOldLogs, renderPlayerProfile, renderProtocol, renderRoom, renderRoomEvents, renderRoomRecords, renderRoomTranscript, renderRules, renderScriptInfo, renderStatus, renderTripLookup, renderVersion, renderWinRateAnalysis } from "../src/render";
+import { renderAdminRooms, renderAdminRoomsLogin, renderBbs, renderBbsTopic, renderFederatedList, renderHome, renderIconCatalog, renderLeaderboard, renderOldLogs, renderPlayerProfile, renderProtocol, renderRoom, renderRoomEvents, renderRoomRecords, renderRoomTranscript, renderRules, renderScriptInfo, renderStatus, renderTripLookup, renderTripRegistration, renderVersion, renderWinRateAnalysis } from "../src/render";
 import { ROOM_CLIENT_SCRIPT } from "../src/room-client";
 
 describe("render", () => {
@@ -83,6 +83,8 @@ describe("render", () => {
     expect(html).toContain("勝率分析");
     expect(html).toContain("/icons");
     expect(html).toContain("頭像一覽");
+    expect(html).toContain("/trip");
+    expect(html).toContain("身份登錄");
     expect(html).toContain("/trips");
     expect(html).toContain("Trip查詢");
     expect(html).toContain("/bbs");
@@ -387,6 +389,24 @@ describe("render", () => {
     expect(html).toContain("werewolf_cf_trip");
     expect(html).toContain("escapeClientHtml");
     expect(html).toContain("encodeURIComponent(playerId)");
+  });
+
+  it("renders dedicated Trip registration page", () => {
+    const html = renderTripRegistration();
+
+    expect(html).toContain("身份登錄");
+    expect(html).toContain("Trip公開資料");
+    expect(html).toContain("registerTripButton");
+    expect(html).toContain("claimTripButton");
+    expect(html).toContain("excludeTripButton");
+    expect(html).toContain("removeTripExclusionButton");
+    expect(html).toContain("tripLookupButton");
+    expect(html).toContain("/api/trips");
+    expect(html).toContain("/api/trips/claim");
+    expect(html).toContain("/api/trips/exclusions");
+    expect(html).toContain("/api/trips/lookup?trip=");
+    expect(html).toContain("werewolf_cf_trip");
+    expect(html).toContain("werewolf_cf_nickname");
   });
 
   it("renders leaderboard as a normal HTML page", () => {
