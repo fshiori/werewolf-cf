@@ -895,6 +895,9 @@ describe("worker routes", () => {
     const body = await response.text();
     expect(body).toContain("請選擇要廢除的村");
     expect(body).toContain("room_admin");
+    expect(body).toContain("參照");
+    expect(body).toContain("/room/room_admin/log");
+    expect(body).toContain("/room/room_admin/events");
     expect(body).toContain("adminEndRoom");
     expect(body).toContain("/api/admin/rooms/");
   });
