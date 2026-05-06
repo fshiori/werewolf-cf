@@ -32,7 +32,7 @@ function responseFor(path, method = "GET") {
     return { contentType: "text/html", body: "<!doctype html><title>身份登錄 Trip公開資料 tripStateMark health-mark</title>" };
   }
   if (path === "/bbs" && method === "GET") {
-    return { contentType: "text/html", body: "<!doctype html><title>主題列表 發表主題 精華</title>" };
+    return { contentType: "text/html", body: '<!doctype html><title>主題列表 發表主題 精華 /bbs/1</title>' };
   }
   if (path === "/bbs/1" && method === "GET") {
     return { contentType: "text/html", body: "<!doctype html><title>回覆列表 主題管理 bbs-status-mark</title>" };
@@ -50,7 +50,7 @@ function responseFor(path, method = "GET") {
     return { contentType: "text/html", body: "<!doctype html><title>系統設定管理 configAdminToken werewolf_cf_config_admin_token</title>" };
   }
   if (path === "/admin/bbs" && method === "GET") {
-    return { contentType: "text/html", body: "<!doctype html><title>討論管理 BBS 管理密碼 bbs-status-mark</title>" };
+    return { contentType: "text/html", body: '<!doctype html><title>討論管理 BBS 管理密碼 bbs-status-mark /bbs/1#bbsModerationForm</title>' };
   }
   if (path === "/manual" && method === "GET") {
     return { contentType: "text/html", body: "<!doctype html><title>說明書 登錄入村</title>" };
