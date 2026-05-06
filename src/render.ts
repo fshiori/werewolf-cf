@@ -812,12 +812,15 @@ function transcriptPlayerCandidates(records: GameRecordSummary[], events: RoomEv
     }
   }
   for (const event of events) {
-    if (!event.playerId || players.has(event.playerId)) {
-      continue;
-    }
     const value = recordValue(event.payload);
-    const nickname = typeof value.nickname === "string" && value.nickname ? value.nickname : "";
-    players.set(event.playerId, nickname ? `${nickname} (${event.playerId})` : event.playerId);
+    if (event.playerId && !players.has(event.playerId)) {
+      const nickname = typeof value.nickname === "string" && value.nickname ? value.nickname : "";
+      players.set(event.playerId, nickname ? `${nickname} (${event.playerId})` : event.playerId);
+    }
+    if (typeof value.targetPlayerId === "string" && value.targetPlayerId && !players.has(value.targetPlayerId)) {
+      const targetNickname = typeof value.targetNickname === "string" && value.targetNickname ? value.targetNickname : "";
+      players.set(value.targetPlayerId, targetNickname ? `${targetNickname} (${value.targetPlayerId})` : value.targetPlayerId);
+    }
   }
   return [...players].map(([playerId, label]) => ({ playerId, label }));
 }

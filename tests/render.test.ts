@@ -1188,6 +1188,23 @@ describe("render", () => {
     expect(html).toContain('<option value="player_wolf" selected>Wolf (player_wolf)</option>');
   });
 
+  it("includes transcript target players in player-view selectors", () => {
+    const html = renderRoomTranscript("room_abc", [], [
+      {
+        id: 1,
+        roomId: "room_abc",
+        playerId: "player_gm",
+        eventType: "gm_whisper",
+        payload: { visibility: "private", nickname: "GM", targetPlayerId: "player_target", targetNickname: "Target", text: "secret", phase: "night", day: 2 },
+        createdAt: "2026-05-06 12:01:00"
+      }
+    ]);
+
+    expect(html).toContain('<option value="player_gm">GM (player_gm)</option>');
+    expect(html).toContain('<option value="player_target">Target (player_target)</option>');
+    expect(html).toContain("/room/room_abc/log?viewer=player&amp;viewer_player_id=player_target");
+  });
+
   it("renders implemented rules page", () => {
     const html = renderRules();
 
