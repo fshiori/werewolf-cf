@@ -922,7 +922,9 @@ describe("render", () => {
     expect(html).toContain("/assets/reference/img/victory_role_human.gif");
     expect(html).toContain("Alice (player_a)");
     expect(html).toContain("占卜師");
+    expect(html).toContain("/assets/reference/img/role_mage.gif");
     expect(html).toContain("Bob (player_b)");
+    expect(html).toContain("/assets/reference/img/role_wolf.gif");
     expect(html).toContain("死亡");
     expect(html).toContain("遊戲開始");
     expect(html).toContain("第1日");
