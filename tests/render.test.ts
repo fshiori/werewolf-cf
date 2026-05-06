@@ -859,6 +859,9 @@ describe("render", () => {
     expect(html).toContain("得票：Bob：2票　Alice：1票");
     expect(html).toContain("投票者");
     expect(html).toContain("投票先");
+    expect(html).toContain("<strong>得票</strong>");
+    expect(html).toContain("<td>Bob</td>\n        <td>2票</td>");
+    expect(html).toContain("<td>Alice</td>\n        <td>1票</td>");
     expect(html).toContain("第 2 日 夜晚");
     expect(html).toContain("襲擊");
     expect(html).toContain("位置");
