@@ -1996,6 +1996,8 @@ export default {
       url.pathname === "/game_view.php" ||
       url.pathname === "/game_play.php" ||
       url.pathname === "/game_frame.php" ||
+      url.pathname === "/game_up.php" ||
+      url.pathname === "/game_vote.php" ||
       url.pathname === "/login.php" ||
       url.pathname === "/user_manager.php";
     const legacyLiveRoomId = isLegacyLiveRoomPage ? url.searchParams.get("room_no") : null;
