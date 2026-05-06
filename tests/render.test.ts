@@ -801,7 +801,14 @@ describe("render", () => {
       {
         id: 1,
         roomId: "room_abc",
-        result: { winner: "werewolves", day: 2, players: [{ playerId: "player_a" }, { playerId: "player_b" }] },
+        result: {
+          winner: "werewolves",
+          day: 2,
+          players: [
+            { playerId: "player_a", nickname: "Alice", role: "seer", alive: false },
+            { playerId: "player_b", nickname: "Bob", role: "werewolf", alive: true }
+          ]
+        },
         createdAt: "2026-05-06 12:00:00"
       }
     ]);
@@ -812,6 +819,11 @@ describe("render", () => {
     expect(html).toContain("/assets/reference/img/victory_role_wolf.gif");
     expect(html).toContain("第 2 日");
     expect(html).toContain("2 人");
+    expect(html).toContain("Alice (player_a)");
+    expect(html).toContain("/assets/reference/img/role_mage.gif");
+    expect(html).toContain("Bob (player_b)");
+    expect(html).toContain("/assets/reference/img/role_wolf.gif");
+    expect(html).toContain("死亡");
   });
 
   it("renders room events as a normal HTML page", () => {
