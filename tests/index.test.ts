@@ -905,6 +905,7 @@ describe("worker routes", () => {
     expect(body).toContain("管理選單");
     expect(body).toContain("/admin/rooms");
     expect(body).toContain("/admin/config");
+    expect(body).toContain("/admin/bbs");
     expect(body).toContain("各管理功能仍需輸入對應管理密碼");
   });
 
@@ -1277,6 +1278,35 @@ describe("worker routes", () => {
     expect(body).toContain("精華主題列表");
     expect(body).toContain("Digest (精華)");
     expect(body).not.toContain("Normal");
+  });
+
+  it("renders BBS admin topic index", async () => {
+    const response = await worker.fetch(
+      new Request("http://example.test/admin/bbs"),
+      envWithRooms([], {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, new Set(), new Set(), {}, [
+        {
+          id: 1,
+          name: "Alice",
+          title: "Welcome",
+          message: "Hello",
+          trip_hash: "trip_hash",
+          reply_count: 2,
+          pinned: 1,
+          locked: 0,
+          digest: 1,
+          created_at: "2026-05-06 12:00:00",
+          updated_at: "2026-05-06 12:30:00"
+        }
+      ])
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.text();
+    expect(body).toContain("討論管理");
+    expect(body).toContain("Welcome");
+    expect(body).toContain("Alice◆Trip");
+    expect(body).toContain("/bbs?view=1#bbsModerationForm");
+    expect(body).toContain("BBS 管理密碼");
   });
 
   it("returns BBS topics", async () => {

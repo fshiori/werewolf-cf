@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { renderAdminConfig, renderAdminConfigLogin, renderAdminIndex, renderAdminRooms, renderAdminRoomsLogin, renderBbs, renderBbsTopic, renderFederatedList, renderHome, renderIconCatalog, renderLeaderboard, renderManual, renderOldLogs, renderPlayerProfile, renderProtocol, renderRoom, renderRoomEvents, renderRoomRecords, renderRoomTranscript, renderRules, renderScriptInfo, renderStatus, renderTripLookup, renderTripRegistration, renderVersion, renderWinRateAnalysis } from "../src/render";
+import { renderAdminConfig, renderAdminConfigLogin, renderAdminIndex, renderAdminRooms, renderAdminRoomsLogin, renderBbs, renderBbsAdmin, renderBbsTopic, renderFederatedList, renderHome, renderIconCatalog, renderLeaderboard, renderManual, renderOldLogs, renderPlayerProfile, renderProtocol, renderRoom, renderRoomEvents, renderRoomRecords, renderRoomTranscript, renderRules, renderScriptInfo, renderStatus, renderTripLookup, renderTripRegistration, renderVersion, renderWinRateAnalysis } from "../src/render";
 import { ROOM_CLIENT_SCRIPT } from "../src/room-client";
 
 describe("render", () => {
@@ -738,6 +738,31 @@ describe("render", () => {
     expect(html).toContain("bbsModerateDigest");
   });
 
+  it("renders BBS admin index", () => {
+    const html = renderBbsAdmin([
+      {
+        id: 1,
+        name: "Alice",
+        title: "<Welcome>",
+        message: "Hello",
+        trip: true,
+        replyCount: 2,
+        pinned: true,
+        locked: false,
+        digest: true,
+        createdAt: "2026-05-06 12:00:00",
+        updatedAt: "2026-05-06 12:30:00"
+      }
+    ]);
+
+    expect(html).toContain("討論管理");
+    expect(html).toContain("&lt;Welcome&gt;");
+    expect(html).toContain("Alice◆Trip");
+    expect(html).toContain("置頂 精華");
+    expect(html).toContain("/bbs?view=1#bbsModerationForm");
+    expect(html).toContain("BBS 管理密碼");
+  });
+
   it("renders room records as a normal HTML page", () => {
     const html = renderRoomRecords("room_abc", [
       {
@@ -1259,6 +1284,7 @@ describe("render", () => {
     expect(html).toContain("管理選單");
     expect(html).toContain("/admin/rooms");
     expect(html).toContain("/admin/config");
+    expect(html).toContain("/admin/bbs");
     expect(html).toContain("/status");
     expect(html).toContain("各管理功能仍需輸入對應管理密碼");
   });

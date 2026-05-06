@@ -1000,6 +1000,7 @@ export function renderAdminIndex(): string {
       <table class="form-table">
         <tr><td><strong>　廢村管理：</strong></td><td><a href="/admin/rooms">村子管理</a> - 檢視進行中/已結束村子，必要時以管理密碼廢村。</td></tr>
         <tr><td><strong>　系統設定：</strong></td><td><a href="/admin/config">設定管理</a> - 更新首頁公告與維護模式。</td></tr>
+        <tr><td><strong>　討論管理：</strong></td><td><a href="/admin/bbs">討論管理</a> - 檢視主題並進入置頂、鎖定、精華設定。</td></tr>
         <tr><td><strong>　伺服器狀態：</strong></td><td><a href="/status">狀態檢查</a> - 檢查 D1、Durable Objects、R2、KV 綁定狀態。</td></tr>
       </table>
     </fieldset>
@@ -1008,6 +1009,34 @@ export function renderAdminIndex(): string {
       <table class="form-table">
         <tr><td><strong>　認證：</strong></td><td>各管理功能仍需輸入對應管理密碼；本頁只提供入口。</td></tr>
         <tr><td><strong>　紀錄：</strong></td><td>廢村與設定變更會透過既有 API 寫入對應的 D1 或 KV 狀態。</td></tr>
+      </table>
+    </fieldset>
+  `));
+}
+
+export function renderBbsAdmin(topics: BbsTopicSummary[]): string {
+  const rows = topics.length
+    ? topics.map((topic) => `<tr>
+        <td align="center">${escapeHtml(String(topic.id))}</td>
+        <td><a href="/bbs?view=${escapeHtml(String(topic.id))}">${escapeHtml(topic.title)}</a></td>
+        <td>${escapeHtml(topic.name)}${topic.trip ? "◆Trip" : ""}</td>
+        <td>${topic.pinned ? "置頂 " : ""}${topic.locked ? "鎖定 " : ""}${topic.digest ? "精華" : ""}${!topic.pinned && !topic.locked && !topic.digest ? "一般" : ""}</td>
+        <td align="center">${escapeHtml(String(topic.replyCount))}</td>
+        <td>${escapeHtml(topic.updatedAt)}</td>
+        <td><a href="/bbs?view=${escapeHtml(String(topic.id))}#bbsModerationForm">管理</a></td>
+      </tr>`).join("")
+    : `<tr><td colspan="7" class="muted">尚無主題。</td></tr>`;
+
+  return page("BBS Admin", shell(`
+    <fieldset>
+      <legend><strong>討論管理</strong></legend>
+      <table class="form-table">
+        <tr><td><strong>　認證：</strong></td><td>主題狀態更新仍需在主題頁輸入 BBS 管理密碼。</td></tr>
+        <tr><td><strong>　入口：</strong></td><td><a href="/bbs">全部主題</a>　<a href="/bbs?digest=1">精華主題</a></td></tr>
+      </table>
+      <table class="form-table" border="1" cellspacing="1" bgcolor="#CCCCCC" style="width:100%;margin:12px 0 18px;">
+        <thead><tr><td><strong>No.</strong></td><td><strong>標題</strong></td><td><strong>作者</strong></td><td><strong>狀態</strong></td><td><strong>回覆</strong></td><td><strong>更新</strong></td><td><strong>操作</strong></td></tr></thead>
+        <tbody>${rows}</tbody>
       </table>
     </fieldset>
   `));
