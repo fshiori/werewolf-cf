@@ -1062,6 +1062,38 @@ async function updateBbsTopicFlags(request: Request, env: Env, topicIdParam: str
   }
 }
 
+async function updateBbsTopicContent(request: Request, env: Env, topicIdParam: string): Promise<Response> {
+  const unauthorized = await requireBbsAdmin(request, env);
+  if (unauthorized) {
+    return unauthorized;
+  }
+  const body: unknown = await request.json().catch(() => null);
+  if (!isRecord(body)) {
+    return json({ error: "Invalid BBS edit request" }, { status: 400 });
+  }
+  try {
+    const topicId = validateBbsTopicId(topicIdParam);
+    const topic = await getBbsTopicById(env, topicId);
+    if (!topic) {
+      return json({ error: "BBS topic not found" }, { status: 404 });
+    }
+    const title = "title" in body ? validateBbsTitle(body.title) : topic.title;
+    const message = "message" in body ? validateBbsMessage(body.message) : topic.message;
+    await env.DB.prepare("UPDATE bbs_topics SET title = ?, message = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?")
+      .bind(title, message, topicId)
+      .run();
+    return json({
+      topic: {
+        ...topic,
+        title,
+        message
+      }
+    });
+  } catch (error) {
+    return json({ error: error instanceof Error ? error.message : "Failed to edit BBS topic" }, { status: 400 });
+  }
+}
+
 async function deleteBbsTopic(request: Request, env: Env, topicIdParam: string): Promise<Response> {
   const unauthorized = await requireBbsAdmin(request, env);
   if (unauthorized) {
@@ -1105,6 +1137,35 @@ async function deleteBbsReply(request: Request, env: Env, topicIdParam: string, 
     return json({ deleted: true, topicId, replyId });
   } catch (error) {
     return json({ error: error instanceof Error ? error.message : "Failed to delete BBS reply" }, { status: 400 });
+  }
+}
+
+async function updateBbsReplyContent(request: Request, env: Env, topicIdParam: string, replyIdParam: string): Promise<Response> {
+  const unauthorized = await requireBbsAdmin(request, env);
+  if (unauthorized) {
+    return unauthorized;
+  }
+  const body: unknown = await request.json().catch(() => null);
+  if (!isRecord(body)) {
+    return json({ error: "Invalid BBS reply edit request" }, { status: 400 });
+  }
+  try {
+    const topicId = validateBbsTopicId(topicIdParam);
+    const replyId = validateBbsTopicId(replyIdParam);
+    const topic = await getBbsTopicById(env, topicId);
+    if (!topic) {
+      return json({ error: "BBS topic not found" }, { status: 404 });
+    }
+    if (!(await bbsReplyExists(env, topicId, replyId))) {
+      return json({ error: "BBS reply not found" }, { status: 404 });
+    }
+    const message = validateBbsMessage(body.message);
+    await env.DB.prepare("UPDATE bbs_replies SET message = ? WHERE id = ? AND topic_id = ?")
+      .bind(message, replyId, topicId)
+      .run();
+    return json({ reply: { id: replyId, topicId, message } });
+  } catch (error) {
+    return json({ error: error instanceof Error ? error.message : "Failed to edit BBS reply" }, { status: 400 });
   }
 }
 
@@ -1764,8 +1825,17 @@ export default {
     }
 
     const bbsReplyModerationApiMatch = url.pathname.match(/^\/api\/bbs\/topics\/(\d+)\/replies\/(\d+)\/moderation$/);
+    if (request.method === "PATCH" && bbsReplyModerationApiMatch) {
+      return updateBbsReplyContent(request, env, bbsReplyModerationApiMatch[1], bbsReplyModerationApiMatch[2]);
+    }
+
     if (request.method === "DELETE" && bbsReplyModerationApiMatch) {
       return deleteBbsReply(request, env, bbsReplyModerationApiMatch[1], bbsReplyModerationApiMatch[2]);
+    }
+
+    const bbsTopicContentApiMatch = url.pathname.match(/^\/api\/bbs\/topics\/(\d+)\/content$/);
+    if (request.method === "PATCH" && bbsTopicContentApiMatch) {
+      return updateBbsTopicContent(request, env, bbsTopicContentApiMatch[1]);
     }
 
     const bbsModerationApiMatch = url.pathname.match(/^\/api\/bbs\/topics\/(\d+)\/moderation$/);

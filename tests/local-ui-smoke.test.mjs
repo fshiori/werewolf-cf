@@ -35,7 +35,7 @@ function responseFor(path, method = "GET") {
     return { contentType: "text/html", body: '<!doctype html><title>主題列表 發表主題 精華 /bbs/1</title>' };
   }
   if (path === "/bbs/1" && method === "GET") {
-    return { contentType: "text/html", body: "<!doctype html><title>回覆列表 主題管理 bbs-status-mark bbsDeleteButton bbsReplyDeleteButton</title>" };
+    return { contentType: "text/html", body: "<!doctype html><title>回覆列表 主題管理 bbs-status-mark bbsDeleteButton bbsReplyDeleteButton bbsTopicEditButton bbsReplyEditButton</title>" };
   }
   if (path === "/status" && method === "GET") {
     return { contentType: "text/html", body: "<!doctype html><title>伺服器狀態 Binding 檢查 health-mark</title>" };

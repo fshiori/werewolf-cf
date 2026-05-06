@@ -2189,7 +2189,11 @@ export function renderBbsTopic(topic: BbsTopicSummary, replies: BbsReplySummary[
         <td>
           <div><strong>${bbsAuthorLabel(reply.name, reply.trip)}</strong> <span class="muted">${escapeHtml(reply.createdAt)}</span></div>
           <div style="white-space:pre-wrap;margin:6px 0 10px;">${escapeHtml(reply.message)}</div>
-          <div><button class="bbsReplyDeleteButton" data-reply-id="${escapeHtml(String(reply.id))}">刪除回覆</button></div>
+          <div>
+            <textarea class="bbsReplyEditMessage" data-reply-id="${escapeHtml(String(reply.id))}" rows="3" cols="60">${escapeHtml(reply.message)}</textarea><br>
+            <button class="bbsReplyEditButton" data-reply-id="${escapeHtml(String(reply.id))}">編輯回覆</button>
+            <button class="bbsReplyDeleteButton" data-reply-id="${escapeHtml(String(reply.id))}">刪除回覆</button>
+          </div>
         </td>
       </tr>`).join("")
     : `<tr><td colspan="2" class="muted">尚無回覆。</td></tr>`;
@@ -2237,7 +2241,9 @@ export function renderBbsTopic(topic: BbsTopicSummary, replies: BbsReplySummary[
         <label><input id="bbsModerateLocked" type="checkbox"${topic.locked ? " checked" : ""}> 鎖定</label>
         <label><input id="bbsModerateDigest" type="checkbox"${topic.digest ? " checked" : ""}> 精華</label>
       </td></tr>
-      <tr><td></td><td><button id="bbsModerateButton">更新</button> <button id="bbsDeleteButton">刪除</button> <span id="bbsModerateStatus" class="muted"></span></td></tr>
+      <tr><td><label><strong>　標題：</strong></label></td><td><input id="bbsEditTitle" maxlength="50" size="48" value="${escapeHtml(topic.title)}"></td></tr>
+      <tr><td><label><strong>　本文：</strong></label></td><td><textarea id="bbsEditMessage" rows="5" cols="64">${escapeHtml(topic.message)}</textarea></td></tr>
+      <tr><td></td><td><button id="bbsModerateButton">更新狀態</button> <button id="bbsTopicEditButton">編輯本文</button> <button id="bbsDeleteButton">刪除</button> <span id="bbsModerateStatus" class="muted"></span></td></tr>
     </table>
     <script>
       document.querySelector("#bbsAdminToken").value = localStorage.getItem("werewolf_cf_bbs_admin_token") || "";
@@ -2262,6 +2268,26 @@ export function renderBbsTopic(topic: BbsTopicSummary, replies: BbsReplySummary[
         }
         location.href = "${topicPath}";
       });
+      document.querySelector("#bbsTopicEditButton").addEventListener("click", async () => {
+        const status = document.querySelector("#bbsModerateStatus");
+        const token = document.querySelector("#bbsAdminToken").value;
+        localStorage.setItem("werewolf_cf_bbs_admin_token", token);
+        status.textContent = "編輯中";
+        const res = await fetch("/api/bbs/topics/${escapeHtml(String(topic.id))}/content", {
+          method: "PATCH",
+          headers: { "content-type": "application/json", "x-bbs-admin-token": token },
+          body: JSON.stringify({
+            title: document.querySelector("#bbsEditTitle").value,
+            message: document.querySelector("#bbsEditMessage").value
+          })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          status.textContent = data.error || "編輯失敗";
+          return;
+        }
+        location.href = "${topicPath}";
+      });
       document.querySelector("#bbsDeleteButton").addEventListener("click", async () => {
         const status = document.querySelector("#bbsModerateStatus");
         const token = document.querySelector("#bbsAdminToken").value;
@@ -2278,6 +2304,28 @@ export function renderBbsTopic(topic: BbsTopicSummary, replies: BbsReplySummary[
           return;
         }
         location.href = "/bbs";
+      });
+      document.querySelectorAll(".bbsReplyEditButton").forEach((button) => {
+        button.addEventListener("click", async () => {
+          const status = document.querySelector("#bbsModerateStatus");
+          const token = document.querySelector("#bbsAdminToken").value;
+          const replyId = button.getAttribute("data-reply-id");
+          const messageInput = Array.from(document.querySelectorAll(".bbsReplyEditMessage")).find((input) => input.getAttribute("data-reply-id") === replyId);
+          localStorage.setItem("werewolf_cf_bbs_admin_token", token);
+          if (!replyId || !messageInput) return;
+          status.textContent = "編輯回覆中";
+          const res = await fetch("/api/bbs/topics/${escapeHtml(String(topic.id))}/replies/" + encodeURIComponent(replyId) + "/moderation", {
+            method: "PATCH",
+            headers: { "content-type": "application/json", "x-bbs-admin-token": token },
+            body: JSON.stringify({ message: messageInput.value })
+          });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) {
+            status.textContent = data.error || "編輯回覆失敗";
+            return;
+          }
+          location.href = "${topicPath}";
+        });
       });
       document.querySelectorAll(".bbsReplyDeleteButton").forEach((button) => {
         button.addEventListener("click", async () => {
