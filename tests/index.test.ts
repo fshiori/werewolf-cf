@@ -814,6 +814,16 @@ describe("worker routes", () => {
     expect(body).toContain("目前功能");
   });
 
+  it("renders script info page", async () => {
+    const response = await worker.fetch(new Request("http://example.test/script-info"), envWithRooms([]));
+
+    expect(response.status).toBe(200);
+    const body = await response.text();
+    expect(body).toContain("Script Info");
+    expect(body).toContain("時間設定");
+    expect(body).toContain("突然死警告");
+  });
+
   it("renders status page", async () => {
     const response = await worker.fetch(
       new Request("http://example.test/status"),

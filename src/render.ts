@@ -141,6 +141,7 @@ function shell(body: string): string {
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/bbs">人狼討論</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/status">伺服器狀態</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/rules">規則</a></td></tr>
+            <tr><td><small><font color="#666666">・</font></small></td><td><a href="/script-info">Script Info</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/protocol">通訊協定</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/version">版本</a></td></tr>
           </table>
@@ -1420,6 +1421,52 @@ export function renderVersion(): string {
         <tr><td><strong>　Core Game Loop：</strong></td><td>docs/test-results/2026-05-03-core-game-loop.md</td></tr>
         <tr><td><strong>　Retro UI Port：</strong></td><td>docs/test-results/2026-05-03-retro-ui-port.md</td></tr>
         <tr><td><strong>　自動測試：</strong></td><td>Vitest + TypeScript typecheck</td></tr>
+      </table>
+    </fieldset>
+  `));
+}
+
+export function renderScriptInfo(): string {
+  return page("Script Info", shell(`
+    <fieldset>
+      <legend><strong>Script Info</strong></legend>
+      <table class="form-table">
+        <tr><td><strong>　Project：</strong></td><td>Werewolf Cloudflare Port</td></tr>
+        <tr><td><strong>　Reference：</strong></td><td><code>ref/diam1.3.61.kz_Build0912/script_info.php</code></td></tr>
+        <tr><td><strong>　Runtime：</strong></td><td>Cloudflare Workers / TypeScript</td></tr>
+        <tr><td><strong>　Realtime：</strong></td><td>Durable Objects + WebSockets + alarms</td></tr>
+        <tr><td><strong>　Database：</strong></td><td>Cloudflare D1</td></tr>
+        <tr><td><strong>　Storage：</strong></td><td>R2 avatars and copied reference assets</td></tr>
+        <tr><td><strong>　Configuration：</strong></td><td>KV runtime config, federated peers, BBS admin token</td></tr>
+      </table>
+    </fieldset>
+    <fieldset>
+      <legend><strong>時間設定</strong></legend>
+      <table class="form-table">
+        <tr><td><strong>　標準白天：</strong></td><td>3分 / real_time dayMinutes</td></tr>
+        <tr><td><strong>　標準夜晚：</strong></td><td>1.5分 / real_time nightMinutes</td></tr>
+        <tr><td><strong>　非即時沉默：</strong></td><td>60秒沉默後推進1時間。</td></tr>
+        <tr><td><strong>　突然死警告：</strong></td><td>時間耗盡後最後2分還不投票將會暴斃。</td></tr>
+        <tr><td><strong>　自動化：</strong></td><td>Durable Object alarm 依 <code>phaseEndsAt</code> 排程。</td></tr>
+      </table>
+    </fieldset>
+    <fieldset>
+      <legend><strong>限制與容量</strong></legend>
+      <table class="form-table">
+        <tr><td><strong>　房間人數：</strong></td><td>8 / 16 / 22 / 30</td></tr>
+        <tr><td><strong>　BBS 標題：</strong></td><td>50字以內</td></tr>
+        <tr><td><strong>　BBS 內容：</strong></td><td>2000字以內</td></tr>
+        <tr><td><strong>　聊天：</strong></td><td>公開、狼人、妖狐、共有、戀人、靈界、GM、GM密語。</td></tr>
+        <tr><td><strong>　頭像：</strong></td><td>R2-backed PNG / JPEG / GIF / WebP，大小由驗證器限制。</td></tr>
+      </table>
+    </fieldset>
+    <fieldset>
+      <legend><strong>相關頁面</strong></legend>
+      <table class="form-table">
+        <tr><td><strong>　版本：</strong></td><td><a href="/version">/version</a></td></tr>
+        <tr><td><strong>　狀態：</strong></td><td><a href="/status">/status</a></td></tr>
+        <tr><td><strong>　規則：</strong></td><td><a href="/rules">/rules</a></td></tr>
+        <tr><td><strong>　通訊協定：</strong></td><td><a href="/protocol">/protocol</a></td></tr>
       </table>
     </fieldset>
   `));
