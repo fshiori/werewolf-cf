@@ -59,6 +59,11 @@ function roleCounts(game: GameState): Record<string, number> {
   }, {});
 }
 
+function randomSequence(values: number[], fallback = 0.999): () => number {
+  let index = 0;
+  return () => values[index++] ?? fallback;
+}
+
 function activeState(phase: "day" | "night", players: GameState["players"]): GameState {
   return {
     roomId: "room_abc",
@@ -697,7 +702,7 @@ describe("game", () => {
         ]
       },
       0,
-      () => 0,
+      randomSequence([0]),
       {
         poison: false,
         bigWolf: false,
@@ -730,6 +735,48 @@ describe("game", () => {
     expect(game.players.find((player) => player.playerId === "player_4")?.role).not.toBe("seer");
   });
 
+  it("processes wish role conflicts in randomized reference order", () => {
+    const state = numberedLobby(8);
+    const game = startGame(
+      {
+        ...state,
+        players: state.players.map((player) => (
+          player.playerId === "player_1" || player.playerId === "player_2" ? { ...player, wishRole: "seer" } : player
+        ))
+      },
+      0,
+      randomSequence([0.999, 0.999, 0.999, 0.999, 0.999, 0.999, 0]),
+      {
+        poison: false,
+        bigWolf: false,
+        authority: false,
+        decider: false,
+        lovers: false,
+        betrayer: false,
+        childFox: false,
+        twoFoxes: false,
+        cat: false,
+        lastWords: false,
+        openVote: false,
+        commonTalkVisible: false,
+        deadRoleVisible: false,
+        wishRole: true,
+        dummyBoy: false,
+        customDummy: false,
+        dummyName: "替身君",
+        dummyLastWords: "",
+        realTime: false,
+        dayMinutes: 3,
+        nightMinutes: 1.5,
+        selfVote: false,
+        voteStatus: false
+      }
+    );
+
+    expect(game.players.find((player) => player.playerId === "player_2")?.role).toBe("seer");
+    expect(game.players.find((player) => player.playerId === "player_1")?.role).not.toBe("seer");
+  });
+
   it("honors enabled optional role wishes before assigning remaining roles", () => {
     const state = numberedLobby(20);
     const game = startGame(
@@ -747,7 +794,7 @@ describe("game", () => {
         })
       },
       0,
-      () => 0,
+      () => 0.999,
       {
         poison: true,
         bigWolf: true,

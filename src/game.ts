@@ -360,7 +360,7 @@ export function startGame(
     return startGameWithPlayers(
       state,
       applyRoomOptions(
-        ensureDummyRoleSafe(assignRolesFromDeck(lobbyPlayers, roleDeck, options)),
+        ensureDummyRoleSafe(assignRolesFromDeck(lobbyPlayers, roleDeck, options, random)),
         options
       ),
       now,
@@ -427,7 +427,7 @@ export function startGame(
     }
     return role;
   });
-  const players = ensureDummyRoleSafe(assignRolesFromDeck(lobbyPlayers, roleDeckWithRoomOptions(roleDeck, options), options));
+  const players = ensureDummyRoleSafe(assignRolesFromDeck(lobbyPlayers, roleDeckWithRoomOptions(roleDeck, options), options, random));
 
   return startGameWithPlayers(state, applyRoomOptions(players, options), now, options);
 }
@@ -459,26 +459,41 @@ function ensureDummyRoleSafe(players: GamePlayer[]): GamePlayer[] {
   });
 }
 
-function assignRolesFromDeck(players: GamePlayer[], roleDeck: GamePlayer["role"][], options: RoomOptions): GamePlayer[] {
+function shufflePlayers(players: GamePlayer[], random: () => number): GamePlayer[] {
+  const shuffled = [...players];
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(random() * (index + 1));
+    [shuffled[index], shuffled[swapIndex]] = [shuffled[swapIndex], shuffled[index]];
+  }
+  return shuffled;
+}
+
+function assignRolesFromDeck(players: GamePlayer[], roleDeck: GamePlayer["role"][], options: RoomOptions, random: () => number): GamePlayer[] {
   if (!options.wishRole) {
     return players.map((player, index) => ({ ...player, role: roleDeck[index], alive: true }));
   }
   const remainingRoles = [...roleDeck];
   const assignments = new Map<string, GamePlayer["role"]>();
-  for (const player of players) {
+  const retryPlayers: GamePlayer[] = [];
+  for (const player of shufflePlayers(players, random)) {
     if (!player.wishRole) {
+      retryPlayers.push(player);
       continue;
     }
     const roleIndex = remainingRoles.indexOf(player.wishRole);
     if (roleIndex === -1) {
+      retryPlayers.push(player);
       continue;
     }
     assignments.set(player.playerId, player.wishRole);
     remainingRoles.splice(roleIndex, 1);
   }
+  for (const player of retryPlayers) {
+    assignments.set(player.playerId, remainingRoles.shift() ?? "villager");
+  }
   return players.map((player) => ({
     ...player,
-    role: assignments.get(player.playerId) ?? remainingRoles.shift() ?? "villager",
+    role: assignments.get(player.playerId) ?? "villager",
     alive: true
   }));
 }
