@@ -576,6 +576,7 @@ describe("render", () => {
     expect(html).toContain("服務中");
     expect(html).toContain("本伺服器");
     expect(html).toContain("募集中");
+    expect(html).toContain("/assets/reference/img/waiting.gif");
     expect(html).toContain("[room_abc]");
     expect(html).toContain("Test村");
     expect(html).toContain("人數22");
@@ -631,6 +632,7 @@ describe("render", () => {
     expect(html).toContain("遠端伺服器");
     expect(html).toContain("https://remote.example/room/remote_room");
     expect(html).toContain("Remote村");
+    expect(html).toContain("/assets/reference/img/playing.gif");
     expect(html).toContain("聯合伺服器狀態");
     expect(html).toContain("故障伺服器");
     expect(html).toContain("連線失敗");
