@@ -2370,12 +2370,14 @@ export function renderBbsTopic(topic: BbsTopicSummary, replies: BbsReplySummary[
           const status = document.querySelector("#bbsModerateStatus");
           const token = document.querySelector("#bbsAdminToken").value;
           const replyId = button.getAttribute("data-reply-id");
+          const passwordInput = Array.from(document.querySelectorAll(".bbsReplyEditPassword")).find((input) => input.getAttribute("data-reply-id") === replyId);
           localStorage.setItem("werewolf_cf_bbs_admin_token", token);
           if (!replyId || !confirm("刪除此回覆？")) return;
           status.textContent = "刪除回覆中";
           const res = await fetch("/api/bbs/topics/${escapeHtml(String(topic.id))}/replies/" + encodeURIComponent(replyId) + "/moderation", {
             method: "DELETE",
-            headers: { "x-bbs-admin-token": token }
+            headers: { "content-type": "application/json", "x-bbs-admin-token": token },
+            body: JSON.stringify({ password: passwordInput ? passwordInput.value : "" })
           });
           const data = await res.json().catch(() => ({}));
           if (!res.ok) {

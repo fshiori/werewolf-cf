@@ -2029,6 +2029,86 @@ describe("worker routes", () => {
     expect(batches[0][1].values).toEqual([1]);
   });
 
+  it("deletes BBS replies with the reply password", async () => {
+    const env = envWithRooms([], {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, new Set(), new Set(), {}, [
+      {
+        id: 1,
+        name: "Alice",
+        title: "Welcome",
+        message: "Topic body",
+        trip_hash: null,
+        reply_count: 1,
+        pinned: 0,
+        locked: 0,
+        digest: 0,
+        created_at: "2026-05-06 12:00:00",
+        updated_at: "2026-05-06 12:00:00"
+      }
+    ], [
+      {
+        id: 2,
+        topic_id: 1,
+        name: "Bob",
+        message: "Reply body",
+        trip_hash: null,
+        password_hash: await bbsPasswordHash("secret"),
+        created_at: "2026-05-06 12:10:00"
+      }
+    ]);
+    const response = await worker.fetch(
+      new Request("http://example.test/api/bbs/topics/1/replies/2/moderation", {
+        method: "DELETE",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ password: "secret" })
+      }),
+      env
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ deleted: true, topicId: 1, replyId: 2 });
+  });
+
+  it("rejects BBS reply deletion with the wrong reply password", async () => {
+    const env = envWithRooms([], {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, new Set(), new Set(), {}, [
+      {
+        id: 1,
+        name: "Alice",
+        title: "Welcome",
+        message: "Topic body",
+        trip_hash: null,
+        reply_count: 1,
+        pinned: 0,
+        locked: 0,
+        digest: 0,
+        created_at: "2026-05-06 12:00:00",
+        updated_at: "2026-05-06 12:00:00"
+      }
+    ], [
+      {
+        id: 2,
+        topic_id: 1,
+        name: "Bob",
+        message: "Reply body",
+        trip_hash: null,
+        password_hash: await bbsPasswordHash("secret"),
+        created_at: "2026-05-06 12:10:00"
+      }
+    ]);
+    const response = await worker.fetch(
+      new Request("http://example.test/api/bbs/topics/1/replies/2/moderation", {
+        method: "DELETE",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ password: "wrong" })
+      }),
+      env
+    );
+
+    expect(response.status).toBe(403);
+    expect(await response.json()).toEqual({ error: "BBS reply delete password is invalid" });
+    const batches = (env as unknown as { batches: Array<Array<{ query: string; values: unknown[] }>> }).batches;
+    expect(batches).toEqual([]);
+  });
+
   it("edits BBS replies with the configured admin token", async () => {
     const env = envWithRooms([], { bbs_admin_token: "secret" }, {}, {}, {}, {}, {}, {}, {}, {}, {}, new Set(), new Set(), {}, [
       {
