@@ -106,6 +106,22 @@ function page(title: string, body: string, extraHead = ""): string {
     .bbs-topic-pinned { border-color: #cc6600; background: #ffffcc; color: #996600; }
     .bbs-topic-locked { border-color: #666666; background: #e6e6e6; color: #333333; }
     .bbs-topic-digest { border-color: #cc3300; background: #ffe6e6; color: #cc0000; }
+    .health-mark {
+      display: inline-block;
+      border: 1px solid #999999;
+      background: #eeeeee;
+      color: #333333;
+      font-size: 11px;
+      line-height: 1.25;
+      padding: 0 4px;
+      margin-right: 3px;
+      min-width: 3em;
+      text-align: center;
+      white-space: nowrap;
+    }
+    .health-ok { border-color: #008800; background: #e6ffe6; color: #008800; }
+    .health-error { border-color: #cc0000; background: #ffe6e6; color: #cc0000; }
+    .health-idle { border-color: #666666; background: #eeeeee; color: #333333; }
     .ref-icon { width: 16px; height: 16px; border: 0; vertical-align: text-bottom; margin-right: 2px; }
     .form-table td { padding: 4px 2px; vertical-align: top; }
     .game-shell { width: 800px; margin: 8px auto 18px; }
@@ -1027,9 +1043,13 @@ export function renderStatus(status: {
   homeAnnouncement?: string | null;
   maintenanceMode: boolean;
 }): string {
+  const healthMark = (label: string, state: "ok" | "error" | "idle"): string => {
+    const className = state === "ok" ? "health-ok" : state === "error" ? "health-error" : "health-idle";
+    return `<span class="health-mark ${className}">${escapeHtml(label)}</span>`;
+  };
   const checkRows = Object.entries(status.checks).map(([name, ok]) => `<tr>
     <td><strong>　${escapeHtml(name)}：</strong></td>
-    <td>${ok ? `<font color="#008800">正常</font>` : `<font color="#cc0000">異常</font>`}</td>
+    <td>${ok ? `${healthMark("正常", "ok")}<font color="#008800">正常</font>` : `${healthMark("異常", "error")}<font color="#cc0000">異常</font>`}</td>
   </tr>`).join("");
 
   return page("Status", shell(`
@@ -1038,11 +1058,11 @@ export function renderStatus(status: {
       <table class="form-table">
         <tr>
           <td><strong>　總狀態：</strong></td>
-          <td>${status.ok ? `<font color="#008800">正常運作</font>` : `<font color="#cc0000">需要確認</font>`}</td>
+          <td>${status.ok ? `${healthMark("正常", "ok")}<font color="#008800">正常運作</font>` : `${healthMark("確認", "error")}<font color="#cc0000">需要確認</font>`}</td>
         </tr>
         <tr>
           <td><strong>　維護模式：</strong></td>
-          <td>${status.maintenanceMode ? `<font color="#cc0000">啟用</font>` : "未啟用"}</td>
+          <td>${status.maintenanceMode ? `${healthMark("啟用", "error")}<font color="#cc0000">啟用</font>` : `${healthMark("未啟用", "idle")}未啟用`}</td>
         </tr>
         <tr>
           <td><strong>　公告：</strong></td>

@@ -41,7 +41,7 @@ Reference files inspected:
 | Durable Objects + WebSockets source of truth | `src/room.ts`, `tests/room.test.ts` | Implemented |
 | DO alarms for day/night | `RoomDurableObject.alarm`, `advancePhaseByAlarm`, alarm tests | Implemented |
 | R2 avatar storage | `/api/assets/avatar`, `/assets/avatar/:playerId`, write smoke | Implemented |
-| KV runtime config | `/api/config`, `/status`, `getHomeAnnouncement`, `isMaintenanceMode` | Implemented |
+| KV runtime config | `/api/config`, `/status`, `getHomeAnnouncement`, `isMaintenanceMode`; `/status` renders reference-style health markers for overall, maintenance, and binding states | Implemented |
 | Rendered non-JSON pages | `/`, `/list`, `/logs`, `/bbs`, `/admin`, `/admin/bbs`, `/admin/rooms`, `/admin/config`, `/trip`, `/trips`, `/room/:id`, `/leaderboard`, `/stats`, `/icons`, `/status`, `/room/:id/records`, `/room/:id/events`, `/player/:id`, `/rules`, `/manual`, `/script-info`, `/protocol`, `/version` | Implemented |
 | Room page client script not inline | `/assets/room-client.js`, `src/room-client.ts`, local UI smoke | Implemented |
 | Reference top/menu visual style | Table layout, side menu, fieldsets, colors, and reference top title/background asset URLs in `src/render.ts` | Partial |
