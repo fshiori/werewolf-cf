@@ -38,6 +38,27 @@ function javascript(body: string): Response {
   });
 }
 
+function text(body: string): Response {
+  return new Response(body, { headers: { "content-type": "text/plain; charset=utf-8" } });
+}
+
+function legacyApiField(value: string): string {
+  return value.replaceAll("\t", " ").replaceAll("\r", " ").replaceAll("\n", " ");
+}
+
+function legacyFederatedApiLine(room: RoomSummary, origin: string): string {
+  const status = room.status === "playing" ? "playing" : "waiting";
+  const baseUrl = origin.endsWith("/") ? origin : `${origin}/`;
+  return [
+    `werewolf-cf ${room.id}`,
+    room.name,
+    room.comment,
+    status,
+    String(room.maxPlayers),
+    baseUrl
+  ].map(legacyApiField).join("\t");
+}
+
 function generateRoomId(): string {
   return `room_${crypto.randomUUID().replaceAll("-", "").slice(0, 16)}`;
 }
@@ -1653,6 +1674,11 @@ export default {
 
     if (request.method === "GET" && url.pathname === "/api/rooms") {
       return json({ rooms: await listRooms(env) });
+    }
+
+    if (request.method === "GET" && url.pathname === "/api.php") {
+      const activeRooms = (await listRooms(env)).filter((room) => room.status !== "ended");
+      return text(activeRooms.map((room) => legacyFederatedApiLine(room, url.origin)).join("\n") + (activeRooms.length ? "\n" : ""));
     }
 
     const roomSummaryMatch = url.pathname.match(/^\/api\/rooms\/([^/]+)$/);
