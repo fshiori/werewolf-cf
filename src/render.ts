@@ -1,4 +1,4 @@
-import type { BbsReplySummary, BbsTopicSummary, FederatedRoomSummary, GameRecordSummary, LeaderboardEntry, PlayerRole, RoomEventSummary, RoomSummary } from "./types";
+import type { BbsReplySummary, BbsTopicSummary, FederatedRoomSummary, GameRecordSummary, LeaderboardEntry, PlayerRole, RoomEventSummary, RoomSummary, WinRateEntry } from "./types";
 import { escapeHtml } from "./validation";
 
 function page(title: string, body: string): string {
@@ -136,6 +136,7 @@ function shell(body: string): string {
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/">首頁</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/list">聯合列表</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/leaderboard">戰績排行榜</a></td></tr>
+            <tr><td><small><font color="#666666">・</font></small></td><td><a href="/stats">勝率分析</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/icons">頭像一覽</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/trips">Trip查詢</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/bbs">人狼討論</a></td></tr>
@@ -470,6 +471,34 @@ export function renderLeaderboard(entries: LeaderboardEntry[]): string {
           </tr>
         </thead>
         <tbody>${rows}</tbody>
+      </table>
+    </fieldset>
+  `));
+}
+
+export function renderWinRateAnalysis(entries: WinRateEntry[]): string {
+  const total = entries[0]?.total ?? 0;
+  const rows = entries.map((entry) => `<tr>
+    <td>－${escapeHtml(entry.label)}－</td>
+    <td>${escapeHtml(String(entry.wins))} / ${escapeHtml(String(entry.total))}</td>
+    <td>勝率 ${escapeHtml(entry.rate.toFixed(2))} %</td>
+  </tr>`).join("");
+
+  return page("Win Rate Analysis", shell(`
+    <fieldset>
+      <legend><strong>勝率分析</strong></legend>
+      <p>以下統計目前保存的結束村勝利分析，不包含未結束村。</p>
+      <table class="form-table" style="margin:12px 20px 18px;">
+        <tr><td><strong>　統計場數：</strong></td><td colspan="2">${escapeHtml(String(total))}</td></tr>
+        ${rows || `<tr><td colspan="3" class="muted">尚無勝率資料。</td></tr>`}
+      </table>
+    </fieldset>
+    <fieldset>
+      <legend><strong>資料來源</strong></legend>
+      <table class="form-table">
+        <tr><td><strong>　Records：</strong></td><td><code>game_records.result_json</code></td></tr>
+        <tr><td><strong>　JSON：</strong></td><td><code>/api/stats/win-rate</code></td></tr>
+        <tr><td><strong>　排行榜：</strong></td><td><a href="/leaderboard">戰績排行榜</a></td></tr>
       </table>
     </fieldset>
   `));

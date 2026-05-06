@@ -75,6 +75,7 @@ try {
   await expectHtml("/", ["汝等是人是狼？", "建立村子", "戰績排行榜"], ["房間 JSON", "排行榜 JSON"]);
   await expectHtml("/list", ["聯合遊戲列表", "本伺服器"]);
   await expectHtml("/leaderboard", ["戰績排行榜"]);
+  await expectHtml("/stats", ["勝率分析", "統計場數"]);
   await expectHtml("/icons", ["頭像一覽", "/assets/reference/user_icon/001.gif"]);
   await expectHtml("/trips", ["Trip查詢", "Trip公開資料"]);
   await expectHtml("/bbs", ["主題列表", "發表主題"]);
