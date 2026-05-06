@@ -166,7 +166,7 @@ function envWithRooms(
                   return { results: bbsReplies.filter((reply) => reply.topic_id === Number(values[0])) };
                 }
                 if (query.includes("FROM bbs_topics")) {
-                  return { results: bbsTopics };
+                  return { results: query.includes("WHERE digest = 1") ? bbsTopics.filter((topic) => topic.digest === 1) : bbsTopics };
                 }
                 return { results: [] };
               },
@@ -181,7 +181,7 @@ function envWithRooms(
               return { results: bbsReplies };
             }
             if (query.includes("FROM bbs_topics")) {
-              return { results: bbsTopics };
+              return { results: query.includes("WHERE digest = 1") ? bbsTopics.filter((topic) => topic.digest === 1) : bbsTopics };
             }
             if (query.includes("FROM game_records")) {
               return { results: Object.values(records).flat().sort((a, b) => b.created_at.localeCompare(a.created_at)) };
@@ -960,8 +960,49 @@ describe("worker routes", () => {
     expect(response.status).toBe(200);
     const body = await response.text();
     expect(body).toContain("主題列表");
+    expect(body).toContain("/bbs?digest=1");
     expect(body).toContain("[置頂] Welcome (精華)");
     expect(body).toContain("Alice◆Trip");
+  });
+
+  it("renders BBS digest topic list page", async () => {
+    const response = await worker.fetch(
+      new Request("http://example.test/bbs?go=dige"),
+      envWithRooms([], {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, new Set(), new Set(), {}, [
+        {
+          id: 1,
+          name: "Alice",
+          title: "Digest",
+          message: "Digest body",
+          trip_hash: null,
+          reply_count: 0,
+          pinned: 0,
+          locked: 0,
+          digest: 1,
+          created_at: "2026-05-06 12:00:00",
+          updated_at: "2026-05-06 12:30:00"
+        },
+        {
+          id: 2,
+          name: "Bob",
+          title: "Normal",
+          message: "Normal body",
+          trip_hash: null,
+          reply_count: 0,
+          pinned: 0,
+          locked: 0,
+          digest: 0,
+          created_at: "2026-05-06 12:05:00",
+          updated_at: "2026-05-06 12:35:00"
+        }
+      ])
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.text();
+    expect(body).toContain("精華主題列表");
+    expect(body).toContain("Digest (精華)");
+    expect(body).not.toContain("Normal");
   });
 
   it("returns BBS topics", async () => {
@@ -1002,6 +1043,44 @@ describe("worker routes", () => {
         }
       ]
     });
+  });
+
+  it("returns BBS digest topics", async () => {
+    const response = await worker.fetch(
+      new Request("http://example.test/api/bbs/topics?digest=1"),
+      envWithRooms([], {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, new Set(), new Set(), {}, [
+        {
+          id: 1,
+          name: "Alice",
+          title: "Digest",
+          message: "Digest body",
+          trip_hash: null,
+          reply_count: 0,
+          pinned: 0,
+          locked: 0,
+          digest: 1,
+          created_at: "2026-05-06 12:00:00",
+          updated_at: "2026-05-06 12:30:00"
+        },
+        {
+          id: 2,
+          name: "Bob",
+          title: "Normal",
+          message: "Normal body",
+          trip_hash: null,
+          reply_count: 0,
+          pinned: 0,
+          locked: 0,
+          digest: 0,
+          created_at: "2026-05-06 12:05:00",
+          updated_at: "2026-05-06 12:35:00"
+        }
+      ])
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.json() as { topics: Array<{ title: string }> };
+    expect(body.topics.map((topic) => topic.title)).toEqual(["Digest"]);
   });
 
   it("renders BBS topic detail page with replies", async () => {

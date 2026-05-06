@@ -538,10 +538,19 @@ describe("render", () => {
 
     expect(html).toContain("主題列表");
     expect(html).toContain("發表主題");
+    expect(html).toContain("/bbs?digest=1");
     expect(html).toContain("[置頂] Welcome (精華)");
     expect(html).toContain("Alice◆Trip");
     expect(html).toContain("/api/bbs/topics");
     expect(html).toContain("bbsPostButton");
+  });
+
+  it("renders BBS digest list as a normal HTML page", () => {
+    const html = renderBbs([], { digestOnly: true });
+
+    expect(html).toContain("精華主題列表");
+    expect(html).toContain("尚無精華主題。");
+    expect(html).toContain("/bbs?digest=1");
   });
 
   it("renders BBS topic detail with replies", () => {
