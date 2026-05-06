@@ -1,4 +1,4 @@
-import { renderHome, renderIconCatalog, renderLeaderboard, renderPlayerProfile, renderProtocol, renderRoom, renderRoomEvents, renderRoomRecords, renderRoomTranscript, renderRules, renderStatus, renderTripLookup, renderVersion } from "./render";
+import { renderFederatedList, renderHome, renderIconCatalog, renderLeaderboard, renderPlayerProfile, renderProtocol, renderRoom, renderRoomEvents, renderRoomRecords, renderRoomTranscript, renderRules, renderStatus, renderTripLookup, renderVersion } from "./render";
 import { RoomDurableObject } from "./room";
 import { ROOM_CLIENT_SCRIPT } from "./room-client";
 import { DEFAULT_DAY_MINUTES, DEFAULT_NIGHT_MINUTES } from "./game";
@@ -967,6 +967,10 @@ export default {
 
     if (request.method === "GET" && url.pathname === "/leaderboard") {
       return html(renderLeaderboard(await listLeaderboard(env)));
+    }
+
+    if (request.method === "GET" && url.pathname === "/list") {
+      return html(renderFederatedList(await listRooms(env)));
     }
 
     if (request.method === "GET" && url.pathname === "/trips") {

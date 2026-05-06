@@ -134,6 +134,7 @@ function shell(body: string): string {
           <table class="menu-box"><tr><th>選單</th></tr></table>
           <table class="menu-list">
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/">首頁</a></td></tr>
+            <tr><td><small><font color="#666666">・</font></small></td><td><a href="/list">聯合列表</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/leaderboard">戰績排行榜</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/icons">頭像一覽</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/trips">Trip查詢</a></td></tr>
@@ -326,6 +327,48 @@ function roomStatusIcon(status: RoomSummary["status"]): string {
 function maxPlayersMark(maxPlayers: number): string {
   const iconPath = [8, 16, 22, 23, 30].includes(maxPlayers) ? `img/max${maxPlayers}.gif` : undefined;
   return optionMark(`最大${String(maxPlayers)}`, iconPath);
+}
+
+function federatedStatusLabel(status: RoomSummary["status"]): string {
+  if (status === "playing") {
+    return "遊戲中";
+  }
+  if (status === "ended") {
+    return "終了";
+  }
+  return "募集中";
+}
+
+export function renderFederatedList(rooms: RoomSummary[]): string {
+  const rows = rooms.length
+    ? rooms.map((room) => {
+      const label = federatedStatusLabel(room.status);
+      const boldStart = room.status === "lobby" ? "<b>" : "";
+      const boldEnd = room.status === "lobby" ? "</b>" : "";
+      return `<tr>
+        <td width="70">${boldStart}<a href="/room/${escapeHtml(room.id)}"><font style="font-size : 15px;">${escapeHtml(label)}</font></a>${boldEnd}</td>
+        <td width="120">${boldStart}<a href="/room/${escapeHtml(room.id)}"><font style="font-size : 15px;">[${escapeHtml(room.id)}]</font></a>${boldEnd}</td>
+        <td width="250">${boldStart}<a href="/room/${escapeHtml(room.id)}"><font style="font-size : 15px;">${escapeHtml(room.name)}村</font></a>${boldEnd}</td>
+        <td>${boldStart}<a href="/room/${escapeHtml(room.id)}"><font style="font-size : 12px;">${escapeHtml(room.comment)}</font></a>${boldEnd}</td>
+        <td width="80">${boldStart}<a href="/room/${escapeHtml(room.id)}"><font style="font-size : 13px;">人數${escapeHtml(String(room.maxPlayers))}</font></a>${boldEnd}</td>
+      </tr>`;
+    }).join("")
+    : `<tr><td colspan="5" class="muted">目前沒有可列出的村子。</td></tr>`;
+
+  return page("Federated List", shell(`
+    <fieldset>
+      <legend><strong>聯合遊戲列表</strong></legend>
+      <div style="line-height:135%;margin:20px 20px 30px;">
+        <strong>
+          <table style="width: 100%">
+            <tr><td>服務中</td><td colspan="4"><a href="/">本伺服器 / Cloudflare Workers</a></td></tr>
+            <tr><td colspan="5"><hr></td></tr>
+            ${rows}
+          </table>
+        </strong>
+      </div>
+    </fieldset>
+  `));
 }
 
 function readRecordPlayers(record: GameRecordSummary): Record<string, unknown>[] {
