@@ -1992,15 +1992,20 @@ export default {
     }
 
     const roomMatch = url.pathname.match(/^\/room\/([^/]+)$/);
-    if (request.method === "GET" && roomMatch) {
+    const isLegacyLiveRoomPage = url.pathname === "/game_view.php" || url.pathname === "/game_play.php" || url.pathname === "/game_frame.php";
+    const legacyLiveRoomId = isLegacyLiveRoomPage ? url.searchParams.get("room_no") : null;
+    if (request.method === "GET" && (roomMatch || isLegacyLiveRoomPage)) {
       try {
-        const roomId = validateRoomId(roomMatch[1]);
+        if (!roomMatch && !legacyLiveRoomId) {
+          throw new Error(`${url.pathname.slice(1)} requires room_no`);
+        }
+        const roomId = validateRoomId(roomMatch ? roomMatch[1] : legacyLiveRoomId ?? "");
         if (!(await roomExists(env, roomId))) {
           return new Response("Room not found", { status: 404 });
         }
         const autoReloadParam = url.searchParams.get("auto_reload");
         const viewModeParam = url.searchParams.get("view");
-        const viewMode = viewModeParam === "spectator" || viewModeParam === "heaven" ? viewModeParam : "player";
+        const viewMode = viewModeParam === "spectator" || viewModeParam === "heaven" ? viewModeParam : url.pathname === "/game_view.php" ? "spectator" : "player";
         return html(renderRoom(roomId, { autoReloadSeconds: autoReloadParam ? Number(autoReloadParam) : 0, viewMode }));
       } catch (error) {
         return json({ error: error instanceof Error ? error.message : "Invalid room" }, { status: 400 });
