@@ -875,6 +875,32 @@ describe("render", () => {
     expect(html).toContain("<strong>[2]</strong>");
   });
 
+  it("renders locked BBS topics without an active reply form", () => {
+    const html = renderBbsTopic(
+      {
+        id: 1,
+        name: "Alice",
+        title: "Locked topic",
+        message: "Topic body",
+        trip: false,
+        replyCount: 0,
+        pinned: false,
+        locked: true,
+        digest: false,
+        createdAt: "2026-05-06 12:00:00",
+        updatedAt: "2026-05-06 12:00:00"
+      },
+      []
+    );
+
+    expect(html).toContain("此主題已鎖定。");
+    expect(html).toContain("bbs-topic-locked");
+    expect(html).not.toContain("bbsReplyName");
+    expect(html).not.toContain("bbsReplyMessage");
+    expect(html).not.toContain("bbsReplyPassword");
+    expect(html).not.toContain("bbsReplyButton");
+  });
+
   it("renders BBS admin index", () => {
     const html = renderBbsAdmin([
       {
