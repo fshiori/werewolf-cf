@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import worker from "../src/index";
-import { registeredTripHash } from "../src/identity";
+import { bbsPasswordHash, registeredTripHash } from "../src/identity";
 
 type StoredAsset = {
   body: ReadableStream;
@@ -114,6 +114,10 @@ function envWithRooms(
                 }
                 if (query.includes("COUNT(*) AS count") && query.includes("FROM bbs_replies")) {
                   return { count: bbsReplies.filter((reply) => reply.topic_id === Number(values[0])).length };
+                }
+                if (query.includes("SELECT password_hash FROM bbs_topics")) {
+                  const topic = bbsTopics.find((value) => value.id === Number(values[0]));
+                  return topic ? { password_hash: topic.password_hash ?? null } : null;
                 }
                 if (query.includes("FROM bbs_replies")) {
                   return bbsReplies.find((reply) => reply.id === Number(values[0]) && reply.topic_id === Number(values[1])) ?? null;
@@ -1851,6 +1855,70 @@ describe("worker routes", () => {
     const runs = (env as unknown as { runs: Array<{ query: string; values: unknown[] }> }).runs;
     expect(runs[0].query).toContain("UPDATE bbs_topics SET title = ?, message = ?");
     expect(runs[0].values).toEqual(["Edited", "Edited body", 1]);
+  });
+
+  it("edits BBS topic content with the post password", async () => {
+    const env = envWithRooms([], {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, new Set(), new Set(), {}, [
+      {
+        id: 1,
+        name: "Alice",
+        title: "Welcome",
+        message: "Topic body",
+        trip_hash: null,
+        password_hash: await bbsPasswordHash("secret"),
+        reply_count: 0,
+        pinned: 0,
+        locked: 0,
+        digest: 0,
+        created_at: "2026-05-06 12:00:00",
+        updated_at: "2026-05-06 12:00:00"
+      }
+    ]);
+    const response = await worker.fetch(
+      new Request("http://example.test/api/bbs/topics/1/content", {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ title: "Edited", message: "Edited body", password: "secret" })
+      }),
+      env
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      topic: expect.objectContaining({ id: 1, title: "Edited", message: "Edited body" })
+    });
+  });
+
+  it("rejects BBS topic content edits with the wrong post password", async () => {
+    const env = envWithRooms([], {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, new Set(), new Set(), {}, [
+      {
+        id: 1,
+        name: "Alice",
+        title: "Welcome",
+        message: "Topic body",
+        trip_hash: null,
+        password_hash: await bbsPasswordHash("secret"),
+        reply_count: 0,
+        pinned: 0,
+        locked: 0,
+        digest: 0,
+        created_at: "2026-05-06 12:00:00",
+        updated_at: "2026-05-06 12:00:00"
+      }
+    ]);
+    const response = await worker.fetch(
+      new Request("http://example.test/api/bbs/topics/1/content", {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ title: "Edited", message: "Edited body", password: "wrong" })
+      }),
+      env
+    );
+
+    expect(response.status).toBe(403);
+    expect(await response.json()).toEqual({ error: "BBS edit password is invalid" });
+    const runs = (env as unknown as { runs: Array<{ query: string; values: unknown[] }> }).runs;
+    expect(runs).toEqual([]);
   });
 
   it("rejects BBS moderation without the configured admin token", async () => {
