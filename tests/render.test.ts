@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { renderAdminRooms, renderAdminRoomsLogin, renderBbs, renderBbsTopic, renderFederatedList, renderHome, renderIconCatalog, renderLeaderboard, renderManual, renderOldLogs, renderPlayerProfile, renderProtocol, renderRoom, renderRoomEvents, renderRoomRecords, renderRoomTranscript, renderRules, renderScriptInfo, renderStatus, renderTripLookup, renderTripRegistration, renderVersion, renderWinRateAnalysis } from "../src/render";
+import { renderAdminConfig, renderAdminConfigLogin, renderAdminRooms, renderAdminRoomsLogin, renderBbs, renderBbsTopic, renderFederatedList, renderHome, renderIconCatalog, renderLeaderboard, renderManual, renderOldLogs, renderPlayerProfile, renderProtocol, renderRoom, renderRoomEvents, renderRoomRecords, renderRoomTranscript, renderRules, renderScriptInfo, renderStatus, renderTripLookup, renderTripRegistration, renderVersion, renderWinRateAnalysis } from "../src/render";
 import { ROOM_CLIENT_SCRIPT } from "../src/room-client";
 
 describe("render", () => {
@@ -1209,6 +1209,22 @@ describe("render", () => {
     expect(html).toContain("adminEndRoom");
     expect(html).toContain("/api/admin/rooms/");
     expect(html).toContain('"x-room-admin-token": roomAdminToken');
+  });
+
+  it("renders runtime config admin pages", () => {
+    const login = renderAdminConfigLogin();
+    expect(login).toContain("系統設定管理");
+    expect(login).toContain("configAdminToken");
+    expect(login).toContain("werewolf_cf_config_admin_token");
+
+    const html = renderAdminConfig({ homeAnnouncement: "<Notice>", maintenanceMode: true }, "secret token");
+    expect(html).toContain("首頁公告");
+    expect(html).toContain("&lt;Notice&gt;");
+    expect(html).toContain("configMaintenanceMode");
+    expect(html).toContain("checked");
+    expect(html).toContain("/api/admin/config");
+    expect(html).toContain('"x-config-admin-token": configAdminToken');
+    expect(html).toContain("werewolf_cf_config_admin_token");
   });
 
   it("renders websocket protocol page", () => {

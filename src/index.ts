@@ -1,4 +1,4 @@
-import { renderAdminRooms, renderAdminRoomsLogin, renderBbs, renderBbsTopic, renderFederatedList, renderHome, renderIconCatalog, renderLeaderboard, renderManual, renderOldLogs, renderPlayerProfile, renderProtocol, renderRoom, renderRoomEvents, renderRoomRecords, renderRoomTranscript, renderRules, renderScriptInfo, renderStatus, renderTripRegistration, renderTripLookup, renderVersion, renderWinRateAnalysis } from "./render";
+import { renderAdminConfig, renderAdminConfigLogin, renderAdminRooms, renderAdminRoomsLogin, renderBbs, renderBbsTopic, renderFederatedList, renderHome, renderIconCatalog, renderLeaderboard, renderManual, renderOldLogs, renderPlayerProfile, renderProtocol, renderRoom, renderRoomEvents, renderRoomRecords, renderRoomTranscript, renderRules, renderScriptInfo, renderStatus, renderTripRegistration, renderTripLookup, renderVersion, renderWinRateAnalysis } from "./render";
 import { RoomDurableObject } from "./room";
 import { ROOM_CLIENT_SCRIPT } from "./room-client";
 import { DEFAULT_DAY_MINUTES, DEFAULT_NIGHT_MINUTES } from "./game";
@@ -119,6 +119,19 @@ async function requireRoomAdmin(request: Request, env: Env): Promise<Response | 
   const provided = request.headers.get("x-room-admin-token") ?? url.searchParams.get("token") ?? "";
   if (provided !== adminToken) {
     return json({ error: "Room admin token is invalid" }, { status: 403 });
+  }
+  return undefined;
+}
+
+async function requireConfigAdmin(request: Request, env: Env): Promise<Response | undefined> {
+  const adminToken = await env.CONFIG.get("config_admin_token");
+  if (!adminToken) {
+    return json({ error: "Config admin is not configured" }, { status: 403 });
+  }
+  const url = new URL(request.url);
+  const provided = request.headers.get("x-config-admin-token") ?? url.searchParams.get("token") ?? "";
+  if (provided !== adminToken) {
+    return json({ error: "Config admin token is invalid" }, { status: 403 });
   }
   return undefined;
 }
@@ -484,6 +497,24 @@ async function getRuntimeConfig(env: Env): Promise<Response> {
       maintenanceMode: config.maintenanceMode
     }
   });
+}
+
+async function updateRuntimeConfig(request: Request, env: Env): Promise<Response> {
+  const authError = await requireConfigAdmin(request, env);
+  if (authError) {
+    return authError;
+  }
+  const body: unknown = await request.json().catch(() => null);
+  if (!isRecord(body)) {
+    return json({ error: "Invalid config payload" }, { status: 400 });
+  }
+  const homeAnnouncement = typeof body.homeAnnouncement === "string" ? body.homeAnnouncement.trim().slice(0, 500) : "";
+  const maintenanceMode = body.maintenanceMode === true;
+  await Promise.all([
+    env.CONFIG.put("home_announcement", homeAnnouncement),
+    env.CONFIG.put("maintenance_mode", maintenanceMode ? "true" : "false")
+  ]);
+  return json({ config: { homeAnnouncement: homeAnnouncement || null, maintenanceMode } });
 }
 
 async function readRuntimeConfig(env: Env): Promise<{ homeAnnouncement: string | null; maintenanceMode: boolean }> {
@@ -1474,6 +1505,10 @@ export default {
       return getRuntimeConfig(env);
     }
 
+    if (request.method === "PATCH" && url.pathname === "/api/admin/config") {
+      return updateRuntimeConfig(request, env);
+    }
+
     if (request.method === "GET" && url.pathname === "/api/health") {
       return getHealth(env);
     }
@@ -1539,6 +1574,14 @@ export default {
         statusFilter === "all" ? true : statusFilter === "ended" ? room.status === "ended" : room.status !== "ended"
       ));
       return html(renderAdminRooms(rooms, statusFilter, url.searchParams.get("token") ?? ""));
+    }
+
+    if (request.method === "GET" && url.pathname === "/admin/config") {
+      const authError = await requireConfigAdmin(request, env);
+      if (authError) {
+        return html(renderAdminConfigLogin());
+      }
+      return html(renderAdminConfig(await readRuntimeConfig(env), url.searchParams.get("token") ?? ""));
     }
 
     if (request.method === "GET" && url.pathname === "/assets/room-client.js") {
