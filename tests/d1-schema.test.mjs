@@ -14,8 +14,8 @@ const requiredColumns = {
   room_events: ["id", "room_id", "player_id", "event_type", "payload_json", "created_at"],
   registered_trips: ["trip_hash", "created_at"],
   excluded_trips: ["trip_hash", "reason", "created_at"],
-  bbs_topics: ["id", "name", "title", "message", "trip_hash", "reply_count", "pinned", "locked", "digest", "created_at", "updated_at"],
-  bbs_replies: ["id", "topic_id", "name", "message", "trip_hash", "created_at"]
+  bbs_topics: ["id", "name", "title", "message", "trip_hash", "password_hash", "reply_count", "pinned", "locked", "digest", "created_at", "updated_at"],
+  bbs_replies: ["id", "topic_id", "name", "message", "trip_hash", "password_hash", "created_at"]
 };
 
 function rowsForSchema(schema) {

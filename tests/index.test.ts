@@ -35,6 +35,7 @@ type MockBbsTopic = {
   title: string;
   message: string;
   trip_hash: string | null;
+  password_hash?: string | null;
   reply_count: number;
   pinned: number;
   locked: number;
@@ -49,6 +50,7 @@ type MockBbsReply = {
   name: string;
   message: string;
   trip_hash: string | null;
+  password_hash?: string | null;
   created_at: string;
 };
 
@@ -1627,8 +1629,27 @@ describe("worker routes", () => {
     expect(await response.json()).toEqual({ posted: true, topicId: 1 });
     const runs = (env as unknown as { runs: Array<{ query: string; values: unknown[] }> }).runs;
     expect(runs[0].query).toContain("INSERT INTO bbs_topics");
+    expect(runs[0].query).toContain("password_hash");
     expect(runs[0].values.slice(0, 3)).toEqual(["Alice", "Welcome", "Hello"]);
     expect(typeof runs[0].values[3]).toBe("string");
+    expect(runs[0].values[4]).toBeNull();
+  });
+
+  it("stores hashed BBS topic passwords", async () => {
+    const env = envWithRooms([]);
+    const response = await worker.fetch(
+      new Request("http://example.test/api/bbs/topics", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ name: "Alice", title: "Welcome", message: "Hello", password: "secret" })
+      }),
+      env
+    );
+
+    expect(response.status).toBe(200);
+    const runs = (env as unknown as { runs: Array<{ query: string; values: unknown[] }> }).runs;
+    expect(typeof runs[0].values[4]).toBe("string");
+    expect(runs[0].values[4]).not.toBe("secret");
   });
 
   it("creates BBS replies", async () => {
@@ -1660,8 +1681,42 @@ describe("worker routes", () => {
     expect(await response.json()).toEqual({ posted: true, replyCount: 1, page: 1 });
     const batches = (env as unknown as { batches: Array<Array<{ query: string; values: unknown[] }>> }).batches;
     expect(batches[0][0].query).toContain("INSERT INTO bbs_replies");
+    expect(batches[0][0].query).toContain("password_hash");
     expect(batches[0][0].values.slice(0, 3)).toEqual([1, "Bob", "Reply body"]);
+    expect(typeof batches[0][0].values[3]).toBe("string");
+    expect(batches[0][0].values[4]).toBeNull();
     expect(batches[0][1].query).toContain("UPDATE bbs_topics SET reply_count = reply_count + 1");
+  });
+
+  it("stores hashed BBS reply passwords", async () => {
+    const env = envWithRooms([], {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, new Set(), new Set(), {}, [
+      {
+        id: 1,
+        name: "Alice",
+        title: "Welcome",
+        message: "Topic body",
+        trip_hash: null,
+        reply_count: 0,
+        pinned: 0,
+        locked: 0,
+        digest: 0,
+        created_at: "2026-05-06 12:00:00",
+        updated_at: "2026-05-06 12:00:00"
+      }
+    ]);
+    const response = await worker.fetch(
+      new Request("http://example.test/api/bbs/topics/1/replies", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ name: "Bob", message: "Reply body", password: "secret" })
+      }),
+      env
+    );
+
+    expect(response.status).toBe(200);
+    const batches = (env as unknown as { batches: Array<Array<{ query: string; values: unknown[] }>> }).batches;
+    expect(typeof batches[0][0].values[4]).toBe("string");
+    expect(batches[0][0].values[4]).not.toBe("secret");
   });
 
   it("returns the target BBS reply page after creating replies", async () => {

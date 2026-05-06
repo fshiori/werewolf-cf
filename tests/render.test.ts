@@ -726,6 +726,9 @@ describe("render", () => {
     expect(html).toContain("Alice◆Trip");
     expect(html).toContain("/api/bbs/topics");
     expect(html).toContain("bbsPostButton");
+    expect(html).toContain("bbsPassword");
+    expect(html).toContain("編輯/刪除用");
+    expect(html).toContain('password: document.querySelector("#bbsPassword").value');
     expect(html).toContain('"/bbs/" + encodeURIComponent(String(topicId))');
   });
 
@@ -812,6 +815,8 @@ describe("render", () => {
     expect(html).toContain("Bob");
     expect(html).toContain("Reply body");
     expect(html).toContain("/api/bbs/topics/1/replies");
+    expect(html).toContain("bbsReplyPassword");
+    expect(html).toContain('password: document.querySelector("#bbsReplyPassword").value');
     expect(html).toContain("replyPage");
     expect(html).toContain('?page=" + encodeURIComponent(String(replyPage))');
     expect(html).toContain("bbsReplyDeleteButton");
