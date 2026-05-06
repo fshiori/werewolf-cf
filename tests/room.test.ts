@@ -2166,7 +2166,7 @@ describe("RoomDurableObject", () => {
       lastWords: {},
       log: []
     };
-    const room = roomObject(game);
+    const { room, stored, dbRuns } = observableRoomObject(game);
     const hostMessages: SentMessage[] = [];
     const targetMessages: SentMessage[] = [];
     const otherMessages: SentMessage[] = [];
@@ -2199,6 +2199,20 @@ describe("RoomDurableObject", () => {
           { playerId: "player_host", nickname: "Host" },
           { playerId: "player_other", nickname: "Other" }
         ]
+      })
+    );
+    expect(stored.get("gameState")).toEqual(
+      expect.objectContaining({
+        players: expect.not.arrayContaining([expect.objectContaining({ playerId: "player_target" })]),
+        lobbyStartVotes: {},
+        lobbyKickVotes: {},
+        log: expect.arrayContaining(["Target 人間蒸發、被轉學了。", "＜投票重新開始 請盡速重新投票＞"])
+      })
+    );
+    expect(dbRuns).toContainEqual(
+      expect.objectContaining({
+        query: expect.stringContaining("INSERT INTO room_events"),
+        binds: ["room_abc", "player_host", "player_kicked", JSON.stringify({ targetPlayerId: "player_target", targetNickname: "Target", method: "host" })]
       })
     );
   });

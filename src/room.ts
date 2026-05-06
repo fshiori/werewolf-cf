@@ -469,9 +469,16 @@ export class RoomDurableObject {
         if (targetPlayerId === member.playerId) {
           throw new Error("Cannot kick yourself");
         }
-        const next = { ...removeLobbyPlayer(loadedGame, targetPlayerId), lobbyStartVotes: {}, lobbyKickVotes: {} };
+        const targetNickname = loadedGame.players.find((player) => player.playerId === targetPlayerId)?.nickname;
+        const kicked = removeLobbyPlayer(loadedGame, targetPlayerId);
+        const next = {
+          ...kicked,
+          lobbyStartVotes: {},
+          lobbyKickVotes: {},
+          log: [...kicked.log, `${targetNickname ?? targetPlayerId} 人間蒸發、被轉學了。`, "＜投票重新開始 請盡速重新投票＞"]
+        };
         await this.saveGameState(next);
-        await this.persistRoomEvent(member.playerId, "player_kicked", { targetPlayerId });
+        await this.persistRoomEvent(member.playerId, "player_kicked", { targetPlayerId, targetNickname, method: member.gm ? "gm" : "host" });
         this.disconnectPlayer(targetPlayerId, "You were kicked from the room");
         this.send(socket, buildActionAckMessage("kick_player", targetPlayerId));
         this.broadcast(buildPresenceMessage(this.members()));
