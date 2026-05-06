@@ -1245,6 +1245,8 @@ describe("render", () => {
           players: [
             { playerId: "player_wolf_a", nickname: "Wolf A", role: "werewolf", alive: true },
             { playerId: "player_wolf_b", nickname: "Wolf B", role: "big_wolf", alive: true },
+            { playerId: "player_fox_a", nickname: "Fox A", role: "fox", alive: true },
+            { playerId: "player_fox_b", nickname: "Fox B", role: "fox", alive: true },
             { playerId: "player_common_a", nickname: "Common A", role: "common", alive: true },
             { playerId: "player_common_b", nickname: "Common B", role: "common", alive: true },
             { playerId: "player_lover_a", nickname: "Lover A", role: "villager", alive: true, lover: true },
@@ -1267,36 +1269,53 @@ describe("render", () => {
       {
         id: 2,
         roomId: "room_abc",
-        playerId: "player_common_b",
-        eventType: "common_chat",
-        payload: { visibility: "private", nickname: "Common B", text: "common message", phase: "night", day: 2 },
+        playerId: "player_fox_b",
+        eventType: "fox_chat",
+        payload: { visibility: "private", nickname: "Fox B", text: "fox message", phase: "night", day: 2 },
         createdAt: "2026-05-06 12:02:00"
       },
       {
         id: 3,
         roomId: "room_abc",
+        playerId: "player_common_b",
+        eventType: "common_chat",
+        payload: { visibility: "private", nickname: "Common B", text: "common message", phase: "night", day: 2 },
+        createdAt: "2026-05-06 12:03:00"
+      },
+      {
+        id: 4,
+        roomId: "room_abc",
         playerId: "player_lover_b",
         eventType: "lovers_chat",
         payload: { visibility: "private", nickname: "Lover B", text: "lover message", phase: "night", day: 2 },
-        createdAt: "2026-05-06 12:03:00"
+        createdAt: "2026-05-06 12:04:00"
       }
     ];
 
     const wolfView = renderRoomTranscript("room_abc", records, events, { viewerMode: "player", viewerPlayerId: "player_wolf_a", heavenTalk: true });
     expect(wolfView).toContain("pack message");
+    expect(wolfView).not.toContain("fox message");
     expect(wolfView).not.toContain("common message");
     expect(wolfView).not.toContain("lover message");
+
+    const foxView = renderRoomTranscript("room_abc", records, events, { viewerMode: "player", viewerPlayerId: "player_fox_a", heavenTalk: true });
+    expect(foxView).toContain("fox message");
+    expect(foxView).not.toContain("pack message");
+    expect(foxView).not.toContain("common message");
 
     const commonView = renderRoomTranscript("room_abc", records, events, { viewerMode: "player", viewerPlayerId: "player_common_a", heavenTalk: true });
     expect(commonView).toContain("common message");
     expect(commonView).not.toContain("pack message");
+    expect(commonView).not.toContain("fox message");
 
     const loverView = renderRoomTranscript("room_abc", records, events, { viewerMode: "player", viewerPlayerId: "player_lover_a", heavenTalk: true });
     expect(loverView).toContain("lover message");
     expect(loverView).not.toContain("pack message");
+    expect(loverView).not.toContain("fox message");
 
     const seerView = renderRoomTranscript("room_abc", records, events, { viewerMode: "player", viewerPlayerId: "player_seer", heavenTalk: true });
     expect(seerView).not.toContain("pack message");
+    expect(seerView).not.toContain("fox message");
     expect(seerView).not.toContain("common message");
     expect(seerView).not.toContain("lover message");
     expect(seerView).toContain("可聽見的同陣營密談");
