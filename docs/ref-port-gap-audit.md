@@ -41,7 +41,7 @@ Reference files inspected:
 | DO alarms for day/night | `RoomDurableObject.alarm`, `advancePhaseByAlarm`, alarm tests | Implemented |
 | R2 avatar storage | `/api/assets/avatar`, `/assets/avatar/:playerId`, write smoke | Implemented |
 | KV runtime config | `/api/config`, `/status`, `getHomeAnnouncement`, `isMaintenanceMode` | Implemented |
-| Rendered non-JSON pages | `/`, `/list`, `/bbs`, `/room/:id`, `/leaderboard`, `/stats`, `/icons`, `/trips`, `/status`, `/room/:id/records`, `/room/:id/events`, `/player/:id`, `/rules`, `/script-info`, `/protocol`, `/version` | Implemented |
+| Rendered non-JSON pages | `/`, `/list`, `/bbs`, `/admin/rooms`, `/room/:id`, `/leaderboard`, `/stats`, `/icons`, `/trips`, `/status`, `/room/:id/records`, `/room/:id/events`, `/player/:id`, `/rules`, `/script-info`, `/protocol`, `/version` | Implemented |
 | Room page client script not inline | `/assets/room-client.js`, `src/room-client.ts`, local UI smoke | Implemented |
 | Reference top/menu visual style | Table layout, side menu, fieldsets, colors, and reference top title/background asset URLs in `src/render.ts` | Partial |
 | Reference room player grid visual style | `renderRoom`, `.player-card`, `.player-icon`, role/death/vote styling; client emits reference role icons and colored role text for revealed roles plus grave fallback for dead players | Partial |
@@ -64,6 +64,7 @@ Reference files inspected:
 - Room creation covers max users, comments, real-time timing, wish role, Trip-required, GM, dummy boy, last words, open vote, common voice, dead role visibility, self-vote, vote-status, and major optional roles.
 - Room page uses retro table panels for header, player list, actions/votes, chat, logs, records, and events.
 - Room page now loads client logic through `/assets/room-client.js` instead of embedding the whole WebSocket client in the HTML.
+- `/admin/rooms` now provides a KV-token-protected reference-style `廢村管理` list and D1-backed room-ending action for active rooms.
 
 ### Still missing or weak
 
@@ -104,7 +105,7 @@ Reference files inspected:
 1. Continue improving `/room/:roomId/log` toward PHP-compatible viewer-specific transcript masking; day/phase grouping, historical vote tables, private talk/action transcript persistence, self-talk, and major per-location styling are now in place.
 2. Continue converting the remaining partial/missing rows in `docs/rule-parity-manifest.md` into focused tests and implementation slices.
 3. Add a visual parity checklist with screenshots once a browser is available in the environment.
-4. Continue reducing remaining legacy menu/page gaps, including room-admin screens if PHP-era server management pages are needed.
+4. Continue reducing remaining legacy menu/page gaps; the room-admin end screen exists, but other PHP-era server management pages are still not mapped.
 
 ## Current Verification Gaps
 
