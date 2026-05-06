@@ -18,6 +18,8 @@ export const DEFAULT_DAY_MINUTES = DAY_MS / 60_000;
 export const DEFAULT_NIGHT_MINUTES = NIGHT_MS / 60_000;
 export const MAX_REVOTES = 1;
 export const SUDDEN_DEATH_WARNING_MS = 120_000;
+export const SILENCE_THRESHOLD_MS = 60_000;
+export const SILENCE_ADVANCE_MS = 60 * 60_000;
 const DUMMY_PLAYER_ID = "player_dummy_boy";
 const REFERENCE_ROLE_DECKS: Record<number, GamePlayer["role"][]> = {
   8: ["villager", "villager", "villager", "villager", "villager", "werewolf", "werewolf", "seer"],
@@ -59,6 +61,7 @@ export function createLobbyState(roomId: string): GameState {
     dummyBoy: false,
     dayMs: DAY_MS,
     nightMs: NIGHT_MS,
+    realTime: false,
     selfVote: false,
     voteStatus: false,
     revoteCount: 0,
@@ -438,6 +441,7 @@ function startGameWithPlayers(state: GameState, players: GamePlayer[], now: numb
     dummyBoy: options.dummyBoy,
     dayMs: roomOptionDayMs(options),
     nightMs: roomOptionNightMs(options),
+    realTime: options.realTime,
     selfVote: options.selfVote,
     voteStatus: options.voteStatus,
     revoteCount: 0,
@@ -450,7 +454,33 @@ function startGameWithPlayers(state: GameState, players: GamePlayer[], now: numb
       : state.lastWords ?? {},
     mediumReading: undefined,
     phaseEndsAt: new Date(now + (options.dummyBoy ? roomOptionNightMs(options) : roomOptionDayMs(options))).toISOString(),
+    lastSpokenAt: new Date(now).toISOString(),
     log: [...state.log, "遊戲開始。", options.dummyBoy ? "替身君的第一夜開始。" : "第 1 日白天開始。"]
+  };
+}
+
+export function recordConversationActivity(state: GameState, now = Date.now()): GameState {
+  if (state.phase !== "day" && state.phase !== "night") {
+    return state;
+  }
+  const timestamp = new Date(now).toISOString();
+  if (state.realTime) {
+    return { ...state, lastSpokenAt: timestamp };
+  }
+
+  const lastSpokenAt = state.lastSpokenAt ? Date.parse(state.lastSpokenAt) : now;
+  const phaseEndsAt = state.phaseEndsAt ? Date.parse(state.phaseEndsAt) : undefined;
+  const silenceElapsed = now - lastSpokenAt;
+  if (!phaseEndsAt || silenceElapsed <= SILENCE_THRESHOLD_MS || phaseEndsAt <= now) {
+    return { ...state, lastSpokenAt: timestamp };
+  }
+
+  const nextPhaseEndsAt = Math.max(now, phaseEndsAt - SILENCE_ADVANCE_MS);
+  return {
+    ...state,
+    phaseEndsAt: new Date(nextPhaseEndsAt).toISOString(),
+    lastSpokenAt: timestamp,
+    log: [...state.log, "・・・・・・・・・・ 持續沉默了 1時間"]
   };
 }
 
@@ -820,6 +850,7 @@ function resolveDay(state: GameState, now = Date.now()): GameState {
       votes: {},
       revoteCount: revoteCount + 1,
       suddenDeathWarningAt: undefined,
+      lastSpokenAt: new Date(now).toISOString(),
       phaseEndsAt: new Date(now + (state.dayMs ?? DAY_MS)).toISOString(),
       log: [...state.log, "投票結果平手，重新投票。"]
     };
@@ -970,6 +1001,7 @@ function withWinOrNextNight(state: GameState, now: number): GameState {
     ...state,
     phase: "night",
     suddenDeathWarningAt: undefined,
+    lastSpokenAt: new Date(now).toISOString(),
     phaseEndsAt: new Date(now + (state.nightMs ?? NIGHT_MS)).toISOString(),
     log: [...state.log, `第 ${state.day} 日夜晚開始。`]
   };
@@ -987,6 +1019,7 @@ function withWinOrNextDay(state: GameState, now: number): GameState {
     day,
     revoteCount: 0,
     suddenDeathWarningAt: undefined,
+    lastSpokenAt: new Date(now).toISOString(),
     phaseEndsAt: new Date(now + (state.dayMs ?? DAY_MS)).toISOString(),
     log: [...state.log, `第 ${day} 日白天開始。`]
   };

@@ -596,6 +596,7 @@ describe("render", () => {
     expect(html).toContain("人狼 / 大狼");
     expect(html).toContain("Trip限定");
     expect(html).toContain("Durable Object alarm");
+    expect(html).toContain("沉默時間推進");
     expect(html).toContain("最後2分警告");
   });
 
