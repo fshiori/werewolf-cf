@@ -107,6 +107,9 @@ function envWithRooms(
                 if (query.includes("FROM excluded_trips")) {
                   return excludedTripHashes.has(String(values[0])) ? { trip_hash: values[0] } : null;
                 }
+                if (query.includes("FROM bbs_replies")) {
+                  return bbsReplies.find((reply) => reply.id === Number(values[0]) && reply.topic_id === Number(values[1])) ?? null;
+                }
                 if (query.includes("FROM bbs_topics")) {
                   return bbsTopics.find((topic) => topic.id === Number(values[0])) ?? null;
                 }
@@ -1709,6 +1712,78 @@ describe("worker routes", () => {
     expect(batches[0][0].values).toEqual([1]);
     expect(batches[0][1].query).toContain("DELETE FROM bbs_topics");
     expect(batches[0][1].values).toEqual([1]);
+  });
+
+  it("deletes BBS replies with the configured admin token", async () => {
+    const env = envWithRooms([], { bbs_admin_token: "secret" }, {}, {}, {}, {}, {}, {}, {}, {}, {}, new Set(), new Set(), {}, [
+      {
+        id: 1,
+        name: "Alice",
+        title: "Welcome",
+        message: "Topic body",
+        trip_hash: null,
+        reply_count: 1,
+        pinned: 0,
+        locked: 0,
+        digest: 0,
+        created_at: "2026-05-06 12:00:00",
+        updated_at: "2026-05-06 12:00:00"
+      }
+    ], [
+      {
+        id: 2,
+        topic_id: 1,
+        name: "Bob",
+        message: "Reply body",
+        trip_hash: null,
+        created_at: "2026-05-06 12:10:00"
+      }
+    ]);
+    const response = await worker.fetch(
+      new Request("http://example.test/api/bbs/topics/1/replies/2/moderation", {
+        method: "DELETE",
+        headers: { "x-bbs-admin-token": "secret" }
+      }),
+      env
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ deleted: true, topicId: 1, replyId: 2 });
+    const batches = (env as unknown as { batches: Array<Array<{ query: string; values: unknown[] }>> }).batches;
+    expect(batches[0][0].query).toContain("DELETE FROM bbs_replies WHERE id = ? AND topic_id = ?");
+    expect(batches[0][0].values).toEqual([2, 1]);
+    expect(batches[0][1].query).toContain("UPDATE bbs_topics SET reply_count = MAX(reply_count - 1, 0)");
+    expect(batches[0][1].values).toEqual([1]);
+  });
+
+  it("rejects deleting missing BBS replies", async () => {
+    const env = envWithRooms([], { bbs_admin_token: "secret" }, {}, {}, {}, {}, {}, {}, {}, {}, {}, new Set(), new Set(), {}, [
+      {
+        id: 1,
+        name: "Alice",
+        title: "Welcome",
+        message: "Topic body",
+        trip_hash: null,
+        reply_count: 0,
+        pinned: 0,
+        locked: 0,
+        digest: 0,
+        created_at: "2026-05-06 12:00:00",
+        updated_at: "2026-05-06 12:00:00"
+      }
+    ]);
+    const response = await worker.fetch(
+      new Request("http://example.test/api/bbs/topics/1/replies/99/moderation", {
+        method: "DELETE",
+        headers: { "x-bbs-admin-token": "secret" }
+      }),
+      env
+    );
+
+    expect(response.status).toBe(404);
+    expect(await response.json()).toEqual({ error: "BBS reply not found" });
+    const batches = (env as unknown as { batches: Array<Array<{ query: string; values: unknown[] }>> }).batches;
+    expect(batches).toEqual([]);
   });
 
   it("renders default icon catalog page", async () => {
