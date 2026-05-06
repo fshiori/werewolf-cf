@@ -322,6 +322,33 @@ function roleLabel(value) {
     cat: "貓又"
   }[value] || value;
 }
+function roleIconPath(value) {
+  return {
+    villager: "img/role_human.gif",
+    werewolf: "img/role_wolf.gif",
+    big_wolf: "img/role_heavywolf.gif",
+    seer: "img/role_mage.gif",
+    medium: "img/role_necromancer.gif",
+    madman: "img/role_mad.gif",
+    guard: "img/role_guard.gif",
+    common: "img/role_common.gif",
+    fox: "img/role_fox.gif",
+    poison: "img/role_poison.gif",
+    betrayer: "img/role_cult.gif",
+    child_fox: "img/role_fosi.gif",
+    cat: "img/role_cat.gif"
+  }[value] || "";
+}
+function referenceImage(path, alt) {
+  const image = document.createElement("img");
+  image.src = "/assets/reference/" + path;
+  image.alt = alt;
+  image.title = alt;
+  image.width = 16;
+  image.height = 16;
+  image.className = "ref-icon";
+  return image;
+}
 function winnerLabel(value) {
   return {
     villagers: "村民",
@@ -400,7 +427,11 @@ function renderGame(game) {
     avatar.alt = "";
     avatar.addEventListener("error", () => {
       avatar.remove();
-      iconCell.textContent = initial;
+      if (player.alive) {
+        iconCell.textContent = initial;
+      } else {
+        iconCell.appendChild(referenceImage("img/grave.gif", "死亡"));
+      }
     });
     iconCell.appendChild(avatar);
     const nameCell = document.createElement("td");
@@ -416,7 +447,13 @@ function renderGame(game) {
     nameCell.append(marker, profileLink, document.createElement("br"), status);
     if (revealedRoles[player.playerId]) {
       const roleText = document.createElement("small");
-      roleText.textContent = " [" + roleLabel(revealedRoles[player.playerId]) + "]";
+      const revealedRole = revealedRoles[player.playerId];
+      const iconPath = roleIconPath(revealedRole);
+      roleText.append(" [");
+      if (iconPath) {
+        roleText.append(referenceImage(iconPath, roleLabel(revealedRole)));
+      }
+      roleText.append(roleLabel(revealedRole) + "]");
       nameCell.append(roleText);
     }
     if (voteSummary[player.playerId] && voteSummary[player.playerId].length) {
