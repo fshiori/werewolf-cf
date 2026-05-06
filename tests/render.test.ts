@@ -266,6 +266,8 @@ describe("render", () => {
     expect(ROOM_CLIENT_SCRIPT).toContain("投票：");
     expect(ROOM_CLIENT_SCRIPT).toContain("actorCanAct");
     expect(ROOM_CLIENT_SCRIPT).toContain("function roleLabel(value)");
+    expect(ROOM_CLIENT_SCRIPT).toContain("function roleIconPath(value)");
+    expect(ROOM_CLIENT_SCRIPT).toContain("function referenceImage(path, alt)");
     expect(ROOM_CLIENT_SCRIPT).toContain('werewolf: "人狼"');
     expect(ROOM_CLIENT_SCRIPT).toContain('big_wolf: "大狼"');
     expect(ROOM_CLIENT_SCRIPT).toContain('fox: "妖狐"');
@@ -273,6 +275,11 @@ describe("render", () => {
     expect(ROOM_CLIENT_SCRIPT).toContain('betrayer: "背德者"');
     expect(ROOM_CLIENT_SCRIPT).toContain('child_fox: "子狐"');
     expect(ROOM_CLIENT_SCRIPT).toContain('cat: "貓又"');
+    expect(ROOM_CLIENT_SCRIPT).toContain('werewolf: "img/role_wolf.gif"');
+    expect(ROOM_CLIENT_SCRIPT).toContain('big_wolf: "img/role_heavywolf.gif"');
+    expect(ROOM_CLIENT_SCRIPT).toContain('cat: "img/role_cat.gif"');
+    expect(ROOM_CLIENT_SCRIPT).toContain('referenceImage("img/grave.gif", "死亡")');
+    expect(ROOM_CLIENT_SCRIPT).toContain('image.src = "/assets/reference/" + path;');
     expect(ROOM_CLIENT_SCRIPT).toContain("roleLabel(msg.role)");
     expect(ROOM_CLIENT_SCRIPT).toContain("winnerLabel(game.winner)");
     expect(ROOM_CLIENT_SCRIPT).toContain("isWolfRole(role)");

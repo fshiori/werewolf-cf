@@ -116,4 +116,4 @@ The reference uses Flash for notification sounds. A Cloudflare/browser port shou
 
 ## Next Implementation Step
 
-Use the R2-backed `GET /assets/reference/:path` endpoint to wire more copied priority assets into rendered pages, starting with live room player-card role/death markers and postgame result images. Top title/background, room-list status/options, and rules role rows already emit reference asset URLs with text fallback.
+Use the R2-backed `GET /assets/reference/:path` endpoint to wire more copied priority assets into rendered pages, starting with postgame result images and remaining live-room markers. Top title/background, room-list status/options, rules role rows, revealed live-room role icons, and dead-player grave fallback already emit reference asset URLs with text fallback.
