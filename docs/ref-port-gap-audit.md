@@ -86,7 +86,7 @@ Reference files inspected:
 - Night kill, seer, child fox, guard, cat revive.
 - Poison/cat linked deaths, lover linked deaths, betrayer linked deaths.
 - Winners: villagers, werewolves, foxes, lovers.
-- Private channels: wolf, fox, common, lovers, dead, GM, GM whisper; GM can toggle common voice visibility and persist `chdis` restrictions for wolf/common/lovers/fox channels during active games.
+- Private channels: wolf, fox, common, lovers, dead, GM, GM whisper; GM can toggle common voice visibility and persist `chdis` restrictions for wolf/common/lovers/fox channels during active games, and room summaries render those restrictions as option markers.
 - Dead role visibility and end-game role reveal.
 - Last words and dummy boy first night.
 - D1 final records and player stats after game end.

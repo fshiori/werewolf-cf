@@ -296,7 +296,7 @@ describe("worker routes", () => {
         {},
         {},
         {},
-        { room_poison: "poison wfbig authority decide lovers betr fosi foxs cat will open_vote comoutl wish_role istrip as_gm dummy_boy cust_dummy real_time:5:2 votedme votedisplay" },
+        { room_poison: "poison wfbig authority decide lovers betr fosi foxs cat will open_vote comoutl wish_role istrip as_gm dummy_boy cust_dummy real_time:5:2 votedme votedisplay chdis:ch_wolf::ch_lovers:" },
         { room_poison: "<test comment>" },
         { room_poison: 30 },
         { room_poison: true },
@@ -363,6 +363,12 @@ describe("worker routes", () => {
             lastWords: true,
             openVote: true,
             commonTalkVisible: true,
+            channelRestrictions: {
+              wolf: true,
+              common: false,
+              lovers: true,
+              fox: false
+            },
             deadRoleVisible: true,
             wishRole: true,
             tripRequired: true,
@@ -496,6 +502,12 @@ describe("worker routes", () => {
             lastWords: true,
             openVote: true,
             commonTalkVisible: true,
+            channelRestrictions: {
+              wolf: true,
+              common: false,
+              lovers: true,
+              fox: false
+            },
             deadRoleVisible: true,
             wishRole: true,
             tripRequired: true,
@@ -533,7 +545,7 @@ describe("worker routes", () => {
     expect(roomInsert?.values).toContain("Custom Dummy");
     expect(roomInsert?.values).toContain("Remember the dummy");
     expect(String(roomInsert?.values.at(-2))).toMatch(/^[0-9a-f]{64}$/);
-    expect(roomInsert?.values.at(-1)).toBe("poison wfbig authority decide lovers betr cat will open_vote comoutl wish_role istrip as_gm dummy_boy cust_dummy real_time:5:2 votedme votedisplay");
+    expect(roomInsert?.values.at(-1)).toBe("poison wfbig authority decide lovers betr cat will open_vote comoutl wish_role istrip as_gm dummy_boy cust_dummy real_time:5:2 votedme votedisplay chdis:ch_wolf::ch_lovers:");
     expect(JSON.parse(String(eventInsert?.values.at(-1)))).toEqual({
       name: "Option Test",
       comment: "Beginners welcome",
@@ -551,6 +563,12 @@ describe("worker routes", () => {
         lastWords: true,
         openVote: true,
         commonTalkVisible: true,
+        channelRestrictions: {
+          wolf: true,
+          common: false,
+          lovers: true,
+          fox: false
+        },
         deadRoleVisible: true,
         wishRole: true,
         tripRequired: true,

@@ -25,6 +25,12 @@ describe("render", () => {
           lastWords: true,
           openVote: true,
           commonTalkVisible: true,
+          channelRestrictions: {
+            wolf: true,
+            common: false,
+            lovers: true,
+            fox: false
+          },
           deadRoleVisible: true,
           wishRole: true,
           tripRequired: true,
@@ -160,6 +166,7 @@ describe("render", () => {
     expect(html).toContain("遺言");
     expect(html).toContain("公開票");
     expect(html).toContain("共有聲");
+    expect(html).toContain("頻道限:狼/戀");
     expect(html).toContain("靈視");
     expect(html).toContain("希望");
     expect(html).toContain("Trip限定");
