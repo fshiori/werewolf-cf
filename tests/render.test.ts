@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { renderAdminRooms, renderAdminRoomsLogin, renderBbs, renderBbsTopic, renderFederatedList, renderHome, renderIconCatalog, renderLeaderboard, renderPlayerProfile, renderProtocol, renderRoom, renderRoomEvents, renderRoomRecords, renderRoomTranscript, renderRules, renderScriptInfo, renderStatus, renderTripLookup, renderVersion, renderWinRateAnalysis } from "../src/render";
+import { renderAdminRooms, renderAdminRoomsLogin, renderBbs, renderBbsTopic, renderFederatedList, renderHome, renderIconCatalog, renderLeaderboard, renderOldLogs, renderPlayerProfile, renderProtocol, renderRoom, renderRoomEvents, renderRoomRecords, renderRoomTranscript, renderRules, renderScriptInfo, renderStatus, renderTripLookup, renderVersion, renderWinRateAnalysis } from "../src/render";
 import { ROOM_CLIENT_SCRIPT } from "../src/room-client";
 
 describe("render", () => {
@@ -517,6 +517,55 @@ describe("render", () => {
     expect(html).toContain("遠端伺服器");
     expect(html).toContain("https://remote.example/room/remote_room");
     expect(html).toContain("Remote村");
+  });
+
+  it("renders old log index with reference log links", () => {
+    const html = renderOldLogs([
+      {
+        id: "room_finished",
+        name: "Finished",
+        comment: "",
+        maxPlayers: 16,
+        status: "ended",
+        createdAt: "2026-05-06 12:00:00",
+        options: {
+          poison: true,
+          bigWolf: false,
+          authority: false,
+          decider: false,
+          lovers: false,
+          betrayer: false,
+          childFox: false,
+          twoFoxes: false,
+          cat: false,
+          lastWords: false,
+          openVote: true,
+          commonTalkVisible: false,
+          deadRoleVisible: false,
+          wishRole: false,
+          dummyBoy: false,
+          customDummy: false,
+          dummyName: "替身君",
+          dummyLastWords: "",
+          realTime: true,
+          dayMinutes: 5,
+          nightMinutes: 3,
+          selfVote: false,
+          voteStatus: false
+        }
+      }
+    ]);
+
+    expect(html).toContain("過去紀錄");
+    expect(html).toContain("村No");
+    expect(html).toContain("Finished 村");
+    expect(html).toContain("/room/room_finished/log");
+    expect(html).toContain("reverse_log=on");
+    expect(html).toContain("heaven_talk=on");
+    expect(html).toContain("heaven_only=on");
+    expect(html).toContain("埋毒");
+    expect(html).toContain("公開票");
+    expect(html).toContain('<a href="/logs">過去紀錄</a>');
   });
 
   it("renders BBS as a normal HTML page", () => {

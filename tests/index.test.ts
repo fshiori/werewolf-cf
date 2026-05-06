@@ -221,7 +221,7 @@ function envWithRooms(
                   dellook: deadRoleVisibleRooms[id] ? 1 : 0,
                   dummy_name: roomDummyNames[id] ?? "替身君",
                   dummy_last_words: roomDummyLastWords[id] ?? "",
-                  status: "lobby",
+                  status: config[`room_status:${id}`] ?? "lobby",
                   created_at: "2026-05-04 04:00:00",
                   option_role: roomOptionRoles[id] ?? ""
                 }))
@@ -958,6 +958,32 @@ describe("worker routes", () => {
     expect(body).toContain("list村");
     expect(body).toContain("Friendly");
     expect(body).toContain("人數22");
+  });
+
+  it("renders old log index with ended rooms", async () => {
+    const response = await worker.fetch(
+      new Request("http://example.test/logs"),
+      envWithRooms(
+        ["room_active", "room_finished"],
+        { "room_status:room_finished": "ended" },
+        {},
+        {},
+        {},
+        { room_finished: "poison real_time:5:3 open_vote" },
+        {},
+        { room_finished: 16 }
+      )
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.text();
+    expect(body).toContain("過去紀錄");
+    expect(body).toContain("room_finished");
+    expect(body).toContain("/room/room_finished/log?reverse_log=on");
+    expect(body).toContain("/room/room_finished/log?heaven_talk=on");
+    expect(body).toContain("/room/room_finished/log?heaven_only=on");
+    expect(body).toContain("埋毒");
+    expect(body).not.toContain("room_active");
   });
 
   it("renders federated list page with configured remote rooms", async () => {

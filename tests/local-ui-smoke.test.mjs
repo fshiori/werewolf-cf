@@ -19,6 +19,9 @@ function responseFor(path, method = "GET") {
   if (path === "/list" && method === "GET") {
     return { contentType: "text/html", body: "<!doctype html><title>聯合遊戲列表 本伺服器</title>" };
   }
+  if (path === "/logs" && method === "GET") {
+    return { contentType: "text/html", body: "<!doctype html><title>過去紀錄 村No</title>" };
+  }
   if (path === "/icons" && method === "GET") {
     return { contentType: "text/html", body: '<!doctype html><title>頭像一覽 /assets/reference/user_icon/001.gif</title>' };
   }
