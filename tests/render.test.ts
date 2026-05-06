@@ -233,6 +233,9 @@ describe("render", () => {
     expect(html).toContain("對局紀錄");
     expect(html).toContain("playerRecords");
     expect(html).toContain("事件");
+    expect(html).toContain("manualRefresh");
+    expect(html).toContain("autoRefresh");
+    expect(html).toContain("自動更新");
     expect(html).toContain("/events");
     expect(html).toContain("事件履歷");
     expect(html).toContain("/room/room_abc/log");
@@ -279,7 +282,11 @@ describe("render", () => {
     expect(ROOM_CLIENT_SCRIPT).toContain("kick_player");
     expect(ROOM_CLIENT_SCRIPT).toContain("kick_vote");
     expect(ROOM_CLIENT_SCRIPT).toContain("leave_room");
-    expect(ROOM_CLIENT_SCRIPT).toContain("void refreshStats();");
+    expect(ROOM_CLIENT_SCRIPT).toContain("function refreshAuxiliaryPanels()");
+    expect(ROOM_CLIENT_SCRIPT).toContain("function configureAutoRefresh()");
+    expect(ROOM_CLIENT_SCRIPT).toContain("werewolf_cf_auto_refresh");
+    expect(ROOM_CLIENT_SCRIPT).toContain("setInterval(refreshAuxiliaryPanels, 15000)");
+    expect(ROOM_CLIENT_SCRIPT).toContain('document.querySelector("#manualRefresh").addEventListener("click", refreshAuxiliaryPanels);');
     expect(ROOM_CLIENT_SCRIPT).toContain("/api/players/");
     expect(ROOM_CLIENT_SCRIPT).toContain("/stats");
     expect(ROOM_CLIENT_SCRIPT).toContain("/api/rooms/");

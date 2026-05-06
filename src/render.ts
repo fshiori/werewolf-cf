@@ -1553,6 +1553,8 @@ export function renderRoom(roomId: string): string {
                 　<a href="/room/${escapeHtml(roomId)}/records">對局紀錄</a>
                 　<a href="/room/${escapeHtml(roomId)}/events">事件履歷</a>
                 　<a href="/room/${escapeHtml(roomId)}/log">完整紀錄</a>
+                　<button id="manualRefresh" type="button">手動更新</button>
+                <label><input id="autoRefresh" type="checkbox"> 自動更新</label>
               </td>
             </tr>
             <tr>
