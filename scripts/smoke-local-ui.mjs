@@ -87,7 +87,11 @@ try {
   await expectHtml("/admin/rooms", ["廢村管理", "roomAdminToken", "werewolf_cf_room_admin_token"]);
   await expectHtml("/admin/config", ["系統設定管理", "configAdminToken", "werewolf_cf_config_admin_token"]);
   await expectHtml("/admin/bbs", ["討論管理", "BBS 管理密碼", "bbs-status-mark"]);
+  await expectHtml("/rules", ["基本流程", "/assets/reference/img/role_human.gif"]);
   await expectHtml("/manual", ["說明書", "登錄入村"]);
+  await expectHtml("/script-info", ["Script Info", "Cloudflare Workers / TypeScript"]);
+  await expectHtml("/protocol", ["WebSocket 入口", "game_state"]);
+  await expectHtml("/version", ["版本資訊", "Werewolf Cloudflare Port"]);
   await expectHtml("/assets/room-client.js", ["new WebSocket", "data-room-id"]);
 
   const createResult = await expectJson(
@@ -115,6 +119,7 @@ try {
   await expectHtml(`/room/${roomId}/records`, ["村子對局紀錄", roomId]);
   await expectHtml(`/room/${roomId}/events`, ["村子事件履歷", roomId, "room_created"]);
   await expectHtml(`/room/${roomId}/log`, ["村子完整紀錄", roomId, "room_created"]);
+  await expectHtml(`/player/${playerId}`, ["個人戰績", playerId, "最近參戰紀錄", "/assets/reference/"]);
 
   console.log(`${smokeLabel} smoke passed`);
   process.exit(0);
