@@ -13,6 +13,9 @@ function responseFor(path, method = "GET") {
   if (path === "/leaderboard" && method === "GET") {
     return { contentType: "text/html", body: "<!doctype html><title>戰績排行榜</title>" };
   }
+  if (path === "/list" && method === "GET") {
+    return { contentType: "text/html", body: "<!doctype html><title>聯合遊戲列表 本伺服器</title>" };
+  }
   if (path === "/icons" && method === "GET") {
     return { contentType: "text/html", body: '<!doctype html><title>頭像一覽 /assets/reference/user_icon/001.gif</title>' };
   }

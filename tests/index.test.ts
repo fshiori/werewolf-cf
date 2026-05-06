@@ -803,6 +803,23 @@ describe("worker routes", () => {
     expect(body).toContain("player_top");
   });
 
+  it("renders federated list page from local rooms", async () => {
+    const response = await worker.fetch(
+      new Request("http://example.test/list"),
+      envWithRooms(["room_list"], {}, {}, {}, {}, { room_list: "real_time:3:1" }, { room_list: "Friendly" }, { room_list: 22 })
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.text();
+    expect(body).toContain("聯合遊戲列表");
+    expect(body).toContain("服務中");
+    expect(body).toContain("本伺服器");
+    expect(body).toContain("[room_list]");
+    expect(body).toContain("list村");
+    expect(body).toContain("Friendly");
+    expect(body).toContain("人數22");
+  });
+
   it("renders default icon catalog page", async () => {
     const response = await worker.fetch(new Request("http://example.test/icons"), envWithRooms([]));
 

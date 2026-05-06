@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { renderHome, renderIconCatalog, renderLeaderboard, renderPlayerProfile, renderProtocol, renderRoom, renderRoomEvents, renderRoomRecords, renderRoomTranscript, renderRules, renderStatus, renderTripLookup, renderVersion } from "../src/render";
+import { renderFederatedList, renderHome, renderIconCatalog, renderLeaderboard, renderPlayerProfile, renderProtocol, renderRoom, renderRoomEvents, renderRoomRecords, renderRoomTranscript, renderRules, renderStatus, renderTripLookup, renderVersion } from "../src/render";
 import { ROOM_CLIENT_SCRIPT } from "../src/room-client";
 
 describe("render", () => {
@@ -74,6 +74,8 @@ describe("render", () => {
     expect(html).toContain("最大30");
     expect(html).toContain("/room/room_abc");
     expect(html).toContain("入村");
+    expect(html).toContain("/list");
+    expect(html).toContain("聯合列表");
     expect(html).toContain("/leaderboard");
     expect(html).toContain("戰績排行榜");
     expect(html).toContain("/icons");
@@ -364,6 +366,52 @@ describe("render", () => {
     expect(html).toContain("#DDDDDD");
     expect(html).toContain("#FF9999");
     expect(html).toContain("32 x 32");
+  });
+
+  it("renders federated list as a normal HTML page", () => {
+    const html = renderFederatedList([
+      {
+        id: "room_abc",
+        name: "Test",
+        comment: "Friendly",
+        maxPlayers: 22,
+        status: "lobby",
+        createdAt: "2026-05-06 12:00:00",
+        options: {
+          poison: false,
+          bigWolf: false,
+          authority: false,
+          decider: false,
+          lovers: false,
+          betrayer: false,
+          childFox: false,
+          twoFoxes: false,
+          cat: false,
+          lastWords: false,
+          openVote: false,
+          commonTalkVisible: false,
+          deadRoleVisible: false,
+          wishRole: false,
+          dummyBoy: false,
+          customDummy: false,
+          dummyName: "替身君",
+          dummyLastWords: "",
+          realTime: false,
+          dayMinutes: 3,
+          nightMinutes: 1.5,
+          selfVote: false,
+          voteStatus: false
+        }
+      }
+    ]);
+
+    expect(html).toContain("聯合遊戲列表");
+    expect(html).toContain("服務中");
+    expect(html).toContain("本伺服器");
+    expect(html).toContain("募集中");
+    expect(html).toContain("[room_abc]");
+    expect(html).toContain("Test村");
+    expect(html).toContain("人數22");
   });
 
   it("renders room records as a normal HTML page", () => {
