@@ -132,7 +132,7 @@ function shell(body: string): string {
           <table class="menu-list">
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/">首頁</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/leaderboard">戰績排行榜</a></td></tr>
-            <tr><td><small><font color="#666666">・</font></small></td><td><a href="/version">伺服器狀態</a></td></tr>
+            <tr><td><small><font color="#666666">・</font></small></td><td><a href="/status">伺服器狀態</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/rules">規則</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/protocol">通訊協定</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/version">版本</a></td></tr>
@@ -279,6 +279,44 @@ export function renderRoomEvents(roomId: string, events: RoomEventSummary[]): st
       <table class="form-table" style="margin:12px 20px 18px;">
         <thead><tr><td><strong>時間</strong></td><td><strong>事件</strong></td><td><strong>玩家</strong></td><td><strong>內容</strong></td></tr></thead>
         <tbody>${rows}</tbody>
+      </table>
+    </fieldset>
+  `));
+}
+
+export function renderStatus(status: {
+  ok: boolean;
+  checks: Record<string, boolean>;
+  homeAnnouncement?: string | null;
+  maintenanceMode: boolean;
+}): string {
+  const checkRows = Object.entries(status.checks).map(([name, ok]) => `<tr>
+    <td><strong>　${escapeHtml(name)}：</strong></td>
+    <td>${ok ? `<font color="#008800">正常</font>` : `<font color="#cc0000">異常</font>`}</td>
+  </tr>`).join("");
+
+  return page("Status", shell(`
+    <fieldset>
+      <legend><strong>伺服器狀態</strong></legend>
+      <table class="form-table">
+        <tr>
+          <td><strong>　總狀態：</strong></td>
+          <td>${status.ok ? `<font color="#008800">正常運作</font>` : `<font color="#cc0000">需要確認</font>`}</td>
+        </tr>
+        <tr>
+          <td><strong>　維護模式：</strong></td>
+          <td>${status.maintenanceMode ? `<font color="#cc0000">啟用</font>` : "未啟用"}</td>
+        </tr>
+        <tr>
+          <td><strong>　公告：</strong></td>
+          <td>${status.homeAnnouncement ? escapeHtml(status.homeAnnouncement) : `<span class="muted">使用預設公告</span>`}</td>
+        </tr>
+      </table>
+    </fieldset>
+    <fieldset>
+      <legend><strong>Binding 檢查</strong></legend>
+      <table class="form-table">
+        ${checkRows}
       </table>
     </fieldset>
   `));

@@ -74,6 +74,7 @@ Browser pages:
 
 - `GET /`: Retro room list, leaderboard preview, Trip tools, and room creation form.
 - `GET /leaderboard`: Rendered leaderboard page.
+- `GET /status`: Rendered Worker, D1, KV, Durable Object, R2, announcement, and maintenance-mode status page.
 - `GET /room/:roomId`: Rendered room page with WebSocket chat, voting, night actions, GM controls, records, events, and avatar controls.
 - `GET /room/:roomId/records`: Rendered room game-record history.
 - `GET /room/:roomId/events`: Rendered room audit-event history.

@@ -1,4 +1,4 @@
-import { renderHome, renderLeaderboard, renderPlayerProfile, renderProtocol, renderRoom, renderRoomEvents, renderRoomRecords, renderRules, renderVersion } from "./render";
+import { renderHome, renderLeaderboard, renderPlayerProfile, renderProtocol, renderRoom, renderRoomEvents, renderRoomRecords, renderRules, renderStatus, renderVersion } from "./render";
 import { RoomDurableObject } from "./room";
 import { DEFAULT_DAY_MINUTES, DEFAULT_NIGHT_MINUTES } from "./game";
 import { registeredTripHash, tripHashForRoom } from "./identity";
@@ -270,31 +270,46 @@ async function isMaintenanceMode(env: Env): Promise<boolean> {
 }
 
 async function getRuntimeConfig(env: Env): Promise<Response> {
-  const [announcement, maintenanceMode] = await Promise.all([
-    getHomeAnnouncement(env),
-    isMaintenanceMode(env)
-  ]);
+  const config = await readRuntimeConfig(env);
   return json({
     config: {
-      homeAnnouncement: announcement ?? null,
-      maintenanceMode
+      homeAnnouncement: config.homeAnnouncement,
+      maintenanceMode: config.maintenanceMode
     }
   });
 }
 
+async function readRuntimeConfig(env: Env): Promise<{ homeAnnouncement: string | null; maintenanceMode: boolean }> {
+  const [announcement, maintenanceMode] = await Promise.all([
+    getHomeAnnouncement(env),
+    isMaintenanceMode(env)
+  ]);
+  return {
+    homeAnnouncement: announcement ?? null,
+    maintenanceMode
+  };
+}
+
+async function readHealth(env: Env): Promise<{ ok: boolean; checks: Record<string, boolean> }> {
+  const dbRow = await env.DB.prepare("SELECT 1 AS ok").bind().first<{ ok: number }>();
+  await env.CONFIG.get("home_announcement");
+  const checks = {
+    worker: true,
+    db: dbRow?.ok === 1,
+    kv: true,
+    durableObjects: Boolean(env.ROOM_DO),
+    r2: Boolean(env.ASSETS)
+  };
+  return {
+    ok: Object.values(checks).every(Boolean),
+    checks
+  };
+}
+
 async function getHealth(env: Env): Promise<Response> {
   try {
-    const dbRow = await env.DB.prepare("SELECT 1 AS ok").bind().first<{ ok: number }>();
-    await env.CONFIG.get("home_announcement");
-    const checks = {
-      worker: true,
-      db: dbRow?.ok === 1,
-      kv: true,
-      durableObjects: Boolean(env.ROOM_DO),
-      r2: Boolean(env.ASSETS)
-    };
-    const ok = Object.values(checks).every(Boolean);
-    return json({ ok, checks }, { status: ok ? 200 : 503 });
+    const health = await readHealth(env);
+    return json(health, { status: health.ok ? 200 : 503 });
   } catch (error) {
     return json(
       {
@@ -848,6 +863,15 @@ export default {
 
     if (request.method === "GET" && url.pathname === "/version") {
       return html(renderVersion());
+    }
+
+    if (request.method === "GET" && url.pathname === "/status") {
+      try {
+        const [health, config] = await Promise.all([readHealth(env), readRuntimeConfig(env)]);
+        return html(renderStatus({ ...health, ...config }));
+      } catch (error) {
+        return json({ error: error instanceof Error ? error.message : "Status check failed" }, { status: 503 });
+      }
     }
 
     const roomRecordsMatch = url.pathname.match(/^\/api\/rooms\/([^/]+)\/records$/);
