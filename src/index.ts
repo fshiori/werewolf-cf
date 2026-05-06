@@ -1,4 +1,4 @@
-import { renderAdminRooms, renderAdminRoomsLogin, renderBbs, renderBbsTopic, renderFederatedList, renderHome, renderIconCatalog, renderLeaderboard, renderOldLogs, renderPlayerProfile, renderProtocol, renderRoom, renderRoomEvents, renderRoomRecords, renderRoomTranscript, renderRules, renderScriptInfo, renderStatus, renderTripRegistration, renderTripLookup, renderVersion, renderWinRateAnalysis } from "./render";
+import { renderAdminRooms, renderAdminRoomsLogin, renderBbs, renderBbsTopic, renderFederatedList, renderHome, renderIconCatalog, renderLeaderboard, renderManual, renderOldLogs, renderPlayerProfile, renderProtocol, renderRoom, renderRoomEvents, renderRoomRecords, renderRoomTranscript, renderRules, renderScriptInfo, renderStatus, renderTripRegistration, renderTripLookup, renderVersion, renderWinRateAnalysis } from "./render";
 import { RoomDurableObject } from "./room";
 import { ROOM_CLIENT_SCRIPT } from "./room-client";
 import { DEFAULT_DAY_MINUTES, DEFAULT_NIGHT_MINUTES } from "./game";
@@ -1502,6 +1502,10 @@ export default {
 
     if (request.method === "GET" && url.pathname === "/rules") {
       return html(renderRules());
+    }
+
+    if (request.method === "GET" && url.pathname === "/manual") {
+      return html(renderManual());
     }
 
     if (request.method === "GET" && url.pathname === "/script-info") {

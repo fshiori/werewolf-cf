@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { renderAdminRooms, renderAdminRoomsLogin, renderBbs, renderBbsTopic, renderFederatedList, renderHome, renderIconCatalog, renderLeaderboard, renderOldLogs, renderPlayerProfile, renderProtocol, renderRoom, renderRoomEvents, renderRoomRecords, renderRoomTranscript, renderRules, renderScriptInfo, renderStatus, renderTripLookup, renderTripRegistration, renderVersion, renderWinRateAnalysis } from "../src/render";
+import { renderAdminRooms, renderAdminRoomsLogin, renderBbs, renderBbsTopic, renderFederatedList, renderHome, renderIconCatalog, renderLeaderboard, renderManual, renderOldLogs, renderPlayerProfile, renderProtocol, renderRoom, renderRoomEvents, renderRoomRecords, renderRoomTranscript, renderRules, renderScriptInfo, renderStatus, renderTripLookup, renderTripRegistration, renderVersion, renderWinRateAnalysis } from "../src/render";
 import { ROOM_CLIENT_SCRIPT } from "../src/room-client";
 
 describe("render", () => {
@@ -100,6 +100,8 @@ describe("render", () => {
     expect(html).toContain("/status");
     expect(html).toContain("伺服器狀態");
     expect(html).toContain("/rules");
+    expect(html).toContain("/manual");
+    expect(html).toContain("說明書");
     expect(html).toContain("/script-info");
     expect(html).toContain("Script Info");
     expect(html).toContain("/protocol");
@@ -1068,6 +1070,18 @@ describe("render", () => {
     expect(html).toContain("Durable Object alarm");
     expect(html).toContain("沉默時間推進");
     expect(html).toContain("最後2分警告");
+  });
+
+  it("renders manual page", () => {
+    const html = renderManual();
+
+    expect(html).toContain("說明書");
+    expect(html).toContain("建立村子");
+    expect(html).toContain("登錄入村");
+    expect(html).toContain("GM操作");
+    expect(html).toContain("/logs");
+    expect(html).toContain("/icons#upload");
+    expect(html).toContain("/protocol");
   });
 
   it("renders version page with current implementation status", () => {
