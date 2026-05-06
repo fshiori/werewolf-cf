@@ -84,6 +84,8 @@ try {
   await expectHtml("/bbs?digest=1", ["精華", "主題列表"]);
   await expectHtml("/status", ["伺服器狀態", "Binding 檢查", "health-mark"]);
   await expectHtml("/admin", ["管理選單", "/admin/rooms", "/admin/config"]);
+  await expectHtml("/admin/rooms", ["廢村管理", "roomAdminToken", "werewolf_cf_room_admin_token"]);
+  await expectHtml("/admin/config", ["系統設定管理", "configAdminToken", "werewolf_cf_config_admin_token"]);
   await expectHtml("/admin/bbs", ["討論管理", "BBS 管理密碼", "bbs-status-mark"]);
   await expectHtml("/manual", ["說明書", "登錄入村"]);
   await expectHtml("/assets/room-client.js", ["new WebSocket", "data-room-id"]);
