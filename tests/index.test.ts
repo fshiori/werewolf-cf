@@ -948,6 +948,8 @@ describe("worker routes", () => {
       ]
     );
     const cases = [
+      ["/index.php", "建立村子"],
+      ["/room_manager.php", "建立村子"],
       ["/list.php", "聯合遊戲列表"],
       ["/old_log.php", "過去紀錄"],
       ["/bbs.php", "主題列表"],
