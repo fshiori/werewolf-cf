@@ -377,7 +377,7 @@ describe("render", () => {
         roomId: "room_abc",
         playerId: "player_a",
         eventType: "game_started",
-        payload: { day: 1, players: 4 },
+        payload: { day: 1, players: 4, nickname: "Alice", text: "hello" },
         createdAt: "2026-05-06 12:00:00"
       }
     ]);
@@ -387,6 +387,8 @@ describe("render", () => {
     expect(html).toContain("player_a");
     expect(html).toContain("第1日");
     expect(html).toContain("4人");
+    expect(html).toContain("發言:Alice");
+    expect(html).toContain("內容:hello");
   });
 
   it("renders room transcript as a normal HTML page", () => {

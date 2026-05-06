@@ -437,6 +437,54 @@ describe("RoomDurableObject", () => {
     ]);
   });
 
+  it("persists public chat as room transcript events", async () => {
+    const game: GameState = {
+      roomId: "room_abc",
+      phase: "day",
+      day: 1,
+      players: [
+        { playerId: "player_alive", nickname: "Alive", role: "villager", alive: true },
+        { playerId: "player_wolf", nickname: "Wolf", role: "werewolf", alive: true }
+      ],
+      votes: {},
+      openVote: false,
+      commonTalkVisible: false,
+      deadRoleVisible: false,
+      wishRole: false,
+      dummyBoy: false,
+      dayMs: 180_000,
+      nightMs: 90_000,
+      selfVote: false,
+      voteStatus: false,
+      revoteCount: 0,
+      nightKills: {},
+      divinations: {},
+      guards: {},
+      catRevives: {},
+      lastWords: {},
+      log: []
+    };
+    const { room, dbRuns } = observableRoomObject(game);
+    const messages: SentMessage[] = [];
+    const socket = fakeSocket(messages);
+    connect(room, socket, "player_alive", "Alive");
+
+    await sendRaw(room, socket, JSON.stringify({ type: "chat", text: "hello transcript" }));
+
+    expect(messages).toContainEqual(expect.objectContaining({ type: "chat", playerId: "player_alive", text: "hello transcript" }));
+    expect(dbRuns).toContainEqual(
+      expect.objectContaining({
+        query: expect.stringContaining("INSERT INTO room_events"),
+        binds: [
+          "room_abc",
+          "player_alive",
+          "public_chat",
+          JSON.stringify({ nickname: "Alive", text: "hello transcript", phase: "day", day: 1 })
+        ]
+      })
+    );
+  });
+
   it("allows existing players but rejects new players joining active games", async () => {
     const game: GameState = {
       roomId: "room_abc",

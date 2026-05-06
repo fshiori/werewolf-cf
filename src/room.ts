@@ -173,10 +173,12 @@ export class RoomDurableObject {
       }
 
       if (message.type === "chat") {
-        if (!member.gm && !canUsePublicChat(await this.loadGameState(), member.playerId)) {
+        const game = await this.loadGameState();
+        if (!member.gm && !canUsePublicChat(game, member.playerId)) {
           throw new Error("Only living players can chat during the game");
         }
         const text = validateChatText(message.text);
+        await this.persistRoomEvent(member.playerId, "public_chat", { nickname: member.nickname, text, phase: game.phase, day: game.day });
         this.broadcast(buildChatMessage(member.playerId, member.nickname, text));
         return;
       }

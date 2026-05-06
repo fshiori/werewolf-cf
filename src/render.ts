@@ -224,6 +224,8 @@ function formatEventPayload(payload: unknown): string {
   const fields = [
     typeof value.name === "string" ? `村名:${value.name}` : "",
     typeof value.comment === "string" && value.comment ? `說明:${value.comment}` : "",
+    typeof value.nickname === "string" ? `發言:${value.nickname}` : "",
+    typeof value.text === "string" ? `內容:${value.text}` : "",
     typeof value.winner === "string" ? `勝利:${winnerLabel(value.winner)}` : "",
     typeof value.day === "number" ? `第${value.day}日` : "",
     typeof value.players === "number" ? `${value.players}人` : "",
