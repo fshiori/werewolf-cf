@@ -40,6 +40,9 @@ function responseFor(path, method = "GET") {
   if (path === "/admin" && method === "GET") {
     return { contentType: "text/html", body: '<!doctype html><title>管理選單 /admin/rooms /admin/config</title>' };
   }
+  if (path === "/admin/bbs" && method === "GET") {
+    return { contentType: "text/html", body: "<!doctype html><title>討論管理 BBS 管理密碼</title>" };
+  }
   if (path === "/manual" && method === "GET") {
     return { contentType: "text/html", body: "<!doctype html><title>說明書 登錄入村</title>" };
   }
