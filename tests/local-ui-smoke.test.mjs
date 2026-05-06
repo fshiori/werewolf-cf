@@ -52,6 +52,18 @@ function responseFor(path, method = "GET") {
   if (path === "/manual" && method === "GET") {
     return { contentType: "text/html", body: "<!doctype html><title>說明書 登錄入村</title>" };
   }
+  if (path === "/rules" && method === "GET") {
+    return { contentType: "text/html", body: '<!doctype html><title>基本流程 /assets/reference/img/role_human.gif</title>' };
+  }
+  if (path === "/script-info" && method === "GET") {
+    return { contentType: "text/html", body: "<!doctype html><title>Script Info Cloudflare Workers / TypeScript</title>" };
+  }
+  if (path === "/protocol" && method === "GET") {
+    return { contentType: "text/html", body: "<!doctype html><title>WebSocket 入口 game_state</title>" };
+  }
+  if (path === "/version" && method === "GET") {
+    return { contentType: "text/html", body: "<!doctype html><title>版本資訊 Werewolf Cloudflare Port</title>" };
+  }
   if (path === "/assets/room-client.js" && method === "GET") {
     return { contentType: "text/javascript", body: 'const roomShell = document.querySelector("[data-room-id]"); new WebSocket("ws://example.test");' };
   }
@@ -69,6 +81,9 @@ function responseFor(path, method = "GET") {
   }
   if (path === "/room/room_ui_smoke/log" && method === "GET") {
     return { contentType: "text/html", body: "<!doctype html><title>村子完整紀錄 room_ui_smoke room_created</title>" };
+  }
+  if (path.startsWith("/player/player_ui_smoke_") && method === "GET") {
+    return { contentType: "text/html", body: `<!doctype html><title>個人戰績 ${path.slice("/player/".length)} 最近參戰紀錄 /assets/reference/</title>` };
   }
   return { status: 404, contentType: "text/plain", body: "not found" };
 }
