@@ -486,6 +486,166 @@ describe("RoomDurableObject", () => {
     );
   });
 
+  it("persists private chat as private transcript events", async () => {
+    const game: GameState = {
+      roomId: "room_abc",
+      phase: "night",
+      day: 1,
+      players: [
+        { playerId: "player_wolf", nickname: "Wolf", role: "werewolf", alive: true },
+        { playerId: "player_villager", nickname: "Villager", role: "villager", alive: true }
+      ],
+      votes: {},
+      openVote: false,
+      commonTalkVisible: false,
+      deadRoleVisible: false,
+      wishRole: false,
+      dummyBoy: false,
+      dayMs: 180_000,
+      nightMs: 90_000,
+      selfVote: false,
+      voteStatus: false,
+      revoteCount: 0,
+      nightKills: {},
+      divinations: {},
+      guards: {},
+      catRevives: {},
+      lastWords: {},
+      log: []
+    };
+    const { room, dbRuns } = observableRoomObject(game);
+    const messages: SentMessage[] = [];
+    const socket = fakeSocket(messages);
+    connect(room, socket, "player_wolf", "Wolf");
+
+    await sendRaw(room, socket, JSON.stringify({ type: "wolf_chat", text: "secret transcript" }));
+
+    expect(messages).toContainEqual(expect.objectContaining({ type: "wolf_chat", playerId: "player_wolf", text: "secret transcript" }));
+    expect(dbRuns).toContainEqual(
+      expect.objectContaining({
+        query: expect.stringContaining("INSERT INTO room_events"),
+        binds: [
+          "room_abc",
+          "player_wolf",
+          "wolf_chat",
+          JSON.stringify({ visibility: "private", nickname: "Wolf", text: "secret transcript", phase: "night", day: 1 })
+        ]
+      })
+    );
+  });
+
+  it("persists night actions as private transcript events", async () => {
+    const game: GameState = {
+      roomId: "room_abc",
+      phase: "night",
+      day: 1,
+      players: [
+        { playerId: "player_wolf", nickname: "Wolf", role: "werewolf", alive: true },
+        { playerId: "player_villager", nickname: "Villager", role: "villager", alive: true },
+        { playerId: "player_other", nickname: "Other", role: "villager", alive: true }
+      ],
+      votes: {},
+      openVote: false,
+      commonTalkVisible: false,
+      deadRoleVisible: false,
+      wishRole: false,
+      dummyBoy: false,
+      dayMs: 180_000,
+      nightMs: 90_000,
+      selfVote: false,
+      voteStatus: false,
+      revoteCount: 0,
+      nightKills: {},
+      divinations: {},
+      guards: {},
+      catRevives: {},
+      lastWords: {},
+      log: []
+    };
+    const { room, dbRuns } = observableRoomObject(game);
+    const messages: SentMessage[] = [];
+    const socket = fakeSocket(messages);
+    connect(room, socket, "player_wolf", "Wolf");
+
+    await sendRaw(room, socket, JSON.stringify({ type: "night_kill", targetPlayerId: "player_villager" }));
+
+    expect(messages).toContainEqual(expect.objectContaining({ type: "action_ack", action: "night_kill", targetPlayerId: "player_villager" }));
+    expect(dbRuns).toContainEqual(
+      expect.objectContaining({
+        query: expect.stringContaining("INSERT INTO room_events"),
+        binds: [
+          "room_abc",
+          "player_wolf",
+          "night_kill",
+          JSON.stringify({
+            visibility: "private",
+            nickname: "Wolf",
+            targetPlayerId: "player_villager",
+            targetNickname: "Villager",
+            phase: "night",
+            day: 1
+          })
+        ]
+      })
+    );
+  });
+
+  it("persists hidden day votes as private transcript events", async () => {
+    const game: GameState = {
+      roomId: "room_abc",
+      phase: "day",
+      day: 1,
+      players: [
+        { playerId: "player_voter", nickname: "Voter", role: "villager", alive: true },
+        { playerId: "player_target", nickname: "Target", role: "werewolf", alive: true },
+        { playerId: "player_other", nickname: "Other", role: "villager", alive: true }
+      ],
+      votes: {},
+      openVote: false,
+      commonTalkVisible: false,
+      deadRoleVisible: false,
+      wishRole: false,
+      dummyBoy: false,
+      dayMs: 180_000,
+      nightMs: 90_000,
+      selfVote: false,
+      voteStatus: false,
+      revoteCount: 0,
+      nightKills: {},
+      divinations: {},
+      guards: {},
+      catRevives: {},
+      lastWords: {},
+      log: []
+    };
+    const { room, dbRuns } = observableRoomObject(game);
+    const messages: SentMessage[] = [];
+    const socket = fakeSocket(messages);
+    connect(room, socket, "player_voter", "Voter");
+
+    await sendRaw(room, socket, JSON.stringify({ type: "vote", targetPlayerId: "player_target" }));
+
+    expect(messages).toContainEqual(expect.objectContaining({ type: "action_ack", action: "vote", targetPlayerId: "player_target" }));
+    expect(dbRuns).toContainEqual(
+      expect.objectContaining({
+        query: expect.stringContaining("INSERT INTO room_events"),
+        binds: [
+          "room_abc",
+          "player_voter",
+          "day_vote",
+          JSON.stringify({
+            visibility: "private",
+            nickname: "Voter",
+            targetPlayerId: "player_target",
+            targetNickname: "Target",
+            phase: "day",
+            day: 1
+          })
+        ]
+      })
+    );
+  });
+
   it("allows existing players but rejects new players joining active games", async () => {
     const game: GameState = {
       roomId: "room_abc",

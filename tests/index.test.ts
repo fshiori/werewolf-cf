@@ -93,11 +93,15 @@ function envWithRooms(
                         dellook: deadRoleVisibleRooms[id] ? 1 : 0,
                         dummy_name: roomDummyNames[id] ?? "替身君",
                         dummy_last_words: roomDummyLastWords[id] ?? "",
-                        status: "lobby",
+                        status: config[`room_status:${id}`] ?? "lobby",
                         created_at: "2026-05-04 04:00:00",
                         option_role: roomOptionRoles[id] ?? ""
                       }
                     : null;
+                }
+                if (query.includes("SELECT status FROM rooms")) {
+                  const id = String(values[0]);
+                  return roomIds.includes(id) ? { status: config[`room_status:${id}`] ?? "lobby" } : null;
                 }
                 return roomIds.includes(String(values[0])) ? { id: values[0] } : null;
               },
@@ -1322,6 +1326,90 @@ describe("worker routes", () => {
           eventType: "room_created",
           payload: { name: "Test" },
           createdAt: "2026-05-04 04:30:00"
+        }
+      ]
+    });
+  });
+
+  it("hides private room events before the room has ended", async () => {
+    const response = await worker.fetch(
+      new Request("http://example.test/api/rooms/room_events/events"),
+      envWithRooms(
+        ["room_events"],
+        {},
+        {},
+        {},
+        {
+          room_events: [
+            {
+              id: 8,
+              room_id: "room_events",
+              player_id: "player_wolf",
+              event_type: "wolf_chat",
+              payload_json: '{"visibility":"private","nickname":"Wolf","text":"secret"}',
+              created_at: "2026-05-04 04:31:00"
+            },
+            {
+              id: 7,
+              room_id: "room_events",
+              player_id: "player_owner",
+              event_type: "room_created",
+              payload_json: '{"name":"Test"}',
+              created_at: "2026-05-04 04:30:00"
+            }
+          ]
+        }
+      )
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      events: [
+        {
+          id: 7,
+          roomId: "room_events",
+          playerId: "player_owner",
+          eventType: "room_created",
+          payload: { name: "Test" },
+          createdAt: "2026-05-04 04:30:00"
+        }
+      ]
+    });
+  });
+
+  it("shows private room events after the room has ended", async () => {
+    const response = await worker.fetch(
+      new Request("http://example.test/api/rooms/room_events/events"),
+      envWithRooms(
+        ["room_events"],
+        { "room_status:room_events": "ended" },
+        {},
+        {},
+        {
+          room_events: [
+            {
+              id: 8,
+              room_id: "room_events",
+              player_id: "player_wolf",
+              event_type: "wolf_chat",
+              payload_json: '{"visibility":"private","nickname":"Wolf","text":"secret"}',
+              created_at: "2026-05-04 04:31:00"
+            }
+          ]
+        }
+      )
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      events: [
+        {
+          id: 8,
+          roomId: "room_events",
+          playerId: "player_wolf",
+          eventType: "wolf_chat",
+          payload: { visibility: "private", nickname: "Wolf", text: "secret" },
+          createdAt: "2026-05-04 04:31:00"
         }
       ]
     });

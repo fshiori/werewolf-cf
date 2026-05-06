@@ -314,6 +314,11 @@ async function roomExists(env: Env, roomId: string): Promise<boolean> {
   return result !== null;
 }
 
+async function getRoomStatusValue(env: Env, roomId: string): Promise<string | undefined> {
+  const result = await env.DB.prepare("SELECT status FROM rooms WHERE id = ? LIMIT 1").bind(roomId).first<{ status: string }>();
+  return result?.status;
+}
+
 async function getHomeAnnouncement(env: Env): Promise<string | undefined> {
   const announcement = await env.CONFIG.get("home_announcement");
   return announcement?.trim() || undefined;
@@ -711,20 +716,30 @@ async function getRoomRecords(env: Env, roomIdParam: string): Promise<Response> 
   }
 }
 
+function isPrivateRoomEvent(event: RoomEventSummary): boolean {
+  return isRecord(event.payload) && event.payload.visibility === "private";
+}
+
 async function listRoomEvents(env: Env, roomId: string): Promise<RoomEventSummary[]> {
-  const result = await env.DB.prepare(
-    "SELECT id, room_id, player_id, event_type, payload_json, created_at FROM room_events WHERE room_id = ? ORDER BY created_at DESC LIMIT 50"
-  )
-    .bind(roomId)
-    .all<{ id: number; room_id: string; player_id: string | null; event_type: string; payload_json: string; created_at: string }>();
-  return result.results.map((event) => ({
-    id: event.id,
-    roomId: event.room_id,
-    playerId: event.player_id ?? undefined,
-    eventType: event.event_type,
-    payload: parseJsonOrNull(event.payload_json),
-    createdAt: event.created_at
-  }));
+  const [status, result] = await Promise.all([
+    getRoomStatusValue(env, roomId),
+    env.DB.prepare(
+      "SELECT id, room_id, player_id, event_type, payload_json, created_at FROM room_events WHERE room_id = ? ORDER BY created_at DESC LIMIT 50"
+    )
+      .bind(roomId)
+      .all<{ id: number; room_id: string; player_id: string | null; event_type: string; payload_json: string; created_at: string }>()
+  ]);
+  const includePrivate = status === "ended";
+  return result.results
+    .map((event) => ({
+      id: event.id,
+      roomId: event.room_id,
+      playerId: event.player_id ?? undefined,
+      eventType: event.event_type,
+      payload: parseJsonOrNull(event.payload_json),
+      createdAt: event.created_at
+    }))
+    .filter((event) => includePrivate || !isPrivateRoomEvent(event));
 }
 
 async function getRoomEvents(env: Env, roomIdParam: string): Promise<Response> {
