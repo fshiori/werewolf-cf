@@ -826,6 +826,21 @@ describe("game", () => {
     expect(game.log.at(-1)).toBe("戀人勝利。");
   });
 
+  it("does not give lovers the win when only one lover survives a normal win condition", () => {
+    const game = activeState("night", [
+      { playerId: "player_1", nickname: "Lover Wolf", role: "werewolf", alive: true, lover: true },
+      { playerId: "player_2", nickname: "Dead Lover", role: "villager", alive: false, lover: true },
+      { playerId: "player_3", nickname: "Villager", role: "villager", alive: true }
+    ]);
+
+    const killed = castNightKill(game, "player_1", "player_3", 0);
+
+    expect(killed.phase).toBe("ended");
+    expect(killed.players.find((player) => player.playerId === "player_1")?.alive).toBe(false);
+    expect(killed.winner).toBe("villagers");
+    expect(killed.log.at(-1)).toBe("村民勝利。");
+  });
+
   it("moves from completed day vote to night", () => {
     let game = startGame(lobby([["player_1", "Alice"], ["player_2", "Bob"], ["player_3", "Carol"], ["player_4", "Dave"]]), 0, () => 0);
 
@@ -1023,6 +1038,35 @@ describe("game", () => {
     expect(game.phase).toBe("ended");
     expect(game.winner).toBe("foxes");
     expect(game.log.at(-1)).toBe("妖狐勝利。");
+  });
+
+  it("gives foxes the win when only a child fox is alive at a normal win condition", () => {
+    let game = activeState("day", [
+      { playerId: "player_1", nickname: "Wolf", role: "werewolf", alive: true },
+      { playerId: "player_2", nickname: "Child Fox", role: "child_fox", alive: true },
+      { playerId: "player_3", nickname: "Villager", role: "villager", alive: true }
+    ]);
+
+    game = castDayVote(game, "player_1", "player_3");
+    game = castDayVote(game, "player_2", "player_3");
+    game = castDayVote(game, "player_3", "player_1");
+
+    expect(game.phase).toBe("ended");
+    expect(game.winner).toBe("foxes");
+    expect(game.log.at(-1)).toBe("妖狐勝利。");
+  });
+
+  it("counts a lone big wolf as a werewolf for normal win conditions", () => {
+    const game = activeState("night", [
+      { playerId: "player_1", nickname: "Big Wolf", role: "big_wolf", alive: true },
+      { playerId: "player_2", nickname: "Villager", role: "villager", alive: true }
+    ]);
+
+    const killed = castNightKill(game, "player_1", "player_2", 0);
+
+    expect(killed.phase).toBe("ended");
+    expect(killed.winner).toBe("werewolves");
+    expect(killed.log.at(-1)).toBe("狼人勝利。");
   });
 
   it("keeps foxes alive after wolf attacks", () => {

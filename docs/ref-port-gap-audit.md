@@ -48,7 +48,7 @@ Reference files inspected:
 | Reference icons and bitmap assets | R2 upload exists; `docs/reference-asset-inventory.md` classifies 130 reference assets; `/assets/reference/:path` serves vetted copied R2 assets; top chrome, home room-list status/options, rules role rows, live revealed role markers, and game-record victory rows emit reference image URLs with text fallback | Partial |
 | Browser E2E/manual visual verification | Local HTTP UI smoke only; no installed browser detected | Missing |
 | Screenshot/visual parity against ref | No screenshot baseline or comparison artifact | Missing |
-| Complete PHP rule parity | Core roles/options implemented, but no line-by-line rule parity manifest | Partial |
+| Complete PHP rule parity | Core roles/options implemented; focused tests now cover lover-only normal wins, one-lover non-wins, big-wolf win counting, and child-fox fox wins, but no line-by-line rule parity manifest | Partial |
 | Federated room list (`list.php`) | No cross-server/federated list equivalent | Missing |
 | Discussion board (`bbs.php`) | No forum equivalent | Missing |
 | Icon catalog/upload parity | `/icons` renders the reference default icon catalog; room join can send a vetted default `iconPath`; avatar upload exists | Partial |
@@ -91,7 +91,7 @@ Reference files inspected:
 ### Still missing or weak
 
 - `game_functions.php` has additional visibility branches for many system talk locations. Current implementation has equivalent permission checks for channels but not full transcript parity.
-- `game_functions.php` victory logic includes special handling around lover-only victory and heavy wolf / fox edge cases. Current `getWinner` is simpler and needs explicit parity tests against reference scenarios.
+- `game_functions.php` victory logic includes special handling around lover-only victory and heavy wolf / fox edge cases. Current tests now pin both-lovers win, one-lover non-win, big-wolf counting, and child-fox fox-win cases; more reference scenarios may still need mapping.
 - Reference has "cult" images/options in assets and talk-role handling. Current `PlayerRole` and options do not include cult.
 - Reference has objection/sound/revote SWF paths and cookie-driven sound notifications. Current port has no sound notification equivalent.
 - Reference has silence/sudden-death checks in `game_play.php` flow. Current DO alarm advances phases but does not implement reference-style silence/sudden death.
@@ -101,7 +101,7 @@ Reference files inspected:
 ## Next Concrete Work Items
 
 1. Add full talk/vote/action transcript persistence so `/room/:roomId/log` can replay more than final records and audit events.
-2. Add focused parity tests for lover-only victory, heavy wolf/fox edge cases, silence/sudden death, and vote table visibility.
+2. Add focused parity tests for silence/sudden death and vote table visibility.
 3. Add a visual parity checklist with screenshots once a browser is available in the environment.
 4. Decide whether to implement or explicitly defer federated room list and BBS features.
 
