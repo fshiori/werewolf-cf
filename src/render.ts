@@ -607,11 +607,47 @@ function isViewerAddressedTranscriptEvent(event: RoomEventSummary, viewerPlayerI
   return Boolean(viewerPlayerId && event.eventType === "gm_whisper" && value.targetPlayerId === viewerPlayerId);
 }
 
-function filterTranscriptEventsByViewer(events: RoomEventSummary[], options: RoomTranscriptViewOptions): RoomEventSummary[] {
+function transcriptViewerPlayer(records: GameRecordSummary[], viewerPlayerId?: string): Record<string, unknown> | undefined {
+  if (!viewerPlayerId) {
+    return undefined;
+  }
+  for (const record of records) {
+    const player = readRecordPlayers(record).find((candidate) => candidate.playerId === viewerPlayerId);
+    if (player) {
+      return player;
+    }
+  }
+  return undefined;
+}
+
+function isWerewolfTranscriptRole(role: unknown): boolean {
+  return role === "werewolf" || role === "big_wolf";
+}
+
+function isViewerChannelTranscriptEvent(event: RoomEventSummary, viewerPlayer?: Record<string, unknown>): boolean {
+  if (!viewerPlayer) {
+    return false;
+  }
+  switch (event.eventType) {
+    case "wolf_chat":
+      return isWerewolfTranscriptRole(viewerPlayer.role);
+    case "fox_chat":
+      return viewerPlayer.role === "fox";
+    case "common_chat":
+      return viewerPlayer.role === "common";
+    case "lovers_chat":
+      return viewerPlayer.lover === true;
+    default:
+      return false;
+  }
+}
+
+function filterTranscriptEventsByViewer(events: RoomEventSummary[], records: GameRecordSummary[], options: RoomTranscriptViewOptions): RoomEventSummary[] {
   const mode = options.viewerMode ?? "legacy";
   if (mode === "legacy" || mode === "gm") {
     return events;
   }
+  const viewerPlayer = mode === "player" ? transcriptViewerPlayer(records, options.viewerPlayerId) : undefined;
   return events.filter((event) => {
     if (!isPrivateTranscriptEvent(event)) {
       return true;
@@ -620,14 +656,16 @@ function filterTranscriptEventsByViewer(events: RoomEventSummary[], options: Roo
       return isHeavenTranscriptEvent(event) || isSystemTranscriptEvent(event);
     }
     if (mode === "player") {
-      return isViewerOwnedTranscriptEvent(event, options.viewerPlayerId) || isViewerAddressedTranscriptEvent(event, options.viewerPlayerId);
+      return isViewerOwnedTranscriptEvent(event, options.viewerPlayerId) ||
+        isViewerAddressedTranscriptEvent(event, options.viewerPlayerId) ||
+        isViewerChannelTranscriptEvent(event, viewerPlayer);
     }
     return isSystemTranscriptEvent(event);
   });
 }
 
-function filterTranscriptEvents(events: RoomEventSummary[], options: RoomTranscriptViewOptions): RoomEventSummary[] {
-  const viewerEvents = filterTranscriptEventsByViewer(events, options);
+function filterTranscriptEvents(events: RoomEventSummary[], records: GameRecordSummary[], options: RoomTranscriptViewOptions): RoomEventSummary[] {
+  const viewerEvents = filterTranscriptEventsByViewer(events, records, options);
   const filtered = options.heavenOnly
     ? viewerEvents.filter((event) => isHeavenTranscriptEvent(event) || isSystemTranscriptEvent(event))
     : options.heavenTalk
@@ -955,7 +993,7 @@ export function renderRoomEvents(roomId: string, events: RoomEventSummary[]): st
 }
 
 export function renderRoomTranscript(roomId: string, records: GameRecordSummary[], events: RoomEventSummary[], options: RoomTranscriptViewOptions = {}): string {
-  const visibleEvents = filterTranscriptEvents(events, options);
+  const visibleEvents = filterTranscriptEvents(events, records, options);
   const recordSections = records.length
     ? records.map((record) => {
       const players = readRecordPlayers(record);
@@ -994,7 +1032,7 @@ export function renderRoomTranscript(roomId: string, records: GameRecordSummary[
     legacy: "結束後全公開：顯示保存的公開、私有、系統與GM紀錄。",
     public: "旁觀：只顯示公開與系統紀錄，隱藏私人頻道與個人能力內容。",
     player: options.viewerPlayerId
-      ? `玩家：顯示 ${options.viewerPlayerId} 的私人發言/行動與指向該玩家的GM密語。`
+      ? `玩家：顯示 ${options.viewerPlayerId} 的私人發言/行動、可聽見的同陣營密談與指向該玩家的GM密語。`
       : "玩家：請選擇玩家後顯示該玩家可見的私人紀錄。",
     dead: "靈界：顯示公開、系統與靈界紀錄。",
     gm: "GM：顯示全部保存紀錄。"

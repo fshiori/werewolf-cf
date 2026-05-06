@@ -1210,7 +1210,7 @@ describe("render", () => {
     expect(playerView).toContain("玩家 player_wolf");
     expect(playerView).toContain("玩家視點");
     expect(playerView).toContain("可見範圍");
-    expect(playerView).toContain("顯示 player_wolf 的私人發言/行動與指向該玩家的GM密語");
+    expect(playerView).toContain("顯示 player_wolf 的私人發言/行動、可聽見的同陣營密談與指向該玩家的GM密語");
     expect(playerView).toContain('<option value="player_wolf" selected>Wolf (player_wolf)</option>');
     expect(playerView).toContain("/room/room_abc/log?heaven_talk=on&amp;viewer=player&amp;viewer_player_id=player_wolf");
     expect(playerView).toContain("howl");
@@ -1232,6 +1232,74 @@ describe("render", () => {
     expect(gmView).toContain("howl");
     expect(gmView).toContain("heaven");
     expect(gmView).toContain("mutter");
+  });
+
+  it("shows player-view private channel rows the selected role could hear", () => {
+    const records = [
+      {
+        id: 1,
+        roomId: "room_abc",
+        result: {
+          winner: "villagers",
+          day: 3,
+          players: [
+            { playerId: "player_wolf_a", nickname: "Wolf A", role: "werewolf", alive: true },
+            { playerId: "player_wolf_b", nickname: "Wolf B", role: "big_wolf", alive: true },
+            { playerId: "player_common_a", nickname: "Common A", role: "common", alive: true },
+            { playerId: "player_common_b", nickname: "Common B", role: "common", alive: true },
+            { playerId: "player_lover_a", nickname: "Lover A", role: "villager", alive: true, lover: true },
+            { playerId: "player_lover_b", nickname: "Lover B", role: "seer", alive: true, lover: true },
+            { playerId: "player_seer", nickname: "Seer", role: "seer", alive: true }
+          ]
+        },
+        createdAt: "2026-05-06 12:00:00"
+      }
+    ];
+    const events = [
+      {
+        id: 1,
+        roomId: "room_abc",
+        playerId: "player_wolf_b",
+        eventType: "wolf_chat",
+        payload: { visibility: "private", nickname: "Wolf B", text: "pack message", phase: "night", day: 2 },
+        createdAt: "2026-05-06 12:01:00"
+      },
+      {
+        id: 2,
+        roomId: "room_abc",
+        playerId: "player_common_b",
+        eventType: "common_chat",
+        payload: { visibility: "private", nickname: "Common B", text: "common message", phase: "night", day: 2 },
+        createdAt: "2026-05-06 12:02:00"
+      },
+      {
+        id: 3,
+        roomId: "room_abc",
+        playerId: "player_lover_b",
+        eventType: "lovers_chat",
+        payload: { visibility: "private", nickname: "Lover B", text: "lover message", phase: "night", day: 2 },
+        createdAt: "2026-05-06 12:03:00"
+      }
+    ];
+
+    const wolfView = renderRoomTranscript("room_abc", records, events, { viewerMode: "player", viewerPlayerId: "player_wolf_a", heavenTalk: true });
+    expect(wolfView).toContain("pack message");
+    expect(wolfView).not.toContain("common message");
+    expect(wolfView).not.toContain("lover message");
+
+    const commonView = renderRoomTranscript("room_abc", records, events, { viewerMode: "player", viewerPlayerId: "player_common_a", heavenTalk: true });
+    expect(commonView).toContain("common message");
+    expect(commonView).not.toContain("pack message");
+
+    const loverView = renderRoomTranscript("room_abc", records, events, { viewerMode: "player", viewerPlayerId: "player_lover_a", heavenTalk: true });
+    expect(loverView).toContain("lover message");
+    expect(loverView).not.toContain("pack message");
+
+    const seerView = renderRoomTranscript("room_abc", records, events, { viewerMode: "player", viewerPlayerId: "player_seer", heavenTalk: true });
+    expect(seerView).not.toContain("pack message");
+    expect(seerView).not.toContain("common message");
+    expect(seerView).not.toContain("lover message");
+    expect(seerView).toContain("可聽見的同陣營密談");
   });
 
   it("renders room transcript reverse log controls", () => {
