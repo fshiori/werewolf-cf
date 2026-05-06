@@ -40,7 +40,7 @@ Reference files inspected:
 | DO alarms for day/night | `RoomDurableObject.alarm`, `advancePhaseByAlarm`, alarm tests | Implemented |
 | R2 avatar storage | `/api/assets/avatar`, `/assets/avatar/:playerId`, write smoke | Implemented |
 | KV runtime config | `/api/config`, `/status`, `getHomeAnnouncement`, `isMaintenanceMode` | Implemented |
-| Rendered non-JSON pages | `/`, `/list`, `/bbs`, `/room/:id`, `/leaderboard`, `/icons`, `/trips`, `/status`, `/room/:id/records`, `/room/:id/events`, `/player/:id`, `/rules`, `/protocol`, `/version` | Implemented |
+| Rendered non-JSON pages | `/`, `/list`, `/bbs`, `/room/:id`, `/leaderboard`, `/icons`, `/trips`, `/status`, `/room/:id/records`, `/room/:id/events`, `/player/:id`, `/rules`, `/script-info`, `/protocol`, `/version` | Implemented |
 | Room page client script not inline | `/assets/room-client.js`, `src/room-client.ts`, local UI smoke | Implemented |
 | Reference top/menu visual style | Table layout, side menu, fieldsets, colors, and reference top title/background asset URLs in `src/render.ts` | Partial |
 | Reference room player grid visual style | `renderRoom`, `.player-card`, `.player-icon`, role/death/vote styling; client emits reference role icons for revealed roles and grave fallback for dead players | Partial |
@@ -67,7 +67,7 @@ Reference files inspected:
 ### Still missing or weak
 
 - Reference uses bitmap title/background/role/status/option/victory images such as `img/top_title.jpg`, `img/top_bg.jpg`, `img/playing.gif`, `img/waiting.gif`, role images, option icons, and victory result images. Current top chrome, room list, rules role rows, revealed live-room role markers, dead fallback, and game-record victory rows now emit copied R2 asset URLs while keeping text fallback.
-- Reference menu includes `聯合列表`, script info, old logs, icon view/upload, win-rate analysis, BBS, Trip registration. Current menu has the core app pages, a configurable federated-list page, a default icon catalog, Trip lookup, and a basic BBS topic/reply board, but not every legacy page.
+- Reference menu includes `聯合列表`, script info, old logs, icon view/upload, win-rate analysis, BBS, Trip registration. Current menu has the core app pages, a configurable federated-list page, script info, a default icon catalog, Trip lookup, and a basic BBS topic/reply board, but not every legacy page.
 - Reference room view has phase-specific body colors, manual/auto refresh links, login/resident registration links, and different layouts for spectator/player/heaven modes. Current room page is a single realtime WebSocket view.
 - Reference player list includes default icons, hover image swap, Trip links, role reveal text colors, already-voted background, and dead icon handling. Current player cards now emit selected default icons, reference role icons for revealed roles, and a grave fallback for dead players, but still lack hover image swap and Trip links.
 - Reference talk log has many location-specific render paths: public day, night wolf, common, lovers, fox, self talk, heaven, GM broadcast/whisper, system action visibility, and post-game/dead visibility. Current WebSocket channels cover the major private channels and public/private transcript entries are persisted with room-status visibility filtering; `/room/:id/log` groups replay entries by day/phase, but still lacks full PHP-compatible per-location styling.

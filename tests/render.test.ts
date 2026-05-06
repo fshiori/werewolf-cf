@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { renderBbs, renderBbsTopic, renderFederatedList, renderHome, renderIconCatalog, renderLeaderboard, renderPlayerProfile, renderProtocol, renderRoom, renderRoomEvents, renderRoomRecords, renderRoomTranscript, renderRules, renderStatus, renderTripLookup, renderVersion } from "../src/render";
+import { renderBbs, renderBbsTopic, renderFederatedList, renderHome, renderIconCatalog, renderLeaderboard, renderPlayerProfile, renderProtocol, renderRoom, renderRoomEvents, renderRoomRecords, renderRoomTranscript, renderRules, renderScriptInfo, renderStatus, renderTripLookup, renderVersion } from "../src/render";
 import { ROOM_CLIENT_SCRIPT } from "../src/room-client";
 
 describe("render", () => {
@@ -87,6 +87,8 @@ describe("render", () => {
     expect(html).toContain("/status");
     expect(html).toContain("伺服器狀態");
     expect(html).toContain("/rules");
+    expect(html).toContain("/script-info");
+    expect(html).toContain("Script Info");
     expect(html).toContain("/protocol");
     expect(html).toContain("通訊協定");
     expect(html).toContain("/version");
@@ -659,6 +661,17 @@ describe("render", () => {
     expect(html).toContain("/api/version");
     expect(html).toContain("目前功能");
     expect(html).toContain("docs/test-results/2026-05-03-core-game-loop.md");
+  });
+
+  it("renders script info page", () => {
+    const html = renderScriptInfo();
+
+    expect(html).toContain("Script Info");
+    expect(html).toContain("ref/diam1.3.61.kz_Build0912/script_info.php");
+    expect(html).toContain("時間設定");
+    expect(html).toContain("60秒沉默後推進1時間");
+    expect(html).toContain("BBS 標題");
+    expect(html).toContain("/protocol");
   });
 
   it("renders status page with health checks and runtime config", () => {
