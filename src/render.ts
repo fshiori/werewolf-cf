@@ -954,6 +954,70 @@ export function renderAdminRoomsLogin(): string {
   `));
 }
 
+export function renderAdminConfigLogin(): string {
+  return page("Config Admin", shell(`
+    <fieldset>
+      <legend><strong>系統設定管理</strong></legend>
+      <table class="form-table">
+        <tr><td><label><strong>　管理密碼：</strong></label></td><td><input id="configAdminToken" type="password" maxlength="128" size="24"> <button id="configAdminLogin">登入</button></td></tr>
+        <tr><td></td><td class="muted">輸入後會開啟公告與維護模式設定。</td></tr>
+      </table>
+    </fieldset>
+    <script>
+      const tokenInput = document.querySelector("#configAdminToken");
+      tokenInput.value = localStorage.getItem("werewolf_cf_config_admin_token") || "";
+      document.querySelector("#configAdminLogin").addEventListener("click", () => {
+        const token = tokenInput.value;
+        localStorage.setItem("werewolf_cf_config_admin_token", token);
+        location.href = "/admin/config?token=" + encodeURIComponent(token);
+      });
+    </script>
+  `));
+}
+
+export function renderAdminConfig(config: { homeAnnouncement: string | null; maintenanceMode: boolean }, adminToken = ""): string {
+  return page("Config Admin", shell(`
+    <fieldset>
+      <legend><strong>系統設定管理</strong></legend>
+      <table class="form-table">
+        <tr><td><label><strong>　首頁公告：</strong></label></td><td><textarea id="configHomeAnnouncement" rows="4" cols="70">${escapeHtml(config.homeAnnouncement ?? "")}</textarea></td></tr>
+        <tr><td><label><strong>　維護模式：</strong></label></td><td><label><input id="configMaintenanceMode" type="checkbox"${config.maintenanceMode ? " checked" : ""}> 暫停建立新村</label></td></tr>
+        <tr><td></td><td><button id="configSave">儲存設定</button> <span id="configAdminStatus" class="muted"></span></td></tr>
+      </table>
+    </fieldset>
+    <fieldset>
+      <legend><strong>目前公開設定</strong></legend>
+      <table class="form-table">
+        <tr><td><strong>　公告：</strong></td><td>${config.homeAnnouncement ? escapeHtml(config.homeAnnouncement) : `<span class="muted">使用預設公告</span>`}</td></tr>
+        <tr><td><strong>　維護模式：</strong></td><td>${config.maintenanceMode ? `<font color="#cc0000">啟用</font>` : "未啟用"}</td></tr>
+        <tr><td><strong>　公開 API：</strong></td><td><a href="/api/config">/api/config</a></td></tr>
+      </table>
+    </fieldset>
+    <script>
+      const configAdminToken = new URLSearchParams(location.search).get("token") || localStorage.getItem("werewolf_cf_config_admin_token") || ${JSON.stringify(adminToken)};
+      if (configAdminToken) localStorage.setItem("werewolf_cf_config_admin_token", configAdminToken);
+      document.querySelector("#configSave").addEventListener("click", async () => {
+        const status = document.querySelector("#configAdminStatus");
+        status.textContent = "更新中";
+        const res = await fetch("/api/admin/config", {
+          method: "PATCH",
+          headers: { "content-type": "application/json", "x-config-admin-token": configAdminToken },
+          body: JSON.stringify({
+            homeAnnouncement: document.querySelector("#configHomeAnnouncement").value,
+            maintenanceMode: document.querySelector("#configMaintenanceMode").checked
+          })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          status.textContent = data.error || "更新失敗";
+          return;
+        }
+        status.textContent = "已儲存";
+      });
+    </script>
+  `));
+}
+
 type AdminRoomStatusFilter = "active" | "ended" | "all";
 
 export function renderAdminRooms(rooms: RoomSummary[], statusFilter: AdminRoomStatusFilter = "active", adminToken = ""): string {

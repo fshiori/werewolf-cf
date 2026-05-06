@@ -278,6 +278,9 @@ function envWithRooms(
     CONFIG: {
       async get(key: string) {
         return config[key] ?? null;
+      },
+      async put(key: string, value: string) {
+        config[key] = value;
       }
     } as unknown as KVNamespace
   } as unknown as Env;
@@ -889,6 +892,64 @@ describe("worker routes", () => {
     expect(body).toContain("正常運作");
     expect(body).toContain("Binding 檢查");
     expect(body).toContain("&lt;Runtime notice&gt;");
+  });
+
+  it("renders config admin login without a valid token", async () => {
+    const response = await worker.fetch(
+      new Request("http://example.test/admin/config"),
+      envWithRooms([], { config_admin_token: "secret" })
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.text();
+    expect(body).toContain("系統設定管理");
+    expect(body).toContain("configAdminToken");
+    expect(body).not.toContain("configHomeAnnouncement");
+  });
+
+  it("renders runtime config admin page with a valid token", async () => {
+    const response = await worker.fetch(
+      new Request("http://example.test/admin/config?token=secret"),
+      envWithRooms([], { config_admin_token: "secret", home_announcement: "<Runtime notice>", maintenance_mode: "true" })
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.text();
+    expect(body).toContain("首頁公告");
+    expect(body).toContain("&lt;Runtime notice&gt;");
+    expect(body).toContain("configMaintenanceMode");
+    expect(body).toContain("/api/admin/config");
+  });
+
+  it("lets config admins update runtime config", async () => {
+    const env = envWithRooms([], { config_admin_token: "secret" });
+    const response = await worker.fetch(
+      new Request("http://example.test/api/admin/config", {
+        method: "PATCH",
+        headers: { "content-type": "application/json", "x-config-admin-token": "secret" },
+        body: JSON.stringify({ homeAnnouncement: "New notice", maintenanceMode: true })
+      }),
+      env
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({ config: { homeAnnouncement: "New notice", maintenanceMode: true } });
+    const configResponse = await worker.fetch(new Request("http://example.test/api/config"), env);
+    await expect(configResponse.json()).resolves.toEqual({ config: { homeAnnouncement: "New notice", maintenanceMode: true } });
+  });
+
+  it("rejects config admin actions without the configured token", async () => {
+    const response = await worker.fetch(
+      new Request("http://example.test/api/admin/config", {
+        method: "PATCH",
+        headers: { "content-type": "application/json", "x-config-admin-token": "wrong" },
+        body: JSON.stringify({ homeAnnouncement: "New notice", maintenanceMode: true })
+      }),
+      envWithRooms([], { config_admin_token: "secret" })
+    );
+
+    expect(response.status).toBe(403);
+    expect(await response.json()).toEqual({ error: "Config admin token is invalid" });
   });
 
   it("renders room admin login without a valid token", async () => {
