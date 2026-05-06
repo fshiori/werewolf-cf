@@ -709,7 +709,7 @@ export function renderOldLogs(rooms: RoomSummary[]): string {
           <a href="${roomUrl}?reverse_log=on&heaven_only=on">逆&amp;逝</a>)</small>
         </td>
         <td align="right" class="row"><small>${escapeHtml(room.createdAt)}</small></td>
-        <td align="right" class="row">${escapeHtml(String(room.maxPlayers))}</td>
+        <td align="right" class="row">${maxPlayersMark(room.maxPlayers)}</td>
         <td class="row">${optionMarks || "<br>"}</td>
       </tr>`;
     }).join("")
