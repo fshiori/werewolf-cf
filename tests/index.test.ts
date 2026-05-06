@@ -1652,6 +1652,40 @@ describe("worker routes", () => {
     expect(runs[0].values).toEqual([1, 1, 1, 1]);
   });
 
+  it("edits BBS topic content with the configured admin token", async () => {
+    const env = envWithRooms([], { bbs_admin_token: "secret" }, {}, {}, {}, {}, {}, {}, {}, {}, {}, new Set(), new Set(), {}, [
+      {
+        id: 1,
+        name: "Alice",
+        title: "Welcome",
+        message: "Topic body",
+        trip_hash: null,
+        reply_count: 0,
+        pinned: 0,
+        locked: 0,
+        digest: 0,
+        created_at: "2026-05-06 12:00:00",
+        updated_at: "2026-05-06 12:00:00"
+      }
+    ]);
+    const response = await worker.fetch(
+      new Request("http://example.test/api/bbs/topics/1/content", {
+        method: "PATCH",
+        headers: { "content-type": "application/json", "x-bbs-admin-token": "secret" },
+        body: JSON.stringify({ title: "Edited", message: "Edited body" })
+      }),
+      env
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      topic: expect.objectContaining({ id: 1, title: "Edited", message: "Edited body" })
+    });
+    const runs = (env as unknown as { runs: Array<{ query: string; values: unknown[] }> }).runs;
+    expect(runs[0].query).toContain("UPDATE bbs_topics SET title = ?, message = ?");
+    expect(runs[0].values).toEqual(["Edited", "Edited body", 1]);
+  });
+
   it("rejects BBS moderation without the configured admin token", async () => {
     const env = envWithRooms([], { bbs_admin_token: "secret" }, {}, {}, {}, {}, {}, {}, {}, {}, {}, new Set(), new Set(), {}, [
       {
@@ -1754,6 +1788,47 @@ describe("worker routes", () => {
     expect(batches[0][0].values).toEqual([2, 1]);
     expect(batches[0][1].query).toContain("UPDATE bbs_topics SET reply_count = MAX(reply_count - 1, 0)");
     expect(batches[0][1].values).toEqual([1]);
+  });
+
+  it("edits BBS replies with the configured admin token", async () => {
+    const env = envWithRooms([], { bbs_admin_token: "secret" }, {}, {}, {}, {}, {}, {}, {}, {}, {}, new Set(), new Set(), {}, [
+      {
+        id: 1,
+        name: "Alice",
+        title: "Welcome",
+        message: "Topic body",
+        trip_hash: null,
+        reply_count: 1,
+        pinned: 0,
+        locked: 0,
+        digest: 0,
+        created_at: "2026-05-06 12:00:00",
+        updated_at: "2026-05-06 12:00:00"
+      }
+    ], [
+      {
+        id: 2,
+        topic_id: 1,
+        name: "Bob",
+        message: "Reply body",
+        trip_hash: null,
+        created_at: "2026-05-06 12:10:00"
+      }
+    ]);
+    const response = await worker.fetch(
+      new Request("http://example.test/api/bbs/topics/1/replies/2/moderation", {
+        method: "PATCH",
+        headers: { "content-type": "application/json", "x-bbs-admin-token": "secret" },
+        body: JSON.stringify({ message: "Edited reply" })
+      }),
+      env
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ reply: { id: 2, topicId: 1, message: "Edited reply" } });
+    const runs = (env as unknown as { runs: Array<{ query: string; values: unknown[] }> }).runs;
+    expect(runs[0].query).toContain("UPDATE bbs_replies SET message = ?");
+    expect(runs[0].values).toEqual(["Edited reply", 2, 1]);
   });
 
   it("rejects deleting missing BBS replies", async () => {

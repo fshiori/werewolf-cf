@@ -770,6 +770,8 @@ describe("render", () => {
     expect(html).toContain("Reply body");
     expect(html).toContain("/api/bbs/topics/1/replies");
     expect(html).toContain("bbsReplyDeleteButton");
+    expect(html).toContain("bbsReplyEditButton");
+    expect(html).toContain("bbsReplyEditMessage");
     expect(html).toContain("/replies/\" + encodeURIComponent(replyId) + \"/moderation");
     expect(html).toContain("刪除此回覆？");
     expect(html).toContain("狀態");
@@ -778,6 +780,10 @@ describe("render", () => {
     expect(html).toContain("bbsAdminToken");
     expect(html).toContain("werewolf_cf_bbs_admin_token");
     expect(html).toContain("/api/bbs/topics/1/moderation");
+    expect(html).toContain("/api/bbs/topics/1/content");
+    expect(html).toContain("bbsTopicEditButton");
+    expect(html).toContain("bbsEditTitle");
+    expect(html).toContain("bbsEditMessage");
     expect(html).toContain('"x-bbs-admin-token": token');
     expect(html).toContain("bbsModeratePinned");
     expect(html).toContain("bbsModerateLocked");
