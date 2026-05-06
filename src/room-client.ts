@@ -496,6 +496,7 @@ function renderGame(game) {
       const roleText = document.createElement("small");
       const revealedRole = revealedRoles[player.playerId];
       const iconPath = roleIconPath(revealedRole);
+      roleText.className = "revealed-role role-" + revealedRole;
       roleText.append(" [");
       if (iconPath) {
         roleText.append(referenceImage(iconPath, roleLabel(revealedRole)));
