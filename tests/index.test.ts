@@ -1505,7 +1505,8 @@ describe("worker routes", () => {
           "child_fox_divine",
           "guard",
           "cat_revive",
-          "set_last_words"
+          "set_last_words",
+          "objection"
         ],
         serverMessages: [
           "joined",
@@ -1523,6 +1524,7 @@ describe("worker routes", () => {
           "child_fox_result",
           "medium_result",
           "last_words_ack",
+          "objection",
           "action_ack",
           "game_state",
           "role",

@@ -486,6 +486,56 @@ describe("RoomDurableObject", () => {
     );
   });
 
+  it("broadcasts and persists objections", async () => {
+    const game: GameState = {
+      roomId: "room_abc",
+      phase: "day",
+      day: 1,
+      players: [
+        { playerId: "player_alive", nickname: "Alive", role: "villager", alive: true },
+        { playerId: "player_wolf", nickname: "Wolf", role: "werewolf", alive: true }
+      ],
+      votes: {},
+      openVote: false,
+      commonTalkVisible: false,
+      deadRoleVisible: false,
+      wishRole: false,
+      dummyBoy: false,
+      dayMs: 180_000,
+      nightMs: 90_000,
+      selfVote: false,
+      voteStatus: false,
+      revoteCount: 0,
+      nightKills: {},
+      divinations: {},
+      guards: {},
+      catRevives: {},
+      lastWords: {},
+      log: []
+    };
+    const { room, stored, dbRuns } = observableRoomObject(game);
+    const messages: SentMessage[] = [];
+    const socket = fakeSocket(messages);
+    connect(room, socket, "player_alive", "Alive");
+
+    await sendRaw(room, socket, JSON.stringify({ type: "objection" }));
+
+    expect(messages).toContainEqual(expect.objectContaining({ type: "objection", playerId: "player_alive", nickname: "Alive", remaining: 1 }));
+    expect(messages).toContainEqual(expect.objectContaining({ type: "game_state", log: expect.arrayContaining(["Alive 提出反對。剩餘 1 次。"]) }));
+    expect((stored.get("gameState") as GameState).objectionCounts).toEqual({ player_alive: 1 });
+    expect(dbRuns).toContainEqual(
+      expect.objectContaining({
+        query: expect.stringContaining("INSERT INTO room_events"),
+        binds: [
+          "room_abc",
+          "player_alive",
+          "objection",
+          JSON.stringify({ nickname: "Alive", remaining: 1, phase: "day", day: 1 })
+        ]
+      })
+    );
+  });
+
   it("persists private chat as private transcript events", async () => {
     const game: GameState = {
       roomId: "room_abc",

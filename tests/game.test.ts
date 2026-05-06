@@ -26,6 +26,7 @@ import {
   mediumReadingForPlayer,
   playerStatUpdates,
   publicPlayers,
+  raiseObjection,
   recordConversationActivity,
   removeLobbyPlayer,
   setLastWords,
@@ -1118,6 +1119,26 @@ describe("game", () => {
     expect(next.phaseEndsAt).toBe("2026-05-06T02:00:00.000Z");
     expect(next.lastSpokenAt).toBe("2026-05-06T00:02:00.000Z");
     expect(next.log).toEqual([]);
+  });
+
+  it("limits player objections during lobby and day", () => {
+    let game = upsertLobbyPlayer(createLobbyState("room_abc"), { playerId: "player_1", nickname: "Alice" });
+
+    game = raiseObjection(game, "player_1");
+    game = raiseObjection(game, "player_1");
+
+    expect(game.objectionCounts).toEqual({ player_1: 2 });
+    expect(game.log.at(-1)).toBe("Alice 提出反對。剩餘 0 次。");
+    expect(() => raiseObjection(game, "player_1")).toThrow("No objections remaining");
+  });
+
+  it("rejects night objections", () => {
+    const game = activeState("night", [
+      { playerId: "player_1", nickname: "Alice", role: "werewolf", alive: true },
+      { playerId: "player_2", nickname: "Bob", role: "villager", alive: true }
+    ]);
+
+    expect(() => raiseObjection(game, "player_1")).toThrow("Objection is only available");
   });
 
   it("allows only wolves to perform night kills and detects wolf win", () => {

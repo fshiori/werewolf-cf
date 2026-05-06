@@ -197,6 +197,7 @@ export interface GameState {
   guards: Record<string, string>;
   catRevives: Record<string, string>;
   lastWords: Record<string, string>;
+  objectionCounts?: Record<string, number>;
   mediumReading?: MediumReading;
   winner?: GameWinner;
   phaseEndsAt?: string;
@@ -329,6 +330,10 @@ export type SetLastWordsClientMessage = {
   text: string;
 };
 
+export type ObjectionClientMessage = {
+  type: "objection";
+};
+
 export type ClientMessage =
   | JoinClientMessage
   | ChatClientMessage
@@ -352,7 +357,8 @@ export type ClientMessage =
   | ChildFoxDivineClientMessage
   | GuardClientMessage
   | CatReviveClientMessage
-  | SetLastWordsClientMessage;
+  | SetLastWordsClientMessage
+  | ObjectionClientMessage;
 
 export type ServerMessage =
   | { type: "joined"; roomId: string; playerId: string; members: RoomMember[] }
@@ -365,6 +371,7 @@ export type ServerMessage =
   | { type: "dead_chat"; playerId: string; nickname: string; text: string; sentAt: string }
   | { type: "gm_chat"; playerId: string; nickname: string; text: string; sentAt: string }
   | { type: "gm_whisper"; playerId: string; nickname: string; targetPlayerId: string; targetNickname: string; text: string; sentAt: string }
+  | { type: "objection"; playerId: string; nickname: string; remaining: number; sentAt: string }
   | { type: "revealed_roles"; roles: Record<string, PlayerRole> }
   | { type: "divination_result"; targetPlayerId: string; targetNickname: string; result: DivinationResult }
   | { type: "child_fox_result"; targetPlayerId: string; targetNickname: string; result: ChildFoxDivinationResult }

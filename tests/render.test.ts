@@ -241,6 +241,8 @@ describe("render", () => {
     expect(html).toContain("wishRole");
     expect(html).toContain("<option value=\"seer\">占卜師</option>");
     expect(html).toContain("sendDeadChat");
+    expect(html).toContain("sendObjection");
+    expect(html).toContain("soundNotify");
     expect(html).toContain("lastWordsText");
     expect(html).toContain("setLastWords");
   });
@@ -308,6 +310,9 @@ describe("render", () => {
     expect(ROOM_CLIENT_SCRIPT).toContain("msg.commons");
     expect(ROOM_CLIENT_SCRIPT).toContain("共有：");
     expect(ROOM_CLIENT_SCRIPT).toContain("wolf_chat");
+    expect(ROOM_CLIENT_SCRIPT).toContain("objection");
+    expect(ROOM_CLIENT_SCRIPT).toContain("playNotifySound");
+    expect(ROOM_CLIENT_SCRIPT).toContain("werewolf_cf_sound");
     expect(ROOM_CLIENT_SCRIPT).toContain("fox_chat");
     expect(ROOM_CLIENT_SCRIPT).toContain("common_chat");
     expect(ROOM_CLIENT_SCRIPT).toContain("lovers_chat");

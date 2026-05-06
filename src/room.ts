@@ -24,6 +24,7 @@ import {
   loversForPlayer,
   mediumReadingForPlayer,
   playerStatUpdates,
+  raiseObjection,
   recordConversationActivity as recordGameConversationActivity,
   removeLobbyPlayer,
   setLastWords,
@@ -31,7 +32,8 @@ import {
   upsertLobbyPlayer,
   wolvesForPlayer,
   DEFAULT_DAY_MINUTES,
-  DEFAULT_NIGHT_MINUTES
+  DEFAULT_NIGHT_MINUTES,
+  MAX_OBJECTIONS
 } from "./game";
 import { registeredTripHash, tripHashForRoom } from "./identity";
 import {
@@ -50,6 +52,7 @@ import {
   buildLastWordsAckMessage,
   buildLoversChatMessage,
   buildMediumResultMessage,
+  buildObjectionMessage,
   buildPresenceMessage,
   buildRevealedRolesMessage,
   buildRoleMessage,
@@ -394,6 +397,16 @@ export class RoomDurableObject {
         const next = setLastWords(await this.loadGameState(), member.playerId, text);
         await this.saveGameState(next);
         this.send(socket, buildLastWordsAckMessage());
+        return;
+      }
+
+      if (message.type === "objection") {
+        const next = raiseObjection(await this.loadGameState(), member.playerId);
+        await this.saveGameState(next);
+        const remaining = MAX_OBJECTIONS - (next.objectionCounts?.[member.playerId] ?? 0);
+        await this.persistRoomEvent(member.playerId, "objection", { nickname: member.nickname, remaining, phase: next.phase, day: next.day });
+        this.broadcast(buildObjectionMessage(member.playerId, member.nickname, remaining));
+        await this.broadcastGameState(next);
         return;
       }
 
