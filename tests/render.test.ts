@@ -309,6 +309,8 @@ describe("render", () => {
     expect(ROOM_CLIENT_SCRIPT).toContain('grave.addEventListener("mouseout"');
     expect(ROOM_CLIENT_SCRIPT).toContain("appendPlayerIcon(iconCell, player, initial)");
     expect(ROOM_CLIENT_SCRIPT).toContain('profileLink.href = "/player/" + player.playerId;');
+    expect(ROOM_CLIENT_SCRIPT).toContain('tripLink.href = "/trips";');
+    expect(ROOM_CLIENT_SCRIPT).toContain('tripLink.title = "Trip查詢";');
     expect(ROOM_CLIENT_SCRIPT).toContain("gm_chat");
     expect(ROOM_CLIENT_SCRIPT).toContain("gm_whisper");
     expect(ROOM_CLIENT_SCRIPT).toContain("gm_advance_phase");

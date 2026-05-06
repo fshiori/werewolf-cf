@@ -602,9 +602,13 @@ function renderGame(game) {
     const profileLink = document.createElement("a");
     profileLink.href = "/player/" + player.playerId;
     profileLink.textContent = player.nickname;
+    const tripLink = document.createElement("a");
+    tripLink.href = "/trips";
+    tripLink.textContent = "Trip";
+    tripLink.title = "Trip查詢";
     const status = document.createElement("span");
     status.textContent = player.alive ? "(生存中)" : "(死亡)";
-    nameCell.append(marker, profileLink, document.createElement("br"), status);
+    nameCell.append(marker, profileLink, "　[", tripLink, "]", document.createElement("br"), status);
     if (revealedRoles[player.playerId]) {
       const roleText = document.createElement("small");
       const revealedRole = revealedRoles[player.playerId];
