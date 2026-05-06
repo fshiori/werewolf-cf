@@ -638,7 +638,7 @@ export function renderFederatedList(rooms: Array<RoomSummary | FederatedRoomSumm
       const boldStart = room.status === "lobby" ? "<b>" : "";
       const boldEnd = room.status === "lobby" ? "</b>" : "";
       return `<tr>
-        <td width="70">${boldStart}<a href="${escapeHtml(room.roomUrl)}"><font style="font-size : 15px;">${escapeHtml(label)}</font></a>${boldEnd}</td>
+        <td width="70">${boldStart}<a href="${escapeHtml(room.roomUrl)}">${roomStatusIcon(room.status)}<font style="font-size : 15px;">${escapeHtml(label)}</font></a>${boldEnd}</td>
         <td width="120">${boldStart}<a href="${escapeHtml(room.roomUrl)}"><font style="font-size : 15px;">[${escapeHtml(room.id)}]</font></a>${boldEnd}</td>
         <td width="250">${boldStart}<a href="${escapeHtml(room.roomUrl)}"><font style="font-size : 15px;">${escapeHtml(room.name)}村</font></a>${boldEnd}</td>
         <td>${boldStart}<a href="${escapeHtml(room.roomUrl)}"><font style="font-size : 12px;">${escapeHtml(room.comment)}</font></a>${boldEnd}</td>
