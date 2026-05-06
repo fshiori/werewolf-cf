@@ -876,15 +876,15 @@ export function renderRules(): string {
     <fieldset>
       <legend><strong>角色</strong></legend>
       <table class="form-table">
-        <tr><td><strong>　村民：</strong></td><td>沒有夜晚能力，透過白天投票找出人狼。</td></tr>
-        <tr><td><strong>　人狼 / 大狼：</strong></td><td>夜晚選擇襲擊目標；大狼在占卜時可能被判定為人。</td></tr>
-        <tr><td><strong>　占卜師：</strong></td><td>夜晚占卜一名玩家，結果為人或狼。</td></tr>
-        <tr><td><strong>　靈能者：</strong></td><td>隔日得知前一天被處刑者是人或狼。</td></tr>
-        <tr><td><strong>　狂人：</strong></td><td>隸屬村民計數，但勝利目標偏向人狼。</td></tr>
-        <tr><td><strong>　獵人：</strong></td><td>夜晚護衛一名玩家，可阻止襲擊。</td></tr>
-        <tr><td><strong>　共有者：</strong></td><td>可在夜晚與其他共有者對話。</td></tr>
-        <tr><td><strong>　妖狐 / 背德者 / 子狐：</strong></td><td>妖狐被襲擊不死；背德者跟隨妖狐死亡；子狐可嘗試占卜。</td></tr>
-        <tr><td><strong>　埋毒者 / 貓又：</strong></td><td>死亡時可能牽連其他玩家；貓又可嘗試復活。</td></tr>
+        <tr><td><strong>　${referenceAssetImg("img/role_human.gif", "村民")}村民：</strong></td><td>沒有夜晚能力，透過白天投票找出人狼。</td></tr>
+        <tr><td><strong>　${referenceAssetImg("img/role_wolf.gif", "人狼")}${referenceAssetImg("img/role_heavywolf.gif", "大狼")}人狼 / 大狼：</strong></td><td>夜晚選擇襲擊目標；大狼在占卜時可能被判定為人。</td></tr>
+        <tr><td><strong>　${referenceAssetImg("img/role_mage.gif", "占卜師")}占卜師：</strong></td><td>夜晚占卜一名玩家，結果為人或狼。</td></tr>
+        <tr><td><strong>　${referenceAssetImg("img/role_necromancer.gif", "靈能者")}靈能者：</strong></td><td>隔日得知前一天被處刑者是人或狼。</td></tr>
+        <tr><td><strong>　${referenceAssetImg("img/role_mad.gif", "狂人")}狂人：</strong></td><td>隸屬村民計數，但勝利目標偏向人狼。</td></tr>
+        <tr><td><strong>　${referenceAssetImg("img/role_guard.gif", "獵人")}獵人：</strong></td><td>夜晚護衛一名玩家，可阻止襲擊。</td></tr>
+        <tr><td><strong>　${referenceAssetImg("img/role_common.gif", "共有者")}共有者：</strong></td><td>可在夜晚與其他共有者對話。</td></tr>
+        <tr><td><strong>　${referenceAssetImg("img/role_fox.gif", "妖狐")}${referenceAssetImg("img/role_cult.gif", "背德者")}${referenceAssetImg("img/role_fosi.gif", "子狐")}妖狐 / 背德者 / 子狐：</strong></td><td>妖狐被襲擊不死；背德者跟隨妖狐死亡；子狐可嘗試占卜。</td></tr>
+        <tr><td><strong>　${referenceAssetImg("img/role_poison.gif", "埋毒者")}${referenceAssetImg("img/role_cat.gif", "貓又")}埋毒者 / 貓又：</strong></td><td>死亡時可能牽連其他玩家；貓又可嘗試復活。</td></tr>
       </table>
     </fieldset>
     <fieldset>
