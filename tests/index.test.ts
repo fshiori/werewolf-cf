@@ -894,6 +894,20 @@ describe("worker routes", () => {
     expect(body).toContain("&lt;Runtime notice&gt;");
   });
 
+  it("renders admin navigation page", async () => {
+    const response = await worker.fetch(
+      new Request("http://example.test/admin"),
+      envWithRooms([])
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.text();
+    expect(body).toContain("管理選單");
+    expect(body).toContain("/admin/rooms");
+    expect(body).toContain("/admin/config");
+    expect(body).toContain("各管理功能仍需輸入對應管理密碼");
+  });
+
   it("renders config admin login without a valid token", async () => {
     const response = await worker.fetch(
       new Request("http://example.test/admin/config"),

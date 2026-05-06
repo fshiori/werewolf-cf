@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { renderAdminConfig, renderAdminConfigLogin, renderAdminRooms, renderAdminRoomsLogin, renderBbs, renderBbsTopic, renderFederatedList, renderHome, renderIconCatalog, renderLeaderboard, renderManual, renderOldLogs, renderPlayerProfile, renderProtocol, renderRoom, renderRoomEvents, renderRoomRecords, renderRoomTranscript, renderRules, renderScriptInfo, renderStatus, renderTripLookup, renderTripRegistration, renderVersion, renderWinRateAnalysis } from "../src/render";
+import { renderAdminConfig, renderAdminConfigLogin, renderAdminIndex, renderAdminRooms, renderAdminRoomsLogin, renderBbs, renderBbsTopic, renderFederatedList, renderHome, renderIconCatalog, renderLeaderboard, renderManual, renderOldLogs, renderPlayerProfile, renderProtocol, renderRoom, renderRoomEvents, renderRoomRecords, renderRoomTranscript, renderRules, renderScriptInfo, renderStatus, renderTripLookup, renderTripRegistration, renderVersion, renderWinRateAnalysis } from "../src/render";
 import { ROOM_CLIENT_SCRIPT } from "../src/room-client";
 
 describe("render", () => {
@@ -55,6 +55,7 @@ describe("render", () => {
     expect(html).toContain('alt="汝等是人是狼？"');
     expect(html).toContain("遊戲列表");
     expect(html).toContain("戰績排行榜");
+    expect(html).toContain("管理選單");
     expect(html).toContain("Trip登記");
     expect(html).toContain("registerTripButton");
     expect(html).toContain("claimTripButton");
@@ -1225,6 +1226,16 @@ describe("render", () => {
     expect(html).toContain("/api/admin/config");
     expect(html).toContain('"x-config-admin-token": configAdminToken');
     expect(html).toContain("werewolf_cf_config_admin_token");
+  });
+
+  it("renders admin navigation page", () => {
+    const html = renderAdminIndex();
+
+    expect(html).toContain("管理選單");
+    expect(html).toContain("/admin/rooms");
+    expect(html).toContain("/admin/config");
+    expect(html).toContain("/status");
+    expect(html).toContain("各管理功能仍需輸入對應管理密碼");
   });
 
   it("renders websocket protocol page", () => {
