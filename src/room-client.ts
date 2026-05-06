@@ -53,6 +53,20 @@ function playNotifySound() {
     oscillator.stop(context.currentTime + 0.12);
   } catch {}
 }
+function notifyStateSound(nextGame, previousGame) {
+  if (!previousGame) return;
+  const phaseChanged = nextGame.phase !== previousGame.phase || nextGame.day !== previousGame.day;
+  const revoteStarted =
+    nextGame.phase === "day" &&
+    previousGame.phase === "day" &&
+    nextGame.revoteCount > previousGame.revoteCount;
+  const suddenDeathWarningStarted =
+    nextGame.suddenDeathWarningAt &&
+    nextGame.suddenDeathWarningAt !== previousGame.suddenDeathWarningAt;
+  if (phaseChanged || revoteStarted || suddenDeathWarningStarted) {
+    playNotifySound();
+  }
+}
 async function refreshStats() {
   const playerId = localStorage.getItem(playerKey);
   const target = document.querySelector("#stats");
@@ -208,6 +222,8 @@ document.querySelector("#connect").addEventListener("click", () => {
     } else if (msg.type === "last_words_ack") {
       append("<span class='muted'>遺言已更新。</span>");
     } else if (msg.type === "game_state") {
+      const previousGame = latestGame;
+      notifyStateSound(msg, previousGame);
       latestGame = msg;
       renderGame(msg);
       if (msg.phase === "ended") {

@@ -417,6 +417,7 @@ export type ServerMessage =
       lobbyStartVotedPlayerIds?: string[];
       winner?: GameWinner;
       phaseEndsAt?: string;
+      suddenDeathWarningAt?: string;
       log: string[];
     }
   | {

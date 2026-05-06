@@ -242,6 +242,12 @@ describe("messages", () => {
       ]
     });
     expect(JSON.stringify(buildGameStateMessage(game))).not.toContain('"role"');
+
+    const suddenDeathWarningAt = "2026-05-06T00:03:00.000Z";
+    expect(buildGameStateMessage({ ...game, suddenDeathWarningAt })).toMatchObject({
+      type: "game_state",
+      suddenDeathWarningAt
+    });
   });
 
   it("hides vote mappings unless open vote is enabled", () => {

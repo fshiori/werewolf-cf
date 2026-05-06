@@ -193,6 +193,7 @@ export function buildGameStateMessage(state: GameState): ServerMessage {
     lobbyStartVotedPlayerIds: state.phase === "lobby" ? state.players.filter((player) => state.lobbyStartVotes?.[player.playerId]).map((player) => player.playerId) : undefined,
     winner: state.winner,
     phaseEndsAt: state.phaseEndsAt,
+    suddenDeathWarningAt: state.suddenDeathWarningAt,
     log: state.log.map(escapeHtml)
   };
 }

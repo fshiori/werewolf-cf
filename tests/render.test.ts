@@ -342,6 +342,10 @@ describe("render", () => {
     expect(ROOM_CLIENT_SCRIPT).toContain("wolf_chat");
     expect(ROOM_CLIENT_SCRIPT).toContain("objection");
     expect(ROOM_CLIENT_SCRIPT).toContain("playNotifySound");
+    expect(ROOM_CLIENT_SCRIPT).toContain("function notifyStateSound(nextGame, previousGame)");
+    expect(ROOM_CLIENT_SCRIPT).toContain("nextGame.revoteCount > previousGame.revoteCount");
+    expect(ROOM_CLIENT_SCRIPT).toContain("nextGame.suddenDeathWarningAt !== previousGame.suddenDeathWarningAt");
+    expect(ROOM_CLIENT_SCRIPT).toContain("notifyStateSound(msg, previousGame)");
     expect(ROOM_CLIENT_SCRIPT).toContain("werewolf_cf_sound");
     expect(ROOM_CLIENT_SCRIPT).toContain("#leaveRoom");
     expect(ROOM_CLIENT_SCRIPT).toContain("#startVote");
