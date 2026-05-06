@@ -119,6 +119,10 @@ function envWithRooms(
                   const topic = bbsTopics.find((value) => value.id === Number(values[0]));
                   return topic ? { password_hash: topic.password_hash ?? null } : null;
                 }
+                if (query.includes("SELECT password_hash FROM bbs_replies")) {
+                  const reply = bbsReplies.find((value) => value.id === Number(values[0]) && value.topic_id === Number(values[1]));
+                  return reply ? { password_hash: reply.password_hash ?? null } : null;
+                }
                 if (query.includes("FROM bbs_replies")) {
                   return bbsReplies.find((reply) => reply.id === Number(values[0]) && reply.topic_id === Number(values[1])) ?? null;
                 }
@@ -2064,6 +2068,86 @@ describe("worker routes", () => {
     const runs = (env as unknown as { runs: Array<{ query: string; values: unknown[] }> }).runs;
     expect(runs[0].query).toContain("UPDATE bbs_replies SET message = ?");
     expect(runs[0].values).toEqual(["Edited reply", 2, 1]);
+  });
+
+  it("edits BBS replies with the reply password", async () => {
+    const env = envWithRooms([], {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, new Set(), new Set(), {}, [
+      {
+        id: 1,
+        name: "Alice",
+        title: "Welcome",
+        message: "Topic body",
+        trip_hash: null,
+        reply_count: 1,
+        pinned: 0,
+        locked: 0,
+        digest: 0,
+        created_at: "2026-05-06 12:00:00",
+        updated_at: "2026-05-06 12:00:00"
+      }
+    ], [
+      {
+        id: 2,
+        topic_id: 1,
+        name: "Bob",
+        message: "Reply body",
+        trip_hash: null,
+        password_hash: await bbsPasswordHash("secret"),
+        created_at: "2026-05-06 12:10:00"
+      }
+    ]);
+    const response = await worker.fetch(
+      new Request("http://example.test/api/bbs/topics/1/replies/2/moderation", {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ message: "Edited reply", password: "secret" })
+      }),
+      env
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ reply: { id: 2, topicId: 1, message: "Edited reply" } });
+  });
+
+  it("rejects BBS reply edits with the wrong reply password", async () => {
+    const env = envWithRooms([], {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, new Set(), new Set(), {}, [
+      {
+        id: 1,
+        name: "Alice",
+        title: "Welcome",
+        message: "Topic body",
+        trip_hash: null,
+        reply_count: 1,
+        pinned: 0,
+        locked: 0,
+        digest: 0,
+        created_at: "2026-05-06 12:00:00",
+        updated_at: "2026-05-06 12:00:00"
+      }
+    ], [
+      {
+        id: 2,
+        topic_id: 1,
+        name: "Bob",
+        message: "Reply body",
+        trip_hash: null,
+        password_hash: await bbsPasswordHash("secret"),
+        created_at: "2026-05-06 12:10:00"
+      }
+    ]);
+    const response = await worker.fetch(
+      new Request("http://example.test/api/bbs/topics/1/replies/2/moderation", {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ message: "Edited reply", password: "wrong" })
+      }),
+      env
+    );
+
+    expect(response.status).toBe(403);
+    expect(await response.json()).toEqual({ error: "BBS reply edit password is invalid" });
+    const runs = (env as unknown as { runs: Array<{ query: string; values: unknown[] }> }).runs;
+    expect(runs).toEqual([]);
   });
 
   it("rejects deleting missing BBS replies", async () => {

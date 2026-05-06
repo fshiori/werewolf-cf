@@ -822,6 +822,9 @@ describe("render", () => {
     expect(html).toContain("bbsReplyDeleteButton");
     expect(html).toContain("bbsReplyEditButton");
     expect(html).toContain("bbsReplyEditMessage");
+    expect(html).toContain("bbsReplyEditPassword");
+    expect(html).toContain("回覆密碼");
+    expect(html).toContain("passwordInput ? passwordInput.value");
     expect(html).toContain("/replies/\" + encodeURIComponent(replyId) + \"/moderation");
     expect(html).toContain("刪除此回覆？");
     expect(html).toContain("狀態");
