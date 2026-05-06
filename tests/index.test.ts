@@ -869,6 +869,8 @@ describe("worker routes", () => {
       ["/game_view.php?room_no=room_exists&auto_reload=20", "spectator", "旁觀視點"],
       ["/game_play.php?room_no=room_exists&auto_reload=20", "player", "玩家視點"],
       ["/game_frame.php?room_no=room_exists&auto_reload=20", "player", "玩家視點"],
+      ["/game_up.php?room_no=room_exists&auto_reload=20", "player", "玩家視點"],
+      ["/game_vote.php?room_no=room_exists&auto_reload=20", "player", "玩家視點"],
       ["/login.php?room_no=room_exists&auto_reload=20", "player", "玩家視點"],
       ["/user_manager.php?room_no=room_exists&auto_reload=20", "player", "玩家視點"]
     ] as const;
