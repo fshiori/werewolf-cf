@@ -52,7 +52,7 @@ Reference files inspected:
 | Federated room list (`list.php`) | `/list` renders a reference-style federated list from local D1 rooms and optional remote peers configured by KV `federated_servers`; failed peers are ignored | Partial |
 | Discussion board (`bbs.php`) | `/bbs` renders a reference-style topic list, topic detail view, post form, and reply form backed by D1 `bbs_topics`/`bbs_replies`; token-protected moderation can pin, lock, and mark digest topics | Partial |
 | Icon catalog/upload parity | `/icons` renders the reference default icon catalog; room join can send a vetted default `iconPath`; avatar upload exists | Partial |
-| Old logs (`old_log.php`) | `/room/:roomId/log` renders D1 game records, day/phase transcript sections, and historical vote tables grouped by day/revote round; private entries are visible only after the room ends | Partial |
+| Old logs (`old_log.php`) | `/room/:roomId/log` renders D1 game records, day/phase transcript sections, historical vote tables grouped by day/revote round, and reference-inspired location labels/colors for public/private/system/action rows; private entries are visible only after the room ends | Partial |
 | Trip identity parity | Trip register/claim/exclusion exists; `/trips` and `/api/trips/lookup` provide a public lookup UI/API for registered/excluded status, claimed players, and aggregate stats without exposing Trip hashes | Partial |
 
 ## UI Parity Findings
@@ -70,7 +70,7 @@ Reference files inspected:
 - Reference menu includes `聯合列表`, script info, old logs, icon view/upload, win-rate analysis, BBS, Trip registration. Current menu has the core app pages, a configurable federated-list page, script info, win-rate analysis, a default icon catalog, Trip lookup, and a basic BBS topic/reply board, but not every legacy page.
 - Reference room view has phase-specific body colors, manual/auto refresh links, login/resident registration links, and different layouts for spectator/player/heaven modes. Current room page now applies reference-style lobby/day/night/ended body colors as realtime state changes and includes manual/auto refresh controls for auxiliary panels, but remains a single WebSocket view without separate spectator/heaven layouts.
 - Reference player list includes default icons, hover image swap, Trip links, role reveal text colors, already-voted background, and dead icon handling. Current player cards now emit selected default icons, reference role icons and colored text for revealed roles, profile links from nicknames, already-voted backgrounds, a grave icon for dead players, and reference-style dead-icon hover swap back to the selected default icon, but still lack full Trip-page parity.
-- Reference talk log has many location-specific render paths: public day, night wolf, common, lovers, fox, self talk, heaven, GM broadcast/whisper, system action visibility, and post-game/dead visibility. Current WebSocket channels cover the major private channels and public/private transcript entries are persisted with room-status visibility filtering; `/room/:id/log` groups replay entries by day/phase, but still lacks full PHP-compatible per-location styling.
+- Reference talk log has many location-specific render paths: public day, night wolf, common, lovers, fox, self talk, heaven, GM broadcast/whisper, system action visibility, and post-game/dead visibility. Current WebSocket channels cover the major private channels and public/private transcript entries are persisted with room-status visibility filtering; `/room/:id/log` groups replay entries by day/phase and now labels/styles major locations and role-action rows, but still lacks full PHP-compatible viewer-specific transcript masking.
 - Reference vote output renders per-day vote tables, open-vote visibility, revote messages, and dead/spectator differences. Current room UI shows summary/action state, marks day voters and night action actors when vote-status is enabled without exposing hidden targets, and old logs now render historical vote tables by day/revote round, but active-room spectator/dead variants are still not fully PHP-compatible.
 
 ## Rule Parity Findings
@@ -100,7 +100,7 @@ Reference files inspected:
 
 ## Next Concrete Work Items
 
-1. Continue improving `/room/:roomId/log` toward PHP-compatible per-location styling; day/phase grouping, historical vote tables, and private talk/action transcript persistence are now in place.
+1. Continue improving `/room/:roomId/log` toward PHP-compatible viewer-specific transcript masking; day/phase grouping, historical vote tables, private talk/action transcript persistence, and major per-location styling are now in place.
 2. Continue mapping lesser PHP rule branches into focused tests; vote table visibility, non-realtime silence acceleration, warning windows, and timed sudden-death actor handling are now pinned.
 3. Add a visual parity checklist with screenshots once a browser is available in the environment.
 4. Continue reducing remaining legacy menu/page gaps, including fuller BBS admin pages if PHP-era moderation screens are needed.

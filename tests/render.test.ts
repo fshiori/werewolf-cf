@@ -656,6 +656,22 @@ describe("render", () => {
           eventType: "night_kill",
           payload: { visibility: "private", nickname: "Bob", targetPlayerId: "player_a", targetNickname: "Alice", phase: "night", day: 2 },
           createdAt: "2026-05-06 12:03:00"
+        },
+        {
+          id: 4,
+          roomId: "room_abc",
+          playerId: "player_b",
+          eventType: "wolf_chat",
+          payload: { visibility: "private", nickname: "Bob", text: "howl", phase: "night", day: 2 },
+          createdAt: "2026-05-06 12:04:00"
+        },
+        {
+          id: 5,
+          roomId: "room_abc",
+          playerId: "player_gm",
+          eventType: "gm_whisper",
+          payload: { visibility: "private", nickname: "GM", text: "secret", phase: "night", day: 2 },
+          createdAt: "2026-05-06 12:05:00"
         }
       ]
     );
@@ -677,6 +693,15 @@ describe("render", () => {
     expect(html).toContain("投票先");
     expect(html).toContain("第 2 日 夜晚");
     expect(html).toContain("襲擊");
+    expect(html).toContain("位置");
+    expect(html).toContain("襲擊行動");
+    expect(html).toContain("人狼密談");
+    expect(html).toContain("GM密語");
+    expect(html).toContain('class="transcript-row transcript-location-kill"');
+    expect(html).toContain('class="transcript-row transcript-location-wolf"');
+    expect(html).toContain('class="transcript-row transcript-location-gm-whisper"');
+    expect(html).toContain(".transcript-location-wolf td { background: #000030; color: #ffccff; }");
+    expect(html).toContain(".transcript-location-kill td { background: #cc3300; color: snow; font-weight: bold; }");
     expect(html).toContain("對象名:Bob");
   });
 

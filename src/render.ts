@@ -142,6 +142,18 @@ function page(title: string, body: string): string {
     #chatLog div, #gameLog div { border-top: 1px dashed silver; padding: 2px 4px; overflow-wrap: anywhere; word-break: break-word; }
     #gameLog { max-height: 140px; overflow: auto; background: #ffffff; }
     #players button { margin: 2px 4px 2px 0; min-width: 7em; text-align: left; }
+    .transcript-row td { border-top: 1px dashed silver; }
+    .transcript-location-system td, .transcript-location-game td { background: #efefef; font-weight: bold; }
+    .transcript-location-wolf td { background: #000030; color: #ffccff; }
+    .transcript-location-common td, .transcript-location-fox td, .transcript-location-lovers td { background: #000030; color: #ccffcc; }
+    .transcript-location-dead td { background: #cccccc; color: #000000; }
+    .transcript-location-gm td, .transcript-location-gm-whisper td { color: #cc0000; }
+    .transcript-location-vote td { background: #999900; color: snow; font-weight: bold; }
+    .transcript-location-kill td { background: #cc3300; color: snow; font-weight: bold; }
+    .transcript-location-divination td { background: #990099; color: snow; font-weight: bold; }
+    .transcript-location-guard td { background: #0099ff; color: snow; font-weight: bold; }
+    .transcript-location-cat td { background: #006633; color: snow; font-weight: bold; }
+    .location-badge { white-space: nowrap; font-size: 10pt; }
     .muted { color: #666666; }
   </style>
 </head>
@@ -321,6 +333,41 @@ function eventSpeakerLabel(event: RoomEventSummary): string {
   return event.playerId ?? "系統";
 }
 
+function transcriptLocation(event: RoomEventSummary): { className: string; label: string } {
+  const value = recordValue(event.payload);
+  const phase = value.phase === "night" ? "夜晚" : value.phase === "day" ? "白天" : "";
+  const locations: Record<string, { className: string; label: string }> = {
+    public_chat: { className: "transcript-location-public", label: phase ? `${phase}公開` : "公開" },
+    wolf_chat: { className: "transcript-location-wolf", label: "人狼密談" },
+    fox_chat: { className: "transcript-location-fox", label: "妖狐密談" },
+    common_chat: { className: "transcript-location-common", label: "共有密談" },
+    lovers_chat: { className: "transcript-location-lovers", label: "戀人密談" },
+    dead_chat: { className: "transcript-location-dead", label: "靈界" },
+    gm_chat: { className: "transcript-location-gm", label: "GM廣播" },
+    gm_whisper: { className: "transcript-location-gm-whisper", label: "GM密語" },
+    day_vote: { className: "transcript-location-vote", label: "處刑投票" },
+    night_kill: { className: "transcript-location-kill", label: "襲擊行動" },
+    divination: { className: "transcript-location-divination", label: "占卜行動" },
+    child_fox_divination: { className: "transcript-location-divination", label: "子狐占卜" },
+    guard: { className: "transcript-location-guard", label: "護衛行動" },
+    cat_revive: { className: "transcript-location-cat", label: "復活行動" },
+    objection: { className: "transcript-location-system", label: "系統" },
+    lobby_start_vote: { className: "transcript-location-system", label: "等待室" },
+    lobby_kick_vote: { className: "transcript-location-system", label: "等待室" },
+    player_left: { className: "transcript-location-system", label: "系統" },
+    player_kicked: { className: "transcript-location-system", label: "系統" },
+    room_created: { className: "transcript-location-system", label: "系統" },
+    game_started: { className: "transcript-location-game", label: "遊戲" },
+    game_ended: { className: "transcript-location-game", label: "遊戲" },
+    gm_advanced_phase: { className: "transcript-location-gm", label: "GM操作" },
+    gm_ended_game: { className: "transcript-location-gm", label: "GM操作" },
+    gm_set_alive: { className: "transcript-location-gm", label: "GM操作" },
+    gm_set_role: { className: "transcript-location-gm", label: "GM操作" },
+    gm_set_flag: { className: "transcript-location-gm", label: "GM操作" }
+  };
+  return locations[event.eventType] ?? { className: "transcript-location-system", label: phase || "系統" };
+}
+
 function voteRoundLabel(value: Record<string, unknown>): string {
   const revoteCount = typeof value.revoteCount === "number" ? value.revoteCount : 0;
   return revoteCount > 0 ? `再投票 ${revoteCount}` : "第一回";
@@ -373,7 +420,7 @@ function renderTranscriptVoteTables(events: RoomEventSummary[]): string {
 
 function renderTranscriptEventSections(events: RoomEventSummary[]): string {
   if (events.length === 0) {
-    return `<tr><td colspan="4" class="muted">尚無事件履歷。</td></tr>`;
+    return `<tr><td colspan="5" class="muted">尚無事件履歷。</td></tr>`;
   }
 
   const groups = new Map<string, RoomEventSummary[]>();
@@ -383,13 +430,17 @@ function renderTranscriptEventSections(events: RoomEventSummary[]): string {
   }
 
   return Array.from(groups.entries()).map(([label, groupEvents]) => `
-    <tr><td colspan="4"><strong>${escapeHtml(label)}</strong></td></tr>
-    ${groupEvents.map((event) => `<tr>
+    <tr><td colspan="5"><strong>${escapeHtml(label)}</strong></td></tr>
+    ${groupEvents.map((event) => {
+      const location = transcriptLocation(event);
+      return `<tr class="transcript-row ${location.className}">
       <td>${escapeHtml(event.createdAt)}</td>
+      <td><span class="location-badge">${escapeHtml(location.label)}</span></td>
       <td>${escapeHtml(eventTypeLabel(event.eventType))}</td>
       <td>${escapeHtml(eventSpeakerLabel(event))}</td>
       <td>${escapeHtml(formatEventPayload(event.payload))}</td>
-    </tr>`).join("")}
+    </tr>`;
+    }).join("")}
   `).join("");
 }
 
@@ -634,7 +685,7 @@ export function renderRoomTranscript(roomId: string, records: GameRecordSummary[
     <fieldset>
       <legend><strong>事件履歷</strong></legend>
       <table class="form-table" style="margin:12px 20px 18px;">
-        <thead><tr><td><strong>時間</strong></td><td><strong>種類</strong></td><td><strong>發言/行動</strong></td><td><strong>內容</strong></td></tr></thead>
+        <thead><tr><td><strong>時間</strong></td><td><strong>位置</strong></td><td><strong>種類</strong></td><td><strong>發言/行動</strong></td><td><strong>內容</strong></td></tr></thead>
         <tbody>${eventRows}</tbody>
       </table>
     </fieldset>
