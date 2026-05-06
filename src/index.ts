@@ -3,7 +3,7 @@ import { RoomDurableObject } from "./room";
 import { ROOM_CLIENT_SCRIPT } from "./room-client";
 import { DEFAULT_DAY_MINUTES, DEFAULT_NIGHT_MINUTES } from "./game";
 import { registeredTripHash, tripHashForRoom } from "./identity";
-import type { BbsReplySummary, BbsTopicSummary, FederatedRoomSummary, GamePlayer, GameRecordSummary, GameWinner, LeaderboardEntry, PlayerGameRecordSummary, PlayerStats, RoomEventSummary, RoomOptions, RoomSummary, WinRateEntry } from "./types";
+import type { BbsReplySummary, BbsTopicSummary, ChannelRestrictions, FederatedRoomSummary, GamePlayer, GameRecordSummary, GameWinner, LeaderboardEntry, PlayerGameRecordSummary, PlayerStats, RoomEventSummary, RoomOptions, RoomSummary, WinRateEntry } from "./types";
 import {
   isRecord,
   validateNickname,
@@ -274,6 +274,7 @@ function parseRoomOptions(optionRole: string): RoomOptions {
     lastWords: roles.has("will"),
     openVote: roles.has("open_vote"),
     commonTalkVisible: roles.has("comoutl"),
+    channelRestrictions: parseChannelRestrictions(tokens),
     deadRoleVisible: false,
     wishRole: roles.has("wish_role"),
     tripRequired: roles.has("istrip"),
@@ -291,6 +292,7 @@ function parseRoomOptions(optionRole: string): RoomOptions {
 }
 
 function serializeRoomOptions(options: RoomOptions): string {
+  const channelRestrictions = options.channelRestrictions;
   return [
     options.poison ? "poison" : "",
     options.bigWolf ? "wfbig" : "",
@@ -311,7 +313,8 @@ function serializeRoomOptions(options: RoomOptions): string {
     options.customDummy ? "cust_dummy" : "",
     options.realTime ? `real_time:${formatMinutes(options.dayMinutes)}:${formatMinutes(options.nightMinutes)}` : "",
     options.selfVote ? "votedme" : "",
-    options.voteStatus ? "votedisplay" : ""
+    options.voteStatus ? "votedisplay" : "",
+    channelRestrictions ? serializeChannelRestrictions(channelRestrictions) : ""
   ].filter(Boolean).join(" ");
 }
 
@@ -359,6 +362,7 @@ function readRoomOptions(value: unknown): RoomOptions {
     lastWords: value.lastWords === true,
     openVote: value.openVote === true,
     commonTalkVisible: value.commonTalkVisible === true,
+    channelRestrictions: readChannelRestrictions(value.channelRestrictions),
     deadRoleVisible: value.deadRoleVisible === true,
     wishRole: value.wishRole === true,
     tripRequired: value.tripRequired === true,
@@ -372,6 +376,48 @@ function readRoomOptions(value: unknown): RoomOptions {
     nightMinutes: readMinutes(value.nightMinutes, DEFAULT_NIGHT_MINUTES),
     selfVote: value.selfVote === true,
     voteStatus: value.voteStatus === true
+  };
+}
+
+function parseChannelRestrictions(tokens: string[]): ChannelRestrictions | undefined {
+  const token = tokens.find((value) => value.startsWith("chdis:"));
+  if (!token) {
+    return undefined;
+  }
+  return {
+    wolf: token.includes("ch_wolf"),
+    common: token.includes("ch_common"),
+    lovers: token.includes("ch_lovers"),
+    fox: token.includes("ch_fox")
+  };
+}
+
+function serializeChannelRestrictions(restrictions: ChannelRestrictions): string {
+  return `chdis:${[
+    restrictions.wolf ? "ch_wolf" : "",
+    restrictions.common ? "ch_common" : "",
+    restrictions.lovers ? "ch_lovers" : "",
+    restrictions.fox ? "ch_fox" : ""
+  ].join(":")}`;
+}
+
+function readChannelRestrictions(value: unknown): ChannelRestrictions | undefined {
+  if (!isRecord(value)) {
+    return undefined;
+  }
+  if (
+    typeof value.wolf !== "boolean" ||
+    typeof value.common !== "boolean" ||
+    typeof value.lovers !== "boolean" ||
+    typeof value.fox !== "boolean"
+  ) {
+    return undefined;
+  }
+  return {
+    wolf: value.wolf,
+    common: value.common,
+    lovers: value.lovers,
+    fox: value.fox
   };
 }
 

@@ -527,6 +527,20 @@ function optionMark(label: string, iconPath?: string): string {
   return `<span class="option-mark">${iconPath ? referenceAssetImg(iconPath, label) : ""}${escapeHtml(label)}</span>`;
 }
 
+function channelRestrictionOptionMark(room: RoomSummary): string {
+  const restrictions = room.options.channelRestrictions;
+  if (!restrictions || !(restrictions.wolf || restrictions.common || restrictions.lovers || restrictions.fox)) {
+    return "";
+  }
+  const labels = [
+    restrictions.wolf ? "狼" : "",
+    restrictions.common ? "共" : "",
+    restrictions.lovers ? "戀" : "",
+    restrictions.fox ? "狐" : ""
+  ].filter(Boolean).join("/");
+  return optionMark(`頻道限:${labels}`);
+}
+
 function roomStatusIcon(status: RoomSummary["status"]): string {
   if (status === "lobby") {
     return referenceAssetImg("img/waiting.gif", "募集中");
@@ -609,6 +623,7 @@ export function renderOldLogs(rooms: RoomSummary[]): string {
         room.options.deadRoleVisible ? optionMark("靈視", "img/room_option_rei.gif") : "",
         room.options.openVote ? optionMark("公開票", "img/room_option_open_vote.gif") : "",
         room.options.commonTalkVisible ? optionMark("共有聲", "img/room_option_common.gif") : "",
+        channelRestrictionOptionMark(room),
         room.options.voteStatus ? optionMark("投票済", "img/conn_look.gif") : ""
       ].filter(Boolean).join(" ");
       return `<tr>
@@ -1043,6 +1058,7 @@ export function renderHome(rooms: RoomSummary[], announcement = DEFAULT_ANNOUNCE
         room.options.wishRole ? optionMark("希望", "img/room_option_wish_role.gif") : "",
         room.options.tripRequired ? optionMark("Trip限定", "img/room_option_trip.gif") : "",
         room.options.gmEnabled ? optionMark("GM制", "img/room_option_gm.gif") : "",
+        channelRestrictionOptionMark(room),
         room.options.dummyBoy ? optionMark("替身", "img/room_option_dummy_boy.gif") : "",
         room.options.customDummy ? optionMark("自訂替身", "img/room_option_dummy_boy.gif") : "",
         room.options.selfVote ? optionMark("自投", "img/room_option_voteme.gif") : "",
