@@ -136,6 +136,20 @@ export interface RoomEventSummary {
   createdAt: string;
 }
 
+export interface BbsTopicSummary {
+  id: number;
+  name: string;
+  title: string;
+  message: string;
+  trip: boolean;
+  replyCount: number;
+  pinned: boolean;
+  locked: boolean;
+  digest: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface GameState {
   roomId: string;
   phase: GamePhase;

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { renderFederatedList, renderHome, renderIconCatalog, renderLeaderboard, renderPlayerProfile, renderProtocol, renderRoom, renderRoomEvents, renderRoomRecords, renderRoomTranscript, renderRules, renderStatus, renderTripLookup, renderVersion } from "../src/render";
+import { renderBbs, renderFederatedList, renderHome, renderIconCatalog, renderLeaderboard, renderPlayerProfile, renderProtocol, renderRoom, renderRoomEvents, renderRoomRecords, renderRoomTranscript, renderRules, renderStatus, renderTripLookup, renderVersion } from "../src/render";
 import { ROOM_CLIENT_SCRIPT } from "../src/room-client";
 
 describe("render", () => {
@@ -82,6 +82,8 @@ describe("render", () => {
     expect(html).toContain("頭像一覽");
     expect(html).toContain("/trips");
     expect(html).toContain("Trip查詢");
+    expect(html).toContain("/bbs");
+    expect(html).toContain("人狼討論");
     expect(html).toContain("/status");
     expect(html).toContain("伺服器狀態");
     expect(html).toContain("/rules");
@@ -412,6 +414,31 @@ describe("render", () => {
     expect(html).toContain("[room_abc]");
     expect(html).toContain("Test村");
     expect(html).toContain("人數22");
+  });
+
+  it("renders BBS as a normal HTML page", () => {
+    const html = renderBbs([
+      {
+        id: 1,
+        name: "Alice",
+        title: "Welcome",
+        message: "Hello",
+        trip: true,
+        replyCount: 2,
+        pinned: true,
+        locked: false,
+        digest: true,
+        createdAt: "2026-05-06 12:00:00",
+        updatedAt: "2026-05-06 12:30:00"
+      }
+    ]);
+
+    expect(html).toContain("主題列表");
+    expect(html).toContain("發表主題");
+    expect(html).toContain("[置頂] Welcome (精華)");
+    expect(html).toContain("Alice◆Trip");
+    expect(html).toContain("/api/bbs/topics");
+    expect(html).toContain("bbsPostButton");
   });
 
   it("renders room records as a normal HTML page", () => {

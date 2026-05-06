@@ -1,9 +1,9 @@
-import { renderFederatedList, renderHome, renderIconCatalog, renderLeaderboard, renderPlayerProfile, renderProtocol, renderRoom, renderRoomEvents, renderRoomRecords, renderRoomTranscript, renderRules, renderStatus, renderTripLookup, renderVersion } from "./render";
+import { renderBbs, renderFederatedList, renderHome, renderIconCatalog, renderLeaderboard, renderPlayerProfile, renderProtocol, renderRoom, renderRoomEvents, renderRoomRecords, renderRoomTranscript, renderRules, renderStatus, renderTripLookup, renderVersion } from "./render";
 import { RoomDurableObject } from "./room";
 import { ROOM_CLIENT_SCRIPT } from "./room-client";
 import { DEFAULT_DAY_MINUTES, DEFAULT_NIGHT_MINUTES } from "./game";
 import { registeredTripHash, tripHashForRoom } from "./identity";
-import type { GamePlayer, GameRecordSummary, GameWinner, LeaderboardEntry, PlayerGameRecordSummary, PlayerStats, RoomEventSummary, RoomOptions, RoomSummary } from "./types";
+import type { BbsTopicSummary, GamePlayer, GameRecordSummary, GameWinner, LeaderboardEntry, PlayerGameRecordSummary, PlayerStats, RoomEventSummary, RoomOptions, RoomSummary } from "./types";
 import {
   isRecord,
   validateNickname,
@@ -590,6 +590,89 @@ async function getTripLookup(request: Request, env: Env): Promise<Response> {
   }
 }
 
+function validateBbsTitle(value: unknown): string {
+  if (typeof value !== "string") {
+    throw new Error("BBS title is required");
+  }
+  const title = value.trim();
+  if (!title) {
+    throw new Error("BBS title is required");
+  }
+  if (title.length > 50) {
+    throw new Error("BBS title is too long");
+  }
+  return title;
+}
+
+function validateBbsMessage(value: unknown): string {
+  if (typeof value !== "string") {
+    throw new Error("BBS message is required");
+  }
+  const message = value.trim();
+  if (!message) {
+    throw new Error("BBS message is required");
+  }
+  if (message.length > 2000) {
+    throw new Error("BBS message is too long");
+  }
+  return message;
+}
+
+async function listBbsTopics(env: Env): Promise<BbsTopicSummary[]> {
+  const result = await env.DB.prepare(
+    "SELECT id, name, title, message, trip_hash, reply_count, pinned, locked, digest, created_at, updated_at FROM bbs_topics ORDER BY pinned DESC, updated_at DESC LIMIT 50"
+  ).all<{
+    id: number;
+    name: string;
+    title: string;
+    message: string;
+    trip_hash: string | null;
+    reply_count: number;
+    pinned: number;
+    locked: number;
+    digest: number;
+    created_at: string;
+    updated_at: string;
+  }>();
+  return result.results.map((topic) => ({
+    id: topic.id,
+    name: topic.name,
+    title: topic.title,
+    message: topic.message,
+    trip: Boolean(topic.trip_hash),
+    replyCount: topic.reply_count,
+    pinned: topic.pinned === 1,
+    locked: topic.locked === 1,
+    digest: topic.digest === 1,
+    createdAt: topic.created_at,
+    updatedAt: topic.updated_at
+  }));
+}
+
+async function getBbsTopics(env: Env): Promise<Response> {
+  return json({ topics: await listBbsTopics(env) });
+}
+
+async function createBbsTopic(request: Request, env: Env): Promise<Response> {
+  const body: unknown = await request.json().catch(() => null);
+  if (!isRecord(body)) {
+    return json({ error: "Invalid BBS topic" }, { status: 400 });
+  }
+  try {
+    const name = typeof body.name === "string" && body.name.trim() ? validateNickname(body.name) : "匿名";
+    const title = validateBbsTitle(body.title);
+    const message = validateBbsMessage(body.message);
+    const trip = typeof body.trip === "string" && body.trip.trim() ? validateTrip(body.trip) : undefined;
+    const tripHash = trip ? await registeredTripHash(trip) : null;
+    await env.DB.prepare("INSERT INTO bbs_topics (name, title, message, trip_hash) VALUES (?, ?, ?, ?)")
+      .bind(name, title, message, tripHash)
+      .run();
+    return json({ posted: true });
+  } catch (error) {
+    return json({ error: error instanceof Error ? error.message : "Failed to create BBS topic" }, { status: 400 });
+  }
+}
+
 async function getPlayerStats(env: Env, playerIdParam: string): Promise<Response> {
   try {
     const playerId = validatePlayerId(playerIdParam);
@@ -977,6 +1060,10 @@ export default {
       return html(renderTripLookup());
     }
 
+    if (request.method === "GET" && url.pathname === "/bbs") {
+      return html(renderBbs(await listBbsTopics(env)));
+    }
+
     if (request.method === "GET" && url.pathname === "/icons") {
       return html(renderIconCatalog());
     }
@@ -995,6 +1082,10 @@ export default {
 
     if (request.method === "GET" && url.pathname === "/api/protocol") {
       return getProtocol();
+    }
+
+    if (request.method === "GET" && url.pathname === "/api/bbs/topics") {
+      return getBbsTopics(env);
     }
 
     if (request.method === "GET" && url.pathname === "/rules") {
@@ -1088,6 +1179,10 @@ export default {
 
     if (request.method === "POST" && url.pathname === "/api/trips") {
       return registerTrip(request, env);
+    }
+
+    if (request.method === "POST" && url.pathname === "/api/bbs/topics") {
+      return createBbsTopic(request, env);
     }
 
     if (request.method === "GET" && url.pathname === "/api/trips/lookup") {
