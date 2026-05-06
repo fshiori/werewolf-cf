@@ -32,7 +32,7 @@ function responseFor(path, method = "GET") {
     return { contentType: "text/html", body: "<!doctype html><title>身份登錄 Trip公開資料</title>" };
   }
   if (path === "/bbs" && method === "GET") {
-    return { contentType: "text/html", body: "<!doctype html><title>主題列表 發表主題</title>" };
+    return { contentType: "text/html", body: "<!doctype html><title>主題列表 發表主題 精華</title>" };
   }
   if (path === "/status" && method === "GET") {
     return { contentType: "text/html", body: "<!doctype html><title>伺服器狀態 Binding 檢查</title>" };

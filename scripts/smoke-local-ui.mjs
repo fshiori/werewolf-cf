@@ -81,6 +81,7 @@ try {
   await expectHtml("/trip", ["身份登錄", "Trip公開資料"]);
   await expectHtml("/trips", ["Trip查詢", "Trip公開資料"]);
   await expectHtml("/bbs", ["主題列表", "發表主題"]);
+  await expectHtml("/bbs?digest=1", ["精華", "主題列表"]);
   await expectHtml("/status", ["伺服器狀態", "Binding 檢查"]);
   await expectHtml("/manual", ["說明書", "登錄入村"]);
   await expectHtml("/assets/room-client.js", ["new WebSocket", "data-room-id"]);
