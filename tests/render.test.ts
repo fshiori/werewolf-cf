@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { renderBbs, renderFederatedList, renderHome, renderIconCatalog, renderLeaderboard, renderPlayerProfile, renderProtocol, renderRoom, renderRoomEvents, renderRoomRecords, renderRoomTranscript, renderRules, renderStatus, renderTripLookup, renderVersion } from "../src/render";
+import { renderBbs, renderBbsTopic, renderFederatedList, renderHome, renderIconCatalog, renderLeaderboard, renderPlayerProfile, renderProtocol, renderRoom, renderRoomEvents, renderRoomRecords, renderRoomTranscript, renderRules, renderStatus, renderTripLookup, renderVersion } from "../src/render";
 import { ROOM_CLIENT_SCRIPT } from "../src/room-client";
 
 describe("render", () => {
@@ -439,6 +439,40 @@ describe("render", () => {
     expect(html).toContain("Alice◆Trip");
     expect(html).toContain("/api/bbs/topics");
     expect(html).toContain("bbsPostButton");
+  });
+
+  it("renders BBS topic detail with replies", () => {
+    const html = renderBbsTopic(
+      {
+        id: 1,
+        name: "Alice",
+        title: "Welcome",
+        message: "Topic body",
+        trip: true,
+        replyCount: 1,
+        pinned: false,
+        locked: false,
+        digest: false,
+        createdAt: "2026-05-06 12:00:00",
+        updatedAt: "2026-05-06 12:10:00"
+      },
+      [
+        {
+          id: 1,
+          topicId: 1,
+          name: "Bob",
+          message: "Reply body",
+          trip: false,
+          createdAt: "2026-05-06 12:10:00"
+        }
+      ]
+    );
+
+    expect(html).toContain("Topic body");
+    expect(html).toContain("回覆列表");
+    expect(html).toContain("Bob");
+    expect(html).toContain("Reply body");
+    expect(html).toContain("/api/bbs/topics/1/replies");
   });
 
   it("renders room records as a normal HTML page", () => {

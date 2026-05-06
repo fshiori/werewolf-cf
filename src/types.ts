@@ -150,6 +150,15 @@ export interface BbsTopicSummary {
   updatedAt: string;
 }
 
+export interface BbsReplySummary {
+  id: number;
+  topicId: number;
+  name: string;
+  message: string;
+  trip: boolean;
+  createdAt: string;
+}
+
 export interface GameState {
   roomId: string;
   phase: GamePhase;

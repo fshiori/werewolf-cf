@@ -43,6 +43,15 @@ type MockBbsTopic = {
   updated_at: string;
 };
 
+type MockBbsReply = {
+  id: number;
+  topic_id: number;
+  name: string;
+  message: string;
+  trip_hash: string | null;
+  created_at: string;
+};
+
 function envWithRooms(
   roomIds: string[],
   config: Record<string, string> = {},
@@ -58,7 +67,8 @@ function envWithRooms(
   registeredTripHashes: Set<string> = new Set(),
   excludedTripHashes: Set<string> = new Set(),
   playerRegisteredTripHashes: Record<string, string> = {},
-  bbsTopics: MockBbsTopic[] = []
+  bbsTopics: MockBbsTopic[] = [],
+  bbsReplies: MockBbsReply[] = []
 ): Env {
   const assets = new Map<string, StoredAsset>();
   const batches: Array<Array<{ query: string; values: unknown[] }>> = [];
@@ -96,6 +106,9 @@ function envWithRooms(
                 }
                 if (query.includes("FROM excluded_trips")) {
                   return excludedTripHashes.has(String(values[0])) ? { trip_hash: values[0] } : null;
+                }
+                if (query.includes("FROM bbs_topics")) {
+                  return bbsTopics.find((topic) => topic.id === Number(values[0])) ?? null;
                 }
                 if (query.includes("FROM rooms") && query.includes("name")) {
                   const id = String(values[0]);
@@ -149,6 +162,9 @@ function envWithRooms(
                 if (query.includes("FROM room_events")) {
                   return { results: events[String(values[0])] ?? [] };
                 }
+                if (query.includes("FROM bbs_replies")) {
+                  return { results: bbsReplies.filter((reply) => reply.topic_id === Number(values[0])) };
+                }
                 if (query.includes("FROM bbs_topics")) {
                   return { results: bbsTopics };
                 }
@@ -161,6 +177,9 @@ function envWithRooms(
             };
           },
           async all() {
+            if (query.includes("FROM bbs_replies")) {
+              return { results: bbsReplies };
+            }
             if (query.includes("FROM bbs_topics")) {
               return { results: bbsTopics };
             }
@@ -908,6 +927,101 @@ describe("worker routes", () => {
     });
   });
 
+  it("renders BBS topic detail page with replies", async () => {
+    const response = await worker.fetch(
+      new Request("http://example.test/bbs?view=1"),
+      envWithRooms([], {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, new Set(), new Set(), {}, [
+        {
+          id: 1,
+          name: "Alice",
+          title: "Welcome",
+          message: "Topic body",
+          trip_hash: "trip_hash",
+          reply_count: 1,
+          pinned: 0,
+          locked: 0,
+          digest: 0,
+          created_at: "2026-05-06 12:00:00",
+          updated_at: "2026-05-06 12:10:00"
+        }
+      ], [
+        {
+          id: 1,
+          topic_id: 1,
+          name: "Bob",
+          message: "Reply body",
+          trip_hash: null,
+          created_at: "2026-05-06 12:10:00"
+        }
+      ])
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.text();
+    expect(body).toContain("Topic body");
+    expect(body).toContain("回覆列表");
+    expect(body).toContain("Bob");
+    expect(body).toContain("Reply body");
+    expect(body).toContain("/api/bbs/topics/1/replies");
+  });
+
+  it("returns BBS topic details", async () => {
+    const response = await worker.fetch(
+      new Request("http://example.test/api/bbs/topics/1"),
+      envWithRooms([], {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, new Set(), new Set(), {}, [
+        {
+          id: 1,
+          name: "Alice",
+          title: "Welcome",
+          message: "Topic body",
+          trip_hash: null,
+          reply_count: 1,
+          pinned: 0,
+          locked: 0,
+          digest: 0,
+          created_at: "2026-05-06 12:00:00",
+          updated_at: "2026-05-06 12:10:00"
+        }
+      ], [
+        {
+          id: 1,
+          topic_id: 1,
+          name: "Bob",
+          message: "Reply body",
+          trip_hash: "trip_hash",
+          created_at: "2026-05-06 12:10:00"
+        }
+      ])
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      topic: {
+        id: 1,
+        name: "Alice",
+        title: "Welcome",
+        message: "Topic body",
+        trip: false,
+        replyCount: 1,
+        pinned: false,
+        locked: false,
+        digest: false,
+        createdAt: "2026-05-06 12:00:00",
+        updatedAt: "2026-05-06 12:10:00"
+      },
+      replies: [
+        {
+          id: 1,
+          topicId: 1,
+          name: "Bob",
+          message: "Reply body",
+          trip: true,
+          createdAt: "2026-05-06 12:10:00"
+        }
+      ]
+    });
+  });
+
   it("creates BBS topics", async () => {
     const env = envWithRooms([]);
     const response = await worker.fetch(
@@ -925,6 +1039,39 @@ describe("worker routes", () => {
     expect(runs[0].query).toContain("INSERT INTO bbs_topics");
     expect(runs[0].values.slice(0, 3)).toEqual(["Alice", "Welcome", "Hello"]);
     expect(typeof runs[0].values[3]).toBe("string");
+  });
+
+  it("creates BBS replies", async () => {
+    const env = envWithRooms([], {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, new Set(), new Set(), {}, [
+      {
+        id: 1,
+        name: "Alice",
+        title: "Welcome",
+        message: "Topic body",
+        trip_hash: null,
+        reply_count: 0,
+        pinned: 0,
+        locked: 0,
+        digest: 0,
+        created_at: "2026-05-06 12:00:00",
+        updated_at: "2026-05-06 12:00:00"
+      }
+    ]);
+    const response = await worker.fetch(
+      new Request("http://example.test/api/bbs/topics/1/replies", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ name: "Bob", message: "Reply body", trip: "ab12CD" })
+      }),
+      env
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ posted: true });
+    const batches = (env as unknown as { batches: Array<Array<{ query: string; values: unknown[] }>> }).batches;
+    expect(batches[0][0].query).toContain("INSERT INTO bbs_replies");
+    expect(batches[0][0].values.slice(0, 3)).toEqual([1, "Bob", "Reply body"]);
+    expect(batches[0][1].query).toContain("UPDATE bbs_topics SET reply_count = reply_count + 1");
   });
 
   it("renders default icon catalog page", async () => {
