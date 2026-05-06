@@ -24,6 +24,7 @@ import {
   loversForPlayer,
   mediumReadingForPlayer,
   playerStatUpdates,
+  recordConversationActivity as recordGameConversationActivity,
   removeLobbyPlayer,
   setLastWords,
   startGame,
@@ -178,7 +179,8 @@ export class RoomDurableObject {
           throw new Error("Only living players can chat during the game");
         }
         const text = validateChatText(message.text);
-        await this.persistRoomEvent(member.playerId, "public_chat", { nickname: member.nickname, text, phase: game.phase, day: game.day });
+        const next = await this.recordConversationActivity(game);
+        await this.persistRoomEvent(member.playerId, "public_chat", { nickname: member.nickname, text, phase: next.phase, day: next.day });
         this.broadcast(buildChatMessage(member.playerId, member.nickname, text));
         return;
       }
@@ -189,7 +191,8 @@ export class RoomDurableObject {
           throw new Error("Werewolf channel is only available to living werewolves at night");
         }
         const text = validateChatText(message.text);
-        await this.persistRoomEvent(member.playerId, "wolf_chat", { visibility: "private", nickname: member.nickname, text, phase: game.phase, day: game.day });
+        const next = await this.recordConversationActivity(game);
+        await this.persistRoomEvent(member.playerId, "wolf_chat", { visibility: "private", nickname: member.nickname, text, phase: next.phase, day: next.day });
         this.broadcastWerewolf(game, buildWolfChatMessage(member.playerId, member.nickname, text));
         return;
       }
@@ -200,7 +203,8 @@ export class RoomDurableObject {
           throw new Error("Fox channel is only available to living foxes at night");
         }
         const text = validateChatText(message.text);
-        await this.persistRoomEvent(member.playerId, "fox_chat", { visibility: "private", nickname: member.nickname, text, phase: game.phase, day: game.day });
+        const next = await this.recordConversationActivity(game);
+        await this.persistRoomEvent(member.playerId, "fox_chat", { visibility: "private", nickname: member.nickname, text, phase: next.phase, day: next.day });
         this.broadcastFox(game, buildFoxChatMessage(member.playerId, member.nickname, text));
         return;
       }
@@ -211,7 +215,8 @@ export class RoomDurableObject {
           throw new Error("Common channel is only available to living common partners at night");
         }
         const text = validateChatText(message.text);
-        await this.persistRoomEvent(member.playerId, "common_chat", { visibility: "private", nickname: member.nickname, text, phase: game.phase, day: game.day });
+        const next = await this.recordConversationActivity(game);
+        await this.persistRoomEvent(member.playerId, "common_chat", { visibility: "private", nickname: member.nickname, text, phase: next.phase, day: next.day });
         this.broadcastCommon(game, buildCommonChatMessage(member.playerId, member.nickname, text));
         if ((await this.loadRoomOptions()).commonTalkVisible) {
           this.broadcastCommonVoice(game, buildCommonChatMessage("common_voice", "共有者的聲音", text));
@@ -225,7 +230,8 @@ export class RoomDurableObject {
           throw new Error("Lovers channel is only available to living lovers at night");
         }
         const text = validateChatText(message.text);
-        await this.persistRoomEvent(member.playerId, "lovers_chat", { visibility: "private", nickname: member.nickname, text, phase: game.phase, day: game.day });
+        const next = await this.recordConversationActivity(game);
+        await this.persistRoomEvent(member.playerId, "lovers_chat", { visibility: "private", nickname: member.nickname, text, phase: next.phase, day: next.day });
         this.broadcastLovers(game, buildLoversChatMessage(member.playerId, member.nickname, text));
         return;
       }
@@ -245,6 +251,7 @@ export class RoomDurableObject {
         if (!member.gm) {
           throw new Error("GM chat is only available to the GM");
         }
+        await this.recordConversationActivity(await this.loadGameState());
         const text = validateChatText(message.text);
         this.broadcast(buildGmChatMessage(member.playerId, member.nickname, text));
         return;
@@ -633,6 +640,18 @@ export class RoomDurableObject {
     } else {
       await this.state.storage.deleteAlarm();
     }
+  }
+
+  private async recordConversationActivity(gameState: GameState): Promise<GameState> {
+    const next = recordGameConversationActivity(gameState);
+    if (next === gameState) {
+      return gameState;
+    }
+    await this.saveGameState(next);
+    if (next.phaseEndsAt !== gameState.phaseEndsAt || next.log.length !== gameState.log.length) {
+      await this.broadcastGameState(next);
+    }
+    return next;
   }
 
   private async broadcastGameState(gameState: GameState): Promise<void> {

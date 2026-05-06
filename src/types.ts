@@ -173,6 +173,7 @@ export interface GameState {
   dummyBoy: boolean;
   dayMs: number;
   nightMs: number;
+  realTime?: boolean;
   selfVote: boolean;
   voteStatus: boolean;
   revoteCount: number;
@@ -185,6 +186,7 @@ export interface GameState {
   winner?: GameWinner;
   phaseEndsAt?: string;
   suddenDeathWarningAt?: string;
+  lastSpokenAt?: string;
   log: string[];
 }
 

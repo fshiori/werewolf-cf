@@ -26,6 +26,7 @@ import {
   mediumReadingForPlayer,
   playerStatUpdates,
   publicPlayers,
+  recordConversationActivity,
   removeLobbyPlayer,
   setLastWords,
   startGame,
@@ -1079,6 +1080,44 @@ describe("game", () => {
     expect(next.suddenDeathWarningAt).toBeUndefined();
     expect(next.phaseEndsAt).toBe("2026-05-06T00:05:00.000Z");
     expect(next.log).toContain("Seer 突然暴斃死亡。");
+  });
+
+  it("accelerates non-realtime conversation phases after silence", () => {
+    const players: GameState["players"] = [
+      { playerId: "player_1", nickname: "Alice", role: "werewolf", alive: true },
+      { playerId: "player_2", nickname: "Bob", role: "villager", alive: true }
+    ];
+    const day = {
+      ...activeState("day", players),
+      realTime: false,
+      phaseEndsAt: "2026-05-06T02:00:00.000Z",
+      lastSpokenAt: "2026-05-06T00:00:00.000Z"
+    };
+
+    const next = recordConversationActivity(day, Date.parse("2026-05-06T00:02:00.000Z"));
+
+    expect(next.phaseEndsAt).toBe("2026-05-06T01:00:00.000Z");
+    expect(next.lastSpokenAt).toBe("2026-05-06T00:02:00.000Z");
+    expect(next.log.at(-1)).toBe("・・・・・・・・・・ 持續沉默了 1時間");
+  });
+
+  it("does not accelerate realtime phases after silence", () => {
+    const players: GameState["players"] = [
+      { playerId: "player_1", nickname: "Alice", role: "werewolf", alive: true },
+      { playerId: "player_2", nickname: "Bob", role: "villager", alive: true }
+    ];
+    const day = {
+      ...activeState("day", players),
+      realTime: true,
+      phaseEndsAt: "2026-05-06T02:00:00.000Z",
+      lastSpokenAt: "2026-05-06T00:00:00.000Z"
+    };
+
+    const next = recordConversationActivity(day, Date.parse("2026-05-06T00:02:00.000Z"));
+
+    expect(next.phaseEndsAt).toBe("2026-05-06T02:00:00.000Z");
+    expect(next.lastSpokenAt).toBe("2026-05-06T00:02:00.000Z");
+    expect(next.log).toEqual([]);
   });
 
   it("allows only wolves to perform night kills and detects wolf win", () => {

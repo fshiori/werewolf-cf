@@ -1319,7 +1319,7 @@ export function renderRules(): string {
         <tr><td><strong>　替身君：</strong></td><td>加入替身君並由第一夜開始，可自訂名稱與遺言。</td></tr>
         <tr><td><strong>　公開票 / 投票顯示：</strong></td><td>控制白天投票資訊是否公開與已投票玩家顯示。</td></tr>
         <tr><td><strong>　遺言 / 幽靈視角：</strong></td><td>控制死亡訊息與死後可見資訊。</td></tr>
-        <tr><td><strong>　限時時間：</strong></td><td>啟用後 Durable Object alarm 會依日夜時間自動換日；未行動者會先收到最後2分警告，逾時後暴斃。</td></tr>
+        <tr><td><strong>　限時時間：</strong></td><td>啟用後 Durable Object alarm 會依日夜時間自動換日；非即時制會套用沉默時間推進，未行動者會先收到最後2分警告，逾時後暴斃。</td></tr>
       </table>
     </fieldset>
   `));
