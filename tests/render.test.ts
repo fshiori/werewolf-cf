@@ -1083,6 +1083,22 @@ describe("render", () => {
         eventType: "self_talk",
         payload: { visibility: "private", nickname: "Seer", text: "mutter", phase: "night", day: 2 },
         createdAt: "2026-05-06 12:04:00"
+      },
+      {
+        id: 5,
+        roomId: "room_abc",
+        playerId: "player_gm",
+        eventType: "gm_whisper",
+        payload: { visibility: "private", nickname: "GM", targetPlayerId: "player_wolf", targetNickname: "Wolf", text: "secret for wolf", phase: "night", day: 2 },
+        createdAt: "2026-05-06 12:05:00"
+      },
+      {
+        id: 6,
+        roomId: "room_abc",
+        playerId: "player_gm",
+        eventType: "gm_whisper",
+        payload: { visibility: "private", nickname: "GM", targetPlayerId: "player_seer", targetNickname: "Seer", text: "secret for seer", phase: "night", day: 2 },
+        createdAt: "2026-05-06 12:06:00"
       }
     ];
 
@@ -1099,8 +1115,10 @@ describe("render", () => {
     expect(playerView).toContain('<option value="player_wolf" selected>Wolf (player_wolf)</option>');
     expect(playerView).toContain("/room/room_abc/log?heaven_talk=on&amp;viewer=player&amp;viewer_player_id=player_wolf");
     expect(playerView).toContain("howl");
+    expect(playerView).toContain("secret for wolf");
     expect(playerView).not.toContain("內容:heaven");
     expect(playerView).not.toContain("內容:mutter");
+    expect(playerView).not.toContain("secret for seer");
 
     const deadView = renderRoomTranscript("room_abc", [], events, { viewerMode: "dead", heavenTalk: true });
     expect(deadView).toContain("靈界");
