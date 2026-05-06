@@ -28,6 +28,9 @@ function responseFor(path, method = "GET") {
   if (path === "/trips" && method === "GET") {
     return { contentType: "text/html", body: "<!doctype html><title>Trip查詢 Trip公開資料</title>" };
   }
+  if (path === "/trip" && method === "GET") {
+    return { contentType: "text/html", body: "<!doctype html><title>身份登錄 Trip公開資料</title>" };
+  }
   if (path === "/bbs" && method === "GET") {
     return { contentType: "text/html", body: "<!doctype html><title>主題列表 發表主題</title>" };
   }

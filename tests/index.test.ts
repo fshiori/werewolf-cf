@@ -727,6 +727,19 @@ describe("worker routes", () => {
     expect(body).toContain("/api/trips/lookup?trip=");
   });
 
+  it("renders Trip registration page", async () => {
+    const response = await worker.fetch(new Request("http://example.test/trip"), envWithRooms([]));
+
+    expect(response.status).toBe(200);
+    const body = await response.text();
+    expect(body).toContain("身份登錄");
+    expect(body).toContain("registerTripButton");
+    expect(body).toContain("claimTripButton");
+    expect(body).toContain("excludeTripButton");
+    expect(body).toContain("Trip公開資料");
+    expect(body).toContain("/api/trips/lookup?trip=");
+  });
+
   it("returns public Trip lookup data without exposing Trip hashes", async () => {
     const tripHash = await registeredTripHash("ab12CD");
     const response = await worker.fetch(
