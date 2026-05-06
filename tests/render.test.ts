@@ -238,6 +238,10 @@ describe("render", () => {
     expect(html).toContain("開始遊戲");
     expect(html).toContain("房主");
     expect(html).toContain("戰績");
+    expect(html).toContain("<a href=\"#nickname\"><strong>[住民登錄]</strong></a>");
+    expect(html).toContain("<a href=\"/trip\">[身份登錄]</a>");
+    expect(html).toContain("<a href=\"/trips\">[Trip查詢]</a>");
+    expect(html).toContain("<a href=\"/\">[返回]</a>");
     expect(html).toContain("/room/room_abc/records");
     expect(html).toContain("對局紀錄");
     expect(html).toContain("最近對局");
