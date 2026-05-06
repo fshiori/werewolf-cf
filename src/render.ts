@@ -92,6 +92,20 @@ function page(title: string, body: string, extraHead = ""): string {
       padding: 0 3px;
       margin-left: 2px;
     }
+    .bbs-status-mark {
+      display: inline-block;
+      border: 1px solid #999999;
+      background: #eeeeee;
+      color: #333333;
+      font-size: 11px;
+      line-height: 1.25;
+      padding: 0 3px;
+      margin-right: 3px;
+      white-space: nowrap;
+    }
+    .bbs-topic-pinned { border-color: #cc6600; background: #ffffcc; color: #996600; }
+    .bbs-topic-locked { border-color: #666666; background: #e6e6e6; color: #333333; }
+    .bbs-topic-digest { border-color: #cc3300; background: #ffe6e6; color: #cc0000; }
     .ref-icon { width: 16px; height: 16px; border: 0; vertical-align: text-bottom; margin-right: 2px; }
     .form-table td { padding: 4px 2px; vertical-align: top; }
     .game-shell { width: 800px; margin: 8px auto 18px; }
@@ -1072,7 +1086,7 @@ export function renderBbsAdmin(topics: BbsTopicSummary[]): string {
         <td align="center">${escapeHtml(String(topic.id))}</td>
         <td><a href="/bbs?view=${escapeHtml(String(topic.id))}">${escapeHtml(topic.title)}</a></td>
         <td>${escapeHtml(topic.name)}${topic.trip ? "◆Trip" : ""}</td>
-        <td>${topic.pinned ? "置頂 " : ""}${topic.locked ? "鎖定 " : ""}${topic.digest ? "精華" : ""}${!topic.pinned && !topic.locked && !topic.digest ? "一般" : ""}</td>
+        <td>${bbsStatusMarks(topic)}</td>
         <td align="center">${escapeHtml(String(topic.replyCount))}</td>
         <td>${escapeHtml(topic.updatedAt)}</td>
         <td><a href="/bbs?view=${escapeHtml(String(topic.id))}#bbsModerationForm">管理</a></td>
@@ -2001,10 +2015,10 @@ export function renderTripRegistration(): string {
 export function renderBbs(topics: BbsTopicSummary[], options: { digestOnly?: boolean } = {}): string {
   const topicRows = topics.length
     ? topics.map((topic) => {
-      const title = `${topic.pinned ? "[置頂] " : ""}${topic.locked ? "[鎖定] " : ""}${topic.title}${topic.digest ? " (精華)" : ""}`;
+      const legacyTitle = `${topic.pinned ? "[置頂] " : ""}${topic.locked ? "[鎖定] " : ""}${topic.title}${topic.digest ? " (精華)" : ""}`;
       return `<tr>
         <td align="center"><a href="/bbs?view=${escapeHtml(String(topic.id))}">${escapeHtml(String(topic.id))}</a></td>
-        <td><a href="/bbs?view=${escapeHtml(String(topic.id))}">${escapeHtml(title)}</a></td>
+        <td><a href="/bbs?view=${escapeHtml(String(topic.id))}" title="${escapeHtml(legacyTitle)}">${bbsStatusMarks(topic, true)}${escapeHtml(topic.title)}</a></td>
         <td>${escapeHtml(topic.name)}${topic.trip ? "◆Trip" : ""}</td>
         <td align="center">${escapeHtml(String(topic.replyCount))}</td>
         <td>${escapeHtml(topic.updatedAt)}</td>
@@ -2069,6 +2083,15 @@ export function renderBbs(topics: BbsTopicSummary[], options: { digestOnly?: boo
 
 function bbsAuthorLabel(name: string, trip: boolean): string {
   return `${escapeHtml(name)}${trip ? "◆Trip" : ""}`;
+}
+
+function bbsStatusMarks(topic: Pick<BbsTopicSummary, "pinned" | "locked" | "digest">, bracketed = false): string {
+  const marks = [
+    topic.pinned ? `<span class="bbs-status-mark bbs-topic-pinned">${bracketed ? "[置頂]" : "置頂"}</span>` : "",
+    topic.locked ? `<span class="bbs-status-mark bbs-topic-locked">${bracketed ? "[鎖定]" : "鎖定"}</span>` : "",
+    topic.digest ? `<span class="bbs-status-mark bbs-topic-digest">${bracketed ? "(精華)" : "精華"}</span>` : ""
+  ].filter(Boolean);
+  return marks.length ? marks.join(" ") : `<span class="bbs-status-mark">一般</span>`;
 }
 
 export function renderBbsTopic(topic: BbsTopicSummary, replies: BbsReplySummary[]): string {
@@ -2159,7 +2182,7 @@ export function renderBbsTopic(topic: BbsTopicSummary, replies: BbsReplySummary[
       <table class="form-table">
         <tr><td><strong>　作者：</strong></td><td>${bbsAuthorLabel(topic.name, topic.trip)}</td></tr>
         <tr><td><strong>　時間：</strong></td><td>${escapeHtml(topic.createdAt)}　更新 ${escapeHtml(topic.updatedAt)}</td></tr>
-        <tr><td><strong>　狀態：</strong></td><td>${topic.pinned ? "置頂　" : ""}${topic.locked ? "鎖定　" : ""}${topic.digest ? "精華" : ""}${!topic.pinned && !topic.locked && !topic.digest ? "一般" : ""}</td></tr>
+        <tr><td><strong>　狀態：</strong></td><td>${bbsStatusMarks(topic)}</td></tr>
         <tr><td><strong>　本文：</strong></td><td><div style="white-space:pre-wrap;">${escapeHtml(topic.message)}</div></td></tr>
       </table>
     </fieldset>

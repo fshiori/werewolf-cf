@@ -715,6 +715,8 @@ describe("render", () => {
     expect(html).toContain("發表主題");
     expect(html).toContain("/bbs?digest=1");
     expect(html).toContain("[置頂] Welcome (精華)");
+    expect(html).toContain("bbs-topic-pinned");
+    expect(html).toContain("bbs-topic-digest");
     expect(html).toContain("Alice◆Trip");
     expect(html).toContain("/api/bbs/topics");
     expect(html).toContain("bbsPostButton");
@@ -761,6 +763,7 @@ describe("render", () => {
     expect(html).toContain("Reply body");
     expect(html).toContain("/api/bbs/topics/1/replies");
     expect(html).toContain("狀態");
+    expect(html).toContain('<span class="bbs-status-mark">一般</span>');
     expect(html).toContain("主題管理");
     expect(html).toContain("bbsAdminToken");
     expect(html).toContain("werewolf_cf_bbs_admin_token");
@@ -791,7 +794,8 @@ describe("render", () => {
     expect(html).toContain("討論管理");
     expect(html).toContain("&lt;Welcome&gt;");
     expect(html).toContain("Alice◆Trip");
-    expect(html).toContain("置頂 精華");
+    expect(html).toContain("bbs-topic-pinned");
+    expect(html).toContain("bbs-topic-digest");
     expect(html).toContain("/bbs?view=1#bbsModerationForm");
     expect(html).toContain("BBS 管理密碼");
   });
