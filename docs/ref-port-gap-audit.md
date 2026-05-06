@@ -45,7 +45,7 @@ Reference files inspected:
 | Reference top/menu visual style | Table layout, side menu, fieldsets, colors in `src/render.ts` | Partial |
 | Reference room player grid visual style | `renderRoom`, `.player-card`, `.player-icon`, role/death/vote styling | Partial |
 | Reference chat/log/death/vote sections | Room page has chat/game log/records/events; game functions have log/death/vote handling | Partial |
-| Reference icons and bitmap assets | R2 upload exists; `docs/reference-asset-inventory.md` classifies 130 reference assets and identifies copy/defer decisions | Partial |
+| Reference icons and bitmap assets | R2 upload exists; `docs/reference-asset-inventory.md` classifies 130 reference assets; `/assets/reference/:path` serves vetted copied R2 assets | Partial |
 | Browser E2E/manual visual verification | Local HTTP UI smoke only; no installed browser detected | Missing |
 | Screenshot/visual parity against ref | No screenshot baseline or comparison artifact | Missing |
 | Complete PHP rule parity | Core roles/options implemented, but no line-by-line rule parity manifest | Partial |
@@ -100,7 +100,7 @@ Reference files inspected:
 
 ## Next Concrete Work Items
 
-1. Add an R2-backed `GET /assets/reference/:path` endpoint and a local/admin upload workflow for the priority asset set in `docs/reference-asset-inventory.md`.
+1. Wire copied R2 reference assets into rendered pages, starting with room-list status images and room option icons.
 2. Add default icon picker/catalog parity for `icon_view.php` and `user_manager.php` icon registration.
 3. Add full talk/vote/action transcript persistence so `/room/:roomId/log` can replay more than final records and audit events.
 4. Add a visual parity checklist with screenshots once a browser is available in the environment.

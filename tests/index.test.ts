@@ -1348,6 +1348,34 @@ describe("worker routes", () => {
     expect(await download.text()).toBe("avatar-bytes");
   });
 
+  it("serves copied reference assets from R2", async () => {
+    const env = envWithRooms([]);
+    await env.ASSETS.put("reference/img/top_title.jpg", new Blob(["title-bytes"]).stream(), {
+      httpMetadata: { contentType: "image/jpeg" }
+    });
+
+    const response = await worker.fetch(new Request("http://example.test/assets/reference/img/top_title.jpg"), env);
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toBe("image/jpeg");
+    expect(response.headers.get("cache-control")).toBe("public, max-age=86400");
+    expect(await response.text()).toBe("title-bytes");
+  });
+
+  it("rejects unsafe reference asset paths and reports missing reference assets", async () => {
+    const env = envWithRooms([]);
+    const traversal = await worker.fetch(new Request("http://example.test/assets/reference/img/../setting.php"), env);
+    const unsupported = await worker.fetch(new Request("http://example.test/assets/reference/img/Thumbs.db"), env);
+    const missing = await worker.fetch(new Request("http://example.test/assets/reference/img/top_title.jpg"), env);
+
+    expect(traversal.status).toBe(400);
+    expect(await traversal.json()).toEqual({ error: "Invalid reference asset path" });
+    expect(unsupported.status).toBe(400);
+    expect(await unsupported.json()).toEqual({ error: "Invalid reference asset path" });
+    expect(missing.status).toBe(404);
+    expect(await missing.text()).toBe("Reference asset not found");
+  });
+
   it("removes uploaded avatar images from R2", async () => {
     const env = envWithRooms([]);
     const form = new FormData();

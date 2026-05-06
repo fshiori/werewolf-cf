@@ -10,6 +10,18 @@ Inventory command:
 node scripts/inventory-reference-assets.mjs
 ```
 
+Priority upload dry-run:
+
+```bash
+node scripts/upload-reference-assets.mjs
+```
+
+Execute the upload only after confirming the target bucket/config:
+
+```bash
+node scripts/upload-reference-assets.mjs --bucket=werewolf-cf-assets --config=wrangler.production.toml --yes
+```
+
 The command reads the reference tree and excludes non-asset metadata such as `Thumbs.db`. It does not modify `ref/`.
 
 ## Summary
@@ -102,4 +114,4 @@ The reference uses Flash for notification sounds. A Cloudflare/browser port shou
 
 ## Next Implementation Step
 
-Add an R2-backed `GET /assets/reference/:path` endpoint and an admin/local upload script that copies the priority copy set from `ref/diam1.3.61.kz_Build0912` into the `ASSETS` bucket without checking binary copies into the repository.
+Use the R2-backed `GET /assets/reference/:path` endpoint to wire the copied priority assets into rendered pages, starting with room-list status images and room option icons.
