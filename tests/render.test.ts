@@ -473,6 +473,8 @@ describe("render", () => {
     expect(html).toContain("/api/trips/lookup?trip=");
     expect(html).toContain("werewolf_cf_trip");
     expect(html).toContain("escapeClientHtml");
+    expect(html).toContain("function tripStateMark(label, state)");
+    expect(html).toContain("health-mark");
     expect(html).toContain("encodeURIComponent(playerId)");
   });
 
@@ -492,6 +494,8 @@ describe("render", () => {
     expect(html).toContain("/api/trips/lookup?trip=");
     expect(html).toContain("werewolf_cf_trip");
     expect(html).toContain("werewolf_cf_nickname");
+    expect(html).toContain("function tripStateMark(label, state)");
+    expect(html).toContain("health-error");
   });
 
   it("renders leaderboard as a normal HTML page", () => {
