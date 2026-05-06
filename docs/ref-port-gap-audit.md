@@ -17,6 +17,7 @@ Implemented Cloudflare artifacts:
 - Core game state machine: `src/game.ts`
 - D1 schema: `migrations/`
 - Local rendered UI smoke: `scripts/smoke-local-ui.mjs`
+- Reference asset inventory: `docs/reference-asset-inventory.md`, `scripts/inventory-reference-assets.mjs`
 - Automated tests: `tests/`
 
 Reference files inspected:
@@ -44,14 +45,14 @@ Reference files inspected:
 | Reference top/menu visual style | Table layout, side menu, fieldsets, colors in `src/render.ts` | Partial |
 | Reference room player grid visual style | `renderRoom`, `.player-card`, `.player-icon`, role/death/vote styling | Partial |
 | Reference chat/log/death/vote sections | Room page has chat/game log/records/events; game functions have log/death/vote handling | Partial |
-| Reference icons and bitmap assets | R2 upload exists; bundled `ref/img` role/status/menu images are not ported | Missing |
+| Reference icons and bitmap assets | R2 upload exists; `docs/reference-asset-inventory.md` classifies 130 reference assets and identifies copy/defer decisions | Partial |
 | Browser E2E/manual visual verification | Local HTTP UI smoke only; no installed browser detected | Missing |
 | Screenshot/visual parity against ref | No screenshot baseline or comparison artifact | Missing |
 | Complete PHP rule parity | Core roles/options implemented, but no line-by-line rule parity manifest | Partial |
 | Federated room list (`list.php`) | No cross-server/federated list equivalent | Missing |
 | Discussion board (`bbs.php`) | No forum equivalent | Missing |
 | Icon catalog/upload parity | Avatar upload exists, but no reference-style icon catalog/default icon picker | Partial |
-| Old logs (`old_log.php`) | Room/player records pages exist, but no full historical log replay UI | Partial |
+| Old logs (`old_log.php`) | `/room/:roomId/log` renders the D1 game-record and audit-event transcript summary; full talk/vote replay persistence is still missing | Partial |
 | Trip identity parity | Trip register/claim/exclusion exists, but no full reference-style Trip public lookup UI | Partial |
 
 ## UI Parity Findings
@@ -65,7 +66,7 @@ Reference files inspected:
 
 ### Still missing or weak
 
-- Reference uses bitmap title/background/role/status/option images such as `img/top_title.jpg`, `img/top_bg.jpg`, `img/playing.gif`, `img/waiting.gif`, role images, and option icons. Current UI approximates with CSS/text.
+- Reference uses bitmap title/background/role/status/option images such as `img/top_title.jpg`, `img/top_bg.jpg`, `img/playing.gif`, `img/waiting.gif`, role images, and option icons. Current UI approximates with CSS/text; the reference asset inventory now identifies copy priority and deferred SWF assets.
 - Reference menu includes `聯合列表`, script info, old logs, icon view/upload, win-rate analysis, BBS, Trip registration. Current menu has the core app pages but not every legacy page.
 - Reference room view has phase-specific body colors, manual/auto refresh links, login/resident registration links, and different layouts for spectator/player/heaven modes. Current room page is a single realtime WebSocket view.
 - Reference player list includes default icons, hover image swap, Trip links, role reveal text colors, already-voted background, and dead icon handling. Current player cards approximate only part of this.
@@ -99,11 +100,11 @@ Reference files inspected:
 
 ## Next Concrete Work Items
 
-1. Add a reference asset inventory and decide which `ref/img` assets should be copied into Cloudflare storage/build output, without modifying `ref/`.
+1. Add an R2-backed `GET /assets/reference/:path` endpoint and a local/admin upload workflow for the priority asset set in `docs/reference-asset-inventory.md`.
 2. Add default icon picker/catalog parity for `icon_view.php` and `user_manager.php` icon registration.
-3. Add a visual parity checklist with screenshots once a browser is available in the environment.
-4. Add focused parity tests for lover-only victory, heavy wolf/fox edge cases, silence/sudden death, and vote table visibility.
-5. Add old-log/full-game transcript page to bridge `old_log.php` and `game_log.php`.
+3. Add full talk/vote/action transcript persistence so `/room/:roomId/log` can replay more than final records and audit events.
+4. Add a visual parity checklist with screenshots once a browser is available in the environment.
+5. Add focused parity tests for lover-only victory, heavy wolf/fox edge cases, silence/sudden death, and vote table visibility.
 6. Decide whether to implement or explicitly defer federated room list and BBS features.
 
 ## Current Verification Gaps
