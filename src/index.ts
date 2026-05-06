@@ -1052,7 +1052,8 @@ async function createBbsReply(request: Request, env: Env, topicIdParam: string):
       env.DB.prepare("INSERT INTO bbs_replies (topic_id, name, message, trip_hash) VALUES (?, ?, ?, ?)").bind(topicId, name, message, tripHash),
       env.DB.prepare("UPDATE bbs_topics SET reply_count = reply_count + 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?").bind(topicId)
     ]);
-    return json({ posted: true });
+    const replyCount = topic.replyCount + 1;
+    return json({ posted: true, replyCount, page: Math.max(1, Math.ceil(replyCount / BBS_REPLY_PAGE_SIZE)) });
   } catch (error) {
     return json({ error: error instanceof Error ? error.message : "Failed to create BBS reply" }, { status: 400 });
   }

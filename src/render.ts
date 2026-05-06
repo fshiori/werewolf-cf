@@ -2251,7 +2251,8 @@ export function renderBbsTopic(topic: BbsTopicSummary, replies: BbsReplySummary[
             status.textContent = data.error || "回覆失敗";
             return;
           }
-          location.href = "${topicPath}";
+          const replyPage = Number(data.page);
+          location.href = Number.isInteger(replyPage) && replyPage > 1 ? "${topicPath}?page=" + encodeURIComponent(String(replyPage)) : "${topicPath}";
         });
       </script>`;
   const moderationPanel = `<table class="form-table">

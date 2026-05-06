@@ -791,6 +791,8 @@ describe("render", () => {
     expect(html).toContain("Bob");
     expect(html).toContain("Reply body");
     expect(html).toContain("/api/bbs/topics/1/replies");
+    expect(html).toContain("replyPage");
+    expect(html).toContain('?page=" + encodeURIComponent(String(replyPage))');
     expect(html).toContain("bbsReplyDeleteButton");
     expect(html).toContain("bbsReplyEditButton");
     expect(html).toContain("bbsReplyEditMessage");
