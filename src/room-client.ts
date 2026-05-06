@@ -464,6 +464,31 @@ function appendPlayerIcon(iconCell, player, initial) {
   });
   iconCell.appendChild(avatar);
 }
+function appendVoteObserverPanel(container, game, currentPlayer, currentPlayerDead, voteSummary, votedPlayerIds) {
+  if (game.phase !== "day" && game.phase !== "night") return;
+  const observer = !currentPlayer || currentPlayerDead;
+  if (!observer) return;
+  const panel = document.createElement("div");
+  panel.className = "muted";
+  const label = currentPlayerDead ? "靈界視點" : "旁觀視點";
+  const visibility = Object.keys(game.votes || {}).length ? "公開投票先" : "投票先非公開";
+  panel.textContent = label + "：" + visibility + "。已投票 " + votedPlayerIds.size + " / " + game.players.filter((player) => player.alive).length + "。";
+  container.appendChild(panel);
+  if (!Object.keys(voteSummary).length) return;
+  const table = document.createElement("table");
+  table.className = "form-table";
+  Object.entries(voteSummary).forEach(([targetId, voterNames]) => {
+    const target = game.players.find((player) => player.playerId === targetId);
+    const row = document.createElement("tr");
+    const targetCell = document.createElement("td");
+    const votersCell = document.createElement("td");
+    targetCell.textContent = target ? target.nickname : targetId;
+    votersCell.textContent = voterNames.join(", ");
+    row.append(targetCell, votersCell);
+    table.appendChild(row);
+  });
+  container.appendChild(table);
+}
 function winnerLabel(value) {
   return {
     villagers: "村民",
@@ -525,6 +550,7 @@ function renderGame(game) {
     if (!voteSummary[targetId]) voteSummary[targetId] = [];
     voteSummary[targetId].push(voter.nickname);
   });
+  appendVoteObserverPanel(players, game, currentPlayer, currentPlayerDead, voteSummary, votedPlayerIds);
   let row;
   game.players.forEach((player) => {
     const option = document.createElement("option");
