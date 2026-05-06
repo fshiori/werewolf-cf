@@ -1511,6 +1511,16 @@ export default {
       return html(renderBbs(await listBbsTopics(env, digestOnly), { digestOnly }));
     }
 
+    const bbsTopicPageMatch = url.pathname.match(/^\/bbs\/(\d+)$/);
+    if (request.method === "GET" && bbsTopicPageMatch) {
+      const topicId = validateBbsTopicId(bbsTopicPageMatch[1]);
+      const topic = await getBbsTopicById(env, topicId);
+      if (!topic) {
+        return new Response("BBS topic not found", { status: 404 });
+      }
+      return html(renderBbsTopic(topic, await listBbsReplies(env, topicId)));
+    }
+
     if (request.method === "GET" && url.pathname === "/icons") {
       return html(renderIconCatalog());
     }
