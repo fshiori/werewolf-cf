@@ -1808,7 +1808,12 @@ export default {
     }
 
     if (request.method === "GET" && url.pathname === "/admin/bbs") {
-      return html(renderBbsAdmin(await listBbsTopics(env)));
+      const page = readPositivePage(url.searchParams.get("page"));
+      return html(renderBbsAdmin(await listBbsTopics(env, false, BBS_TOPIC_PAGE_SIZE, (page - 1) * BBS_TOPIC_PAGE_SIZE), {
+        page,
+        pageSize: BBS_TOPIC_PAGE_SIZE,
+        totalTopics: await countBbsTopics(env)
+      }));
     }
 
     if (request.method === "GET" && url.pathname === "/admin/rooms") {

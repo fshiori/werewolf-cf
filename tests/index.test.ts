@@ -1374,6 +1374,35 @@ describe("worker routes", () => {
     expect(body).toContain("BBS 管理密碼");
   });
 
+  it("renders BBS admin pagination", async () => {
+    const topics = Array.from({ length: 31 }, (_, index) => ({
+      id: index + 1,
+      name: `Author ${index + 1}`,
+      title: `Topic ${index + 1}`,
+      message: "Hello",
+      trip_hash: null,
+      reply_count: 0,
+      pinned: 0,
+      locked: 0,
+      digest: 0,
+      created_at: "2026-05-06 12:00:00",
+      updated_at: "2026-05-06 12:30:00"
+    }));
+    const response = await worker.fetch(
+      new Request("http://example.test/admin/bbs?page=2"),
+      envWithRooms([], {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, new Set(), new Set(), {}, topics)
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.text();
+    expect(body).toContain("bbs-pagination");
+    expect(body).toContain('<a href="/admin/bbs?page=1">[1]</a>');
+    expect(body).toContain("<strong>[2]</strong>");
+    expect(body).toContain('<a href="/admin/bbs?page=3">[3]</a>');
+    expect(body).toContain("Topic 16");
+    expect(body).not.toContain("Topic 1</a>");
+  });
+
   it("returns BBS topics", async () => {
     const response = await worker.fetch(
       new Request("http://example.test/api/bbs/topics"),

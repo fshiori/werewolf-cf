@@ -1157,7 +1157,8 @@ export function renderAdminIndex(): string {
   `));
 }
 
-export function renderBbsAdmin(topics: BbsTopicSummary[]): string {
+export function renderBbsAdmin(topics: BbsTopicSummary[], options: { page?: number; pageSize?: number; totalTopics?: number } = {}): string {
+  const pagination = paginationLinks(options.totalTopics, options.page, options.pageSize, "/admin/bbs");
   const rows = topics.length
     ? topics.map((topic) => {
       const topicPath = bbsTopicPath(topic.id);
@@ -1180,10 +1181,12 @@ export function renderBbsAdmin(topics: BbsTopicSummary[]): string {
         <tr><td><strong>　認證：</strong></td><td>主題狀態更新仍需在主題頁輸入 BBS 管理密碼。</td></tr>
         <tr><td><strong>　入口：</strong></td><td><a href="/bbs">全部主題</a>　<a href="/bbs?digest=1">精華主題</a></td></tr>
       </table>
+      ${pagination}
       <table class="form-table" border="1" cellspacing="1" bgcolor="#CCCCCC" style="width:100%;margin:12px 0 18px;">
         <thead><tr><td><strong>No.</strong></td><td><strong>標題</strong></td><td><strong>作者</strong></td><td><strong>狀態</strong></td><td><strong>回覆</strong></td><td><strong>更新</strong></td><td><strong>操作</strong></td></tr></thead>
         <tbody>${rows}</tbody>
       </table>
+      ${pagination}
     </fieldset>
   `));
 }

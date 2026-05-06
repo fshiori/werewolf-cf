@@ -902,7 +902,7 @@ describe("render", () => {
   });
 
   it("renders BBS admin index", () => {
-    const html = renderBbsAdmin([
+    const topics = [
       {
         id: 1,
         name: "Alice",
@@ -916,7 +916,8 @@ describe("render", () => {
         createdAt: "2026-05-06 12:00:00",
         updatedAt: "2026-05-06 12:30:00"
       }
-    ]);
+    ];
+    const html = renderBbsAdmin(topics);
 
     expect(html).toContain("討論管理");
     expect(html).toContain("&lt;Welcome&gt;");
@@ -925,6 +926,12 @@ describe("render", () => {
     expect(html).toContain("bbs-topic-digest");
     expect(html).toContain("/bbs/1#bbsModerationForm");
     expect(html).toContain("BBS 管理密碼");
+
+    const paginated = renderBbsAdmin(topics, { page: 2, pageSize: 15, totalTopics: 31 });
+    expect(paginated).toContain("bbs-pagination");
+    expect(paginated).toContain('<a href="/admin/bbs?page=1">[1]</a>');
+    expect(paginated).toContain("<strong>[2]</strong>");
+    expect(paginated).toContain('<a href="/admin/bbs?page=3">[3]</a>');
   });
 
   it("renders room records as a normal HTML page", () => {
