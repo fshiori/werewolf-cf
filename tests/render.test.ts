@@ -512,7 +512,7 @@ describe("render", () => {
           roomId: "room_abc",
           playerId: "player_a",
           eventType: "day_vote",
-          payload: { visibility: "private", nickname: "Alice", targetPlayerId: "player_b", targetNickname: "Bob", phase: "day", day: 2 },
+          payload: { visibility: "private", nickname: "Alice", targetPlayerId: "player_b", targetNickname: "Bob", phase: "day", day: 2, revoteCount: 1 },
           createdAt: "2026-05-06 12:02:00"
         },
         {
@@ -537,6 +537,10 @@ describe("render", () => {
     expect(html).toContain("第1日");
     expect(html).toContain("第 2 日 白天");
     expect(html).toContain("白天投票");
+    expect(html).toContain("投票紀錄");
+    expect(html).toContain("第 2 日 再投票 1");
+    expect(html).toContain("投票者");
+    expect(html).toContain("投票先");
     expect(html).toContain("第 2 日 夜晚");
     expect(html).toContain("襲擊");
     expect(html).toContain("對象名:Bob");

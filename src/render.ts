@@ -285,6 +285,56 @@ function eventSpeakerLabel(event: RoomEventSummary): string {
   return event.playerId ?? "系統";
 }
 
+function voteRoundLabel(value: Record<string, unknown>): string {
+  const revoteCount = typeof value.revoteCount === "number" ? value.revoteCount : 0;
+  return revoteCount > 0 ? `再投票 ${revoteCount}` : "第一回";
+}
+
+function renderTranscriptVoteTables(events: RoomEventSummary[]): string {
+  const voteEvents = events.filter((event) => event.eventType === "day_vote");
+  if (voteEvents.length === 0) {
+    return `<tr><td colspan="5" class="muted">尚無投票紀錄。</td></tr>`;
+  }
+
+  const groups = new Map<string, RoomEventSummary[]>();
+  for (const event of voteEvents) {
+    const value = recordValue(event.payload);
+    const day = typeof value.day === "number" ? value.day : 0;
+    const revoteCount = typeof value.revoteCount === "number" ? value.revoteCount : 0;
+    const key = `${String(day).padStart(4, "0")}:${String(revoteCount).padStart(4, "0")}`;
+    groups.set(key, [...(groups.get(key) ?? []), event]);
+  }
+
+  return Array.from(groups.entries()).sort(([left], [right]) => left.localeCompare(right)).map(([, groupEvents]) => {
+    const first = recordValue(groupEvents[0]?.payload);
+    const day = typeof first.day === "number" ? first.day : undefined;
+    const label = day ? `第 ${day} 日 ${voteRoundLabel(first)}` : voteRoundLabel(first);
+    const rows = [...groupEvents].sort((left, right) => left.createdAt.localeCompare(right.createdAt)).map((event) => {
+      const value = recordValue(event.payload);
+      const voter = typeof value.nickname === "string" && value.nickname ? value.nickname : event.playerId ?? "不明";
+      const target = typeof value.targetNickname === "string" && value.targetNickname
+        ? value.targetNickname
+        : typeof value.targetPlayerId === "string"
+          ? value.targetPlayerId
+          : "不明";
+      return `<tr>
+        <td>${escapeHtml(voter)}</td>
+        <td>→</td>
+        <td>${escapeHtml(target)}</td>
+        <td>${escapeHtml(event.createdAt)}</td>
+      </tr>`;
+    }).join("");
+    return `
+      <tr><td colspan="5"><strong>${escapeHtml(label)}</strong></td></tr>
+      <tr><td colspan="5">
+        <table class="form-table" style="margin:6px 0 12px 18px;">
+          <thead><tr><td><strong>投票者</strong></td><td></td><td><strong>投票先</strong></td><td><strong>時間</strong></td></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </td></tr>`;
+  }).join("");
+}
+
 function renderTranscriptEventSections(events: RoomEventSummary[]): string {
   if (events.length === 0) {
     return `<tr><td colspan="4" class="muted">尚無事件履歷。</td></tr>`;
@@ -486,6 +536,7 @@ export function renderRoomTranscript(roomId: string, records: GameRecordSummary[
     : `<tr><td colspan="4" class="muted">尚無對局結果。</td></tr>`;
 
   const eventRows = renderTranscriptEventSections(events);
+  const voteRows = renderTranscriptVoteTables(events);
 
   return page(`Room ${roomId} Log`, shell(`
     <fieldset>
@@ -499,6 +550,12 @@ export function renderRoomTranscript(roomId: string, records: GameRecordSummary[
       <legend><strong>對局結果</strong></legend>
       <table class="form-table" style="margin:12px 20px 18px;">
         <tbody>${recordSections}</tbody>
+      </table>
+    </fieldset>
+    <fieldset>
+      <legend><strong>投票紀錄</strong></legend>
+      <table class="form-table" style="margin:12px 20px 18px;">
+        <tbody>${voteRows}</tbody>
       </table>
     </fieldset>
     <fieldset>
