@@ -50,7 +50,7 @@ Reference files inspected:
 | Screenshot/visual parity against ref | No screenshot baseline or comparison artifact | Missing |
 | Complete PHP rule parity | Core roles/options implemented; focused tests now cover lover-only normal wins, one-lover non-wins, big-wolf win counting, child-fox fox wins, vote visibility, non-realtime silence acceleration, timed sudden-death warning windows, and timed sudden-death alarm handling, but no line-by-line rule parity manifest | Partial |
 | Federated room list (`list.php`) | `/list` renders a reference-style federated list from local D1 rooms and optional remote peers configured by KV `federated_servers`; failed peers are ignored | Partial |
-| Discussion board (`bbs.php`) | `/bbs` renders a reference-style topic list, topic detail view, post form, and reply form backed by D1 `bbs_topics`/`bbs_replies`; token-protected moderation can pin, lock, and mark digest topics | Partial |
+| Discussion board (`bbs.php`) | `/bbs` renders a reference-style topic list, topic detail view, post form, reply form, and topic moderation panel backed by D1 `bbs_topics`/`bbs_replies`; token-protected moderation can pin, lock, and mark digest topics | Partial |
 | Icon catalog/upload parity | `/icons` renders the reference default icon catalog; room join can send a vetted default `iconPath`; avatar upload exists | Partial |
 | Old logs (`old_log.php`) | `/room/:roomId/log` renders D1 game records, day/phase transcript sections, historical vote tables grouped by day/revote round, and reference-inspired location labels/colors for public/private/system/action rows; private entries are visible only after the room ends | Partial |
 | Trip identity parity | Trip register/claim/exclusion exists; `/trips` and `/api/trips/lookup` provide a public lookup UI/API for registered/excluded status, claimed players, and aggregate stats without exposing Trip hashes | Partial |
@@ -103,7 +103,7 @@ Reference files inspected:
 1. Continue improving `/room/:roomId/log` toward PHP-compatible viewer-specific transcript masking; day/phase grouping, historical vote tables, private talk/action transcript persistence, self-talk, and major per-location styling are now in place.
 2. Continue mapping lesser PHP rule branches into focused tests; vote table visibility, non-realtime silence acceleration, warning windows, and timed sudden-death actor handling are now pinned.
 3. Add a visual parity checklist with screenshots once a browser is available in the environment.
-4. Continue reducing remaining legacy menu/page gaps, including fuller BBS admin pages if PHP-era moderation screens are needed.
+4. Continue reducing remaining legacy menu/page gaps, including room-admin screens if PHP-era server management pages are needed.
 
 ## Current Verification Gaps
 

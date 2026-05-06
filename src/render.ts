@@ -1389,6 +1389,39 @@ export function renderBbsTopic(topic: BbsTopicSummary, replies: BbsReplySummary[
           location.href = "/bbs?view=${escapeHtml(String(topic.id))}";
         });
       </script>`;
+  const moderationPanel = `<table class="form-table">
+      <tr><td><label><strong>　管理密碼：</strong></label></td><td><input id="bbsAdminToken" type="password" maxlength="128" size="32"></td></tr>
+      <tr><td><strong>　項目：</strong></td><td>
+        <label><input id="bbsModeratePinned" type="checkbox"${topic.pinned ? " checked" : ""}> 置頂</label>
+        <label><input id="bbsModerateLocked" type="checkbox"${topic.locked ? " checked" : ""}> 鎖定</label>
+        <label><input id="bbsModerateDigest" type="checkbox"${topic.digest ? " checked" : ""}> 精華</label>
+      </td></tr>
+      <tr><td></td><td><button id="bbsModerateButton">更新</button> <span id="bbsModerateStatus" class="muted"></span></td></tr>
+    </table>
+    <script>
+      document.querySelector("#bbsAdminToken").value = localStorage.getItem("werewolf_cf_bbs_admin_token") || "";
+      document.querySelector("#bbsModerateButton").addEventListener("click", async () => {
+        const status = document.querySelector("#bbsModerateStatus");
+        const token = document.querySelector("#bbsAdminToken").value;
+        localStorage.setItem("werewolf_cf_bbs_admin_token", token);
+        status.textContent = "更新中";
+        const res = await fetch("/api/bbs/topics/${escapeHtml(String(topic.id))}/moderation", {
+          method: "PATCH",
+          headers: { "content-type": "application/json", "x-bbs-admin-token": token },
+          body: JSON.stringify({
+            pinned: document.querySelector("#bbsModeratePinned").checked,
+            locked: document.querySelector("#bbsModerateLocked").checked,
+            digest: document.querySelector("#bbsModerateDigest").checked
+          })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          status.textContent = data.error || "更新失敗";
+          return;
+        }
+        location.href = "/bbs?view=${escapeHtml(String(topic.id))}";
+      });
+    </script>`;
 
   return page("BBS Topic", shell(`
     <p><a href="/bbs">全部主題</a> <a href="#bbsReplyForm">回覆主題</a></p>
@@ -1410,6 +1443,10 @@ export function renderBbsTopic(topic: BbsTopicSummary, replies: BbsReplySummary[
     <fieldset id="bbsReplyForm">
       <legend><strong>回覆主題</strong></legend>
       ${replyForm}
+    </fieldset>
+    <fieldset id="bbsModerationForm">
+      <legend><strong>主題管理</strong></legend>
+      ${moderationPanel}
     </fieldset>
   `));
 }
