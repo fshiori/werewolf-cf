@@ -9,10 +9,27 @@ document.querySelector("#nickname").value = localStorage.getItem("werewolf_cf_ni
 document.querySelector("#trip").value = localStorage.getItem("werewolf_cf_trip") || "";
 document.querySelector("#defaultIcon").value = localStorage.getItem("werewolf_cf_default_icon") || "";
 document.querySelector("#soundNotify").checked = localStorage.getItem("werewolf_cf_sound") === "on";
+document.querySelector("#autoRefresh").checked = localStorage.getItem("werewolf_cf_auto_refresh") === "on";
 let ws;
+let autoRefreshTimer;
 function setRoomPhaseClass(phase) {
   document.body.classList.remove("room-phase-lobby", "room-phase-day", "room-phase-night", "room-phase-ended");
   document.body.classList.add("room-phase-" + phase);
+}
+function refreshAuxiliaryPanels() {
+  void refreshStats();
+  void refreshRecords();
+  void refreshPlayerRecords();
+  void refreshEvents();
+}
+function configureAutoRefresh() {
+  if (autoRefreshTimer) {
+    clearInterval(autoRefreshTimer);
+    autoRefreshTimer = undefined;
+  }
+  if (document.querySelector("#autoRefresh").checked) {
+    autoRefreshTimer = setInterval(refreshAuxiliaryPanels, 15000);
+  }
 }
 function append(line) {
   const div = document.createElement("div");
@@ -119,10 +136,14 @@ let role = "";
 let isLover = false;
 let isGm = false;
 let revealedRoles = {};
-void refreshStats();
-void refreshRecords();
-void refreshPlayerRecords();
-void refreshEvents();
+refreshAuxiliaryPanels();
+configureAutoRefresh();
+document.querySelector("#manualRefresh").addEventListener("click", refreshAuxiliaryPanels);
+document.querySelector("#autoRefresh").addEventListener("change", (event) => {
+  localStorage.setItem("werewolf_cf_auto_refresh", event.target.checked ? "on" : "off");
+  configureAutoRefresh();
+  if (event.target.checked) refreshAuxiliaryPanels();
+});
 document.querySelector("#connect").addEventListener("click", () => {
   const nickname = document.querySelector("#nickname").value;
   const trip = document.querySelector("#trip").value;
@@ -131,8 +152,7 @@ document.querySelector("#connect").addEventListener("click", () => {
   localStorage.setItem("werewolf_cf_nickname", nickname);
   localStorage.setItem("werewolf_cf_trip", trip);
   localStorage.setItem("werewolf_cf_default_icon", iconPath);
-  void refreshStats();
-  void refreshEvents();
+  refreshAuxiliaryPanels();
   ws = new WebSocket((location.protocol === "https:" ? "wss://" : "ws://") + location.host + "/ws/room/" + roomId);
   ws.addEventListener("open", () => ws.send(JSON.stringify({ type: "join", playerId: localStorage.getItem(playerKey), nickname, trip, wishRole, iconPath })));
   ws.addEventListener("message", (event) => {
@@ -189,10 +209,7 @@ document.querySelector("#connect").addEventListener("click", () => {
       latestGame = msg;
       renderGame(msg);
       if (msg.phase === "ended") {
-        void refreshStats();
-        void refreshRecords();
-        void refreshPlayerRecords();
-        void refreshEvents();
+        refreshAuxiliaryPanels();
       }
     } else if (msg.type === "role") {
       role = msg.role;
