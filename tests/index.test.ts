@@ -1690,6 +1690,34 @@ describe("worker routes", () => {
     expect(body).toContain("/api/bbs/topics/1/replies");
   });
 
+  it("renders BBS topic detail from legacy edit entry query", async () => {
+    const response = await worker.fetch(
+      new Request("http://example.test/bbs.php?go=edit&id=1"),
+      envWithRooms([], {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, new Set(), new Set(), {}, [
+        {
+          id: 1,
+          name: "Alice",
+          title: "Welcome",
+          message: "Hello",
+          trip_hash: null,
+          reply_count: 0,
+          pinned: 0,
+          locked: 0,
+          digest: 0,
+          created_at: "2026-05-06 12:00:00",
+          updated_at: "2026-05-06 12:30:00"
+        }
+      ])
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.text();
+    expect(body).toContain("Welcome");
+    expect(body).toContain("bbsModerationForm");
+    expect(body).toContain("bbsTopicEditButton");
+    expect(body).toContain("/api/bbs/topics/1/content");
+  });
+
   it("renders BBS topic detail page from path route", async () => {
     const response = await worker.fetch(
       new Request("http://example.test/bbs/1"),
