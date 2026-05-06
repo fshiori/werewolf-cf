@@ -194,6 +194,9 @@ describe("render", () => {
     expect(html).toContain('data-room-id="room_abc"');
     expect(html).toContain('<script src="/assets/room-client.js" defer></script>');
     expect(html).not.toContain("new WebSocket");
+    expect(html).toContain("room-phase-lobby");
+    expect(html).toContain("room-phase-night");
+    expect(html).toContain('document.body.classList.add("room-phase-lobby");');
     expect(html).toContain("進入房間");
     expect(html).toContain(".player-card { width: 148px; border: 1px solid #b0b0b0; background: #fafafa; table-layout: fixed; }");
     expect(html).toContain(".player-name { padding-left: 5px; max-width: 96px; overflow-wrap: anywhere; word-break: break-word; }");
@@ -284,6 +287,8 @@ describe("render", () => {
     expect(ROOM_CLIENT_SCRIPT).toContain("/api/players/\" + playerId + \"/records");
     expect(ROOM_CLIENT_SCRIPT).toContain("game.hostId !== currentPlayerId");
     expect(ROOM_CLIENT_SCRIPT).toContain("game.revoteCount");
+    expect(ROOM_CLIENT_SCRIPT).toContain("function setRoomPhaseClass(phase)");
+    expect(ROOM_CLIENT_SCRIPT).toContain('document.body.classList.add("room-phase-" + phase);');
     expect(ROOM_CLIENT_SCRIPT).toContain("currentPlayerAlive");
     expect(ROOM_CLIENT_SCRIPT).toContain("currentPlayerDead");
     expect(ROOM_CLIENT_SCRIPT).toContain("voteSummary");

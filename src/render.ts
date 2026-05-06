@@ -19,6 +19,26 @@ function page(title: string, body: string): string {
       color: #000000;
       font: 14px "Times New Roman", "PMingLiU", "Noto Serif TC", serif;
     }
+    body.room-phase-lobby {
+      background: seashell;
+      background-image: none;
+      color: black;
+    }
+    body.room-phase-day {
+      background: floralwhite;
+      background-image: none;
+      color: black;
+    }
+    body.room-phase-night {
+      background: #000030;
+      background-image: none;
+      color: snow;
+    }
+    body.room-phase-ended {
+      background: aliceblue;
+      background-image: none;
+      color: black;
+    }
     table { border-collapse: collapse; }
     input, button, select {
       font: inherit;
@@ -1519,6 +1539,7 @@ export function renderScriptInfo(): string {
 
 export function renderRoom(roomId: string): string {
   return page(`Room ${roomId}`, `
+    <script>document.body.classList.add("room-phase-lobby");</script>
     <table class="game-shell" data-room-id="${escapeHtml(roomId)}">
       <tr>
         <td>

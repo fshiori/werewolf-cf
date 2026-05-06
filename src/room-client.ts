@@ -10,6 +10,10 @@ document.querySelector("#trip").value = localStorage.getItem("werewolf_cf_trip")
 document.querySelector("#defaultIcon").value = localStorage.getItem("werewolf_cf_default_icon") || "";
 document.querySelector("#soundNotify").checked = localStorage.getItem("werewolf_cf_sound") === "on";
 let ws;
+function setRoomPhaseClass(phase) {
+  document.body.classList.remove("room-phase-lobby", "room-phase-day", "room-phase-night", "room-phase-ended");
+  document.body.classList.add("room-phase-" + phase);
+}
 function append(line) {
   const div = document.createElement("div");
   div.innerHTML = line;
@@ -401,6 +405,7 @@ function isWolfRole(value) {
   return value === "werewolf" || value === "big_wolf";
 }
 function renderGame(game) {
+  setRoomPhaseClass(game.phase);
   document.querySelector("#phase").textContent =
     game.phase + (game.day ? " " + game.day : "") + (game.revoteCount ? " 再投票 " + game.revoteCount : "");
   document.querySelector("#winner").textContent = winnerLabel(game.winner);
