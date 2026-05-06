@@ -928,7 +928,8 @@ describe("worker routes", () => {
       ["/icon_view.php", "頭像一覽"],
       ["/icon_upload.php", "上傳頭像"],
       ["/rule.php", "基本流程"],
-      ["/script_info.php", "Script Info"]
+      ["/script_info.php", "Script Info"],
+      ["/admin.php", "管理選單"]
     ] as const;
 
     for (const [path, expected] of cases) {

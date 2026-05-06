@@ -1803,7 +1803,7 @@ export default {
       }
     }
 
-    if (request.method === "GET" && url.pathname === "/admin") {
+    if (request.method === "GET" && (url.pathname === "/admin" || url.pathname === "/admin.php")) {
       return html(renderAdminIndex());
     }
 
