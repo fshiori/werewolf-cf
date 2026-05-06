@@ -74,6 +74,7 @@ const checks = [
   },
   { path: "/", kind: "html", expectedText: "汝等是人是狼？" },
   { path: "/leaderboard", kind: "html", expectedText: "戰績排行榜" },
+  { path: "/status", kind: "html", expectedText: ["伺服器狀態", "Binding 檢查"] },
   { path: "/rules", kind: "html", expectedText: "規則" },
   { path: "/protocol", kind: "html", expectedText: ["WebSocket 入口", "common_voice"] },
   { path: "/version", kind: "html", expectedText: "版本資訊" }

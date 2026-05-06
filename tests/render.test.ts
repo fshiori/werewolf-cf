@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { renderHome, renderLeaderboard, renderPlayerProfile, renderProtocol, renderRoom, renderRoomEvents, renderRoomRecords, renderRules, renderVersion } from "../src/render";
+import { renderHome, renderLeaderboard, renderPlayerProfile, renderProtocol, renderRoom, renderRoomEvents, renderRoomRecords, renderRules, renderStatus, renderVersion } from "../src/render";
 
 describe("render", () => {
   it("renders home with room rows and escaped names", () => {
@@ -65,6 +65,7 @@ describe("render", () => {
     expect(html).toContain("入村");
     expect(html).toContain("/leaderboard");
     expect(html).toContain("戰績排行榜");
+    expect(html).toContain("/status");
     expect(html).toContain("伺服器狀態");
     expect(html).toContain("/rules");
     expect(html).toContain("/protocol");
@@ -365,6 +366,21 @@ describe("render", () => {
     expect(html).toContain("/api/version");
     expect(html).toContain("目前功能");
     expect(html).toContain("docs/test-results/2026-05-03-core-game-loop.md");
+  });
+
+  it("renders status page with health checks and runtime config", () => {
+    const html = renderStatus({
+      ok: true,
+      checks: { worker: true, db: true, kv: true, durableObjects: true, r2: true },
+      homeAnnouncement: "<Runtime>",
+      maintenanceMode: false
+    });
+
+    expect(html).toContain("伺服器狀態");
+    expect(html).toContain("正常運作");
+    expect(html).toContain("Binding 檢查");
+    expect(html).toContain("durableObjects");
+    expect(html).toContain("&lt;Runtime&gt;");
   });
 
   it("renders websocket protocol page", () => {
