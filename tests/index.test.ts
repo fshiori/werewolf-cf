@@ -1662,8 +1662,13 @@ describe("worker routes", () => {
     const playerView = await worker.fetch(new Request("http://example.test/room/room_log/log?viewer=player&viewer_player_id=player_wolf&heaven_talk=on"), env);
     const playerBody = await playerView.text();
     expect(playerBody).toContain("玩家 player_wolf");
+    expect(playerBody).toContain("viewer=player&amp;viewer_player_id=player_id");
     expect(playerBody).toContain("howl");
     expect(playerBody).not.toContain("mutter");
+
+    const missingPlayerView = await worker.fetch(new Request("http://example.test/room/room_log/log?viewer=player"), env);
+    expect(missingPlayerView.status).toBe(400);
+    expect(await missingPlayerView.json()).toEqual({ error: "Player transcript viewer requires viewer_player_id" });
 
     const invalidPlayerView = await worker.fetch(new Request("http://example.test/room/room_log/log?viewer=player&viewer_player_id=bad"), env);
     expect(invalidPlayerView.status).toBe(400);

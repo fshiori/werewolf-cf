@@ -1579,11 +1579,15 @@ export default {
         const [records, events] = await Promise.all([listRoomRecords(env, roomId), listRoomEvents(env, roomId)]);
         const viewerModeParam = url.searchParams.get("viewer");
         const viewerPlayerIdParam = url.searchParams.get("viewer_player_id");
+        const viewerMode = viewerModeParam === "public" || viewerModeParam === "player" || viewerModeParam === "dead" || viewerModeParam === "gm" ? viewerModeParam : "legacy";
+        if (viewerMode === "player" && !viewerPlayerIdParam) {
+          throw new Error("Player transcript viewer requires viewer_player_id");
+        }
         return html(renderRoomTranscript(roomId, records, events, {
           heavenTalk: url.searchParams.get("heaven_talk") === "on",
           heavenOnly: url.searchParams.get("heaven_only") === "on",
           reverseLog: url.searchParams.get("reverse_log") === "on",
-          viewerMode: viewerModeParam === "public" || viewerModeParam === "player" || viewerModeParam === "dead" || viewerModeParam === "gm" ? viewerModeParam : "legacy",
+          viewerMode,
           viewerPlayerId: viewerPlayerIdParam ? validatePlayerId(viewerPlayerIdParam) : undefined
         }));
       } catch (error) {
