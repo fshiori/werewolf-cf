@@ -1498,6 +1498,62 @@ describe("worker routes", () => {
     expect(body).toContain("占卜師");
     expect(body).toContain("遊戲開始");
     expect(body).toContain("player_host");
+    expect(body).toContain("表示");
+    expect(body).toContain("heaven_talk=on");
+    expect(body).toContain("heaven_only=on");
+  });
+
+  it("applies old-log heaven filters on room transcript page", async () => {
+    const env = envWithRooms(
+      ["room_log"],
+      { "room_status:room_log": "ended" },
+      {},
+      {},
+      {
+        room_log: [
+          {
+            id: 3,
+            room_id: "room_log",
+            player_id: "player_wolf",
+            event_type: "wolf_chat",
+            payload_json: '{"visibility":"private","nickname":"Wolf","text":"howl","phase":"night","day":2}',
+            created_at: "2026-05-06 12:03:00"
+          },
+          {
+            id: 2,
+            room_id: "room_log",
+            player_id: "player_dead",
+            event_type: "dead_chat",
+            payload_json: '{"visibility":"private","nickname":"Dead","text":"heaven","phase":"night","day":2}',
+            created_at: "2026-05-06 12:02:00"
+          },
+          {
+            id: 1,
+            room_id: "room_log",
+            player_id: null,
+            event_type: "game_started",
+            payload_json: '{"day":1,"players":4}',
+            created_at: "2026-05-06 12:01:00"
+          }
+        ]
+      }
+    );
+
+    const normal = await worker.fetch(new Request("http://example.test/room/room_log/log"), env);
+    const normalBody = await normal.text();
+    expect(normalBody).toContain("howl");
+    expect(normalBody).not.toContain("內容:heaven");
+
+    const withHeaven = await worker.fetch(new Request("http://example.test/room/room_log/log?heaven_talk=on"), env);
+    const withHeavenBody = await withHeaven.text();
+    expect(withHeavenBody).toContain("howl");
+    expect(withHeavenBody).toContain("heaven");
+
+    const heavenOnly = await worker.fetch(new Request("http://example.test/room/room_log/log?heaven_only=on"), env);
+    const heavenOnlyBody = await heavenOnly.text();
+    expect(heavenOnlyBody).toContain("heaven");
+    expect(heavenOnlyBody).toContain("遊戲開始");
+    expect(heavenOnlyBody).not.toContain("內容:howl");
   });
 
   it("renders protocol page", async () => {

@@ -737,6 +737,80 @@ describe("render", () => {
     expect(html).toContain("對象名:Bob");
   });
 
+  it("filters room transcript heaven talk like old logs", () => {
+    const events = [
+      {
+        id: 1,
+        roomId: "room_abc",
+        playerId: "player_system",
+        eventType: "game_started",
+        payload: { day: 1, players: 4 },
+        createdAt: "2026-05-06 12:01:00"
+      },
+      {
+        id: 2,
+        roomId: "room_abc",
+        playerId: "player_dead",
+        eventType: "dead_chat",
+        payload: { visibility: "private", nickname: "Dead", text: "heaven", phase: "night", day: 2 },
+        createdAt: "2026-05-06 12:02:00"
+      },
+      {
+        id: 3,
+        roomId: "room_abc",
+        playerId: "player_wolf",
+        eventType: "wolf_chat",
+        payload: { visibility: "private", nickname: "Wolf", text: "howl", phase: "night", day: 2 },
+        createdAt: "2026-05-06 12:03:00"
+      }
+    ];
+
+    const normal = renderRoomTranscript("room_abc", [], events);
+    expect(normal).toContain("通常");
+    expect(normal).toContain("howl");
+    expect(normal).not.toContain("內容:heaven");
+
+    const withHeaven = renderRoomTranscript("room_abc", [], events, { heavenTalk: true });
+    expect(withHeaven).toContain("含靈界");
+    expect(withHeaven).toContain("heaven");
+    expect(withHeaven).toContain("howl");
+
+    const heavenOnly = renderRoomTranscript("room_abc", [], events, { heavenOnly: true });
+    expect(heavenOnly).toContain("逝者靈界");
+    expect(heavenOnly).toContain("遊戲開始");
+    expect(heavenOnly).toContain("heaven");
+    expect(heavenOnly).not.toContain("內容:howl");
+  });
+
+  it("renders room transcript reverse log controls", () => {
+    const html = renderRoomTranscript(
+      "room_abc",
+      [],
+      [
+        {
+          id: 1,
+          roomId: "room_abc",
+          playerId: "player_first",
+          eventType: "public_chat",
+          payload: { nickname: "First", text: "first", phase: "day", day: 1 },
+          createdAt: "2026-05-06 12:01:00"
+        },
+        {
+          id: 2,
+          roomId: "room_abc",
+          playerId: "player_second",
+          eventType: "public_chat",
+          payload: { nickname: "Second", text: "second", phase: "day", day: 1 },
+          createdAt: "2026-05-06 12:02:00"
+        }
+      ],
+      { reverseLog: true }
+    );
+
+    expect(html).toContain("reverse_log=on");
+    expect(html.indexOf("second")).toBeLessThan(html.indexOf("first"));
+  });
+
   it("renders implemented rules page", () => {
     const html = renderRules();
 

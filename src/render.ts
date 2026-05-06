@@ -447,6 +447,45 @@ function renderTranscriptEventSections(events: RoomEventSummary[]): string {
   `).join("");
 }
 
+export type RoomTranscriptViewOptions = {
+  heavenTalk?: boolean;
+  heavenOnly?: boolean;
+  reverseLog?: boolean;
+};
+
+const transcriptSystemEventTypes = new Set([
+  "objection",
+  "lobby_start_vote",
+  "lobby_kick_vote",
+  "player_left",
+  "player_kicked",
+  "room_created",
+  "game_started",
+  "game_ended",
+  "gm_advanced_phase",
+  "gm_ended_game",
+  "gm_set_alive",
+  "gm_set_role",
+  "gm_set_flag"
+]);
+
+function isHeavenTranscriptEvent(event: RoomEventSummary): boolean {
+  return event.eventType === "dead_chat";
+}
+
+function isSystemTranscriptEvent(event: RoomEventSummary): boolean {
+  return !event.playerId || transcriptSystemEventTypes.has(event.eventType);
+}
+
+function filterTranscriptEvents(events: RoomEventSummary[], options: RoomTranscriptViewOptions): RoomEventSummary[] {
+  const filtered = options.heavenOnly
+    ? events.filter((event) => isHeavenTranscriptEvent(event) || isSystemTranscriptEvent(event))
+    : options.heavenTalk
+      ? events
+      : events.filter((event) => !isHeavenTranscriptEvent(event));
+  return options.reverseLog ? [...filtered].reverse() : filtered;
+}
+
 function referenceAssetImg(path: string, alt: string): string {
   return `<img class="ref-icon" src="/assets/reference/${escapeHtml(path)}" alt="${escapeHtml(alt)}" title="${escapeHtml(alt)}">`;
 }
@@ -638,7 +677,8 @@ export function renderRoomEvents(roomId: string, events: RoomEventSummary[]): st
   `));
 }
 
-export function renderRoomTranscript(roomId: string, records: GameRecordSummary[], events: RoomEventSummary[]): string {
+export function renderRoomTranscript(roomId: string, records: GameRecordSummary[], events: RoomEventSummary[], options: RoomTranscriptViewOptions = {}): string {
+  const visibleEvents = filterTranscriptEvents(events, options);
   const recordSections = records.length
     ? records.map((record) => {
       const players = readRecordPlayers(record);
@@ -662,8 +702,11 @@ export function renderRoomTranscript(roomId: string, records: GameRecordSummary[
     }).join("")
     : `<tr><td colspan="4" class="muted">尚無對局結果。</td></tr>`;
 
-  const eventRows = renderTranscriptEventSections(events);
-  const voteRows = renderTranscriptVoteTables(events);
+  const eventRows = renderTranscriptEventSections(visibleEvents);
+  const voteRows = renderTranscriptVoteTables(visibleEvents);
+  const modeLabel = options.heavenOnly ? "逝者靈界" : options.heavenTalk ? "含靈界" : "通常";
+  const reverseSuffix = options.reverseLog ? "&reverse_log=on" : "";
+  const heavenParam = options.heavenTalk ? "&heaven_talk=on" : options.heavenOnly ? "&heaven_only=on" : "";
 
   return page(`Room ${roomId} Log`, shell(`
     <fieldset>
@@ -671,6 +714,7 @@ export function renderRoomTranscript(roomId: string, records: GameRecordSummary[
       <table class="form-table">
         <tr><td><strong>　村子：</strong></td><td><a href="/room/${escapeHtml(roomId)}">${escapeHtml(roomId)}</a></td></tr>
         <tr><td><strong>　索引：</strong></td><td><a href="/room/${escapeHtml(roomId)}/records">對局紀錄</a>　<a href="/room/${escapeHtml(roomId)}/events">事件履歷</a></td></tr>
+        <tr><td><strong>　表示：</strong></td><td>${escapeHtml(modeLabel)}　<a href="/room/${escapeHtml(roomId)}/log">通常</a>　<a href="/room/${escapeHtml(roomId)}/log?heaven_talk=on${reverseSuffix}">靈</a>　<a href="/room/${escapeHtml(roomId)}/log?heaven_only=on${reverseSuffix}">逝</a>　<a href="/room/${escapeHtml(roomId)}/log?reverse_log=on${heavenParam}">逆</a>　<a href="/room/${escapeHtml(roomId)}/log?reverse_log=on&heaven_talk=on">逆&amp;靈</a>　<a href="/room/${escapeHtml(roomId)}/log?reverse_log=on&heaven_only=on">逆&amp;逝</a></td></tr>
       </table>
     </fieldset>
     <fieldset>
