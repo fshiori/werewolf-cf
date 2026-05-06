@@ -103,7 +103,7 @@ Reference metadata from `setting.php`:
 
 The current port already supports user-uploaded avatars in R2 with a larger 512 KiB limit. Do not reduce the upload limit just to match the legacy PHP limit; treat the 3092-byte limit as historical context for the default icon picker.
 
-The `/icons` page renders this default catalog from `/assets/reference/user_icon/*.gif`; selecting one during room join is still a separate implementation step.
+The `/icons` page renders this default catalog from `/assets/reference/user_icon/*.gif`; room join can send a vetted `iconPath` from this catalog for the live player-card fallback.
 
 ## Deferred Assets
 
@@ -116,4 +116,4 @@ The reference uses Flash for notification sounds. A Cloudflare/browser port shou
 
 ## Next Implementation Step
 
-Use the R2-backed `GET /assets/reference/:path` endpoint to wire more copied priority assets into rendered pages, starting with remaining live-room markers and join-time default icon selection. Top title/background, room-list status/options, rules role rows, revealed live-room role icons, dead-player grave fallback, and game-record victory rows already emit reference asset URLs with text fallback.
+Use the R2-backed `GET /assets/reference/:path` endpoint to wire any remaining copied priority assets into rendered pages. Top title/background, room-list status/options, rules role rows, selected default icons, revealed live-room role icons, dead-player grave fallback, and game-record victory rows already emit reference asset URLs with text fallback.

@@ -5,6 +5,7 @@ import {
   parseClientMessage,
   validateChatText,
   validateGameWinner,
+  validateIconPath,
   validateLastWordsText,
   validateNickname,
   validateOptionalLastWordsText,
@@ -62,6 +63,15 @@ describe("validation", () => {
     expect(() => validateWishRole("cat")).toThrow("Invalid wished role");
   });
 
+  it("validates default icon paths", () => {
+    expect(validateIconPath("user_icon/001.gif")).toBe("user_icon/001.gif");
+    expect(validateIconPath("user_icon/010.gif")).toBe("user_icon/010.gif");
+    expect(validateIconPath("")).toBeUndefined();
+    expect(() => validateIconPath("img/grave.gif")).toThrow("Invalid icon path");
+    expect(() => validateIconPath("user_icon/011.gif")).toThrow("Invalid icon path");
+    expect(() => validateIconPath("../user_icon/001.gif")).toThrow("Invalid icon path");
+  });
+
   it("validates player roles", () => {
     expect(validatePlayerRole("cat")).toBe("cat");
     expect(validatePlayerRole("big_wolf")).toBe("big_wolf");
@@ -106,12 +116,13 @@ describe("validation", () => {
 
   it("parses only allowed client messages", () => {
     expect(parseClientMessage('{"type":"chat","text":"hi"}')).toEqual({ type: "chat", text: "hi" });
-    expect(parseClientMessage('{"type":"join","playerId":"player_1","nickname":"Alice","trip":"ab12CD","wishRole":"seer"}')).toEqual({
+    expect(parseClientMessage('{"type":"join","playerId":"player_1","nickname":"Alice","trip":"ab12CD","wishRole":"seer","iconPath":"user_icon/001.gif"}')).toEqual({
       type: "join",
       playerId: "player_1",
       nickname: "Alice",
       trip: "ab12CD",
-      wishRole: "seer"
+      wishRole: "seer",
+      iconPath: "user_icon/001.gif"
     });
     expect(parseClientMessage('{"type":"wolf_chat","text":"secret"}')).toEqual({ type: "wolf_chat", text: "secret" });
     expect(parseClientMessage('{"type":"fox_chat","text":"secret"}')).toEqual({ type: "fox_chat", text: "secret" });

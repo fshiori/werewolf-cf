@@ -131,7 +131,7 @@ Every frame is a JSON object with a `type` string. The first client frame must b
 
 Client messages:
 
-- `join`: `{ "type": "join", "playerId": "player_...", "nickname": "...", "trip": "Abc123", "wishRole": "seer" }`. `trip` is required only for Trip-limited rooms. `wishRole` is used only when wished roles are enabled.
+- `join`: `{ "type": "join", "playerId": "player_...", "nickname": "...", "trip": "Abc123", "wishRole": "seer", "iconPath": "user_icon/001.gif" }`. `trip` is required only for Trip-limited rooms. `wishRole` is used only when wished roles are enabled. `iconPath` is optional and limited to the reference default icon catalog.
 - `chat`: public chat, `{ "type": "chat", "text": "..." }`. During the game, only living players and GM may use it.
 - `wolf_chat`, `fox_chat`, `common_chat`, `lovers_chat`: private night channels for living members of the matching side or pair.
 - `dead_chat`: private dead-player chat during an active game.

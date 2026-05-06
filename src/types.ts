@@ -77,6 +77,7 @@ export interface GamePlayer {
   nickname: string;
   role: PlayerRole;
   alive: boolean;
+  iconPath?: string;
   tripHash?: string;
   wishRole?: PlayerRole;
   authority?: boolean;
@@ -88,6 +89,7 @@ export interface PublicGamePlayer {
   playerId: string;
   nickname: string;
   alive: boolean;
+  iconPath?: string;
 }
 
 export interface PlayerStatUpdate {
@@ -168,6 +170,7 @@ export type JoinClientMessage = {
   nickname: string;
   trip?: string;
   wishRole?: PlayerRole;
+  iconPath?: string;
 };
 
 export type ChatClientMessage = {

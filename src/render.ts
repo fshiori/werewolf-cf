@@ -977,7 +977,7 @@ export function renderProtocol(): string {
     <fieldset>
       <legend><strong>Client Messages</strong></legend>
       <table class="form-table">
-        <tr><td><strong>　join：</strong></td><td><code>{ type, playerId, nickname, trip, wishRole }</code></td></tr>
+        <tr><td><strong>　join：</strong></td><td><code>{ type, playerId, nickname, trip, wishRole, iconPath }</code></td></tr>
         <tr><td><strong>　chat：</strong></td><td>公開發言。遊戲中限生存玩家與 GM 使用。</td></tr>
         <tr><td><strong>　wolf_chat / fox_chat / common_chat / lovers_chat：</strong></td><td>夜晚私有頻道，限對應陣營或關係的生存玩家。</td></tr>
         <tr><td><strong>　dead_chat：</strong></td><td>遊戲進行中死亡玩家的靈界頻道。</td></tr>
@@ -1105,6 +1105,25 @@ export function renderRoom(roomId: string): string {
             <tr>
               <td>頭像</td>
               <td><input id="avatarFile" type="file" accept="image/png,image/jpeg,image/gif,image/webp" size="28"> <button id="uploadAvatar">頭像</button> <button id="removeAvatar">刪頭像</button> <small class="muted">PNG/JPEG/GIF/WebP 512KiB以下</small></td>
+            </tr>
+            <tr>
+              <td>預設頭像</td>
+              <td>
+                <select id="defaultIcon">
+                  <option value="">名稱首字</option>
+                  <option value="user_icon/001.gif">001 明灰</option>
+                  <option value="user_icon/002.gif">002 暗灰</option>
+                  <option value="user_icon/003.gif">003 黃色</option>
+                  <option value="user_icon/004.gif">004 橙色</option>
+                  <option value="user_icon/005.gif">005 紅色</option>
+                  <option value="user_icon/006.gif">006 水色</option>
+                  <option value="user_icon/007.gif">007 藍色</option>
+                  <option value="user_icon/008.gif">008 綠色</option>
+                  <option value="user_icon/009.gif">009 紫色</option>
+                  <option value="user_icon/010.gif">010 櫻色</option>
+                </select>
+                <small><a href="/icons">頭像一覽</a></small>
+              </td>
             </tr>
           </table>
         </td>

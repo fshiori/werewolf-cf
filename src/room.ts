@@ -153,7 +153,7 @@ export class RoomDurableObject {
         }
         const game = upsertLobbyPlayer(
           loadedGame,
-          { playerId, nickname, tripHash, wishRole: roomOptions.wishRole ? message.wishRole : undefined },
+          { playerId, nickname, tripHash, wishRole: roomOptions.wishRole ? message.wishRole : undefined, iconPath: message.iconPath },
           maxPlayers
         );
         this.sockets.set(socket, { playerId, nickname, tripHash });

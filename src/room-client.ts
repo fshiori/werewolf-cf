@@ -7,6 +7,7 @@ if (!localStorage.getItem(playerKey)) {
 }
 document.querySelector("#nickname").value = localStorage.getItem("werewolf_cf_nickname") || "";
 document.querySelector("#trip").value = localStorage.getItem("werewolf_cf_trip") || "";
+document.querySelector("#defaultIcon").value = localStorage.getItem("werewolf_cf_default_icon") || "";
 let ws;
 function append(line) {
   const div = document.createElement("div");
@@ -104,12 +105,14 @@ document.querySelector("#connect").addEventListener("click", () => {
   const nickname = document.querySelector("#nickname").value;
   const trip = document.querySelector("#trip").value;
   const wishRole = document.querySelector("#wishRole").value;
+  const iconPath = document.querySelector("#defaultIcon").value;
   localStorage.setItem("werewolf_cf_nickname", nickname);
   localStorage.setItem("werewolf_cf_trip", trip);
+  localStorage.setItem("werewolf_cf_default_icon", iconPath);
   void refreshStats();
   void refreshEvents();
   ws = new WebSocket((location.protocol === "https:" ? "wss://" : "ws://") + location.host + "/ws/room/" + roomId);
-  ws.addEventListener("open", () => ws.send(JSON.stringify({ type: "join", playerId: localStorage.getItem(playerKey), nickname, trip, wishRole })));
+  ws.addEventListener("open", () => ws.send(JSON.stringify({ type: "join", playerId: localStorage.getItem(playerKey), nickname, trip, wishRole, iconPath })));
   ws.addEventListener("message", (event) => {
     const msg = JSON.parse(event.data);
     if (msg.type === "joined") {
@@ -428,7 +431,11 @@ function renderGame(game) {
     avatar.addEventListener("error", () => {
       avatar.remove();
       if (player.alive) {
-        iconCell.textContent = initial;
+        if (player.iconPath) {
+          iconCell.appendChild(referenceImage(player.iconPath, player.nickname));
+        } else {
+          iconCell.textContent = initial;
+        }
       } else {
         iconCell.appendChild(referenceImage("img/grave.gif", "死亡"));
       }

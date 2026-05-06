@@ -25,6 +25,7 @@ import {
   loversForPlayer,
   mediumReadingForPlayer,
   playerStatUpdates,
+  publicPlayers,
   removeLobbyPlayer,
   setLastWords,
   startGame,
@@ -1268,6 +1269,22 @@ describe("game", () => {
     expect(() => upsertLobbyPlayer(renamed, { playerId: "player_2", nickname: "Bob", tripHash: "trip_a" })).toThrow(
       "Trip already joined this room"
     );
+  });
+
+  it("stores and publishes default icon choices for lobby players", () => {
+    const waiting = upsertLobbyPlayer(createLobbyState("room_abc"), {
+      playerId: "player_1",
+      nickname: "Alice",
+      iconPath: "user_icon/001.gif"
+    });
+    const renamed = upsertLobbyPlayer(waiting, {
+      playerId: "player_1",
+      nickname: "Alice 2",
+      iconPath: "user_icon/002.gif"
+    });
+
+    expect(renamed.players[0]).toMatchObject({ playerId: "player_1", nickname: "Alice 2", iconPath: "user_icon/002.gif" });
+    expect(publicPlayers(renamed.players)).toEqual([{ playerId: "player_1", nickname: "Alice 2", alive: true, iconPath: "user_icon/002.gif" }]);
   });
 
   it("removes lobby players and reassigns host", () => {
