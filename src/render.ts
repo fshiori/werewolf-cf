@@ -240,6 +240,31 @@ function roleLabel(value: unknown): string {
   return typeof value === "string" && value in labels ? labels[value as PlayerRole] : typeof value === "string" ? value : "不明";
 }
 
+function roleIconPath(value: unknown): string | undefined {
+  const paths: Record<PlayerRole, string> = {
+    villager: "img/role_human.gif",
+    werewolf: "img/role_wolf.gif",
+    big_wolf: "img/role_heavywolf.gif",
+    seer: "img/role_mage.gif",
+    medium: "img/role_necromancer.gif",
+    madman: "img/role_mad.gif",
+    guard: "img/role_guard.gif",
+    common: "img/role_common.gif",
+    fox: "img/role_fox.gif",
+    poison: "img/role_poison.gif",
+    betrayer: "img/role_cult.gif",
+    child_fox: "img/role_fosi.gif",
+    cat: "img/role_cat.gif"
+  };
+  return typeof value === "string" && value in paths ? paths[value as PlayerRole] : undefined;
+}
+
+function roleLabelHtml(value: unknown): string {
+  const label = roleLabel(value);
+  const iconPath = roleIconPath(value);
+  return `${iconPath ? referenceAssetImg(iconPath, label) : ""}${escapeHtml(label)}`;
+}
+
 function winnerLabel(value: unknown): string {
   if (value === "villagers") {
     return "村民";
@@ -878,7 +903,7 @@ export function renderRoomTranscript(roomId: string, records: GameRecordSummary[
       const playerRows = players.length
         ? players.map((player) => `<tr>
             <td>${escapeHtml(playerRecordLabel(player))}</td>
-            <td>${escapeHtml(roleLabel(player.role))}</td>
+            <td>${roleLabelHtml(player.role)}</td>
             <td>${player.alive === false ? `<font color="#990000">死亡</font>` : "生存"}</td>
           </tr>`).join("")
         : `<tr><td colspan="3" class="muted">未保存玩家明細。</td></tr>`;
