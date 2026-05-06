@@ -2093,7 +2093,23 @@ export function renderTripRegistration(): string {
   `));
 }
 
-export function renderBbs(topics: BbsTopicSummary[], options: { digestOnly?: boolean } = {}): string {
+function paginationLinks(totalItems: number | undefined, page: number | undefined, pageSize: number | undefined, basePath: string): string {
+  if (!totalItems || !pageSize || totalItems <= pageSize) {
+    return "";
+  }
+  const currentPage = Math.max(1, page ?? 1);
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  const pageHref = (targetPage: number) => `${basePath}${basePath.includes("?") ? "&" : "?"}page=${targetPage}`;
+  const links = Array.from({ length: totalPages }, (_, index) => {
+    const targetPage = index + 1;
+    return targetPage === currentPage
+      ? `<strong>[${escapeHtml(String(targetPage))}]</strong>`
+      : `<a href="${pageHref(targetPage)}">[${escapeHtml(String(targetPage))}]</a>`;
+  });
+  return `<center class="bbs-pagination">${links.join(" ")}</center>`;
+}
+
+export function renderBbs(topics: BbsTopicSummary[], options: { digestOnly?: boolean; page?: number; pageSize?: number; totalTopics?: number } = {}): string {
   const topicRows = topics.length
     ? topics.map((topic) => {
       const legacyTitle = `${topic.pinned ? "[置頂] " : ""}${topic.locked ? "[鎖定] " : ""}${topic.title}${topic.digest ? " (精華)" : ""}`;
@@ -2108,11 +2124,13 @@ export function renderBbs(topics: BbsTopicSummary[], options: { digestOnly?: boo
     }).join("")
     : `<tr><td colspan="5" class="muted">${options.digestOnly ? "尚無精華主題。" : "尚無主題。"}</td></tr>`;
   const listTitle = options.digestOnly ? "精華主題列表" : "主題列表";
+  const pagination = paginationLinks(options.totalTopics, options.page, options.pageSize, options.digestOnly ? "/bbs?digest=1" : "/bbs");
 
   return page("BBS", shell(`
     <p><a href="#bbsPostForm">發表主題</a> <a href="/bbs">全部主題</a> <a href="/bbs?digest=1">精華主題</a></p>
     <fieldset>
       <legend><strong>${listTitle}</strong></legend>
+      ${pagination}
       <div style="line-height:135%;margin:20px 20px 30px;">
         <strong>
           <table class="form-table" style="width:100%">
@@ -2121,6 +2139,7 @@ export function renderBbs(topics: BbsTopicSummary[], options: { digestOnly?: boo
           </table>
         </strong>
       </div>
+      ${pagination}
     </fieldset>
     <fieldset id="bbsPostForm">
       <legend><strong>發表主題</strong></legend>
@@ -2181,8 +2200,9 @@ function bbsStatusMarks(topic: Pick<BbsTopicSummary, "pinned" | "locked" | "dige
   return marks.length ? marks.join(" ") : `<span class="bbs-status-mark">一般</span>`;
 }
 
-export function renderBbsTopic(topic: BbsTopicSummary, replies: BbsReplySummary[]): string {
+export function renderBbsTopic(topic: BbsTopicSummary, replies: BbsReplySummary[], options: { page?: number; pageSize?: number; totalReplies?: number } = {}): string {
   const topicPath = bbsTopicPath(topic.id);
+  const pagination = paginationLinks(options.totalReplies, options.page, options.pageSize, topicPath);
   const replyRows = replies.length
     ? replies.map((reply, index) => `<tr>
         <td valign="top" align="right"><strong>${escapeHtml(String(index + 1))}</strong></td>
@@ -2362,9 +2382,11 @@ export function renderBbsTopic(topic: BbsTopicSummary, replies: BbsReplySummary[
     </fieldset>
     <fieldset>
       <legend><strong>回覆列表</strong></legend>
+      ${pagination}
       <table class="form-table" style="margin:12px 20px 18px;">
         <tbody>${replyRows}</tbody>
       </table>
+      ${pagination}
     </fieldset>
     <fieldset id="bbsReplyForm">
       <legend><strong>回覆主題</strong></legend>

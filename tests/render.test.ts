@@ -737,6 +737,28 @@ describe("render", () => {
     expect(html).toContain("/bbs?digest=1");
   });
 
+  it("renders BBS topic pagination links", () => {
+    const topics = Array.from({ length: 15 }, (_, index) => ({
+      id: index + 1,
+      name: "Alice",
+      title: `Topic ${index + 1}`,
+      message: "Hello",
+      trip: false,
+      replyCount: 0,
+      pinned: false,
+      locked: false,
+      digest: false,
+      createdAt: "2026-05-06 12:00:00",
+      updatedAt: "2026-05-06 12:00:00"
+    }));
+    const html = renderBbs(topics, { page: 2, pageSize: 15, totalTopics: 31 });
+
+    expect(html).toContain("bbs-pagination");
+    expect(html).toContain('<a href="/bbs?page=1">[1]</a>');
+    expect(html).toContain("<strong>[2]</strong>");
+    expect(html).toContain('<a href="/bbs?page=3">[3]</a>');
+  });
+
   it("renders BBS topic detail with replies", () => {
     const html = renderBbsTopic(
       {
@@ -791,6 +813,30 @@ describe("render", () => {
     expect(html).toContain("bbsDeleteButton");
     expect(html).toContain('method: "DELETE"');
     expect(html).toContain("刪除此主題與所有回覆？");
+  });
+
+  it("renders BBS reply pagination links", () => {
+    const html = renderBbsTopic(
+      {
+        id: 1,
+        name: "Alice",
+        title: "Welcome",
+        message: "Topic body",
+        trip: false,
+        replyCount: 11,
+        pinned: false,
+        locked: false,
+        digest: false,
+        createdAt: "2026-05-06 12:00:00",
+        updatedAt: "2026-05-06 12:10:00"
+      },
+      [],
+      { page: 2, pageSize: 10, totalReplies: 11 }
+    );
+
+    expect(html).toContain("bbs-pagination");
+    expect(html).toContain('<a href="/bbs/1?page=1">[1]</a>');
+    expect(html).toContain("<strong>[2]</strong>");
   });
 
   it("renders BBS admin index", () => {
