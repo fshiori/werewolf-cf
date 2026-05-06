@@ -1,4 +1,4 @@
-import type { BbsReplySummary, BbsTopicSummary, GameRecordSummary, LeaderboardEntry, PlayerRole, RoomEventSummary, RoomSummary } from "./types";
+import type { BbsReplySummary, BbsTopicSummary, FederatedRoomSummary, GameRecordSummary, LeaderboardEntry, PlayerRole, RoomEventSummary, RoomSummary } from "./types";
 import { escapeHtml } from "./validation";
 
 function page(title: string, body: string): string {
@@ -390,21 +390,30 @@ function federatedStatusLabel(status: RoomSummary["status"]): string {
   return "募集中";
 }
 
-export function renderFederatedList(rooms: RoomSummary[]): string {
+function federatedRoomValue(room: RoomSummary | FederatedRoomSummary): FederatedRoomSummary {
+  if ("roomUrl" in room) {
+    return room;
+  }
+  return { ...room, serverName: "本伺服器", serverUrl: "/", roomUrl: `/room/${room.id}`, local: true };
+}
+
+export function renderFederatedList(rooms: Array<RoomSummary | FederatedRoomSummary>): string {
   const rows = rooms.length
-    ? rooms.map((room) => {
+    ? rooms.map((value) => {
+      const room = federatedRoomValue(value);
       const label = federatedStatusLabel(room.status);
       const boldStart = room.status === "lobby" ? "<b>" : "";
       const boldEnd = room.status === "lobby" ? "</b>" : "";
       return `<tr>
-        <td width="70">${boldStart}<a href="/room/${escapeHtml(room.id)}"><font style="font-size : 15px;">${escapeHtml(label)}</font></a>${boldEnd}</td>
-        <td width="120">${boldStart}<a href="/room/${escapeHtml(room.id)}"><font style="font-size : 15px;">[${escapeHtml(room.id)}]</font></a>${boldEnd}</td>
-        <td width="250">${boldStart}<a href="/room/${escapeHtml(room.id)}"><font style="font-size : 15px;">${escapeHtml(room.name)}村</font></a>${boldEnd}</td>
-        <td>${boldStart}<a href="/room/${escapeHtml(room.id)}"><font style="font-size : 12px;">${escapeHtml(room.comment)}</font></a>${boldEnd}</td>
-        <td width="80">${boldStart}<a href="/room/${escapeHtml(room.id)}"><font style="font-size : 13px;">人數${escapeHtml(String(room.maxPlayers))}</font></a>${boldEnd}</td>
+        <td width="70">${boldStart}<a href="${escapeHtml(room.roomUrl)}"><font style="font-size : 15px;">${escapeHtml(label)}</font></a>${boldEnd}</td>
+        <td width="120">${boldStart}<a href="${escapeHtml(room.roomUrl)}"><font style="font-size : 15px;">[${escapeHtml(room.id)}]</font></a>${boldEnd}</td>
+        <td width="250">${boldStart}<a href="${escapeHtml(room.roomUrl)}"><font style="font-size : 15px;">${escapeHtml(room.name)}村</font></a>${boldEnd}</td>
+        <td>${boldStart}<a href="${escapeHtml(room.roomUrl)}"><font style="font-size : 12px;">${escapeHtml(room.comment)}</font></a>${boldEnd}</td>
+        <td width="80">${boldStart}<a href="${escapeHtml(room.roomUrl)}"><font style="font-size : 13px;">人數${escapeHtml(String(room.maxPlayers))}</font></a>${boldEnd}</td>
+        <td width="120"><a href="${escapeHtml(room.serverUrl)}">${escapeHtml(room.serverName)}${room.local ? " / 本伺服器" : ""}</a></td>
       </tr>`;
     }).join("")
-    : `<tr><td colspan="5" class="muted">目前沒有可列出的村子。</td></tr>`;
+    : `<tr><td colspan="6" class="muted">目前沒有可列出的村子。</td></tr>`;
 
   return page("Federated List", shell(`
     <fieldset>
@@ -412,8 +421,8 @@ export function renderFederatedList(rooms: RoomSummary[]): string {
       <div style="line-height:135%;margin:20px 20px 30px;">
         <strong>
           <table style="width: 100%">
-            <tr><td>服務中</td><td colspan="4"><a href="/">本伺服器 / Cloudflare Workers</a></td></tr>
-            <tr><td colspan="5"><hr></td></tr>
+            <tr><td>服務中</td><td colspan="5"><a href="/">本伺服器 / Cloudflare Workers</a></td></tr>
+            <tr><td colspan="6"><hr></td></tr>
             ${rows}
           </table>
         </strong>

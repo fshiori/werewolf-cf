@@ -416,6 +416,52 @@ describe("render", () => {
     expect(html).toContain("人數22");
   });
 
+  it("renders remote federated room links", () => {
+    const html = renderFederatedList([
+      {
+        id: "remote_room",
+        name: "Remote",
+        comment: "Away",
+        maxPlayers: 16,
+        status: "playing",
+        createdAt: "2026-05-06 12:00:00",
+        options: {
+          poison: false,
+          bigWolf: false,
+          authority: false,
+          decider: false,
+          lovers: false,
+          betrayer: false,
+          childFox: false,
+          twoFoxes: false,
+          cat: false,
+          lastWords: false,
+          openVote: false,
+          commonTalkVisible: false,
+          deadRoleVisible: false,
+          wishRole: false,
+          dummyBoy: false,
+          customDummy: false,
+          dummyName: "替身君",
+          dummyLastWords: "",
+          realTime: false,
+          dayMinutes: 3,
+          nightMinutes: 1.5,
+          selfVote: false,
+          voteStatus: false
+        },
+        serverName: "遠端伺服器",
+        serverUrl: "https://remote.example",
+        roomUrl: "https://remote.example/room/remote_room",
+        local: false
+      }
+    ]);
+
+    expect(html).toContain("遠端伺服器");
+    expect(html).toContain("https://remote.example/room/remote_room");
+    expect(html).toContain("Remote村");
+  });
+
   it("renders BBS as a normal HTML page", () => {
     const html = renderBbs([
       {

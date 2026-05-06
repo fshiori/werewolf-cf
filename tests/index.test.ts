@@ -860,6 +860,50 @@ describe("worker routes", () => {
     expect(body).toContain("人數22");
   });
 
+  it("renders federated list page with configured remote rooms", async () => {
+    const originalFetch = globalThis.fetch;
+    const requestedUrls: string[] = [];
+    globalThis.fetch = (async (input: RequestInfo | URL) => {
+      requestedUrls.push(String(input));
+      return new Response(JSON.stringify({
+        rooms: [
+          {
+            id: "remote_room",
+            name: "Remote",
+            comment: "Away",
+            maxPlayers: 16,
+            status: "playing",
+            createdAt: "2026-05-06 12:00:00"
+          }
+        ]
+      }), { headers: { "content-type": "application/json" } });
+    }) as typeof fetch;
+    try {
+      const response = await worker.fetch(
+        new Request("http://example.test/list"),
+        envWithRooms(
+          ["room_list"],
+          { federated_servers: JSON.stringify([{ name: "遠端伺服器", url: "https://remote.example/base" }]) },
+          {},
+          {},
+          {},
+          { room_list: "real_time:3:1" }
+        )
+      );
+
+      expect(response.status).toBe(200);
+      const body = await response.text();
+      expect(requestedUrls).toEqual(["https://remote.example/api/rooms"]);
+      expect(body).toContain("[room_list]");
+      expect(body).toContain("[remote_room]");
+      expect(body).toContain("Remote村");
+      expect(body).toContain("遠端伺服器");
+      expect(body).toContain("https://remote.example/room/remote_room");
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
   it("renders BBS topic list page", async () => {
     const response = await worker.fetch(
       new Request("http://example.test/bbs"),

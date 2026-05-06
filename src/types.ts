@@ -10,6 +10,13 @@ export interface RoomSummary {
   options: RoomOptions;
 }
 
+export interface FederatedRoomSummary extends RoomSummary {
+  serverName: string;
+  serverUrl: string;
+  roomUrl: string;
+  local: boolean;
+}
+
 export interface RoomOptions {
   poison: boolean;
   bigWolf: boolean;

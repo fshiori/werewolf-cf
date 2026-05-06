@@ -3,7 +3,7 @@ import { RoomDurableObject } from "./room";
 import { ROOM_CLIENT_SCRIPT } from "./room-client";
 import { DEFAULT_DAY_MINUTES, DEFAULT_NIGHT_MINUTES } from "./game";
 import { registeredTripHash, tripHashForRoom } from "./identity";
-import type { BbsReplySummary, BbsTopicSummary, GamePlayer, GameRecordSummary, GameWinner, LeaderboardEntry, PlayerGameRecordSummary, PlayerStats, RoomEventSummary, RoomOptions, RoomSummary } from "./types";
+import type { BbsReplySummary, BbsTopicSummary, FederatedRoomSummary, GamePlayer, GameRecordSummary, GameWinner, LeaderboardEntry, PlayerGameRecordSummary, PlayerStats, RoomEventSummary, RoomOptions, RoomSummary } from "./types";
 import {
   isRecord,
   validateNickname,
@@ -104,6 +104,91 @@ async function listRooms(env: Env): Promise<RoomSummary[]> {
   ).all<RoomRow>();
 
   return result.results.map(roomRowToSummary);
+}
+
+type FederatedServerConfig = {
+  name: string;
+  url: string;
+};
+
+function readFederatedServers(value: string | null): FederatedServerConfig[] {
+  if (!value) {
+    return [];
+  }
+  const parsed: unknown = JSON.parse(value);
+  if (!Array.isArray(parsed)) {
+    return [];
+  }
+  return parsed.flatMap((entry): FederatedServerConfig[] => {
+    if (!isRecord(entry) || typeof entry.url !== "string") {
+      return [];
+    }
+    try {
+      const url = new URL(entry.url);
+      if (url.protocol !== "https:" && url.protocol !== "http:") {
+        return [];
+      }
+      return [{
+        name: typeof entry.name === "string" && entry.name.trim() ? entry.name.trim() : url.host,
+        url: url.origin
+      }];
+    } catch {
+      return [];
+    }
+  });
+}
+
+function remoteRoomSummary(server: FederatedServerConfig, value: unknown): FederatedRoomSummary | undefined {
+  if (!isRecord(value) || typeof value.id !== "string" || typeof value.name !== "string") {
+    return undefined;
+  }
+  const status = value.status === "playing" || value.status === "ended" ? value.status : "lobby";
+  return {
+    id: value.id,
+    name: value.name,
+    comment: typeof value.comment === "string" ? value.comment : "",
+    maxPlayers: typeof value.maxPlayers === "number" ? value.maxPlayers : 22,
+    status,
+    createdAt: typeof value.createdAt === "string" ? value.createdAt : "",
+    options: parseRoomOptions(""),
+    serverName: server.name,
+    serverUrl: server.url,
+    roomUrl: `${server.url}/room/${encodeURIComponent(value.id)}`,
+    local: false
+  };
+}
+
+async function listFederatedRooms(env: Env): Promise<FederatedRoomSummary[]> {
+  const localRooms = (await listRooms(env)).map((room): FederatedRoomSummary => ({
+    ...room,
+    serverName: "本伺服器",
+    serverUrl: "/",
+    roomUrl: `/room/${room.id}`,
+    local: true
+  }));
+  let servers: FederatedServerConfig[];
+  try {
+    servers = readFederatedServers(await env.CONFIG.get("federated_servers"));
+  } catch {
+    servers = [];
+  }
+  const remoteRooms = await Promise.all(servers.map(async (server): Promise<FederatedRoomSummary[]> => {
+    try {
+      const response = await fetch(`${server.url}/api/rooms`, { headers: { accept: "application/json" } });
+      if (!response.ok) {
+        return [];
+      }
+      const body: unknown = await response.json();
+      const rooms = isRecord(body) && Array.isArray(body.rooms) ? body.rooms : [];
+      return rooms.flatMap((room) => {
+        const summary = remoteRoomSummary(server, room);
+        return summary ? [summary] : [];
+      });
+    } catch {
+      return [];
+    }
+  }));
+  return [...localRooms, ...remoteRooms.flat()];
 }
 
 type RoomRow = {
@@ -1158,7 +1243,7 @@ export default {
     }
 
     if (request.method === "GET" && url.pathname === "/list") {
-      return html(renderFederatedList(await listRooms(env)));
+      return html(renderFederatedList(await listFederatedRooms(env)));
     }
 
     if (request.method === "GET" && url.pathname === "/trips") {
