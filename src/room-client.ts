@@ -355,6 +355,12 @@ document.querySelector("#gmDisableFlag").addEventListener("click", () => {
   const target = document.querySelector("#gmWhisperTarget").value;
   if (target) sendCommand({ type: "gm_set_flag", targetPlayerId: target, flag: document.querySelector("#gmFlag").value, enabled: false });
 });
+document.querySelector("#gmEnableCommonVoice").addEventListener("click", () => {
+  sendCommand({ type: "gm_set_common_voice", enabled: true });
+});
+document.querySelector("#gmDisableCommonVoice").addEventListener("click", () => {
+  sendCommand({ type: "gm_set_common_voice", enabled: false });
+});
 document.querySelector("#uploadAvatar").addEventListener("click", async () => {
   const fileInput = document.querySelector("#avatarFile");
   if (!fileInput.files || fileInput.files.length === 0) return;
@@ -534,6 +540,8 @@ function renderGame(game) {
   document.querySelector("#gmSetRole").disabled = !isGm || !(game.phase === "day" || game.phase === "night") || game.players.length === 0;
   document.querySelector("#gmEnableFlag").disabled = !isGm || !(game.phase === "day" || game.phase === "night") || game.players.length === 0;
   document.querySelector("#gmDisableFlag").disabled = !isGm || !(game.phase === "day" || game.phase === "night") || game.players.length === 0;
+  document.querySelector("#gmEnableCommonVoice").disabled = !isGm || !(game.phase === "day" || game.phase === "night") || game.commonTalkVisible;
+  document.querySelector("#gmDisableCommonVoice").disabled = !isGm || !(game.phase === "day" || game.phase === "night") || !game.commonTalkVisible;
   document.querySelector("#setLastWords").disabled = !(currentPlayerAlive && game.phase !== "lobby" && game.phase !== "ended");
   const players = document.querySelector("#players");
   const playerGrid = document.querySelector("#playerGrid");

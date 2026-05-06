@@ -235,6 +235,7 @@ describe("messages", () => {
       phase: "day",
       hostId: undefined,
       revoteCount: 0,
+      commonTalkVisible: false,
       players: [
         { playerId: "player_1", nickname: "&lt;Wolf&gt;", alive: true },
         { playerId: "player_2", nickname: "Bob", alive: true },

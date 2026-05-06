@@ -2163,6 +2163,8 @@ export function renderRoom(roomId: string): string {
                 </select>
                 <button id="gmEnableFlag" disabled>GM標記</button>
                 <button id="gmDisableFlag" disabled>GM解除</button>
+                <button id="gmEnableCommonVoice" disabled>共有公開</button>
+                <button id="gmDisableCommonVoice" disabled>共有非公開</button>
               </td>
             </tr>
           </table>

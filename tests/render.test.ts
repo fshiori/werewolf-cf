@@ -293,6 +293,9 @@ describe("render", () => {
     expect(ROOM_CLIENT_SCRIPT).toContain("gm_set_alive");
     expect(ROOM_CLIENT_SCRIPT).toContain("gm_set_role");
     expect(ROOM_CLIENT_SCRIPT).toContain("gm_set_flag");
+    expect(ROOM_CLIENT_SCRIPT).toContain("gm_set_common_voice");
+    expect(ROOM_CLIENT_SCRIPT).toContain("#gmEnableCommonVoice");
+    expect(ROOM_CLIENT_SCRIPT).toContain("#gmDisableCommonVoice");
     expect(ROOM_CLIENT_SCRIPT).toContain("start_vote");
     expect(ROOM_CLIENT_SCRIPT).toContain("kick_player");
     expect(ROOM_CLIENT_SCRIPT).toContain("kick_vote");

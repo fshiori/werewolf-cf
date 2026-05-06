@@ -330,6 +330,13 @@ export function parseClientMessage(raw: string): ClientMessage {
     return { type: "gm_set_flag", targetPlayerId: parsed.targetPlayerId, flag: validatePlayerFlag(parsed.flag), enabled: parsed.enabled };
   }
 
+  if (parsed.type === "gm_set_common_voice") {
+    if (typeof parsed.enabled !== "boolean") {
+      throw new Error("Invalid GM channel control message");
+    }
+    return { type: "gm_set_common_voice", enabled: parsed.enabled };
+  }
+
   if (parsed.type === "start_game") {
     return { type: "start_game" };
   }
