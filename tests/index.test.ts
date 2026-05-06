@@ -841,6 +841,73 @@ describe("worker routes", () => {
     expect(body).toContain("&lt;Runtime notice&gt;");
   });
 
+  it("renders room admin login without a valid token", async () => {
+    const response = await worker.fetch(
+      new Request("http://example.test/admin/rooms"),
+      envWithRooms(["room_admin"], { room_admin_token: "secret" })
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.text();
+    expect(body).toContain("廢村管理");
+    expect(body).toContain("roomAdminToken");
+    expect(body).not.toContain("room_admin村");
+  });
+
+  it("renders active rooms on the room admin page with a valid token", async () => {
+    const response = await worker.fetch(
+      new Request("http://example.test/admin/rooms?token=secret"),
+      envWithRooms(["room_admin"], { room_admin_token: "secret" })
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.text();
+    expect(body).toContain("請選擇要廢除的村");
+    expect(body).toContain("room_admin");
+    expect(body).toContain("adminEndRoom");
+    expect(body).toContain("/api/admin/rooms/");
+  });
+
+  it("lets room admins mark rooms ended", async () => {
+    const env = envWithRooms(["room_admin"], { room_admin_token: "secret" });
+    const response = await worker.fetch(
+      new Request("http://example.test/api/admin/rooms/room_admin", {
+        method: "PATCH",
+        headers: { "x-room-admin-token": "secret" }
+      }),
+      env
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({ roomId: "room_admin", status: "ended" });
+    const runs = (env as unknown as { runs: Array<{ query: string; values: unknown[] }> }).runs;
+    expect(runs).toContainEqual(
+      expect.objectContaining({
+        query: "UPDATE rooms SET status = 'ended' WHERE id = ?",
+        values: ["room_admin"]
+      })
+    );
+    expect(runs).toContainEqual(
+      expect.objectContaining({
+        query: "INSERT INTO room_events (room_id, event_type, payload_json) VALUES (?, 'admin_room_ended', ?)",
+        values: ["room_admin", JSON.stringify({ status: "ended" })]
+      })
+    );
+  });
+
+  it("rejects room admin actions without the configured token", async () => {
+    const response = await worker.fetch(
+      new Request("http://example.test/api/admin/rooms/room_admin", {
+        method: "PATCH",
+        headers: { "x-room-admin-token": "wrong" }
+      }),
+      envWithRooms(["room_admin"], { room_admin_token: "secret" })
+    );
+
+    expect(response.status).toBe(403);
+    expect(await response.json()).toEqual({ error: "Room admin token is invalid" });
+  });
+
   it("renders leaderboard page", async () => {
     const response = await worker.fetch(
       new Request("http://example.test/leaderboard"),

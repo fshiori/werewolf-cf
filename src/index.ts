@@ -1,4 +1,4 @@
-import { renderBbs, renderBbsTopic, renderFederatedList, renderHome, renderIconCatalog, renderLeaderboard, renderPlayerProfile, renderProtocol, renderRoom, renderRoomEvents, renderRoomRecords, renderRoomTranscript, renderRules, renderScriptInfo, renderStatus, renderTripLookup, renderVersion, renderWinRateAnalysis } from "./render";
+import { renderAdminRooms, renderAdminRoomsLogin, renderBbs, renderBbsTopic, renderFederatedList, renderHome, renderIconCatalog, renderLeaderboard, renderPlayerProfile, renderProtocol, renderRoom, renderRoomEvents, renderRoomRecords, renderRoomTranscript, renderRules, renderScriptInfo, renderStatus, renderTripLookup, renderVersion, renderWinRateAnalysis } from "./render";
 import { RoomDurableObject } from "./room";
 import { ROOM_CLIENT_SCRIPT } from "./room-client";
 import { DEFAULT_DAY_MINUTES, DEFAULT_NIGHT_MINUTES } from "./game";
@@ -104,6 +104,19 @@ async function listRooms(env: Env): Promise<RoomSummary[]> {
   ).all<RoomRow>();
 
   return result.results.map(roomRowToSummary);
+}
+
+async function requireRoomAdmin(request: Request, env: Env): Promise<Response | undefined> {
+  const adminToken = await env.CONFIG.get("room_admin_token");
+  if (!adminToken) {
+    return json({ error: "Room admin is not configured" }, { status: 403 });
+  }
+  const url = new URL(request.url);
+  const provided = request.headers.get("x-room-admin-token") ?? url.searchParams.get("token") ?? "";
+  if (provided !== adminToken) {
+    return json({ error: "Room admin token is invalid" }, { status: 403 });
+  }
+  return undefined;
 }
 
 type FederatedServerConfig = {
@@ -828,6 +841,28 @@ async function getBbsTopics(request: Request, env: Env): Promise<Response> {
   return json({ topics: await listBbsTopics(env, url.searchParams.get("digest") === "1") });
 }
 
+async function endRoomByAdmin(request: Request, env: Env, roomIdParam: string): Promise<Response> {
+  const authError = await requireRoomAdmin(request, env);
+  if (authError) {
+    return authError;
+  }
+  try {
+    const roomId = validateRoomId(roomIdParam);
+    const exists = await env.DB.prepare("SELECT id FROM rooms WHERE id = ? LIMIT 1").bind(roomId).first<{ id: string }>();
+    if (!exists) {
+      return json({ error: "Room not found" }, { status: 404 });
+    }
+    await env.DB.prepare("UPDATE rooms SET status = 'ended' WHERE id = ?").bind(roomId).run();
+    await env.DB.prepare("INSERT INTO room_events (room_id, event_type, payload_json) VALUES (?, 'admin_room_ended', ?)").bind(
+      roomId,
+      JSON.stringify({ status: "ended" })
+    ).run();
+    return json({ roomId, status: "ended" });
+  } catch (error) {
+    return json({ error: error instanceof Error ? error.message : "Failed to end room" }, { status: 400 });
+  }
+}
+
 async function getBbsTopic(env: Env, topicIdParam: string): Promise<Response> {
   try {
     const topicId = validateBbsTopicId(topicIdParam);
@@ -1395,6 +1430,11 @@ export default {
       return getBbsTopics(request, env);
     }
 
+    const adminRoomApiMatch = url.pathname.match(/^\/api\/admin\/rooms\/([^/]+)$/);
+    if (request.method === "PATCH" && adminRoomApiMatch) {
+      return endRoomByAdmin(request, env, adminRoomApiMatch[1]);
+    }
+
     const bbsTopicApiMatch = url.pathname.match(/^\/api\/bbs\/topics\/(\d+)$/);
     if (request.method === "GET" && bbsTopicApiMatch) {
       return getBbsTopic(env, bbsTopicApiMatch[1]);
@@ -1423,6 +1463,14 @@ export default {
       } catch (error) {
         return json({ error: error instanceof Error ? error.message : "Status check failed" }, { status: 503 });
       }
+    }
+
+    if (request.method === "GET" && url.pathname === "/admin/rooms") {
+      const authError = await requireRoomAdmin(request, env);
+      if (authError) {
+        return html(renderAdminRoomsLogin());
+      }
+      return html(renderAdminRooms((await listRooms(env)).filter((room) => room.status !== "ended")));
     }
 
     if (request.method === "GET" && url.pathname === "/assets/room-client.js") {

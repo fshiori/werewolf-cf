@@ -733,6 +733,73 @@ export function renderStatus(status: {
   `));
 }
 
+export function renderAdminRoomsLogin(): string {
+  return page("Room Admin", shell(`
+    <fieldset>
+      <legend><strong>廢村管理</strong></legend>
+      <table class="form-table">
+        <tr><td><label><strong>　管理密碼：</strong></label></td><td><input id="roomAdminToken" type="password" maxlength="128" size="24"> <button id="roomAdminLogin">登入</button></td></tr>
+        <tr><td></td><td class="muted">輸入後會開啟管理清單。</td></tr>
+      </table>
+    </fieldset>
+    <script>
+      const tokenInput = document.querySelector("#roomAdminToken");
+      tokenInput.value = localStorage.getItem("werewolf_cf_room_admin_token") || "";
+      document.querySelector("#roomAdminLogin").addEventListener("click", () => {
+        const token = tokenInput.value;
+        localStorage.setItem("werewolf_cf_room_admin_token", token);
+        location.href = "/admin/rooms?token=" + encodeURIComponent(token);
+      });
+    </script>
+  `));
+}
+
+export function renderAdminRooms(rooms: RoomSummary[]): string {
+  const rows = rooms.length
+    ? rooms.map((room) => `<tr>
+        <td><a href="/room/${escapeHtml(room.id)}">${escapeHtml(room.id)}</a></td>
+        <td>${escapeHtml(room.name)}村</td>
+        <td>${escapeHtml(room.status)}</td>
+        <td>${escapeHtml(room.createdAt)}</td>
+        <td><button class="adminEndRoom" data-room-id="${escapeHtml(room.id)}">廢村</button></td>
+      </tr>`).join("")
+    : `<tr><td colspan="5" class="muted">目前沒有可廢除的村。</td></tr>`;
+
+  return page("Room Admin", shell(`
+    <fieldset>
+      <legend><strong>廢村管理</strong></legend>
+      <p class="muted">請選擇要廢除的村。注意！一旦選擇將無法復原。</p>
+      <table class="form-table" style="margin:12px 20px 18px;width:100%">
+        <thead><tr><td><strong>村ID</strong></td><td><strong>村名</strong></td><td><strong>狀態</strong></td><td><strong>建立時間</strong></td><td><strong>操作</strong></td></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <p id="roomAdminStatus" class="muted"></p>
+    </fieldset>
+    <script>
+      const roomAdminToken = new URLSearchParams(location.search).get("token") || localStorage.getItem("werewolf_cf_room_admin_token") || "";
+      if (roomAdminToken) localStorage.setItem("werewolf_cf_room_admin_token", roomAdminToken);
+      document.querySelectorAll(".adminEndRoom").forEach((button) => {
+        button.addEventListener("click", async () => {
+          const status = document.querySelector("#roomAdminStatus");
+          const roomId = button.dataset.roomId;
+          status.textContent = "更新中";
+          const res = await fetch("/api/admin/rooms/" + encodeURIComponent(roomId), {
+            method: "PATCH",
+            headers: { "content-type": "application/json", "x-room-admin-token": roomAdminToken },
+            body: JSON.stringify({ status: "ended" })
+          });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) {
+            status.textContent = data.error || "廢村失敗";
+            return;
+          }
+          location.reload();
+        });
+      });
+    </script>
+  `));
+}
+
 export function renderIconCatalog(): string {
   const icons = [
     { file: "001.gif", name: "明灰", color: "#DDDDDD" },

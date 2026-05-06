@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { renderBbs, renderBbsTopic, renderFederatedList, renderHome, renderIconCatalog, renderLeaderboard, renderPlayerProfile, renderProtocol, renderRoom, renderRoomEvents, renderRoomRecords, renderRoomTranscript, renderRules, renderScriptInfo, renderStatus, renderTripLookup, renderVersion, renderWinRateAnalysis } from "../src/render";
+import { renderAdminRooms, renderAdminRoomsLogin, renderBbs, renderBbsTopic, renderFederatedList, renderHome, renderIconCatalog, renderLeaderboard, renderPlayerProfile, renderProtocol, renderRoom, renderRoomEvents, renderRoomRecords, renderRoomTranscript, renderRules, renderScriptInfo, renderStatus, renderTripLookup, renderVersion, renderWinRateAnalysis } from "../src/render";
 import { ROOM_CLIENT_SCRIPT } from "../src/room-client";
 
 describe("render", () => {
@@ -795,6 +795,55 @@ describe("render", () => {
     expect(html).toContain("Binding 檢查");
     expect(html).toContain("durableObjects");
     expect(html).toContain("&lt;Runtime&gt;");
+  });
+
+  it("renders room admin pages", () => {
+    const login = renderAdminRoomsLogin();
+    expect(login).toContain("廢村管理");
+    expect(login).toContain("roomAdminToken");
+    expect(login).toContain("werewolf_cf_room_admin_token");
+
+    const html = renderAdminRooms([
+      {
+        id: "room_abc",
+        name: "Test",
+        comment: "",
+        maxPlayers: 22,
+        status: "playing",
+        createdAt: "2026-05-06 12:00:00",
+        options: {
+          poison: false,
+          bigWolf: false,
+          authority: false,
+          decider: false,
+          lovers: false,
+          betrayer: false,
+          childFox: false,
+          twoFoxes: false,
+          cat: false,
+          lastWords: false,
+          openVote: false,
+          commonTalkVisible: false,
+          deadRoleVisible: false,
+          wishRole: false,
+          dummyBoy: false,
+          customDummy: false,
+          dummyName: "替身君",
+          dummyLastWords: "",
+          realTime: false,
+          dayMinutes: 3,
+          nightMinutes: 1.5,
+          selfVote: false,
+          voteStatus: false
+        }
+      }
+    ]);
+
+    expect(html).toContain("請選擇要廢除的村");
+    expect(html).toContain("room_abc");
+    expect(html).toContain("adminEndRoom");
+    expect(html).toContain("/api/admin/rooms/");
+    expect(html).toContain('"x-room-admin-token": roomAdminToken');
   });
 
   it("renders websocket protocol page", () => {
