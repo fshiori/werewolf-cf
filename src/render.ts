@@ -316,6 +316,8 @@ function eventTypeLabel(eventType: string): string {
     gm_set_alive: "GM 生死調整",
     gm_set_role: "GM 角色調整",
     gm_set_flag: "GM 旗標調整",
+    gm_set_common_voice: "GM 共有公開調整",
+    gm_set_channel_restrictions: "GM 頻道限制調整",
     player_kicked: "踢出玩家",
     room_created: "村子建立"
   };
@@ -368,7 +370,9 @@ function transcriptLocation(event: RoomEventSummary): { className: string; label
     gm_ended_game: { className: "transcript-location-gm", label: "GM操作" },
     gm_set_alive: { className: "transcript-location-gm", label: "GM操作" },
     gm_set_role: { className: "transcript-location-gm", label: "GM操作" },
-    gm_set_flag: { className: "transcript-location-gm", label: "GM操作" }
+    gm_set_flag: { className: "transcript-location-gm", label: "GM操作" },
+    gm_set_common_voice: { className: "transcript-location-gm", label: "GM操作" },
+    gm_set_channel_restrictions: { className: "transcript-location-gm", label: "GM操作" }
   };
   return locations[event.eventType] ?? { className: "transcript-location-system", label: phase || "系統" };
 }
@@ -470,7 +474,9 @@ const transcriptSystemEventTypes = new Set([
   "gm_ended_game",
   "gm_set_alive",
   "gm_set_role",
-  "gm_set_flag"
+  "gm_set_flag",
+  "gm_set_common_voice",
+  "gm_set_channel_restrictions"
 ]);
 
 function isHeavenTranscriptEvent(event: RoomEventSummary): boolean {

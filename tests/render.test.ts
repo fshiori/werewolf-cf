@@ -863,12 +863,31 @@ describe("render", () => {
         eventType: "wolf_chat",
         payload: { visibility: "private", nickname: "Wolf", text: "howl", phase: "night", day: 2 },
         createdAt: "2026-05-06 12:03:00"
+      },
+      {
+        id: 4,
+        roomId: "room_abc",
+        playerId: "player_gm",
+        eventType: "gm_set_common_voice",
+        payload: { enabled: true, phase: "night", day: 2 },
+        createdAt: "2026-05-06 12:04:00"
+      },
+      {
+        id: 5,
+        roomId: "room_abc",
+        playerId: "player_gm",
+        eventType: "gm_set_channel_restrictions",
+        payload: { restrictions: { wolf: true, common: false, lovers: false, fox: true }, phase: "night", day: 2 },
+        createdAt: "2026-05-06 12:05:00"
       }
     ];
 
     const normal = renderRoomTranscript("room_abc", [], events);
     expect(normal).toContain("通常");
     expect(normal).toContain("howl");
+    expect(normal).toContain("GM 共有公開調整");
+    expect(normal).toContain("GM 頻道限制調整");
+    expect(normal).toContain('class="transcript-row transcript-location-gm"');
     expect(normal).not.toContain("內容:heaven");
 
     const withHeaven = renderRoomTranscript("room_abc", [], events, { heavenTalk: true });
@@ -880,6 +899,8 @@ describe("render", () => {
     expect(heavenOnly).toContain("逝者靈界");
     expect(heavenOnly).toContain("遊戲開始");
     expect(heavenOnly).toContain("heaven");
+    expect(heavenOnly).toContain("GM 共有公開調整");
+    expect(heavenOnly).toContain("GM 頻道限制調整");
     expect(heavenOnly).not.toContain("內容:howl");
   });
 
