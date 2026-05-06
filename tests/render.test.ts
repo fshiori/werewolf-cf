@@ -861,6 +861,68 @@ describe("render", () => {
     expect(heavenOnly).not.toContain("內容:howl");
   });
 
+  it("filters room transcript rows for explicit viewer modes", () => {
+    const events = [
+      {
+        id: 1,
+        roomId: "room_abc",
+        playerId: "player_system",
+        eventType: "game_started",
+        payload: { day: 1, players: 4 },
+        createdAt: "2026-05-06 12:01:00"
+      },
+      {
+        id: 2,
+        roomId: "room_abc",
+        playerId: "player_wolf",
+        eventType: "wolf_chat",
+        payload: { visibility: "private", nickname: "Wolf", text: "howl", phase: "night", day: 2 },
+        createdAt: "2026-05-06 12:02:00"
+      },
+      {
+        id: 3,
+        roomId: "room_abc",
+        playerId: "player_dead",
+        eventType: "dead_chat",
+        payload: { visibility: "private", nickname: "Dead", text: "heaven", phase: "night", day: 2 },
+        createdAt: "2026-05-06 12:03:00"
+      },
+      {
+        id: 4,
+        roomId: "room_abc",
+        playerId: "player_seer",
+        eventType: "self_talk",
+        payload: { visibility: "private", nickname: "Seer", text: "mutter", phase: "night", day: 2 },
+        createdAt: "2026-05-06 12:04:00"
+      }
+    ];
+
+    const publicView = renderRoomTranscript("room_abc", [], events, { viewerMode: "public", heavenTalk: true });
+    expect(publicView).toContain("旁觀");
+    expect(publicView).toContain("遊戲開始");
+    expect(publicView).not.toContain("內容:howl");
+    expect(publicView).not.toContain("內容:heaven");
+    expect(publicView).not.toContain("內容:mutter");
+
+    const playerView = renderRoomTranscript("room_abc", [], events, { viewerMode: "player", viewerPlayerId: "player_wolf", heavenTalk: true });
+    expect(playerView).toContain("玩家 player_wolf");
+    expect(playerView).toContain("howl");
+    expect(playerView).not.toContain("內容:heaven");
+    expect(playerView).not.toContain("內容:mutter");
+
+    const deadView = renderRoomTranscript("room_abc", [], events, { viewerMode: "dead", heavenTalk: true });
+    expect(deadView).toContain("靈界");
+    expect(deadView).toContain("heaven");
+    expect(deadView).not.toContain("內容:howl");
+    expect(deadView).not.toContain("內容:mutter");
+
+    const gmView = renderRoomTranscript("room_abc", [], events, { viewerMode: "gm", heavenTalk: true });
+    expect(gmView).toContain("GM");
+    expect(gmView).toContain("howl");
+    expect(gmView).toContain("heaven");
+    expect(gmView).toContain("mutter");
+  });
+
   it("renders room transcript reverse log controls", () => {
     const html = renderRoomTranscript(
       "room_abc",

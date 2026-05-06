@@ -1598,6 +1598,59 @@ describe("worker routes", () => {
     expect(heavenOnlyBody).not.toContain("內容:howl");
   });
 
+  it("applies explicit viewer masking on room transcript page", async () => {
+    const env = envWithRooms(
+      ["room_log"],
+      { "room_status:room_log": "ended" },
+      {},
+      {},
+      {
+        room_log: [
+          {
+            id: 1,
+            room_id: "room_log",
+            player_id: null,
+            event_type: "game_started",
+            payload_json: '{"day":1,"players":4}',
+            created_at: "2026-05-06 12:01:00"
+          },
+          {
+            id: 2,
+            room_id: "room_log",
+            player_id: "player_wolf",
+            event_type: "wolf_chat",
+            payload_json: '{"visibility":"private","nickname":"Wolf","text":"howl","phase":"night","day":2}',
+            created_at: "2026-05-06 12:02:00"
+          },
+          {
+            id: 3,
+            room_id: "room_log",
+            player_id: "player_seer",
+            event_type: "self_talk",
+            payload_json: '{"visibility":"private","nickname":"Seer","text":"mutter","phase":"night","day":2}',
+            created_at: "2026-05-06 12:03:00"
+          }
+        ]
+      }
+    );
+
+    const publicView = await worker.fetch(new Request("http://example.test/room/room_log/log?viewer=public&heaven_talk=on"), env);
+    const publicBody = await publicView.text();
+    expect(publicBody).toContain("旁觀");
+    expect(publicBody).toContain("遊戲開始");
+    expect(publicBody).not.toContain("howl");
+    expect(publicBody).not.toContain("mutter");
+
+    const playerView = await worker.fetch(new Request("http://example.test/room/room_log/log?viewer=player&viewer_player_id=player_wolf&heaven_talk=on"), env);
+    const playerBody = await playerView.text();
+    expect(playerBody).toContain("玩家 player_wolf");
+    expect(playerBody).toContain("howl");
+    expect(playerBody).not.toContain("mutter");
+
+    const invalidPlayerView = await worker.fetch(new Request("http://example.test/room/room_log/log?viewer=player&viewer_player_id=bad"), env);
+    expect(invalidPlayerView.status).toBe(400);
+  });
+
   it("renders protocol page", async () => {
     const response = await worker.fetch(new Request("http://example.test/protocol"), envWithRooms([]));
 
