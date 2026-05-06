@@ -1571,8 +1571,8 @@ async function createRoom(request: Request, env: Env): Promise<Response> {
 
 async function uploadAvatar(request: Request, env: Env): Promise<Response> {
   const form = await request.formData().catch(() => null);
-  const playerIdValue = form?.get("playerId");
-  const avatarValue = form?.get("avatar");
+  const playerIdValue = form?.get("playerId") ?? form?.get("player_id");
+  const avatarValue = form?.get("avatar") ?? form?.get("icon_file");
   if (typeof playerIdValue !== "string" || !isFileLike(avatarValue)) {
     return json({ error: "Invalid avatar upload" }, { status: 400 });
   }
@@ -1597,13 +1597,21 @@ async function uploadAvatar(request: Request, env: Env): Promise<Response> {
 }
 
 async function removeAvatar(request: Request, env: Env): Promise<Response> {
-  const body: unknown = await request.json().catch(() => null);
-  if (!isRecord(body) || typeof body.playerId !== "string") {
+  const contentType = request.headers.get("content-type") ?? "";
+  let playerIdValue: unknown;
+  if (contentType.includes("multipart/form-data") || contentType.includes("application/x-www-form-urlencoded")) {
+    const form = await request.formData().catch(() => null);
+    playerIdValue = form?.get("playerId") ?? form?.get("player_id");
+  } else {
+    const body: unknown = await request.json().catch(() => null);
+    playerIdValue = isRecord(body) ? body.playerId : undefined;
+  }
+  if (typeof playerIdValue !== "string") {
     return json({ error: "Invalid avatar removal" }, { status: 400 });
   }
 
   try {
-    const playerId = validatePlayerId(body.playerId);
+    const playerId = validatePlayerId(playerIdValue);
     await env.ASSETS.delete(avatarKey(playerId));
     return json({ removed: true });
   } catch (error) {
@@ -1999,11 +2007,11 @@ export default {
       return removeTripExclusion(request, env);
     }
 
-    if (request.method === "POST" && url.pathname === "/api/assets/avatar") {
+    if (request.method === "POST" && (url.pathname === "/api/assets/avatar" || url.pathname === "/upload.php")) {
       return uploadAvatar(request, env);
     }
 
-    if (request.method === "DELETE" && url.pathname === "/api/assets/avatar") {
+    if ((request.method === "DELETE" && url.pathname === "/api/assets/avatar") || (request.method === "POST" && url.pathname === "/upload2.php")) {
       return removeAvatar(request, env);
     }
 
