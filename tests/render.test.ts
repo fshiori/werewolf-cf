@@ -458,6 +458,10 @@ describe("render", () => {
     expect(html).toContain("/api/players/\" + playerId + \"/records");
     expect(html).toContain("最近參戰紀錄");
     expect(html).toContain("function roleLabel(value)");
+    expect(html).toContain("function roleIconPath(value)");
+    expect(html).toContain("function appendRoleIcon(container, role)");
+    expect(html).toContain('image.src = "/assets/reference/" + path;');
+    expect(html).toContain("appendRoleIcon(div, record.role)");
   });
 
   it("renders Trip lookup page", () => {
