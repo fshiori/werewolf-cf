@@ -772,6 +772,22 @@ describe("render", () => {
           createdAt: "2026-05-06 12:02:00"
         },
         {
+          id: 7,
+          roomId: "room_abc",
+          playerId: "player_c",
+          eventType: "day_vote",
+          payload: { visibility: "private", nickname: "Carol", targetPlayerId: "player_b", targetNickname: "Bob", phase: "day", day: 2, revoteCount: 1 },
+          createdAt: "2026-05-06 12:02:30"
+        },
+        {
+          id: 8,
+          roomId: "room_abc",
+          playerId: "player_d",
+          eventType: "day_vote",
+          payload: { visibility: "private", nickname: "Dave", targetPlayerId: "player_a", targetNickname: "Alice", phase: "day", day: 2, revoteCount: 1 },
+          createdAt: "2026-05-06 12:02:45"
+        },
+        {
           id: 3,
           roomId: "room_abc",
           playerId: "player_b",
@@ -819,6 +835,7 @@ describe("render", () => {
     expect(html).toContain("白天投票");
     expect(html).toContain("投票紀錄");
     expect(html).toContain("第 2 日 再投票 1");
+    expect(html).toContain("得票：Bob：2票　Alice：1票");
     expect(html).toContain("投票者");
     expect(html).toContain("投票先");
     expect(html).toContain("第 2 日 夜晚");

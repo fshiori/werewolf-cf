@@ -382,6 +382,27 @@ function voteRoundLabel(value: Record<string, unknown>): string {
   return revoteCount > 0 ? `再投票 ${revoteCount}` : "第一回";
 }
 
+function voteTargetLabel(event: RoomEventSummary): string {
+  const value = recordValue(event.payload);
+  return typeof value.targetNickname === "string" && value.targetNickname
+    ? value.targetNickname
+    : typeof value.targetPlayerId === "string"
+      ? value.targetPlayerId
+      : "不明";
+}
+
+function renderVoteTargetTotals(events: RoomEventSummary[]): string {
+  const totals = new Map<string, number>();
+  for (const event of events) {
+    const target = voteTargetLabel(event);
+    totals.set(target, (totals.get(target) ?? 0) + 1);
+  }
+  return Array.from(totals.entries())
+    .sort(([leftTarget, leftCount], [rightTarget, rightCount]) => rightCount - leftCount || leftTarget.localeCompare(rightTarget))
+    .map(([target, count]) => `${escapeHtml(target)}：${count}票`)
+    .join("　");
+}
+
 function renderTranscriptVoteTables(events: RoomEventSummary[]): string {
   const voteEvents = events.filter((event) => event.eventType === "day_vote");
   if (voteEvents.length === 0) {
@@ -404,11 +425,7 @@ function renderTranscriptVoteTables(events: RoomEventSummary[]): string {
     const rows = [...groupEvents].sort((left, right) => left.createdAt.localeCompare(right.createdAt)).map((event) => {
       const value = recordValue(event.payload);
       const voter = typeof value.nickname === "string" && value.nickname ? value.nickname : event.playerId ?? "不明";
-      const target = typeof value.targetNickname === "string" && value.targetNickname
-        ? value.targetNickname
-        : typeof value.targetPlayerId === "string"
-          ? value.targetPlayerId
-          : "不明";
+      const target = voteTargetLabel(event);
       return `<tr>
         <td>${escapeHtml(voter)}</td>
         <td>→</td>
@@ -418,6 +435,7 @@ function renderTranscriptVoteTables(events: RoomEventSummary[]): string {
     }).join("");
     return `
       <tr><td colspan="5"><strong>${escapeHtml(label)}</strong></td></tr>
+      <tr><td colspan="5"><span class="muted">得票：${renderVoteTargetTotals(groupEvents)}</span></td></tr>
       <tr><td colspan="5">
         <table class="form-table" style="margin:6px 0 12px 18px;">
           <thead><tr><td><strong>投票者</strong></td><td></td><td><strong>投票先</strong></td><td><strong>時間</strong></td></tr></thead>
