@@ -1678,6 +1678,39 @@ describe("worker routes", () => {
     expect(await response.json()).toEqual({ error: "BBS moderation token is invalid" });
   });
 
+  it("deletes BBS topics and replies with the configured admin token", async () => {
+    const env = envWithRooms([], { bbs_admin_token: "secret" }, {}, {}, {}, {}, {}, {}, {}, {}, {}, new Set(), new Set(), {}, [
+      {
+        id: 1,
+        name: "Alice",
+        title: "Welcome",
+        message: "Topic body",
+        trip_hash: null,
+        reply_count: 1,
+        pinned: 0,
+        locked: 0,
+        digest: 0,
+        created_at: "2026-05-06 12:00:00",
+        updated_at: "2026-05-06 12:00:00"
+      }
+    ]);
+    const response = await worker.fetch(
+      new Request("http://example.test/api/bbs/topics/1/moderation", {
+        method: "DELETE",
+        headers: { "x-bbs-admin-token": "secret" }
+      }),
+      env
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ deleted: true, topicId: 1 });
+    const batches = (env as unknown as { batches: Array<Array<{ query: string; values: unknown[] }>> }).batches;
+    expect(batches[0][0].query).toContain("DELETE FROM bbs_replies");
+    expect(batches[0][0].values).toEqual([1]);
+    expect(batches[0][1].query).toContain("DELETE FROM bbs_topics");
+    expect(batches[0][1].values).toEqual([1]);
+  });
+
   it("renders default icon catalog page", async () => {
     const response = await worker.fetch(new Request("http://example.test/icons"), envWithRooms([]));
 

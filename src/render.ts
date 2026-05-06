@@ -2236,7 +2236,7 @@ export function renderBbsTopic(topic: BbsTopicSummary, replies: BbsReplySummary[
         <label><input id="bbsModerateLocked" type="checkbox"${topic.locked ? " checked" : ""}> 鎖定</label>
         <label><input id="bbsModerateDigest" type="checkbox"${topic.digest ? " checked" : ""}> 精華</label>
       </td></tr>
-      <tr><td></td><td><button id="bbsModerateButton">更新</button> <span id="bbsModerateStatus" class="muted"></span></td></tr>
+      <tr><td></td><td><button id="bbsModerateButton">更新</button> <button id="bbsDeleteButton">刪除</button> <span id="bbsModerateStatus" class="muted"></span></td></tr>
     </table>
     <script>
       document.querySelector("#bbsAdminToken").value = localStorage.getItem("werewolf_cf_bbs_admin_token") || "";
@@ -2260,6 +2260,23 @@ export function renderBbsTopic(topic: BbsTopicSummary, replies: BbsReplySummary[
           return;
         }
         location.href = "${topicPath}";
+      });
+      document.querySelector("#bbsDeleteButton").addEventListener("click", async () => {
+        const status = document.querySelector("#bbsModerateStatus");
+        const token = document.querySelector("#bbsAdminToken").value;
+        localStorage.setItem("werewolf_cf_bbs_admin_token", token);
+        if (!confirm("刪除此主題與所有回覆？")) return;
+        status.textContent = "刪除中";
+        const res = await fetch("/api/bbs/topics/${escapeHtml(String(topic.id))}/moderation", {
+          method: "DELETE",
+          headers: { "x-bbs-admin-token": token }
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          status.textContent = data.error || "刪除失敗";
+          return;
+        }
+        location.href = "/bbs";
       });
     </script>`;
 

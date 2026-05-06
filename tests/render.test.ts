@@ -779,6 +779,9 @@ describe("render", () => {
     expect(html).toContain("bbsModeratePinned");
     expect(html).toContain("bbsModerateLocked");
     expect(html).toContain("bbsModerateDigest");
+    expect(html).toContain("bbsDeleteButton");
+    expect(html).toContain('method: "DELETE"');
+    expect(html).toContain("刪除此主題與所有回覆？");
   });
 
   it("renders BBS admin index", () => {

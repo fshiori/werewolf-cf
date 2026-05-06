@@ -1055,6 +1055,27 @@ async function updateBbsTopicFlags(request: Request, env: Env, topicIdParam: str
   }
 }
 
+async function deleteBbsTopic(request: Request, env: Env, topicIdParam: string): Promise<Response> {
+  const unauthorized = await requireBbsAdmin(request, env);
+  if (unauthorized) {
+    return unauthorized;
+  }
+  try {
+    const topicId = validateBbsTopicId(topicIdParam);
+    const topic = await getBbsTopicById(env, topicId);
+    if (!topic) {
+      return json({ error: "BBS topic not found" }, { status: 404 });
+    }
+    await env.DB.batch([
+      env.DB.prepare("DELETE FROM bbs_replies WHERE topic_id = ?").bind(topicId),
+      env.DB.prepare("DELETE FROM bbs_topics WHERE id = ?").bind(topicId)
+    ]);
+    return json({ deleted: true, topicId });
+  } catch (error) {
+    return json({ error: error instanceof Error ? error.message : "Failed to delete BBS topic" }, { status: 400 });
+  }
+}
+
 async function getPlayerStats(env: Env, playerIdParam: string): Promise<Response> {
   try {
     const playerId = validatePlayerId(playerIdParam);
@@ -1713,6 +1734,10 @@ export default {
     const bbsModerationApiMatch = url.pathname.match(/^\/api\/bbs\/topics\/(\d+)\/moderation$/);
     if (request.method === "PATCH" && bbsModerationApiMatch) {
       return updateBbsTopicFlags(request, env, bbsModerationApiMatch[1]);
+    }
+
+    if (request.method === "DELETE" && bbsModerationApiMatch) {
+      return deleteBbsTopic(request, env, bbsModerationApiMatch[1]);
     }
 
     if (request.method === "GET" && url.pathname === "/api/trips/lookup") {

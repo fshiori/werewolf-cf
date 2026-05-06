@@ -82,7 +82,7 @@ try {
   await expectHtml("/trips", ["Trip查詢", "Trip公開資料", "tripStateMark", "health-mark"]);
   await expectHtml("/bbs", ["主題列表", "發表主題", "/bbs/1"]);
   await expectHtml("/bbs?digest=1", ["精華", "主題列表"]);
-  await expectHtml("/bbs/1", ["回覆列表", "主題管理", "bbs-status-mark"]);
+  await expectHtml("/bbs/1", ["回覆列表", "主題管理", "bbs-status-mark", "bbsDeleteButton"]);
   await expectHtml("/status", ["伺服器狀態", "Binding 檢查", "health-mark"]);
   await expectHtml("/admin", ["管理選單", "/admin/rooms", "/admin/config"]);
   await expectHtml("/admin/rooms", ["廢村管理", "roomAdminToken", "werewolf_cf_room_admin_token"]);
