@@ -1886,6 +1886,32 @@ describe("worker routes", () => {
     expect(runs[0].values[4]).not.toBe("secret");
   });
 
+  it("accepts legacy BBS topic form posts", async () => {
+    const env = envWithRooms([]);
+    const body = new FormData();
+    body.set("bname", "Alice");
+    body.set("bpass", "secret");
+    body.set("title", "Welcome");
+    body.set("mess", "Hello from PHP form");
+
+    const response = await worker.fetch(
+      new Request("http://example.test/bbs.php?go=post", {
+        method: "POST",
+        body
+      }),
+      env
+    );
+
+    expect(response.status).toBe(303);
+    expect(response.headers.get("Location")).toBe("/bbs/1");
+    const runs = (env as unknown as { runs: Array<{ query: string; values: unknown[] }> }).runs;
+    expect(runs[0].query).toContain("INSERT INTO bbs_topics");
+    expect(runs[0].values.slice(0, 3)).toEqual(["Alice", "Welcome", "Hello from PHP form"]);
+    expect(runs[0].values[3]).toBeNull();
+    expect(typeof runs[0].values[4]).toBe("string");
+    expect(runs[0].values[4]).not.toBe("secret");
+  });
+
   it("creates BBS replies", async () => {
     const env = envWithRooms([], {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, new Set(), new Set(), {}, [
       {
@@ -1988,6 +2014,47 @@ describe("worker routes", () => {
 
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ posted: true, replyCount: 11, page: 2 });
+  });
+
+  it("accepts legacy BBS reply form posts", async () => {
+    const env = envWithRooms([], {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, new Set(), new Set(), {}, [
+      {
+        id: 1,
+        name: "Alice",
+        title: "Welcome",
+        message: "Topic body",
+        trip_hash: null,
+        reply_count: 10,
+        pinned: 0,
+        locked: 0,
+        digest: 0,
+        created_at: "2026-05-06 12:00:00",
+        updated_at: "2026-05-06 12:00:00"
+      }
+    ]);
+    const body = new FormData();
+    body.set("id", "1");
+    body.set("bname", "Bob");
+    body.set("bpass", "secret");
+    body.set("mess", "Reply from PHP form");
+
+    const response = await worker.fetch(
+      new Request("http://example.test/bbs.php?go=postre", {
+        method: "POST",
+        body
+      }),
+      env
+    );
+
+    expect(response.status).toBe(303);
+    expect(response.headers.get("Location")).toBe("/bbs/1?page=2");
+    const batches = (env as unknown as { batches: Array<Array<{ query: string; values: unknown[] }>> }).batches;
+    expect(batches[0][0].query).toContain("INSERT INTO bbs_replies");
+    expect(batches[0][0].values.slice(0, 3)).toEqual([1, "Bob", "Reply from PHP form"]);
+    expect(batches[0][0].values[3]).toBeNull();
+    expect(typeof batches[0][0].values[4]).toBe("string");
+    expect(batches[0][0].values[4]).not.toBe("secret");
+    expect(batches[0][1].query).toContain("UPDATE bbs_topics SET reply_count = reply_count + 1");
   });
 
   it("rejects replies to locked BBS topics", async () => {
