@@ -2222,6 +2222,7 @@ export function renderBbsTopic(topic: BbsTopicSummary, replies: BbsReplySummary[
           <div style="white-space:pre-wrap;margin:6px 0 10px;">${escapeHtml(reply.message)}</div>
           <div>
             <textarea class="bbsReplyEditMessage" data-reply-id="${escapeHtml(String(reply.id))}" rows="3" cols="60">${escapeHtml(reply.message)}</textarea><br>
+            <input class="bbsReplyEditPassword" data-reply-id="${escapeHtml(String(reply.id))}" type="password" maxlength="128" size="24" placeholder="回覆密碼">
             <button class="bbsReplyEditButton" data-reply-id="${escapeHtml(String(reply.id))}">編輯回覆</button>
             <button class="bbsReplyDeleteButton" data-reply-id="${escapeHtml(String(reply.id))}">刪除回覆</button>
           </div>
@@ -2347,13 +2348,14 @@ export function renderBbsTopic(topic: BbsTopicSummary, replies: BbsReplySummary[
           const token = document.querySelector("#bbsAdminToken").value;
           const replyId = button.getAttribute("data-reply-id");
           const messageInput = Array.from(document.querySelectorAll(".bbsReplyEditMessage")).find((input) => input.getAttribute("data-reply-id") === replyId);
+          const passwordInput = Array.from(document.querySelectorAll(".bbsReplyEditPassword")).find((input) => input.getAttribute("data-reply-id") === replyId);
           localStorage.setItem("werewolf_cf_bbs_admin_token", token);
           if (!replyId || !messageInput) return;
           status.textContent = "編輯回覆中";
           const res = await fetch("/api/bbs/topics/${escapeHtml(String(topic.id))}/replies/" + encodeURIComponent(replyId) + "/moderation", {
             method: "PATCH",
             headers: { "content-type": "application/json", "x-bbs-admin-token": token },
-            body: JSON.stringify({ message: messageInput.value })
+            body: JSON.stringify({ message: messageInput.value, password: passwordInput ? passwordInput.value : "" })
           });
           const data = await res.json().catch(() => ({}));
           if (!res.ok) {

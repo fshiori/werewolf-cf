@@ -990,6 +990,13 @@ async function bbsReplyExists(env: Env, topicId: number, replyId: number): Promi
   return Boolean(reply);
 }
 
+async function getBbsReplyPasswordHash(env: Env, topicId: number, replyId: number): Promise<string | null | undefined> {
+  const row = await env.DB.prepare("SELECT password_hash FROM bbs_replies WHERE id = ? AND topic_id = ? LIMIT 1")
+    .bind(replyId, topicId)
+    .first<{ password_hash: string | null }>();
+  return row ? row.password_hash : undefined;
+}
+
 async function getBbsTopics(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
   return json({ topics: await listBbsTopics(env, url.searchParams.get("digest") === "1") });
@@ -1202,10 +1209,6 @@ async function deleteBbsReply(request: Request, env: Env, topicIdParam: string, 
 }
 
 async function updateBbsReplyContent(request: Request, env: Env, topicIdParam: string, replyIdParam: string): Promise<Response> {
-  const unauthorized = await requireBbsAdmin(request, env);
-  if (unauthorized) {
-    return unauthorized;
-  }
   const body: unknown = await request.json().catch(() => null);
   if (!isRecord(body)) {
     return json({ error: "Invalid BBS reply edit request" }, { status: 400 });
@@ -1219,6 +1222,15 @@ async function updateBbsReplyContent(request: Request, env: Env, topicIdParam: s
     }
     if (!(await bbsReplyExists(env, topicId, replyId))) {
       return json({ error: "BBS reply not found" }, { status: 404 });
+    }
+    const adminToken = await env.CONFIG.get("bbs_admin_token");
+    const providedAdminToken = request.headers.get("x-bbs-admin-token") ?? "";
+    const providedPassword = validateBbsPassword(body.password);
+    const passwordHash = await getBbsReplyPasswordHash(env, topicId, replyId);
+    const adminAuthorized = Boolean(adminToken && providedAdminToken === adminToken);
+    const passwordAuthorized = Boolean(passwordHash && providedPassword && await bbsPasswordHash(providedPassword) === passwordHash);
+    if (!adminAuthorized && !passwordAuthorized) {
+      return json({ error: "BBS reply edit password is invalid" }, { status: 403 });
     }
     const message = validateBbsMessage(body.message);
     await env.DB.prepare("UPDATE bbs_replies SET message = ? WHERE id = ? AND topic_id = ?")
