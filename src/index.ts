@@ -1529,10 +1529,14 @@ export default {
           return new Response("Room not found", { status: 404 });
         }
         const [records, events] = await Promise.all([listRoomRecords(env, roomId), listRoomEvents(env, roomId)]);
+        const viewerModeParam = url.searchParams.get("viewer");
+        const viewerPlayerIdParam = url.searchParams.get("viewer_player_id");
         return html(renderRoomTranscript(roomId, records, events, {
           heavenTalk: url.searchParams.get("heaven_talk") === "on",
           heavenOnly: url.searchParams.get("heaven_only") === "on",
-          reverseLog: url.searchParams.get("reverse_log") === "on"
+          reverseLog: url.searchParams.get("reverse_log") === "on",
+          viewerMode: viewerModeParam === "public" || viewerModeParam === "player" || viewerModeParam === "dead" || viewerModeParam === "gm" ? viewerModeParam : "legacy",
+          viewerPlayerId: viewerPlayerIdParam ? validatePlayerId(viewerPlayerIdParam) : undefined
         }));
       } catch (error) {
         return json({ error: error instanceof Error ? error.message : "Invalid room" }, { status: 400 });
