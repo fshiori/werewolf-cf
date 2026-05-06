@@ -2125,6 +2125,15 @@ export function renderRoom(roomId: string, options: RenderRoomOptions = {}): str
               <td><span id="stats" class="muted">未取得</span></td>
             </tr>
             <tr>
+              <td>登錄</td>
+              <td>
+                <a href="#nickname"><strong>[住民登錄]</strong></a>
+                　<a href="/trip">[身份登錄]</a>
+                　<a href="/trips">[Trip查詢]</a>
+                　<a href="/">[返回]</a>
+              </td>
+            </tr>
+            <tr>
               <td>玩家暱稱</td>
               <td><input id="nickname" maxlength="32" size="28"> <button id="connect">進入房間</button> <button id="startVote" disabled>投開始一票</button> <button id="startGame">開始遊戲</button> <button id="leaveRoom" disabled>退出</button></td>
             </tr>
