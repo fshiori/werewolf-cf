@@ -767,9 +767,9 @@ function bbsTopicFromRow(topic: {
   };
 }
 
-async function listBbsTopics(env: Env): Promise<BbsTopicSummary[]> {
+async function listBbsTopics(env: Env, digestOnly = false): Promise<BbsTopicSummary[]> {
   const result = await env.DB.prepare(
-    "SELECT id, name, title, message, trip_hash, reply_count, pinned, locked, digest, created_at, updated_at FROM bbs_topics ORDER BY pinned DESC, updated_at DESC LIMIT 50"
+    `SELECT id, name, title, message, trip_hash, reply_count, pinned, locked, digest, created_at, updated_at FROM bbs_topics${digestOnly ? " WHERE digest = 1" : ""} ORDER BY pinned DESC, updated_at DESC LIMIT 50`
   ).all<{
     id: number;
     name: string;
@@ -823,8 +823,9 @@ async function listBbsReplies(env: Env, topicId: number): Promise<BbsReplySummar
   }));
 }
 
-async function getBbsTopics(env: Env): Promise<Response> {
-  return json({ topics: await listBbsTopics(env) });
+async function getBbsTopics(request: Request, env: Env): Promise<Response> {
+  const url = new URL(request.url);
+  return json({ topics: await listBbsTopics(env, url.searchParams.get("digest") === "1") });
 }
 
 async function getBbsTopic(env: Env, topicIdParam: string): Promise<Response> {
@@ -1354,6 +1355,7 @@ export default {
 
     if (request.method === "GET" && url.pathname === "/bbs") {
       const view = url.searchParams.get("view");
+      const digestOnly = url.searchParams.get("digest") === "1" || url.searchParams.get("go") === "dige";
       if (view) {
         try {
           const topicId = validateBbsTopicId(view);
@@ -1366,7 +1368,7 @@ export default {
           return json({ error: error instanceof Error ? error.message : "Invalid BBS topic" }, { status: 400 });
         }
       }
-      return html(renderBbs(await listBbsTopics(env)));
+      return html(renderBbs(await listBbsTopics(env, digestOnly), { digestOnly }));
     }
 
     if (request.method === "GET" && url.pathname === "/icons") {
@@ -1390,7 +1392,7 @@ export default {
     }
 
     if (request.method === "GET" && url.pathname === "/api/bbs/topics") {
-      return getBbsTopics(env);
+      return getBbsTopics(request, env);
     }
 
     const bbsTopicApiMatch = url.pathname.match(/^\/api\/bbs\/topics\/(\d+)$/);

@@ -1270,7 +1270,7 @@ export function renderTripLookup(): string {
   `));
 }
 
-export function renderBbs(topics: BbsTopicSummary[]): string {
+export function renderBbs(topics: BbsTopicSummary[], options: { digestOnly?: boolean } = {}): string {
   const topicRows = topics.length
     ? topics.map((topic) => {
       const title = `${topic.pinned ? "[置頂] " : ""}${topic.locked ? "[鎖定] " : ""}${topic.title}${topic.digest ? " (精華)" : ""}`;
@@ -1282,12 +1282,13 @@ export function renderBbs(topics: BbsTopicSummary[]): string {
         <td>${escapeHtml(topic.updatedAt)}</td>
       </tr>`;
     }).join("")
-    : `<tr><td colspan="5" class="muted">尚無主題。</td></tr>`;
+    : `<tr><td colspan="5" class="muted">${options.digestOnly ? "尚無精華主題。" : "尚無主題。"}</td></tr>`;
+  const listTitle = options.digestOnly ? "精華主題列表" : "主題列表";
 
   return page("BBS", shell(`
-    <p><a href="#bbsPostForm">發表主題</a> <a href="/bbs">全部主題</a></p>
+    <p><a href="#bbsPostForm">發表主題</a> <a href="/bbs">全部主題</a> <a href="/bbs?digest=1">精華主題</a></p>
     <fieldset>
-      <legend><strong>主題列表</strong></legend>
+      <legend><strong>${listTitle}</strong></legend>
       <div style="line-height:135%;margin:20px 20px 30px;">
         <strong>
           <table class="form-table" style="width:100%">
