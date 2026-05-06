@@ -589,6 +589,60 @@ describe("RoomDurableObject", () => {
     );
   });
 
+  it("persists and echoes self talk only to the speaker", async () => {
+    const game: GameState = {
+      roomId: "room_abc",
+      phase: "night",
+      day: 1,
+      players: [
+        { playerId: "player_alive", nickname: "Alive", role: "villager", alive: true },
+        { playerId: "player_other", nickname: "Other", role: "villager", alive: true }
+      ],
+      votes: {},
+      openVote: false,
+      commonTalkVisible: false,
+      deadRoleVisible: false,
+      wishRole: false,
+      dummyBoy: false,
+      dayMs: 180_000,
+      nightMs: 90_000,
+      selfVote: false,
+      voteStatus: false,
+      revoteCount: 0,
+      nightKills: {},
+      divinations: {},
+      guards: {},
+      catRevives: {},
+      lastWords: {},
+      log: []
+    };
+    const { room, dbRuns } = observableRoomObject(game);
+    const speakerMessages: SentMessage[] = [];
+    const otherMessages: SentMessage[] = [];
+    const speakerSocket = fakeSocket(speakerMessages);
+    const otherSocket = fakeSocket(otherMessages);
+    connect(room, speakerSocket, "player_alive", "Alive");
+    connect(room, otherSocket, "player_other", "Other");
+    speakerMessages.length = 0;
+    otherMessages.length = 0;
+
+    await sendRaw(room, speakerSocket, JSON.stringify({ type: "self_talk", text: "private mutter" }));
+
+    expect(speakerMessages).toEqual([expect.objectContaining({ type: "self_talk", playerId: "player_alive", text: "private mutter" })]);
+    expect(otherMessages).toEqual([]);
+    expect(dbRuns).toContainEqual(
+      expect.objectContaining({
+        query: expect.stringContaining("INSERT INTO room_events"),
+        binds: [
+          "room_abc",
+          "player_alive",
+          "self_talk",
+          JSON.stringify({ visibility: "private", nickname: "Alive", text: "private mutter", phase: "night", day: 1 })
+        ]
+      })
+    );
+  });
+
   it("persists night actions as private transcript events", async () => {
     const game: GameState = {
       roomId: "room_abc",
@@ -824,6 +878,12 @@ describe("RoomDurableObject", () => {
         nickname: "Wolf",
         command: { type: "dead_chat", text: "secret" },
         message: "Dead channel is only available to dead players during the game"
+      },
+      {
+        playerId: "player_dead",
+        nickname: "Dead",
+        command: { type: "self_talk", text: "secret" },
+        message: "Self talk is only available to living players at night"
       }
     ];
 

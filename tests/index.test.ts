@@ -1490,6 +1490,7 @@ describe("worker routes", () => {
           "common_chat",
           "lovers_chat",
           "dead_chat",
+          "self_talk",
           "gm_chat",
           "gm_whisper",
           "gm_advance_phase",
@@ -1520,6 +1521,7 @@ describe("worker routes", () => {
           "common_chat",
           "lovers_chat",
           "dead_chat",
+          "self_talk",
           "gm_chat",
           "gm_whisper",
           "lobby_start_vote",
@@ -1535,7 +1537,7 @@ describe("worker routes", () => {
           "role",
           "error"
         ],
-        privateChannels: ["wolf_chat", "fox_chat", "common_chat", "lovers_chat", "dead_chat", "gm_chat", "gm_whisper"],
+        privateChannels: ["wolf_chat", "fox_chat", "common_chat", "lovers_chat", "dead_chat", "self_talk", "gm_chat", "gm_whisper"],
         channelVariants: {
           common_chat: {
             publicVoicePlayerId: "common_voice",

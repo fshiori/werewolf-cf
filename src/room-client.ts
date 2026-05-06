@@ -182,6 +182,8 @@ document.querySelector("#connect").addEventListener("click", () => {
       append("<font color='#ff6699'>[戀頻]</font> <b>" + msg.nickname + "</b>: " + msg.text);
     } else if (msg.type === "dead_chat") {
       append("<font color='#666666'>[靈界]</font> <b>" + msg.nickname + "</b>: " + msg.text);
+    } else if (msg.type === "self_talk") {
+      append("<font color='#666666'>[自言自語]</font> <b>" + msg.nickname + "</b>: " + msg.text);
     } else if (msg.type === "objection") {
       playNotifySound();
       append("<font color='#cc0000'>[異議あり]</font> <b>" + msg.nickname + "</b> 提出反對。（剩餘 " + msg.remaining + "）");
@@ -265,6 +267,13 @@ document.querySelector("#sendDeadChat").addEventListener("click", () => {
   const input = document.querySelector("#chatText");
   if (ws && ws.readyState === WebSocket.OPEN) {
     ws.send(JSON.stringify({ type: "dead_chat", text: input.value }));
+    input.value = "";
+  }
+});
+document.querySelector("#sendSelfTalk").addEventListener("click", () => {
+  const input = document.querySelector("#chatText");
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify({ type: "self_talk", text: input.value }));
     input.value = "";
   }
 });
@@ -473,6 +482,7 @@ function renderGame(game) {
   document.querySelector("#sendCommonChat").disabled = !(game.phase === "night" && role === "common" && currentPlayerAlive);
   document.querySelector("#sendLoversChat").disabled = !(game.phase === "night" && isLover && currentPlayerAlive);
   document.querySelector("#sendDeadChat").disabled = !(currentPlayerDead && game.phase !== "lobby" && game.phase !== "ended");
+  document.querySelector("#sendSelfTalk").disabled = !(game.phase === "night" && currentPlayerAlive);
   document.querySelector("#sendObjection").disabled = !(currentPlayerAlive && (game.phase === "lobby" || game.phase === "day"));
   document.querySelector("#sendGmChat").disabled = !isGm;
   document.querySelector("#sendGmWhisper").disabled = !isGm || game.players.length === 0;

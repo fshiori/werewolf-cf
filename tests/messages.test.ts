@@ -21,6 +21,7 @@ import {
   buildPresenceMessage,
   buildRevealedRolesMessage,
   buildRoleMessage,
+  buildSelfTalkMessage,
   buildWolfChatMessage,
   buildErrorMessage
 } from "../src/messages";
@@ -118,6 +119,15 @@ describe("messages", () => {
       type: "dead_chat",
       playerId: "player_1",
       nickname: "&lt;Dead&gt;",
+      text: "&lt;secret&gt;"
+    });
+  });
+
+  it("builds escaped self talk messages", () => {
+    expect(buildSelfTalkMessage("player_1", "<Alive>", "<secret>")).toMatchObject({
+      type: "self_talk",
+      playerId: "player_1",
+      nickname: "&lt;Alive&gt;",
       text: "&lt;secret&gt;"
     });
   });

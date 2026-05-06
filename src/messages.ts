@@ -77,6 +77,16 @@ export function buildDeadChatMessage(playerId: string, nickname: string, text: s
   };
 }
 
+export function buildSelfTalkMessage(playerId: string, nickname: string, text: string): ServerMessage {
+  return {
+    type: "self_talk",
+    playerId,
+    nickname: escapeHtml(nickname),
+    text: escapeHtml(text),
+    sentAt: new Date().toISOString()
+  };
+}
+
 export function buildRevealedRolesMessage(state: GameState): ServerMessage {
   return {
     type: "revealed_roles",
