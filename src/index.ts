@@ -1184,10 +1184,7 @@ async function deleteBbsTopic(request: Request, env: Env, topicIdParam: string):
 }
 
 async function deleteBbsReply(request: Request, env: Env, topicIdParam: string, replyIdParam: string): Promise<Response> {
-  const unauthorized = await requireBbsAdmin(request, env);
-  if (unauthorized) {
-    return unauthorized;
-  }
+  const body: unknown = await request.json().catch(() => ({}));
   try {
     const topicId = validateBbsTopicId(topicIdParam);
     const replyId = validateBbsTopicId(replyIdParam);
@@ -1197,6 +1194,15 @@ async function deleteBbsReply(request: Request, env: Env, topicIdParam: string, 
     }
     if (!(await bbsReplyExists(env, topicId, replyId))) {
       return json({ error: "BBS reply not found" }, { status: 404 });
+    }
+    const adminToken = await env.CONFIG.get("bbs_admin_token");
+    const providedAdminToken = request.headers.get("x-bbs-admin-token") ?? "";
+    const providedPassword = isRecord(body) ? validateBbsPassword(body.password) : undefined;
+    const passwordHash = await getBbsReplyPasswordHash(env, topicId, replyId);
+    const adminAuthorized = Boolean(adminToken && providedAdminToken === adminToken);
+    const passwordAuthorized = Boolean(passwordHash && providedPassword && await bbsPasswordHash(providedPassword) === passwordHash);
+    if (!adminAuthorized && !passwordAuthorized) {
+      return json({ error: "BBS reply delete password is invalid" }, { status: 403 });
     }
     await env.DB.batch([
       env.DB.prepare("DELETE FROM bbs_replies WHERE id = ? AND topic_id = ?").bind(replyId, topicId),
