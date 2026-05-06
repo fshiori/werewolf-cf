@@ -46,6 +46,50 @@ function avatarKey(playerId: string): string {
   return `avatars/${playerId}`;
 }
 
+function referenceAssetKey(path: string): string {
+  return `reference/${path}`;
+}
+
+function contentTypeForReferenceAsset(path: string): string {
+  const lower = path.toLowerCase();
+  if (lower.endsWith(".gif")) {
+    return "image/gif";
+  }
+  if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) {
+    return "image/jpeg";
+  }
+  if (lower.endsWith(".png")) {
+    return "image/png";
+  }
+  if (lower.endsWith(".swf")) {
+    return "application/x-shockwave-flash";
+  }
+  return "application/octet-stream";
+}
+
+function validateReferenceAssetPath(value: string): string {
+  let path: string;
+  try {
+    path = decodeURIComponent(value);
+  } catch {
+    throw new Error("Invalid reference asset path");
+  }
+  if (
+    !path ||
+    path.includes("\\") ||
+    path.includes("//") ||
+    path.split("/").some((part) => part === "" || part === "." || part === "..") ||
+    !/^(img|user_icon|user_emot|swf)\/[A-Za-z0-9_.\-/]+$/.test(path) ||
+    /Thumbs\.db$/i.test(path)
+  ) {
+    throw new Error("Invalid reference asset path");
+  }
+  if (!/\.(gif|jpe?g|png|swf)$/i.test(path)) {
+    throw new Error("Invalid reference asset path");
+  }
+  return path;
+}
+
 function isFileLike(value: unknown): value is File {
   return typeof value === "object" && value !== null && "stream" in value && "size" in value && "type" in value;
 }
@@ -808,6 +852,27 @@ async function getAvatar(env: Env, playerIdParam: string): Promise<Response> {
   }
 }
 
+async function getReferenceAsset(env: Env, pathParam: string): Promise<Response> {
+  try {
+    const path = validateReferenceAssetPath(pathParam);
+    const object = await env.ASSETS.get(referenceAssetKey(path));
+    if (!object) {
+      return new Response("Reference asset not found", { status: 404 });
+    }
+
+    const headers = new Headers();
+    object.writeHttpMetadata(headers);
+    if (!headers.has("content-type")) {
+      headers.set("content-type", contentTypeForReferenceAsset(path));
+    }
+    headers.set("etag", object.httpEtag);
+    headers.set("cache-control", "public, max-age=86400");
+    return new Response(object.body, { headers });
+  } catch (error) {
+    return json({ error: error instanceof Error ? error.message : "Invalid reference asset" }, { status: 400 });
+  }
+}
+
 async function routeRoomWebSocket(request: Request, env: Env, roomId: string): Promise<Response> {
   try {
     const validRoomId = validateRoomId(roomId);
@@ -979,6 +1044,11 @@ export default {
     const avatarMatch = url.pathname.match(/^\/assets\/avatar\/([^/]+)$/);
     if (request.method === "GET" && avatarMatch) {
       return getAvatar(env, avatarMatch[1]);
+    }
+
+    const referenceAssetMatch = url.pathname.match(/^\/assets\/reference\/(.+)$/);
+    if (request.method === "GET" && referenceAssetMatch) {
+      return getReferenceAsset(env, referenceAssetMatch[1]);
     }
 
     const roomMatch = url.pathname.match(/^\/room\/([^/]+)$/);

@@ -115,6 +115,7 @@ Trip and avatar management:
 - `POST /api/assets/avatar`: Upload a PNG, JPEG, GIF, or WebP avatar to R2, up to 512 KiB.
 - `DELETE /api/assets/avatar`: Remove the current player's avatar from R2.
 - `GET /assets/avatar/:playerId`: Read a player's avatar.
+- `GET /assets/reference/:path`: Read a vetted reference bitmap asset copied into R2 under `reference/`.
 
 ## WebSocket Protocol
 
@@ -202,4 +203,4 @@ curl -i https://<worker-host>/api/config
 Use `docs/deployment-smoke.md` for the full production checklist, including remote D1 verification, automated read-only/write smoke checks, maintenance mode, and optional manual R2 avatar checks.
 Use `docs/production-handoff.md` when Cloudflare production resource IDs still need to be created or copied into `wrangler.toml`.
 Use `docs/ref-port-gap-audit.md` to track remaining UI/rule parity gaps against `ref/diam1.3.61.kz_Build0912`.
-Use `docs/reference-asset-inventory.md` to track which reference bitmap assets should move into R2, and regenerate the inventory with `node scripts/inventory-reference-assets.mjs`.
+Use `docs/reference-asset-inventory.md` to track which reference bitmap assets should move into R2, regenerate the inventory with `node scripts/inventory-reference-assets.mjs`, and dry-run priority uploads with `node scripts/upload-reference-assets.mjs`.
