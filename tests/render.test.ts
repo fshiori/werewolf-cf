@@ -408,6 +408,12 @@ describe("render", () => {
     expect(html).toContain("白天");
     expect(html).toContain("夜晚");
     expect(html).toContain("角色");
+    expect(html).toContain("/assets/reference/img/role_human.gif");
+    expect(html).toContain("/assets/reference/img/role_wolf.gif");
+    expect(html).toContain("/assets/reference/img/role_heavywolf.gif");
+    expect(html).toContain("/assets/reference/img/role_mage.gif");
+    expect(html).toContain("/assets/reference/img/role_fox.gif");
+    expect(html).toContain("/assets/reference/img/role_cat.gif");
     expect(html).toContain("人狼 / 大狼");
     expect(html).toContain("Trip限定");
     expect(html).toContain("Durable Object alarm");
