@@ -1992,7 +1992,12 @@ export default {
     }
 
     const roomMatch = url.pathname.match(/^\/room\/([^/]+)$/);
-    const isLegacyLiveRoomPage = url.pathname === "/game_view.php" || url.pathname === "/game_play.php" || url.pathname === "/game_frame.php";
+    const isLegacyLiveRoomPage =
+      url.pathname === "/game_view.php" ||
+      url.pathname === "/game_play.php" ||
+      url.pathname === "/game_frame.php" ||
+      url.pathname === "/login.php" ||
+      url.pathname === "/user_manager.php";
     const legacyLiveRoomId = isLegacyLiveRoomPage ? url.searchParams.get("room_no") : null;
     if (request.method === "GET" && (roomMatch || isLegacyLiveRoomPage)) {
       try {

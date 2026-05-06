@@ -868,7 +868,9 @@ describe("worker routes", () => {
     const cases = [
       ["/game_view.php?room_no=room_exists&auto_reload=20", "spectator", "旁觀視點"],
       ["/game_play.php?room_no=room_exists&auto_reload=20", "player", "玩家視點"],
-      ["/game_frame.php?room_no=room_exists&auto_reload=20", "player", "玩家視點"]
+      ["/game_frame.php?room_no=room_exists&auto_reload=20", "player", "玩家視點"],
+      ["/login.php?room_no=room_exists&auto_reload=20", "player", "玩家視點"],
+      ["/user_manager.php?room_no=room_exists&auto_reload=20", "player", "玩家視點"]
     ] as const;
 
     for (const [path, viewMode, label] of cases) {
@@ -878,6 +880,7 @@ describe("worker routes", () => {
       expect(body).toContain("[room_exists]");
       expect(body).toContain(`data-room-view="${viewMode}"`);
       expect(body).toContain(label);
+      expect(body).toContain("<strong>[住民登錄]</strong>");
       expect(body).toContain('<meta http-equiv="refresh" content="20">');
     }
 
