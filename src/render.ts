@@ -1405,6 +1405,7 @@ export function renderIconCatalog(): string {
       <td>${escapeHtml(icon.name)}</td>
       <td><font color="${escapeHtml(icon.color)}">◆</font> ${escapeHtml(icon.color)}</td>
       <td><code>${escapeHtml(path)}</code></td>
+      <td><button class="iconPickButton" data-icon-path="${escapeHtml(path)}">使用</button></td>
     </tr>`;
   }).join("");
 
@@ -1414,9 +1415,10 @@ export function renderIconCatalog(): string {
       <table class="form-table">
         <tr><td><strong>　來源：</strong></td><td>Reference default icons copied to R2 under <code>reference/user_icon/</code>.</td></tr>
         <tr><td><strong>　尺寸：</strong></td><td>32 x 32</td></tr>
+        <tr><td><strong>　選擇：</strong></td><td><span id="iconPickStatus" class="muted">選定後會套用到入村表單。</span></td></tr>
       </table>
       <table class="form-table" style="margin:12px 20px 18px;">
-        <thead><tr><td><strong>No.</strong></td><td><strong>圖</strong></td><td><strong>名稱</strong></td><td><strong>色碼</strong></td><td><strong>R2 path</strong></td></tr></thead>
+        <thead><tr><td><strong>No.</strong></td><td><strong>圖</strong></td><td><strong>名稱</strong></td><td><strong>色碼</strong></td><td><strong>R2 path</strong></td><td><strong>選擇</strong></td></tr></thead>
         <tbody>${rows}</tbody>
       </table>
     </fieldset>
@@ -1437,11 +1439,19 @@ export function renderIconCatalog(): string {
       const iconUploadPlayerId = document.querySelector("#iconUploadPlayerId");
       const iconUploadFile = document.querySelector("#iconUploadFile");
       const iconUploadStatus = document.querySelector("#iconUploadStatus");
+      const iconPickStatus = document.querySelector("#iconPickStatus");
       const playerKey = "werewolf_cf_player_id";
       if (!localStorage.getItem(playerKey)) {
         localStorage.setItem(playerKey, "player_" + crypto.randomUUID().replaceAll("-", ""));
       }
       iconUploadPlayerId.value = localStorage.getItem(playerKey);
+      document.querySelectorAll(".iconPickButton").forEach((button) => {
+        button.addEventListener("click", () => {
+          const iconPath = button.getAttribute("data-icon-path") || "";
+          localStorage.setItem("werewolf_cf_default_icon", iconPath);
+          iconPickStatus.textContent = iconPath ? "已選擇 " + iconPath : "未選擇頭像";
+        });
+      });
       document.querySelector("#iconUploadButton").addEventListener("click", async () => {
         if (!iconUploadFile.files.length) {
           iconUploadStatus.textContent = "請選擇檔案";
