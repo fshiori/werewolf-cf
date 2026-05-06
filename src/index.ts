@@ -1877,9 +1877,14 @@ export default {
     }
 
     const roomTranscriptPageMatch = url.pathname.match(/^\/room\/([^/]+)\/log$/);
-    if (request.method === "GET" && roomTranscriptPageMatch) {
+    const isLegacyGameLogPage = url.pathname === "/game_log.php";
+    const legacyGameLogRoomId = isLegacyGameLogPage ? url.searchParams.get("room_no") : null;
+    if (request.method === "GET" && (roomTranscriptPageMatch || isLegacyGameLogPage)) {
       try {
-        const roomId = validateRoomId(roomTranscriptPageMatch[1]);
+        if (!roomTranscriptPageMatch && !legacyGameLogRoomId) {
+          throw new Error("game_log.php requires room_no");
+        }
+        const roomId = validateRoomId(roomTranscriptPageMatch ? roomTranscriptPageMatch[1] : legacyGameLogRoomId ?? "");
         if (!(await roomExists(env, roomId))) {
           return new Response("Room not found", { status: 404 });
         }

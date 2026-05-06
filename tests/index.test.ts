@@ -929,7 +929,8 @@ describe("worker routes", () => {
       ["/icon_upload.php", "上傳頭像"],
       ["/rule.php", "基本流程"],
       ["/script_info.php", "Script Info"],
-      ["/admin.php", "管理選單"]
+      ["/admin.php", "管理選單"],
+      ["/game_log.php?room_no=room_finished", "村子完整紀錄"]
     ] as const;
 
     for (const [path, expected] of cases) {
@@ -2523,6 +2524,39 @@ describe("worker routes", () => {
     expect(body).toContain("表示");
     expect(body).toContain("heaven_talk=on");
     expect(body).toContain("heaven_only=on");
+  });
+
+  it("renders legacy game_log.php transcript alias", async () => {
+    const env = envWithRooms(
+      ["room_log"],
+      { "room_status:room_log": "ended" },
+      {},
+      {},
+      {
+        room_log: [
+          {
+            id: 1,
+            room_id: "room_log",
+            player_id: "player_dead",
+            event_type: "dead_chat",
+            payload_json: '{"visibility":"private","nickname":"Dead","text":"heaven","phase":"night","day":2}',
+            created_at: "2026-05-06 12:02:00"
+          }
+        ]
+      }
+    );
+
+    const response = await worker.fetch(new Request("http://example.test/game_log.php?room_no=room_log&heaven_talk=on&reverse_log=on"), env);
+
+    expect(response.status).toBe(200);
+    const body = await response.text();
+    expect(body).toContain("村子完整紀錄");
+    expect(body).toContain("heaven");
+    expect(body).toContain("逆&amp;靈");
+
+    const missingRoom = await worker.fetch(new Request("http://example.test/game_log.php"), env);
+    expect(missingRoom.status).toBe(400);
+    expect(await missingRoom.json()).toEqual({ error: "game_log.php requires room_no" });
   });
 
   it("applies old-log heaven filters on room transcript page", async () => {
