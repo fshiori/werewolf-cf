@@ -253,6 +253,11 @@ describe("render", () => {
     expect(html).toContain("能力發動 / 投票");
     expect(html).toContain("wishRole");
     expect(html).toContain("<option value=\"seer\">占卜師</option>");
+    expect(html).toContain("<option value=\"big_wolf\">大狼</option>");
+    expect(html).toContain("<option value=\"poison\">埋毒者</option>");
+    expect(html).toContain("<option value=\"betrayer\">背德者</option>");
+    expect(html).toContain("<option value=\"child_fox\">子狐</option>");
+    expect(html).toContain("<option value=\"cat\">貓又</option>");
     expect(html).toContain("startVote");
     expect(html).toContain("leaveRoom");
     expect(html).toContain("sendDeadChat");

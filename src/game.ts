@@ -335,10 +335,11 @@ export function startGame(
   const lobbyPlayers = options.dummyBoy ? appendDummyPlayer(state.players, options) : state.players;
   const referenceRoleDeck = REFERENCE_ROLE_DECKS[lobbyPlayers.length];
   if (referenceRoleDeck) {
+    const roleDeck = roleDeckWithRoomOptions(referenceRoleDeck, options);
     return startGameWithPlayers(
       state,
       applyRoomOptions(
-        ensureDummyRoleSafe(assignRolesFromDeck(lobbyPlayers, referenceRoleDeck, options)),
+        ensureDummyRoleSafe(assignRolesFromDeck(lobbyPlayers, roleDeck, options)),
         options
       ),
       now,
@@ -405,7 +406,7 @@ export function startGame(
     }
     return role;
   });
-  const players = ensureDummyRoleSafe(assignRolesFromDeck(lobbyPlayers, roleDeck, options));
+  const players = ensureDummyRoleSafe(assignRolesFromDeck(lobbyPlayers, roleDeckWithRoomOptions(roleDeck, options), options));
 
   return startGameWithPlayers(state, applyRoomOptions(players, options), now, options);
 }
@@ -461,6 +462,13 @@ function assignRolesFromDeck(players: GamePlayer[], roleDeck: GamePlayer["role"]
   }));
 }
 
+function roleDeckWithRoomOptions(roleDeck: GamePlayer["role"][], options: RoomOptions): GamePlayer["role"][] {
+  return applyRoomOptions(
+    roleDeck.map((role, index) => ({ playerId: `player_role_${index}`, nickname: "", role, alive: true })),
+    options
+  ).map((player) => player.role);
+}
+
 function applyRoomOptions(players: GamePlayer[], options: RoomOptions): GamePlayer[] {
   let nextPlayers = players;
   if (options.lovers && nextPlayers.length >= 13) {
@@ -485,37 +493,37 @@ function applyRoomOptions(players: GamePlayer[], options: RoomOptions): GamePlay
       nextPlayers = nextPlayers.map((player, index) => (index === deciderIndex ? { ...player, decider: true } : player));
     }
   }
-  if (options.bigWolf && nextPlayers.length >= 20) {
+  if (options.bigWolf && nextPlayers.length >= 20 && !nextPlayers.some((player) => player.role === "big_wolf")) {
     const wolfIndex = nextPlayers.findIndex((player) => player.role === "werewolf");
     if (wolfIndex !== -1) {
       nextPlayers = nextPlayers.map((player, index) => (index === wolfIndex ? { ...player, role: "big_wolf" } : player));
     }
   }
-  if (options.betrayer && nextPlayers.length >= 20) {
+  if (options.betrayer && nextPlayers.length >= 20 && !nextPlayers.some((player) => player.role === "betrayer")) {
     const betrayerIndex = nextPlayers.findIndex((player) => player.role === "villager");
     if (betrayerIndex !== -1) {
       nextPlayers = nextPlayers.map((player, index) => (index === betrayerIndex ? { ...player, role: "betrayer" } : player));
     }
   }
-  if (options.childFox && nextPlayers.length >= 20) {
+  if (options.childFox && nextPlayers.length >= 20 && !nextPlayers.some((player) => player.role === "child_fox")) {
     const childFoxIndex = nextPlayers.findIndex((player) => player.role === "villager");
     if (childFoxIndex !== -1) {
       nextPlayers = nextPlayers.map((player, index) => (index === childFoxIndex ? { ...player, role: "child_fox" } : player));
     }
   }
-  if (options.twoFoxes && nextPlayers.length >= 20) {
+  if (options.twoFoxes && nextPlayers.length >= 20 && nextPlayers.filter((player) => player.role === "fox").length < 2) {
     const foxIndex = nextPlayers.findIndex((player) => player.role === "villager");
     if (foxIndex !== -1) {
       nextPlayers = nextPlayers.map((player, index) => (index === foxIndex ? { ...player, role: "fox" } : player));
     }
   }
-  if (options.cat && nextPlayers.length >= 20) {
+  if (options.cat && nextPlayers.length >= 20 && !nextPlayers.some((player) => player.role === "cat")) {
     const catIndex = nextPlayers.findIndex((player) => player.role === "villager");
     if (catIndex !== -1) {
       nextPlayers = nextPlayers.map((player, index) => (index === catIndex ? { ...player, role: "cat" } : player));
     }
   }
-  if (!options.poison || nextPlayers.length < 20) {
+  if (!options.poison || nextPlayers.length < 20 || nextPlayers.some((player) => player.role === "poison")) {
     return nextPlayers;
   }
   const villagerIndexes = nextPlayers

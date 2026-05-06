@@ -60,7 +60,12 @@ describe("validation", () => {
   it("validates wished roles", () => {
     expect(validateWishRole("none")).toBeUndefined();
     expect(validateWishRole("seer")).toBe("seer");
-    expect(() => validateWishRole("cat")).toThrow("Invalid wished role");
+    expect(validateWishRole("cat")).toBe("cat");
+    expect(validateWishRole("big_wolf")).toBe("big_wolf");
+    expect(validateWishRole("poison")).toBe("poison");
+    expect(validateWishRole("betrayer")).toBe("betrayer");
+    expect(validateWishRole("child_fox")).toBe("child_fox");
+    expect(() => validateWishRole("gm")).toThrow("Invalid wished role");
   });
 
   it("validates default icon paths", () => {

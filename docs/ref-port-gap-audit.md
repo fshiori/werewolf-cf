@@ -61,7 +61,7 @@ Reference files inspected:
 ### Implemented or close
 
 - Top page uses a reference-like table shell, side menu, fieldsets, room list, announcement, and create-room form.
-- Room creation covers max users, comments, real-time timing, wish role, Trip-required, GM, dummy boy, last words, open vote, common voice, dead role visibility, self-vote, vote-status, and major optional roles.
+- Room creation covers max users, comments, real-time timing, wish role, Trip-required, GM, dummy boy, last words, open vote, common voice, dead role visibility, self-vote, vote-status, and major optional roles; the room join selector and assignment path now support enabled optional-role wishes.
 - Room page uses retro table panels for header, player list, actions/votes, chat, logs, records, and events.
 - Room page now loads client logic through `/assets/room-client.js` instead of embedding the whole WebSocket client in the HTML.
 - `/admin/rooms` now provides a KV-token-protected reference-style `廢村管理` list and D1-backed room-ending action for active rooms.
@@ -94,6 +94,7 @@ Reference files inspected:
 
 - `game_functions.php` has additional visibility branches for many system talk locations. Current implementation has equivalent permission checks for channels but not full transcript parity.
 - `game_functions.php` victory logic includes special handling around lover-only victory and heavy wolf / fox edge cases. The rule manifest now maps implemented winner branches to focused tests; more reference scenarios may still need mapping as discovered.
+- Reference `game_vote.php` assigns wishes by removing available wished roles from the current role list, then assigning leftovers. Current assignment now does this for core roles and enabled optional roles; exact reference random ordering and conflict priority remain only partially mapped.
 - Reference `cult` image filenames are used for the `betr` / `背德` role in this build; `docs/reference-betrayer-cult-extraction.md` maps that evidence to the implemented `betrayer` role and no separate cult rule path has been found.
 - Reference has objection/sound/revote SWF paths and cookie-driven sound notifications. Current port implements the objection command, count limit, persisted/broadcast notification, and optional browser beep for objection, phase/day changes, revotes, and sudden-death warnings instead of legacy SWF playback.
 - Reference has silence/sudden-death checks in `game_play.php` flow. Current DO state now applies non-realtime silence acceleration when conversation resumes after the silence threshold; the DO alarm emits the reference-style final 2-minute warning, then sudden-deaths timed-out day voters and required night actors, resets action maps, and starts another same-phase deadline.
