@@ -361,6 +361,17 @@ document.querySelector("#gmEnableCommonVoice").addEventListener("click", () => {
 document.querySelector("#gmDisableCommonVoice").addEventListener("click", () => {
   sendCommand({ type: "gm_set_common_voice", enabled: false });
 });
+document.querySelector("#gmSetChannelRestrictions").addEventListener("click", () => {
+  sendCommand({
+    type: "gm_set_channel_restrictions",
+    restrictions: {
+      wolf: document.querySelector("#gmRestrictWolf").checked,
+      common: document.querySelector("#gmRestrictCommon").checked,
+      lovers: document.querySelector("#gmRestrictLovers").checked,
+      fox: document.querySelector("#gmRestrictFox").checked
+    }
+  });
+});
 document.querySelector("#uploadAvatar").addEventListener("click", async () => {
   const fileInput = document.querySelector("#avatarFile");
   if (!fileInput.files || fileInput.files.length === 0) return;
@@ -524,10 +535,11 @@ function renderGame(game) {
   document.querySelector("#startGame").disabled = game.phase !== "lobby" || (game.hostId !== currentPlayerId && !isGm);
   document.querySelector("#startVote").disabled = !(game.phase === "lobby" && currentPlayer && !isGm && !(game.lobbyStartVotedPlayerIds || []).includes(currentPlayerId));
   document.querySelector("#leaveRoom").disabled = !ws || ws.readyState !== WebSocket.OPEN;
-  document.querySelector("#sendWolfChat").disabled = !(game.phase === "night" && isWolfRole(role) && currentPlayerAlive);
-  document.querySelector("#sendFoxChat").disabled = !(game.phase === "night" && role === "fox" && currentPlayerAlive);
-  document.querySelector("#sendCommonChat").disabled = !(game.phase === "night" && role === "common" && currentPlayerAlive);
-  document.querySelector("#sendLoversChat").disabled = !(game.phase === "night" && isLover && currentPlayerAlive);
+  const channelRestrictions = game.channelRestrictions || {};
+  document.querySelector("#sendWolfChat").disabled = !(game.phase === "night" && isWolfRole(role) && currentPlayerAlive && !channelRestrictions.wolf);
+  document.querySelector("#sendFoxChat").disabled = !(game.phase === "night" && role === "fox" && currentPlayerAlive && !channelRestrictions.fox);
+  document.querySelector("#sendCommonChat").disabled = !(game.phase === "night" && role === "common" && currentPlayerAlive && !channelRestrictions.common);
+  document.querySelector("#sendLoversChat").disabled = !(game.phase === "night" && isLover && currentPlayerAlive && !channelRestrictions.lovers);
   document.querySelector("#sendDeadChat").disabled = !(currentPlayerDead && game.phase !== "lobby" && game.phase !== "ended");
   document.querySelector("#sendSelfTalk").disabled = !(game.phase === "night" && currentPlayerAlive);
   document.querySelector("#sendObjection").disabled = !(currentPlayerAlive && (game.phase === "lobby" || game.phase === "day"));
@@ -542,6 +554,11 @@ function renderGame(game) {
   document.querySelector("#gmDisableFlag").disabled = !isGm || !(game.phase === "day" || game.phase === "night") || game.players.length === 0;
   document.querySelector("#gmEnableCommonVoice").disabled = !isGm || !(game.phase === "day" || game.phase === "night") || game.commonTalkVisible;
   document.querySelector("#gmDisableCommonVoice").disabled = !isGm || !(game.phase === "day" || game.phase === "night") || !game.commonTalkVisible;
+  document.querySelector("#gmRestrictWolf").checked = channelRestrictions.wolf === true;
+  document.querySelector("#gmRestrictCommon").checked = channelRestrictions.common === true;
+  document.querySelector("#gmRestrictLovers").checked = channelRestrictions.lovers === true;
+  document.querySelector("#gmRestrictFox").checked = channelRestrictions.fox === true;
+  document.querySelector("#gmSetChannelRestrictions").disabled = !isGm || !(game.phase === "day" || game.phase === "night");
   document.querySelector("#setLastWords").disabled = !(currentPlayerAlive && game.phase !== "lobby" && game.phase !== "ended");
   const players = document.querySelector("#players");
   const playerGrid = document.querySelector("#playerGrid");

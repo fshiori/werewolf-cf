@@ -21,6 +21,7 @@ type SentMessage = {
   phase?: string;
   day?: number;
   commonTalkVisible?: boolean;
+  channelRestrictions?: { wolf: boolean; common: boolean; lovers: boolean; fox: boolean };
   log?: string[];
   role?: string;
   wolves?: Array<{ playerId: string; nickname: string }>;
@@ -1112,6 +1113,10 @@ describe("RoomDurableObject", () => {
       },
       {
         command: { type: "gm_set_common_voice", enabled: true },
+        message: "Only the GM can adjust channels"
+      },
+      {
+        command: { type: "gm_set_channel_restrictions", restrictions: { wolf: true, common: false, lovers: false, fox: false } },
         message: "Only the GM can adjust channels"
       }
     ];
@@ -2947,6 +2952,54 @@ describe("RoomDurableObject", () => {
     });
     expect(gmMessages).toContainEqual(expect.objectContaining({ type: "action_ack", action: "gm_set_common_voice" }));
     expect(villagerMessages).toContainEqual(expect.objectContaining({ type: "game_state", commonTalkVisible: true }));
+  });
+
+  it("lets GM persist channel restrictions through the websocket handler", async () => {
+    const game: GameState = {
+      roomId: "room_abc",
+      phase: "night",
+      day: 1,
+      players: [
+        { playerId: "player_gm", nickname: "GM", role: "villager", alive: true },
+        { playerId: "player_wolf", nickname: "Wolf", role: "werewolf", alive: true }
+      ],
+      votes: {},
+      openVote: false,
+      commonTalkVisible: false,
+      deadRoleVisible: false,
+      wishRole: false,
+      dummyBoy: false,
+      dayMs: 180_000,
+      nightMs: 90_000,
+      selfVote: false,
+      voteStatus: false,
+      revoteCount: 0,
+      nightKills: {},
+      divinations: {},
+      guards: {},
+      catRevives: {},
+      lastWords: {},
+      log: []
+    };
+    const { room, stored, dbRuns } = observableRoomObject(game, { option_role: "will chdis:ch_common:::" });
+    const gmMessages: SentMessage[] = [];
+    const wolfMessages: SentMessage[] = [];
+    const gmSocket = fakeSocket(gmMessages);
+    const wolfSocket = fakeSocket(wolfMessages);
+    connect(room, gmSocket, "player_gm", "GM", true);
+    connect(room, wolfSocket, "player_wolf", "Wolf");
+
+    await sendRaw(room, gmSocket, JSON.stringify({ type: "gm_set_channel_restrictions", restrictions: { wolf: true, common: false, lovers: true, fox: false } }));
+
+    const saved = stored.get("gameState") as GameState;
+    expect(saved.channelRestrictions).toEqual({ wolf: true, common: false, lovers: true, fox: false });
+    expect(saved.log).toContain("GM 調整頻道限制：人狼關閉、共有開啟、戀人關閉、妖狐開啟。");
+    expect(dbRuns).toContainEqual({
+      query: "UPDATE rooms SET option_role = ? WHERE id = ?",
+      binds: ["will chdis:ch_wolf::ch_lovers:", "room_abc"]
+    });
+    expect(gmMessages).toContainEqual(expect.objectContaining({ type: "action_ack", action: "gm_set_channel_restrictions" }));
+    expect(wolfMessages).toContainEqual(expect.objectContaining({ type: "game_state", channelRestrictions: { wolf: true, common: false, lovers: true, fox: false } }));
   });
 
   it("sends common chat only to living common sockets", () => {

@@ -337,6 +337,27 @@ export function parseClientMessage(raw: string): ClientMessage {
     return { type: "gm_set_common_voice", enabled: parsed.enabled };
   }
 
+  if (parsed.type === "gm_set_channel_restrictions") {
+    if (
+      !isRecord(parsed.restrictions) ||
+      typeof parsed.restrictions.wolf !== "boolean" ||
+      typeof parsed.restrictions.common !== "boolean" ||
+      typeof parsed.restrictions.lovers !== "boolean" ||
+      typeof parsed.restrictions.fox !== "boolean"
+    ) {
+      throw new Error("Invalid GM channel control message");
+    }
+    return {
+      type: "gm_set_channel_restrictions",
+      restrictions: {
+        wolf: parsed.restrictions.wolf,
+        common: parsed.restrictions.common,
+        lovers: parsed.restrictions.lovers,
+        fox: parsed.restrictions.fox
+      }
+    };
+  }
+
   if (parsed.type === "start_game") {
     return { type: "start_game" };
   }

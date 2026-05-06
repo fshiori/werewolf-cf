@@ -20,6 +20,7 @@ import {
   commonsForPlayer,
   createLobbyState,
   forceEndGame,
+  forceSetChannelRestrictions,
   forceSetCommonTalkVisible,
   forceSetPlayerAlive,
   forceSetPlayerFlag,
@@ -66,7 +67,7 @@ import {
   buildSelfTalkMessage,
   buildWolfChatMessage
 } from "./messages";
-import type { GameState, RoomMember, RoomOptions } from "./types";
+import type { ChannelRestrictions, GameState, RoomMember, RoomOptions } from "./types";
 import {
   parseClientMessage,
   validateChatText,
@@ -83,6 +84,19 @@ type ConnectionState = {
   tripHash?: string;
   gm?: boolean;
 };
+
+function parseChannelRestrictions(tokens: string[]): ChannelRestrictions | undefined {
+  const token = tokens.find((value) => value.startsWith("chdis:"));
+  if (!token) {
+    return undefined;
+  }
+  return {
+    wolf: token.includes("ch_wolf"),
+    common: token.includes("ch_common"),
+    lovers: token.includes("ch_lovers"),
+    fox: token.includes("ch_fox")
+  };
+}
 
 export class RoomDurableObject {
   private readonly roomId: string;
@@ -426,6 +440,20 @@ export class RoomDurableObject {
         await this.setRoomOptionToken("comoutl", message.enabled);
         await this.persistRoomEvent(member.playerId, "gm_set_common_voice", { enabled: message.enabled, phase: next.phase, day: next.day });
         this.send(socket, buildActionAckMessage("gm_set_common_voice", member.playerId));
+        await this.broadcastGameState(next);
+        this.sendMediumResults(next);
+        return;
+      }
+
+      if (message.type === "gm_set_channel_restrictions") {
+        if (!member.gm) {
+          throw new Error("Only the GM can adjust channels");
+        }
+        const next = forceSetChannelRestrictions(await this.loadGameState(), message.restrictions);
+        await this.saveGameState(next);
+        await this.setChannelRestrictionOption(message.restrictions);
+        await this.persistRoomEvent(member.playerId, "gm_set_channel_restrictions", { restrictions: message.restrictions, phase: next.phase, day: next.day });
+        this.send(socket, buildActionAckMessage("gm_set_channel_restrictions", member.playerId));
         await this.broadcastGameState(next);
         this.sendMediumResults(next);
         return;
@@ -928,6 +956,7 @@ export class RoomDurableObject {
       lastWords: roles.has("will"),
       openVote: roles.has("open_vote"),
       commonTalkVisible: roles.has("comoutl"),
+      channelRestrictions: parseChannelRestrictions(tokens),
       deadRoleVisible: row?.dellook === 1,
       wishRole: roles.has("wish_role"),
       tripRequired: roles.has("istrip"),
@@ -955,6 +984,22 @@ export class RoomDurableObject {
       : tokens.filter((value) => value !== token);
     await this.env.DB.prepare("UPDATE rooms SET option_role = ? WHERE id = ?")
       .bind(nextTokens.join(" "), this.roomId)
+      .run();
+  }
+
+  private async setChannelRestrictionOption(restrictions: ChannelRestrictions): Promise<void> {
+    const row = await this.env.DB.prepare("SELECT option_role FROM rooms WHERE id = ? LIMIT 1")
+      .bind(this.roomId)
+      .first<{ option_role: string | null }>();
+    const tokens = (row?.option_role ?? "").split(/\s+/).filter(Boolean).filter((token) => !token.startsWith("chdis:"));
+    const restrictedTokens = [
+      restrictions.wolf ? "ch_wolf" : "",
+      restrictions.common ? "ch_common" : "",
+      restrictions.lovers ? "ch_lovers" : "",
+      restrictions.fox ? "ch_fox" : ""
+    ];
+    await this.env.DB.prepare("UPDATE rooms SET option_role = ? WHERE id = ?")
+      .bind([...tokens, `chdis:${restrictedTokens.join(":")}`].join(" "), this.roomId)
       .run();
   }
 

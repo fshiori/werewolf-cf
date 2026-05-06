@@ -4,6 +4,7 @@ import type {
   GameState,
   GameWinner,
   ChildFoxDivinationResult,
+  ChannelRestrictions,
   MediumReading,
   PlayerFlag,
   PlayerStatUpdate,
@@ -23,6 +24,12 @@ export const LOBBY_KICK_VOTES_REQUIRED = 5;
 export const SUDDEN_DEATH_WARNING_MS = 120_000;
 export const SILENCE_THRESHOLD_MS = 60_000;
 export const SILENCE_ADVANCE_MS = 60 * 60_000;
+export const DEFAULT_CHANNEL_RESTRICTIONS: ChannelRestrictions = {
+  wolf: false,
+  common: false,
+  lovers: false,
+  fox: false
+};
 const DUMMY_PLAYER_ID = "player_dummy_boy";
 const REFERENCE_ROLE_DECKS: Record<number, GamePlayer["role"][]> = {
   8: ["villager", "villager", "villager", "villager", "villager", "werewolf", "werewolf", "seer"],
@@ -89,6 +96,13 @@ export function publicPlayers(players: GamePlayer[]): PublicGamePlayer[] {
   }));
 }
 
+export function channelRestrictionsForState(state: Pick<GameState, "channelRestrictions">): ChannelRestrictions {
+  return {
+    ...DEFAULT_CHANNEL_RESTRICTIONS,
+    ...(state.channelRestrictions ?? {})
+  };
+}
+
 export function upsertLobbyPlayer(
   state: GameState,
   member: RoomMember & { tripHash?: string; wishRole?: GamePlayer["role"]; iconPath?: string },
@@ -139,22 +153,22 @@ export function isWerewolfRole(role: GamePlayer["role"]): boolean {
 
 export function canUseWerewolfChannel(state: GameState, playerId: string): boolean {
   const player = state.players.find((candidate) => candidate.playerId === playerId);
-  return state.phase === "night" && player?.alive === true && isWerewolfRole(player.role);
+  return !channelRestrictionsForState(state).wolf && state.phase === "night" && player?.alive === true && isWerewolfRole(player.role);
 }
 
 export function canUseFoxChannel(state: GameState, playerId: string): boolean {
   const player = state.players.find((candidate) => candidate.playerId === playerId);
-  return state.phase === "night" && player?.alive === true && player.role === "fox";
+  return !channelRestrictionsForState(state).fox && state.phase === "night" && player?.alive === true && player.role === "fox";
 }
 
 export function canUseCommonChannel(state: GameState, playerId: string): boolean {
   const player = state.players.find((candidate) => candidate.playerId === playerId);
-  return state.phase === "night" && player?.alive === true && player.role === "common";
+  return !channelRestrictionsForState(state).common && state.phase === "night" && player?.alive === true && player.role === "common";
 }
 
 export function canUseLoversChannel(state: GameState, playerId: string): boolean {
   const player = state.players.find((candidate) => candidate.playerId === playerId);
-  return state.phase === "night" && player?.alive === true && player.lover === true;
+  return !channelRestrictionsForState(state).lovers && state.phase === "night" && player?.alive === true && player.lover === true;
 }
 
 export function canUseDeadChannel(state: GameState, playerId: string): boolean {
@@ -554,6 +568,7 @@ function startGameWithPlayers(state: GameState, players: GamePlayer[], now: numb
     votes: {},
     openVote: options.openVote,
     commonTalkVisible: options.commonTalkVisible,
+    channelRestrictions: options.channelRestrictions ? { ...DEFAULT_CHANNEL_RESTRICTIONS, ...options.channelRestrictions } : undefined,
     deadRoleVisible: options.deadRoleVisible,
     wishRole: options.wishRole,
     dummyBoy: options.dummyBoy,
@@ -1141,6 +1156,24 @@ export function forceSetCommonTalkVisible(state: GameState, enabled: boolean): G
     ...state,
     commonTalkVisible: enabled,
     log: [...state.log, `GM 調整共有頻道公開：${enabled ? "開啟" : "關閉"}。`]
+  };
+}
+
+export function forceSetChannelRestrictions(state: GameState, restrictions: ChannelRestrictions): GameState {
+  if (state.phase !== "day" && state.phase !== "night") {
+    throw new Error("Can only adjust channels during active games");
+  }
+  const nextRestrictions = {
+    ...DEFAULT_CHANNEL_RESTRICTIONS,
+    ...restrictions
+  };
+  return {
+    ...state,
+    channelRestrictions: nextRestrictions,
+    log: [
+      ...state.log,
+      `GM 調整頻道限制：人狼${nextRestrictions.wolf ? "關閉" : "開啟"}、共有${nextRestrictions.common ? "關閉" : "開啟"}、戀人${nextRestrictions.lovers ? "關閉" : "開啟"}、妖狐${nextRestrictions.fox ? "關閉" : "開啟"}。`
+    ]
   };
 }
 

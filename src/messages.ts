@@ -1,4 +1,4 @@
-import { publicPlayers } from "./game";
+import { channelRestrictionsForState, publicPlayers } from "./game";
 import type { ChildFoxDivinationResult, DivinationResult, GameState, MediumReading, PlayerRole, RoomMember, ServerMessage } from "./types";
 import { escapeHtml } from "./validation";
 
@@ -188,6 +188,7 @@ export function buildGameStateMessage(state: GameState): ServerMessage {
     hostId: state.hostId,
     revoteCount: state.revoteCount ?? 0,
     commonTalkVisible: state.commonTalkVisible,
+    channelRestrictions: channelRestrictionsForState(state),
     players: publicPlayers(state.players).map((player) => ({ ...player, nickname: escapeHtml(player.nickname) })),
     votes: state.openVote ? state.votes : {},
     votedPlayerIds: votedPlayerIdsForState(state),
@@ -259,7 +260,7 @@ export function buildLastWordsAckMessage(): ServerMessage {
 }
 
 export function buildActionAckMessage(
-  action: "vote" | "night_kill" | "guard" | "child_fox_divine" | "cat_revive" | "kick_player" | "leave_room" | "gm_set_common_voice",
+  action: "vote" | "night_kill" | "guard" | "child_fox_divine" | "cat_revive" | "kick_player" | "leave_room" | "gm_set_common_voice" | "gm_set_channel_restrictions",
   targetPlayerId: string
 ): ServerMessage {
   return { type: "action_ack", action, targetPlayerId };

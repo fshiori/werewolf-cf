@@ -86,7 +86,7 @@ Reference files inspected:
 - Night kill, seer, child fox, guard, cat revive.
 - Poison/cat linked deaths, lover linked deaths, betrayer linked deaths.
 - Winners: villagers, werewolves, foxes, lovers.
-- Private channels: wolf, fox, common, lovers, dead, GM, GM whisper; GM can toggle common voice visibility during active games.
+- Private channels: wolf, fox, common, lovers, dead, GM, GM whisper; GM can toggle common voice visibility and persist `chdis` restrictions for wolf/common/lovers/fox channels during active games.
 - Dead role visibility and end-game role reveal.
 - Last words and dummy boy first night.
 - D1 final records and player stats after game end.
@@ -99,7 +99,7 @@ Reference files inspected:
 - Reference `cult` image filenames are used for the `betr` / `背德` role in this build; `docs/reference-betrayer-cult-extraction.md` maps that evidence to the implemented `betrayer` role and no separate cult rule path has been found.
 - Reference has objection/sound/revote SWF paths and cookie-driven sound notifications. Current port implements the objection command, count limit, persisted/broadcast notification, and optional browser beep for objection, phase/day changes, revotes, and sudden-death warnings instead of legacy SWF playback.
 - Reference has silence/sudden-death checks in `game_play.php` flow. Current DO state now applies non-realtime silence acceleration when conversation resumes after the silence threshold; the DO alarm emits the reference-style final 2-minute warning, then sudden-deaths timed-out day voters and required night actors, resets action maps, and starts another same-phase deadline.
-- Reference `GM_CHANNEL` can adjust several channel restrictions. Current GM controls cover kill, revive, role, flag, phase, winner declaration, whispers, and common voice visibility; wolf/lovers/fox channel restriction toggles remain unmapped.
+- Reference `GM_CHANNEL` can adjust several channel restrictions. Current GM controls cover kill, revive, role, flag, phase, winner declaration, whispers, common voice visibility, and the `chdis:ch_wolf:ch_common:ch_lovers:ch_fox` restriction matrix; exact PHP self-talk rerouting presentation and remaining admin screens are still not fully mapped.
 - Reference has resident exit/reset vote handling while waiting. Current lobby kick exists, players can voluntarily leave the lobby resident list with host reassignment, resident start votes follow the reference 8-player minimum before auto-starting, and 5 resident kick votes remove a target while resetting lobby votes; remaining reset semantics may still differ from PHP.
 - Reference has manual/auto refresh spectator view. Current app is realtime only.
 

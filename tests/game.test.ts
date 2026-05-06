@@ -21,6 +21,7 @@ import {
   createLobbyState,
   foxesForPlayer,
   forceEndGame,
+  forceSetChannelRestrictions,
   forceSetCommonTalkVisible,
   forceSetPlayerAlive,
   forceSetPlayerFlag,
@@ -1736,6 +1737,15 @@ describe("game", () => {
     expect(() => forceSetCommonTalkVisible(createLobbyState("room_abc"), true)).toThrow("active games");
   });
 
+  it("lets GM restrict night private channels during active games", () => {
+    const day = startGame(lobby([["player_1", "Alice"], ["player_2", "Bob"], ["player_3", "Carol"], ["player_4", "Dave"]]), 0, () => 0);
+    const restricted = forceSetChannelRestrictions(day, { wolf: true, common: false, lovers: true, fox: false });
+
+    expect(restricted.channelRestrictions).toEqual({ wolf: true, common: false, lovers: true, fox: false });
+    expect(restricted.log).toContain("GM 調整頻道限制：人狼關閉、共有開啟、戀人關閉、妖狐開啟。");
+    expect(() => forceSetChannelRestrictions(createLobbyState("room_abc"), { wolf: true, common: false, lovers: false, fox: false })).toThrow("active games");
+  });
+
   it("allows only living werewolves to use the night channel", () => {
     const day = startGame(lobby([["player_1", "Alice"], ["player_2", "Bob"], ["player_3", "Carol"], ["player_4", "Dave"]]), 0, () => 0);
     const night = castDayVote(
@@ -1746,6 +1756,7 @@ describe("game", () => {
 
     expect(canUseWerewolfChannel(day, "player_1")).toBe(false);
     expect(canUseWerewolfChannel(night, "player_1")).toBe(true);
+    expect(canUseWerewolfChannel({ ...night, channelRestrictions: { wolf: true, common: false, lovers: false, fox: false } }, "player_1")).toBe(false);
     expect(canUseWerewolfChannel(night, "player_3")).toBe(false);
     expect(canUseWerewolfChannel(night, "player_2")).toBe(false);
   });
@@ -1760,6 +1771,7 @@ describe("game", () => {
     ]);
 
     expect(canUseFoxChannel(night, "player_1")).toBe(true);
+    expect(canUseFoxChannel({ ...night, channelRestrictions: { wolf: false, common: false, lovers: false, fox: true } }, "player_1")).toBe(false);
     expect(canUseFoxChannel(night, "player_2")).toBe(false);
     expect(canUseFoxChannel(night, "player_3")).toBe(false);
     expect(canUseFoxChannel(night, "player_4")).toBe(false);
@@ -1776,6 +1788,7 @@ describe("game", () => {
     ]);
 
     expect(canUseCommonChannel(night, "player_1")).toBe(true);
+    expect(canUseCommonChannel({ ...night, channelRestrictions: { wolf: false, common: true, lovers: false, fox: false } }, "player_1")).toBe(false);
     expect(canUseCommonChannel(night, "player_2")).toBe(true);
     expect(canUseCommonChannel(night, "player_3")).toBe(false);
     expect(canUseCommonChannel(night, "player_4")).toBe(false);
@@ -1791,6 +1804,7 @@ describe("game", () => {
     ]);
 
     expect(canUseLoversChannel(night, "player_1")).toBe(true);
+    expect(canUseLoversChannel({ ...night, channelRestrictions: { wolf: false, common: false, lovers: true, fox: false } }, "player_1")).toBe(false);
     expect(canUseLoversChannel(night, "player_2")).toBe(true);
     expect(canUseLoversChannel(night, "player_3")).toBe(false);
     expect(canUseLoversChannel(night, "player_4")).toBe(false);
