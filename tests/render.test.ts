@@ -1065,16 +1065,16 @@ describe("render", () => {
       {
         id: "room_abc",
         name: "Test",
-        comment: "",
-        maxPlayers: 22,
+        comment: "Need review",
+        maxPlayers: 30,
         status: "playing",
         createdAt: "2026-05-06 12:00:00",
         options: {
-          poison: false,
-          bigWolf: false,
+          poison: true,
+          bigWolf: true,
           authority: false,
           decider: false,
-          lovers: false,
+          lovers: true,
           betrayer: false,
           childFox: false,
           twoFoxes: false,
@@ -1082,8 +1082,16 @@ describe("render", () => {
           lastWords: false,
           openVote: false,
           commonTalkVisible: false,
+          channelRestrictions: {
+            wolf: true,
+            common: false,
+            lovers: false,
+            fox: true
+          },
           deadRoleVisible: false,
           wishRole: false,
+          tripRequired: true,
+          gmEnabled: true,
           dummyBoy: false,
           customDummy: false,
           dummyName: "替身君",
@@ -1099,6 +1107,13 @@ describe("render", () => {
 
     expect(html).toContain("請選擇要廢除的村");
     expect(html).toContain("room_abc");
+    expect(html).toContain("Need review");
+    expect(html).toContain("/assets/reference/img/max30.gif");
+    expect(html).toContain("埋毒 / 大狼 / 戀人");
+    expect(html).toContain("頻道限:狼/狐");
+    expect(html).toContain("Trip限定 / GM制");
+    expect(html).toContain("/room/room_abc/log");
+    expect(html).toContain("/room/room_abc/events");
     expect(html).toContain("adminEndRoom");
     expect(html).toContain("/api/admin/rooms/");
     expect(html).toContain('"x-room-admin-token": roomAdminToken');

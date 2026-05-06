@@ -909,22 +909,43 @@ export function renderAdminRoomsLogin(): string {
 }
 
 export function renderAdminRooms(rooms: RoomSummary[]): string {
+  const optionSummary = (room: RoomSummary): string => [
+    room.options.realTime ? `限時 ${String(room.options.dayMinutes)}/${String(room.options.nightMinutes)}` : "",
+    room.options.poison ? "埋毒" : "",
+    room.options.bigWolf ? "大狼" : "",
+    room.options.lovers ? "戀人" : "",
+    room.options.betrayer ? "背德" : "",
+    room.options.childFox ? "子狐" : "",
+    room.options.twoFoxes ? "雙狐" : "",
+    room.options.cat ? "貓又" : "",
+    room.options.openVote ? "公開票" : "",
+    room.options.commonTalkVisible ? "共有聲" : "",
+    channelRestrictionOptionMark(room).replace(/<[^>]+>/g, ""),
+    room.options.tripRequired ? "Trip限定" : "",
+    room.options.gmEnabled ? "GM制" : "",
+    room.options.dummyBoy ? "替身" : "",
+    room.options.voteStatus ? "投票済" : ""
+  ].filter(Boolean).join(" / ") || "標準";
   const rows = rooms.length
     ? rooms.map((room) => `<tr>
         <td><a href="/room/${escapeHtml(room.id)}">${escapeHtml(room.id)}</a></td>
         <td>${escapeHtml(room.name)}村</td>
+        <td>${escapeHtml(room.comment || "－")}</td>
+        <td>${maxPlayersMark(room.maxPlayers)}</td>
         <td>${escapeHtml(room.status)}</td>
+        <td>${escapeHtml(optionSummary(room))}</td>
         <td>${escapeHtml(room.createdAt)}</td>
+        <td><a href="/room/${escapeHtml(room.id)}/log">紀錄</a> / <a href="/room/${escapeHtml(room.id)}/events">事件</a></td>
         <td><button class="adminEndRoom" data-room-id="${escapeHtml(room.id)}">廢村</button></td>
       </tr>`).join("")
-    : `<tr><td colspan="5" class="muted">目前沒有可廢除的村。</td></tr>`;
+    : `<tr><td colspan="9" class="muted">目前沒有可廢除的村。</td></tr>`;
 
   return page("Room Admin", shell(`
     <fieldset>
       <legend><strong>廢村管理</strong></legend>
       <p class="muted">請選擇要廢除的村。注意！一旦選擇將無法復原。</p>
       <table class="form-table" style="margin:12px 20px 18px;width:100%">
-        <thead><tr><td><strong>村ID</strong></td><td><strong>村名</strong></td><td><strong>狀態</strong></td><td><strong>建立時間</strong></td><td><strong>操作</strong></td></tr></thead>
+        <thead><tr><td><strong>村ID</strong></td><td><strong>村名</strong></td><td><strong>說明</strong></td><td><strong>人數</strong></td><td><strong>狀態</strong></td><td><strong>選項</strong></td><td><strong>建立時間</strong></td><td><strong>參照</strong></td><td><strong>操作</strong></td></tr></thead>
         <tbody>${rows}</tbody>
       </table>
       <p id="roomAdminStatus" class="muted"></p>
