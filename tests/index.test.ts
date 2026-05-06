@@ -748,6 +748,16 @@ describe("worker routes", () => {
     expect(body).toContain("player_top");
   });
 
+  it("renders default icon catalog page", async () => {
+    const response = await worker.fetch(new Request("http://example.test/icons"), envWithRooms([]));
+
+    expect(response.status).toBe(200);
+    const body = await response.text();
+    expect(body).toContain("頭像一覽");
+    expect(body).toContain("/assets/reference/user_icon/001.gif");
+    expect(body).toContain("32 x 32");
+  });
+
   it("renders room records page", async () => {
     const response = await worker.fetch(
       new Request("http://example.test/room/room_records/records"),

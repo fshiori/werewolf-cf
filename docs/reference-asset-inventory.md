@@ -103,6 +103,8 @@ Reference metadata from `setting.php`:
 
 The current port already supports user-uploaded avatars in R2 with a larger 512 KiB limit. Do not reduce the upload limit just to match the legacy PHP limit; treat the 3092-byte limit as historical context for the default icon picker.
 
+The `/icons` page renders this default catalog from `/assets/reference/user_icon/*.gif`; selecting one during room join is still a separate implementation step.
+
 ## Deferred Assets
 
 - `swf/sound_morning.swf`
