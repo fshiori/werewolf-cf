@@ -818,7 +818,7 @@ export function renderRoomTranscript(roomId: string, records: GameRecordSummary[
         <tr><td><strong>　村子：</strong></td><td><a href="/room/${escapeHtml(roomId)}">${escapeHtml(roomId)}</a></td></tr>
         <tr><td><strong>　索引：</strong></td><td><a href="/room/${escapeHtml(roomId)}/records">對局紀錄</a>　<a href="/room/${escapeHtml(roomId)}/events">事件履歷</a></td></tr>
         <tr><td><strong>　表示：</strong></td><td>${escapeHtml(modeLabel)}　<a href="/room/${escapeHtml(roomId)}/log">通常</a>　<a href="/room/${escapeHtml(roomId)}/log?heaven_talk=on${reverseSuffix}">靈</a>　<a href="/room/${escapeHtml(roomId)}/log?heaven_only=on${reverseSuffix}">逝</a>　<a href="/room/${escapeHtml(roomId)}/log?reverse_log=on${heavenParam}">逆</a>　<a href="/room/${escapeHtml(roomId)}/log?reverse_log=on&heaven_talk=on">逆&amp;靈</a>　<a href="/room/${escapeHtml(roomId)}/log?reverse_log=on&heaven_only=on">逆&amp;逝</a></td></tr>
-        <tr><td><strong>　視點：</strong></td><td>${escapeHtml(viewerLabel)}　<a href="/room/${escapeHtml(roomId)}/log?viewer=public">旁觀</a>　<a href="/room/${escapeHtml(roomId)}/log?viewer=dead&heaven_talk=on">靈界</a>　<a href="/room/${escapeHtml(roomId)}/log?viewer=gm&heaven_talk=on">GM</a></td></tr>
+        <tr><td><strong>　視點：</strong></td><td>${escapeHtml(viewerLabel)}　<a href="/room/${escapeHtml(roomId)}/log?viewer=public">旁觀</a>　<a href="/room/${escapeHtml(roomId)}/log?viewer=dead&heaven_talk=on">靈界</a>　<a href="/room/${escapeHtml(roomId)}/log?viewer=gm&heaven_talk=on">GM</a>　<small class="muted">玩家視點需指定 <code>viewer=player&amp;viewer_player_id=player_id</code></small></td></tr>
       </table>
     </fieldset>
     <fieldset>
