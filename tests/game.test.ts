@@ -1547,18 +1547,39 @@ describe("game", () => {
   });
 
   it("tracks unanimous lobby start votes", () => {
-    const waiting = lobby([["player_1", "Alice"], ["player_2", "Bob"], ["player_3", "Carol"]]);
+    const waiting = lobby([
+      ["player_1", "Alice"],
+      ["player_2", "Bob"],
+      ["player_3", "Carol"],
+      ["player_4", "Dave"],
+      ["player_5", "Eve"],
+      ["player_6", "Frank"],
+      ["player_7", "Grace"],
+      ["player_8", "Heidi"]
+    ]);
     const first = castLobbyStartVote(waiting, "player_1");
     const duplicate = castLobbyStartVote(first.state, "player_1");
     const second = castLobbyStartVote(duplicate.state, "player_2");
-    const third = castLobbyStartVote(second.state, "player_3");
+    const almostReady = ["player_3", "player_4", "player_5", "player_6", "player_7"].reduce(
+      (state, playerId) => castLobbyStartVote(state, playerId).state,
+      second.state
+    );
+    const final = castLobbyStartVote(almostReady, "player_8");
 
-    expect(first).toMatchObject({ ready: false, votedPlayerIds: ["player_1"], required: 3 });
+    expect(first).toMatchObject({ ready: false, votedPlayerIds: ["player_1"], required: 8 });
     expect(duplicate.state.log).toEqual(first.state.log);
-    expect(second).toMatchObject({ ready: false, votedPlayerIds: ["player_1", "player_2"], required: 3 });
-    expect(third).toMatchObject({ ready: true, votedPlayerIds: ["player_1", "player_2", "player_3"], required: 3 });
+    expect(second).toMatchObject({ ready: false, votedPlayerIds: ["player_1", "player_2"], required: 8 });
+    expect(final).toMatchObject({ ready: true, votedPlayerIds: ["player_1", "player_2", "player_3", "player_4", "player_5", "player_6", "player_7", "player_8"], required: 8 });
     expect(() => castLobbyStartVote(startGame(waiting, 0, () => 0), "player_1")).toThrow("Start votes are only available");
     expect(() => castLobbyStartVote(waiting, "player_missing")).toThrow("Start vote player not found");
+  });
+
+  it("requires the reference minimum player count for resident start votes", () => {
+    const waiting = lobby([["player_1", "Alice"], ["player_2", "Bob"], ["player_3", "Carol"]]);
+    const voted = ["player_1", "player_2", "player_3"].reduce((state, playerId) => castLobbyStartVote(state, playerId).state, waiting);
+    const result = castLobbyStartVote(voted, "player_3");
+
+    expect(result).toMatchObject({ ready: false, votedPlayerIds: ["player_1", "player_2", "player_3"], required: 8 });
   });
 
   it("removes lobby start votes when players leave or are kicked", () => {

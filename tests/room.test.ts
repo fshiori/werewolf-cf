@@ -1769,16 +1769,22 @@ describe("RoomDurableObject", () => {
   });
 
   it("starts games when all lobby players cast start votes", async () => {
+    const lobbyPlayers = [
+      { playerId: "player_1", nickname: "Player 1", role: "villager" as const, alive: true },
+      { playerId: "player_2", nickname: "Player 2", role: "villager" as const, alive: true },
+      { playerId: "player_3", nickname: "Player 3", role: "villager" as const, alive: true },
+      { playerId: "player_4", nickname: "Player 4", role: "villager" as const, alive: true },
+      { playerId: "player_5", nickname: "Player 5", role: "villager" as const, alive: true },
+      { playerId: "player_6", nickname: "Player 6", role: "villager" as const, alive: true },
+      { playerId: "player_7", nickname: "Player 7", role: "villager" as const, alive: true },
+      { playerId: "player_8", nickname: "Player 8", role: "villager" as const, alive: true }
+    ];
     const game: GameState = {
       roomId: "room_abc",
       phase: "lobby",
       day: 0,
-      hostId: "player_host",
-      players: [
-        { playerId: "player_host", nickname: "Host", role: "villager", alive: true },
-        { playerId: "player_guest", nickname: "Guest", role: "villager", alive: true },
-        { playerId: "player_third", nickname: "Third", role: "villager", alive: true }
-      ],
+      hostId: "player_1",
+      players: lobbyPlayers,
       votes: {},
       openVote: false,
       commonTalkVisible: false,
@@ -1799,24 +1805,21 @@ describe("RoomDurableObject", () => {
       log: []
     };
     const { room, stored, dbRuns } = observableRoomObject(game);
-    const hostMessages: SentMessage[] = [];
-    const guestMessages: SentMessage[] = [];
-    const thirdMessages: SentMessage[] = [];
-    const hostSocket = fakeSocket(hostMessages);
-    const guestSocket = fakeSocket(guestMessages);
-    const thirdSocket = fakeSocket(thirdMessages);
-    connect(room, hostSocket, "player_host", "Host");
-    connect(room, guestSocket, "player_guest", "Guest");
-    connect(room, thirdSocket, "player_third", "Third");
+    const clients = lobbyPlayers.map((player) => {
+      const messages: SentMessage[] = [];
+      const socket = fakeSocket(messages);
+      connect(room, socket, player.playerId, player.nickname);
+      return { player, socket, messages };
+    });
 
-    await sendRaw(room, hostSocket, JSON.stringify({ type: "start_vote" }));
-    await sendRaw(room, guestSocket, JSON.stringify({ type: "start_vote" }));
-    await sendRaw(room, thirdSocket, JSON.stringify({ type: "start_vote" }));
+    for (const client of clients) {
+      await sendRaw(room, client.socket, JSON.stringify({ type: "start_vote" }));
+    }
 
-    expect(hostMessages).toContainEqual(expect.objectContaining({ type: "lobby_start_vote", votedPlayerIds: ["player_host"], required: 3, ready: false }));
-    expect(guestMessages).toContainEqual(expect.objectContaining({ type: "lobby_start_vote", votedPlayerIds: ["player_host", "player_guest"], required: 3, ready: false }));
-    for (const messages of [hostMessages, guestMessages, thirdMessages]) {
-      expect(messages).toContainEqual(expect.objectContaining({ type: "lobby_start_vote", votedPlayerIds: ["player_host", "player_guest", "player_third"], required: 3, ready: true }));
+    expect(clients[0].messages).toContainEqual(expect.objectContaining({ type: "lobby_start_vote", votedPlayerIds: ["player_1"], required: 8, ready: false }));
+    expect(clients[1].messages).toContainEqual(expect.objectContaining({ type: "lobby_start_vote", votedPlayerIds: ["player_1", "player_2"], required: 8, ready: false }));
+    for (const { messages } of clients) {
+      expect(messages).toContainEqual(expect.objectContaining({ type: "lobby_start_vote", votedPlayerIds: ["player_1", "player_2", "player_3", "player_4", "player_5", "player_6", "player_7", "player_8"], required: 8, ready: true }));
       expect(messages).toContainEqual(expect.objectContaining({ type: "game_state", phase: "day", day: 1 }));
       expect(messages.filter((message) => message.type === "role")).toHaveLength(1);
     }
@@ -1825,7 +1828,7 @@ describe("RoomDurableObject", () => {
     expect(dbRuns).toContainEqual(
       expect.objectContaining({
         query: expect.stringContaining("INSERT INTO room_events"),
-        binds: ["room_abc", "player_third", "game_started", JSON.stringify({ day: 1, players: 3, startVotes: 3 })]
+        binds: ["room_abc", "player_8", "game_started", JSON.stringify({ day: 1, players: 8, startVotes: 8 })]
       })
     );
   });

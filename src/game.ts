@@ -18,6 +18,7 @@ export const DEFAULT_DAY_MINUTES = DAY_MS / 60_000;
 export const DEFAULT_NIGHT_MINUTES = NIGHT_MS / 60_000;
 export const MAX_REVOTES = 1;
 export const MAX_OBJECTIONS = 2;
+export const LOBBY_START_VOTE_MIN_PLAYERS = 8;
 export const LOBBY_KICK_VOTES_REQUIRED = 5;
 export const SUDDEN_DEATH_WARNING_MS = 120_000;
 export const SILENCE_THRESHOLD_MS = 60_000;
@@ -243,7 +244,7 @@ export function castLobbyStartVote(state: GameState, playerId: string): { state:
     Object.entries({ ...(state.lobbyStartVotes ?? {}), [playerId]: true }).filter(([voterId]) => currentPlayerIds.has(voterId))
   );
   const votedPlayerIds = state.players.filter((player) => nextVotes[player.playerId]).map((player) => player.playerId);
-  const required = state.players.length;
+  const required = Math.max(state.players.length, LOBBY_START_VOTE_MIN_PLAYERS);
   return {
     state: {
       ...state,
