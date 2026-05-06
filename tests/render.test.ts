@@ -1309,6 +1309,10 @@ describe("render", () => {
     expect(html).toContain("已結束");
     expect(html).toContain("/assets/reference/img/playing.gif");
     expect(html).toContain("/assets/reference/img/max30.gif");
+    expect(html).toContain("/assets/reference/img/room_option_poison.gif");
+    expect(html).toContain("/assets/reference/img/room_option_wfbig.gif");
+    expect(html).toContain("/assets/reference/img/room_option_lovers.gif");
+    expect(html).toContain("/assets/reference/img/room_option_trip.gif");
     expect(html).toContain("埋毒 / 大狼 / 戀人");
     expect(html).toContain("頻道限:狼/狐");
     expect(html).toContain("Trip限定 / GM制");
