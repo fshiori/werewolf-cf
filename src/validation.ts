@@ -313,6 +313,10 @@ export function parseClientMessage(raw: string): ClientMessage {
     return { type: "start_game" };
   }
 
+  if (parsed.type === "start_vote") {
+    return { type: "start_vote" };
+  }
+
   if (parsed.type === "kick_player") {
     if (typeof parsed.targetPlayerId !== "string") {
       throw new Error("Invalid kick message");

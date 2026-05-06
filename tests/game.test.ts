@@ -9,6 +9,7 @@ import {
   canUseLoversChannel,
   canUsePublicChat,
   canUseWerewolfChannel,
+  castLobbyStartVote,
   castChildFoxDivination,
   castCatRevive,
   castDayVote,
@@ -1418,6 +1419,29 @@ describe("game", () => {
     expect(canStartGame(game, "player_1")).toBe(true);
     expect(canStartGame(game, "player_2")).toBe(false);
     expect(canStartGame(startGame(game, 0, () => 0), "player_1")).toBe(false);
+  });
+
+  it("tracks unanimous lobby start votes", () => {
+    const waiting = lobby([["player_1", "Alice"], ["player_2", "Bob"], ["player_3", "Carol"]]);
+    const first = castLobbyStartVote(waiting, "player_1");
+    const duplicate = castLobbyStartVote(first.state, "player_1");
+    const second = castLobbyStartVote(duplicate.state, "player_2");
+    const third = castLobbyStartVote(second.state, "player_3");
+
+    expect(first).toMatchObject({ ready: false, votedPlayerIds: ["player_1"], required: 3 });
+    expect(duplicate.state.log).toEqual(first.state.log);
+    expect(second).toMatchObject({ ready: false, votedPlayerIds: ["player_1", "player_2"], required: 3 });
+    expect(third).toMatchObject({ ready: true, votedPlayerIds: ["player_1", "player_2", "player_3"], required: 3 });
+    expect(() => castLobbyStartVote(startGame(waiting, 0, () => 0), "player_1")).toThrow("Start votes are only available");
+    expect(() => castLobbyStartVote(waiting, "player_missing")).toThrow("Start vote player not found");
+  });
+
+  it("removes lobby start votes when players leave or are kicked", () => {
+    const waiting = lobby([["player_1", "Alice"], ["player_2", "Bob"], ["player_3", "Carol"]]);
+    const voted = castLobbyStartVote(castLobbyStartVote(waiting, "player_1").state, "player_2").state;
+
+    expect(removeLobbyPlayer(voted, "player_2").lobbyStartVotes).toEqual({ player_1: true });
+    expect(leaveLobbyPlayer(voted, "player_1").lobbyStartVotes).toEqual({ player_2: true });
   });
 
   it("allows lobby joins but only existing players after start", () => {

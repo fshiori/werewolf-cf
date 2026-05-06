@@ -72,6 +72,7 @@ export function createLobbyState(roomId: string): GameState {
     catRevives: {},
     lastWords: {},
     objectionCounts: {},
+    lobbyStartVotes: {},
     log: ["等待玩家加入。"]
   };
 }
@@ -184,7 +185,8 @@ export function removeLobbyPlayer(state: GameState, targetPlayerId: string): Gam
   return {
     ...state,
     hostId: state.hostId === targetPlayerId ? nextPlayers[0]?.playerId : state.hostId,
-    players: nextPlayers
+    players: nextPlayers,
+    lobbyStartVotes: removeLobbyVote(state.lobbyStartVotes, targetPlayerId)
   };
 }
 
@@ -199,7 +201,40 @@ export function leaveLobbyPlayer(state: GameState, playerId: string): GameState 
   return {
     ...state,
     hostId: state.hostId === playerId ? nextPlayers[0]?.playerId : state.hostId,
-    players: nextPlayers
+    players: nextPlayers,
+    lobbyStartVotes: removeLobbyVote(state.lobbyStartVotes, playerId)
+  };
+}
+
+function removeLobbyVote(votes: Record<string, boolean> | undefined, playerId: string): Record<string, boolean> {
+  const { [playerId]: _removed, ...remaining } = votes ?? {};
+  return remaining;
+}
+
+export function castLobbyStartVote(state: GameState, playerId: string): { state: GameState; ready: boolean; votedPlayerIds: string[]; required: number } {
+  if (state.phase !== "lobby") {
+    throw new Error("Start votes are only available before the game starts");
+  }
+  const voter = state.players.find((player) => player.playerId === playerId);
+  if (!voter) {
+    throw new Error("Start vote player not found");
+  }
+  const alreadyVoted = state.lobbyStartVotes?.[playerId] === true;
+  const currentPlayerIds = new Set(state.players.map((player) => player.playerId));
+  const nextVotes = Object.fromEntries(
+    Object.entries({ ...(state.lobbyStartVotes ?? {}), [playerId]: true }).filter(([voterId]) => currentPlayerIds.has(voterId))
+  );
+  const votedPlayerIds = state.players.filter((player) => nextVotes[player.playerId]).map((player) => player.playerId);
+  const required = state.players.length;
+  return {
+    state: {
+      ...state,
+      lobbyStartVotes: nextVotes,
+      log: alreadyVoted ? state.log : [...state.log, `${voter.nickname} 投下開始遊戲一票。`]
+    },
+    ready: votedPlayerIds.length >= required,
+    votedPlayerIds,
+    required
   };
 }
 
@@ -470,6 +505,7 @@ function startGameWithPlayers(state: GameState, players: GamePlayer[], now: numb
       ? { ...(state.lastWords ?? {}), [DUMMY_PLAYER_ID]: options.dummyLastWords }
       : state.lastWords ?? {},
     objectionCounts: {},
+    lobbyStartVotes: {},
     mediumReading: undefined,
     phaseEndsAt: new Date(now + (options.dummyBoy ? roomOptionNightMs(options) : roomOptionDayMs(options))).toISOString(),
     lastSpokenAt: new Date(now).toISOString(),
