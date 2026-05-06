@@ -188,6 +188,7 @@ function shell(body: string): string {
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/bbs">人狼討論</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/status">伺服器狀態</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/rules">規則</a></td></tr>
+            <tr><td><small><font color="#666666">・</font></small></td><td><a href="/manual">說明書</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/script-info">Script Info</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/protocol">通訊協定</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/version">版本</a></td></tr>
@@ -1954,6 +1955,41 @@ export function renderRules(): string {
         <tr><td><strong>　公開票 / 投票顯示：</strong></td><td>控制白天投票資訊是否公開與已投票玩家顯示。</td></tr>
         <tr><td><strong>　遺言 / 幽靈視角：</strong></td><td>控制死亡訊息與死後可見資訊。</td></tr>
         <tr><td><strong>　限時時間：</strong></td><td>啟用後 Durable Object alarm 會依日夜時間自動換日；非即時制會套用沉默時間推進，未行動者會先收到最後2分警告，逾時後暴斃。</td></tr>
+      </table>
+    </fieldset>
+  `));
+}
+
+export function renderManual(): string {
+  return page("Manual", shell(`
+    <fieldset>
+      <legend><strong>說明書</strong></legend>
+      <table class="form-table">
+        <tr><td><strong>　建立村子：</strong></td><td>首頁輸入村名、說明、人數與村子選項後建立。Trip限定、GM制、替身君、限時、公開票與角色追加都在同一表單設定。</td></tr>
+        <tr><td><strong>　登錄入村：</strong></td><td>進入房間後填寫玩家ID、暱稱、Trip、希望角色與頭像。Trip限定村必須使用已登記且未排除的 Trip。</td></tr>
+        <tr><td><strong>　開始遊戲：</strong></td><td>房主或 GM 可直接開始；居民可投開始票，8人以上達有效票數後自動開始，替身君會折抵一票。</td></tr>
+        <tr><td><strong>　白天行動：</strong></td><td>生存玩家公開發言並投票。平手時會重新投票一次；啟用公開票或投票顯示時，畫面會公開對應的投票狀態。</td></tr>
+        <tr><td><strong>　夜晚行動：</strong></td><td>人狼、占卜師、獵人、子狐、貓又依角色使用能力；人狼、妖狐、共有者、戀人與靈界頻道會由 Durable Object 依身份過濾。</td></tr>
+        <tr><td><strong>　GM操作：</strong></td><td>GM可私語、廣播、換日、裁定勝負、調整生死/角色/旗標、切換共有公開與頻道限制。</td></tr>
+      </table>
+    </fieldset>
+    <fieldset>
+      <legend><strong>身份與紀錄</strong></legend>
+      <table class="form-table">
+        <tr><td><strong>　Trip：</strong></td><td><a href="/trip">身份登錄</a> 可登記、認領與排除 Trip；<a href="/trips">Trip查詢</a> 顯示公開狀態與彙總戰績，不公開 Trip hash。</td></tr>
+        <tr><td><strong>　頭像：</strong></td><td><a href="/icons">頭像一覽</a> 可選擇參考預設圖；<a href="/icons#upload">頭像上傳</a> 可上傳或刪除 R2-backed 個人頭像。</td></tr>
+        <tr><td><strong>　過去紀錄：</strong></td><td><a href="/logs">過去紀錄</a> 顯示結束村，支援通常、逆序、靈界、逝者與公開/玩家/靈界/GM視點。</td></tr>
+        <tr><td><strong>　戰績：</strong></td><td><a href="/leaderboard">戰績排行榜</a>、<a href="/stats">勝率分析</a> 與玩家頁使用 D1 結束紀錄彙總。</td></tr>
+        <tr><td><strong>　討論：</strong></td><td><a href="/bbs">人狼討論</a> 可發主題、回覆、瀏覽精華，管理者可置頂、鎖定與標記精華。</td></tr>
+      </table>
+    </fieldset>
+    <fieldset>
+      <legend><strong>相關文件</strong></legend>
+      <table class="form-table">
+        <tr><td><strong>　規則：</strong></td><td><a href="/rules">/rules</a></td></tr>
+        <tr><td><strong>　Script Info：</strong></td><td><a href="/script-info">/script-info</a></td></tr>
+        <tr><td><strong>　通訊協定：</strong></td><td><a href="/protocol">/protocol</a></td></tr>
+        <tr><td><strong>　版本：</strong></td><td><a href="/version">/version</a></td></tr>
       </table>
     </fieldset>
   `));

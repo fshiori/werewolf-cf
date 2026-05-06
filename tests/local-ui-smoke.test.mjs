@@ -37,6 +37,9 @@ function responseFor(path, method = "GET") {
   if (path === "/status" && method === "GET") {
     return { contentType: "text/html", body: "<!doctype html><title>伺服器狀態 Binding 檢查</title>" };
   }
+  if (path === "/manual" && method === "GET") {
+    return { contentType: "text/html", body: "<!doctype html><title>說明書 登錄入村</title>" };
+  }
   if (path === "/assets/room-client.js" && method === "GET") {
     return { contentType: "text/javascript", body: 'const roomShell = document.querySelector("[data-room-id]"); new WebSocket("ws://example.test");' };
   }

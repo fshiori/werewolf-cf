@@ -848,6 +848,16 @@ describe("worker routes", () => {
     expect(body).toContain("村子選項");
   });
 
+  it("renders manual page", async () => {
+    const response = await worker.fetch(new Request("http://example.test/manual"), envWithRooms([]));
+
+    expect(response.status).toBe(200);
+    const body = await response.text();
+    expect(body).toContain("說明書");
+    expect(body).toContain("登錄入村");
+    expect(body).toContain("身份與紀錄");
+  });
+
   it("renders version page", async () => {
     const response = await worker.fetch(new Request("http://example.test/version"), envWithRooms([]));
 
