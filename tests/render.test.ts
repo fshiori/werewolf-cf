@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { renderHome, renderLeaderboard, renderPlayerProfile, renderProtocol, renderRoom, renderRoomEvents, renderRoomRecords, renderRules, renderStatus, renderVersion } from "../src/render";
+import { renderHome, renderLeaderboard, renderPlayerProfile, renderProtocol, renderRoom, renderRoomEvents, renderRoomRecords, renderRoomTranscript, renderRules, renderStatus, renderVersion } from "../src/render";
 import { ROOM_CLIENT_SCRIPT } from "../src/room-client";
 
 describe("render", () => {
@@ -207,6 +207,8 @@ describe("render", () => {
     expect(html).toContain("事件");
     expect(html).toContain("/events");
     expect(html).toContain("事件履歷");
+    expect(html).toContain("/room/room_abc/log");
+    expect(html).toContain("完整紀錄");
     expect(html).toContain(".player-card.voted");
     expect(html).toContain("權力者");
     expect(html).toContain("玩家列表");
@@ -347,6 +349,46 @@ describe("render", () => {
     expect(html).toContain("player_a");
     expect(html).toContain("第1日");
     expect(html).toContain("4人");
+  });
+
+  it("renders room transcript as a normal HTML page", () => {
+    const html = renderRoomTranscript(
+      "room_abc",
+      [
+        {
+          id: 1,
+          roomId: "room_abc",
+          result: {
+            winner: "villagers",
+            day: 4,
+            players: [
+              { playerId: "player_a", nickname: "Alice", role: "seer", alive: true },
+              { playerId: "player_b", nickname: "Bob", role: "werewolf", alive: false }
+            ]
+          },
+          createdAt: "2026-05-06 12:00:00"
+        }
+      ],
+      [
+        {
+          id: 1,
+          roomId: "room_abc",
+          playerId: "player_a",
+          eventType: "game_started",
+          payload: { day: 1, players: 4 },
+          createdAt: "2026-05-06 12:01:00"
+        }
+      ]
+    );
+
+    expect(html).toContain("村子完整紀錄");
+    expect(html).toContain("村民勝利");
+    expect(html).toContain("Alice (player_a)");
+    expect(html).toContain("占卜師");
+    expect(html).toContain("Bob (player_b)");
+    expect(html).toContain("死亡");
+    expect(html).toContain("game_started");
+    expect(html).toContain("第1日");
   });
 
   it("renders implemented rules page", () => {

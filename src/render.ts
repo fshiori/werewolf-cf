@@ -208,6 +208,19 @@ function formatEventPayload(payload: unknown): string {
   return fields.length ? fields.join("　") : "";
 }
 
+function readRecordPlayers(record: GameRecordSummary): Record<string, unknown>[] {
+  const result = recordValue(record.result);
+  return Array.isArray(result.players)
+    ? result.players.filter((player): player is Record<string, unknown> => typeof player === "object" && player !== null && !Array.isArray(player))
+    : [];
+}
+
+function playerRecordLabel(player: Record<string, unknown>): string {
+  const nickname = typeof player.nickname === "string" && player.nickname ? player.nickname : "";
+  const playerId = typeof player.playerId === "string" ? player.playerId : "unknown";
+  return nickname ? `${nickname} (${playerId})` : playerId;
+}
+
 export function renderLeaderboard(entries: LeaderboardEntry[]): string {
   const rows = entries.length
     ? entries.map((entry) => `<tr>
@@ -279,6 +292,63 @@ export function renderRoomEvents(roomId: string, events: RoomEventSummary[]): st
       <table class="form-table" style="margin:12px 20px 18px;">
         <thead><tr><td><strong>時間</strong></td><td><strong>事件</strong></td><td><strong>玩家</strong></td><td><strong>內容</strong></td></tr></thead>
         <tbody>${rows}</tbody>
+      </table>
+    </fieldset>
+  `));
+}
+
+export function renderRoomTranscript(roomId: string, records: GameRecordSummary[], events: RoomEventSummary[]): string {
+  const recordSections = records.length
+    ? records.map((record) => {
+      const players = readRecordPlayers(record);
+      const playerRows = players.length
+        ? players.map((player) => `<tr>
+            <td>${escapeHtml(playerRecordLabel(player))}</td>
+            <td>${escapeHtml(roleLabel(player.role))}</td>
+            <td>${player.alive === false ? `<font color="#990000">死亡</font>` : "生存"}</td>
+          </tr>`).join("")
+        : `<tr><td colspan="3" class="muted">未保存玩家明細。</td></tr>`;
+
+      return `<tr>
+        <td colspan="4">
+          <strong>${escapeHtml(formatGameRecord(record))}</strong>
+          <table class="form-table" style="margin:6px 0 12px 18px;">
+            <thead><tr><td><strong>玩家</strong></td><td><strong>職業</strong></td><td><strong>結局</strong></td></tr></thead>
+            <tbody>${playerRows}</tbody>
+          </table>
+        </td>
+      </tr>`;
+    }).join("")
+    : `<tr><td colspan="4" class="muted">尚無對局結果。</td></tr>`;
+
+  const eventRows = events.length
+    ? events.map((event) => `<tr>
+        <td>${escapeHtml(event.createdAt)}</td>
+        <td>${escapeHtml(event.eventType)}</td>
+        <td>${event.playerId ? escapeHtml(event.playerId) : `<span class="muted">系統</span>`}</td>
+        <td>${escapeHtml(formatEventPayload(event.payload))}</td>
+      </tr>`).join("")
+    : `<tr><td colspan="4" class="muted">尚無事件履歷。</td></tr>`;
+
+  return page(`Room ${roomId} Log`, shell(`
+    <fieldset>
+      <legend><strong>村子完整紀錄</strong></legend>
+      <table class="form-table">
+        <tr><td><strong>　村子：</strong></td><td><a href="/room/${escapeHtml(roomId)}">${escapeHtml(roomId)}</a></td></tr>
+        <tr><td><strong>　索引：</strong></td><td><a href="/room/${escapeHtml(roomId)}/records">對局紀錄</a>　<a href="/room/${escapeHtml(roomId)}/events">事件履歷</a></td></tr>
+      </table>
+    </fieldset>
+    <fieldset>
+      <legend><strong>對局結果</strong></legend>
+      <table class="form-table" style="margin:12px 20px 18px;">
+        <tbody>${recordSections}</tbody>
+      </table>
+    </fieldset>
+    <fieldset>
+      <legend><strong>事件履歷</strong></legend>
+      <table class="form-table" style="margin:12px 20px 18px;">
+        <thead><tr><td><strong>時間</strong></td><td><strong>事件</strong></td><td><strong>玩家</strong></td><td><strong>內容</strong></td></tr></thead>
+        <tbody>${eventRows}</tbody>
       </table>
     </fieldset>
   `));
@@ -909,6 +979,7 @@ export function renderRoom(roomId: string): string {
                 　<a href="/">首頁</a>
                 　<a href="/room/${escapeHtml(roomId)}/records">對局紀錄</a>
                 　<a href="/room/${escapeHtml(roomId)}/events">事件履歷</a>
+                　<a href="/room/${escapeHtml(roomId)}/log">完整紀錄</a>
               </td>
             </tr>
             <tr>

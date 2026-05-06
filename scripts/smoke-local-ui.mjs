@@ -96,9 +96,10 @@ try {
   );
 
   const roomId = createResult.roomId;
-  await expectHtml(`/room/${roomId}`, [`[${roomId}]`, "進入房間", "玩家列表", "能力發動 / 投票", "對局紀錄", "事件履歷", "/assets/room-client.js"], ["房間JSON", "對局JSON", "事件JSON", "new WebSocket"]);
+  await expectHtml(`/room/${roomId}`, [`[${roomId}]`, "進入房間", "玩家列表", "能力發動 / 投票", "對局紀錄", "事件履歷", "完整紀錄", "/assets/room-client.js"], ["房間JSON", "對局JSON", "事件JSON", "new WebSocket"]);
   await expectHtml(`/room/${roomId}/records`, ["村子對局紀錄", roomId]);
   await expectHtml(`/room/${roomId}/events`, ["村子事件履歷", roomId, "room_created"]);
+  await expectHtml(`/room/${roomId}/log`, ["村子完整紀錄", roomId, "room_created"]);
 
   console.log(`${smokeLabel} smoke passed`);
   process.exit(0);

@@ -1,4 +1,4 @@
-import { renderHome, renderLeaderboard, renderPlayerProfile, renderProtocol, renderRoom, renderRoomEvents, renderRoomRecords, renderRules, renderStatus, renderVersion } from "./render";
+import { renderHome, renderLeaderboard, renderPlayerProfile, renderProtocol, renderRoom, renderRoomEvents, renderRoomRecords, renderRoomTranscript, renderRules, renderStatus, renderVersion } from "./render";
 import { RoomDurableObject } from "./room";
 import { ROOM_CLIENT_SCRIPT } from "./room-client";
 import { DEFAULT_DAY_MINUTES, DEFAULT_NIGHT_MINUTES } from "./game";
@@ -919,6 +919,20 @@ export default {
           return new Response("Room not found", { status: 404 });
         }
         return html(renderRoomEvents(roomId, await listRoomEvents(env, roomId)));
+      } catch (error) {
+        return json({ error: error instanceof Error ? error.message : "Invalid room" }, { status: 400 });
+      }
+    }
+
+    const roomTranscriptPageMatch = url.pathname.match(/^\/room\/([^/]+)\/log$/);
+    if (request.method === "GET" && roomTranscriptPageMatch) {
+      try {
+        const roomId = validateRoomId(roomTranscriptPageMatch[1]);
+        if (!(await roomExists(env, roomId))) {
+          return new Response("Room not found", { status: 404 });
+        }
+        const [records, events] = await Promise.all([listRoomRecords(env, roomId), listRoomEvents(env, roomId)]);
+        return html(renderRoomTranscript(roomId, records, events));
       } catch (error) {
         return json({ error: error instanceof Error ? error.message : "Invalid room" }, { status: 400 });
       }

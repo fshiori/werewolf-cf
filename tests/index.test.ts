@@ -805,6 +805,48 @@ describe("worker routes", () => {
     expect(body).toContain("player_host");
   });
 
+  it("renders room transcript page", async () => {
+    const response = await worker.fetch(
+      new Request("http://example.test/room/room_log/log"),
+      envWithRooms(
+        ["room_log"],
+        {},
+        {},
+        {
+          room_log: [
+            {
+              id: 1,
+              room_id: "room_log",
+              result_json: "{\"winner\":\"villagers\",\"day\":3,\"players\":[{\"playerId\":\"player_a\",\"nickname\":\"Alice\",\"role\":\"seer\",\"alive\":true},{\"playerId\":\"player_b\",\"nickname\":\"Bob\",\"role\":\"werewolf\",\"alive\":false}]}",
+              created_at: "2026-05-06 12:00:00"
+            }
+          ]
+        },
+        {
+          room_log: [
+            {
+              id: 1,
+              room_id: "room_log",
+              player_id: "player_host",
+              event_type: "game_started",
+              payload_json: "{\"day\":1,\"players\":4}",
+              created_at: "2026-05-06 12:00:01"
+            }
+          ]
+        }
+      )
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.text();
+    expect(body).toContain("村子完整紀錄");
+    expect(body).toContain("村民勝利");
+    expect(body).toContain("Alice (player_a)");
+    expect(body).toContain("占卜師");
+    expect(body).toContain("game_started");
+    expect(body).toContain("player_host");
+  });
+
   it("renders protocol page", async () => {
     const response = await worker.fetch(new Request("http://example.test/protocol"), envWithRooms([]));
 

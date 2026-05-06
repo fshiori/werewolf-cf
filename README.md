@@ -79,6 +79,7 @@ Browser pages:
 - `GET /room/:roomId`: Rendered room page with WebSocket chat, voting, night actions, GM controls, records, events, and avatar controls.
 - `GET /room/:roomId/records`: Rendered room game-record history.
 - `GET /room/:roomId/events`: Rendered room audit-event history.
+- `GET /room/:roomId/log`: Rendered room transcript summary combining game records and audit events.
 - `GET /player/:playerId`: Rendered player profile, avatar, stats, and recent records.
 - `GET /rules`: Rendered rules summary.
 - `GET /protocol`: Rendered WebSocket protocol reference.

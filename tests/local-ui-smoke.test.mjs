@@ -23,13 +23,16 @@ function responseFor(path, method = "GET") {
     return { contentType: "application/json", body: JSON.stringify({ roomId: "room_ui_smoke" }) };
   }
   if (path === "/room/room_ui_smoke" && method === "GET") {
-    return { contentType: "text/html", body: '<!doctype html><title>[room_ui_smoke] 進入房間 玩家列表 能力發動 / 投票 對局紀錄 事件履歷 /assets/room-client.js</title>' };
+    return { contentType: "text/html", body: '<!doctype html><title>[room_ui_smoke] 進入房間 玩家列表 能力發動 / 投票 對局紀錄 事件履歷 完整紀錄 /assets/room-client.js</title>' };
   }
   if (path === "/room/room_ui_smoke/records" && method === "GET") {
     return { contentType: "text/html", body: "<!doctype html><title>村子對局紀錄 room_ui_smoke</title>" };
   }
   if (path === "/room/room_ui_smoke/events" && method === "GET") {
     return { contentType: "text/html", body: "<!doctype html><title>村子事件履歷 room_ui_smoke room_created</title>" };
+  }
+  if (path === "/room/room_ui_smoke/log" && method === "GET") {
+    return { contentType: "text/html", body: "<!doctype html><title>村子完整紀錄 room_ui_smoke room_created</title>" };
   }
   return { status: 404, contentType: "text/plain", body: "not found" };
 }
@@ -91,7 +94,7 @@ describe("local UI smoke script", () => {
     const host = await startServer({
       "GET /room/room_ui_smoke": {
         contentType: "text/html",
-        body: '<!doctype html><title>[room_ui_smoke] 進入房間 玩家列表 能力發動 / 投票 對局紀錄 事件履歷 /assets/room-client.js 房間JSON</title>'
+        body: '<!doctype html><title>[room_ui_smoke] 進入房間 玩家列表 能力發動 / 投票 對局紀錄 事件履歷 完整紀錄 /assets/room-client.js 房間JSON</title>'
       }
     });
     const result = await runScript([host]);
