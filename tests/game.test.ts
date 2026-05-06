@@ -1010,7 +1010,7 @@ describe("game", () => {
     expect(nextDay.divinations).toEqual({});
   });
 
-  it("sudden-deaths day players who have not voted when a timed phase expires", () => {
+  it("warns before sudden-deathing day players who have not voted when a timed phase expires", () => {
     const players: GameState["players"] = [
       { playerId: "player_1", nickname: "Alice", role: "werewolf", alive: true },
       { playerId: "player_2", nickname: "Bob", role: "villager", alive: true },
@@ -1024,18 +1024,27 @@ describe("game", () => {
       lastWords: { player_4: "我先走一步" }
     };
 
-    const next = advancePhaseByAlarm(day, Date.parse("2026-05-06T00:03:00.000Z"));
+    const warning = advancePhaseByAlarm(day, Date.parse("2026-05-06T00:03:00.000Z"));
 
-    expect(next.phase).toBe("day");
+    expect(warning.phase).toBe("day");
+    expect(warning.players.find((player) => player.playerId === "player_4")?.alive).toBe(true);
+    expect(warning.votes).toEqual({ player_1: "player_2", player_2: "player_1", player_3: "player_2" });
+    expect(warning.phaseEndsAt).toBe("2026-05-06T00:05:00.000Z");
+    expect(warning.suddenDeathWarningAt).toBe("2026-05-06T00:03:00.000Z");
+    expect(warning.log.at(-1)).toBe("最後2分還不投票將會暴斃");
+
+    const next = advancePhaseByAlarm(warning, Date.parse("2026-05-06T00:05:00.000Z"));
+
     expect(next.players.find((player) => player.playerId === "player_4")?.alive).toBe(false);
     expect(next.votes).toEqual({});
-    expect(next.phaseEndsAt).toBe("2026-05-06T00:06:00.000Z");
+    expect(next.suddenDeathWarningAt).toBeUndefined();
+    expect(next.phaseEndsAt).toBe("2026-05-06T00:08:00.000Z");
     expect(next.log).toContain("Dave 突然暴斃死亡。");
     expect(next.log).toContain("Dave 的遺言：我先走一步");
     expect(next.log.at(-1)).toBe("＜投票結果有問題 請重新投票＞");
   });
 
-  it("sudden-deaths required night actors who have not acted when a timed phase expires", () => {
+  it("warns before sudden-deathing required night actors who have not acted when a timed phase expires", () => {
     const players: GameState["players"] = [
       { playerId: "player_1", nickname: "Wolf", role: "werewolf", alive: true },
       { playerId: "player_2", nickname: "Seer", role: "seer", alive: true },
@@ -1049,16 +1058,26 @@ describe("game", () => {
       guards: { player_3: "player_2" }
     };
 
-    const next = advancePhaseByAlarm(night, Date.parse("2026-05-06T00:01:30.000Z"));
+    const warning = advancePhaseByAlarm(night, Date.parse("2026-05-06T00:01:30.000Z"));
 
-    expect(next.phase).toBe("night");
+    expect(warning.phase).toBe("night");
+    expect(warning.players.find((player) => player.playerId === "player_2")?.alive).toBe(true);
+    expect(warning.nightKills).toEqual({ player_1: "player_4" });
+    expect(warning.guards).toEqual({ player_3: "player_2" });
+    expect(warning.phaseEndsAt).toBe("2026-05-06T00:03:30.000Z");
+    expect(warning.suddenDeathWarningAt).toBe("2026-05-06T00:01:30.000Z");
+    expect(warning.log.at(-1)).toBe("最後2分還不投票將會暴斃");
+
+    const next = advancePhaseByAlarm(warning, Date.parse("2026-05-06T00:03:30.000Z"));
+
     expect(next.players.find((player) => player.playerId === "player_1")?.alive).toBe(true);
     expect(next.players.find((player) => player.playerId === "player_2")?.alive).toBe(false);
     expect(next.players.find((player) => player.playerId === "player_3")?.alive).toBe(true);
     expect(next.nightKills).toEqual({});
     expect(next.divinations).toEqual({});
     expect(next.guards).toEqual({});
-    expect(next.phaseEndsAt).toBe("2026-05-06T00:03:00.000Z");
+    expect(next.suddenDeathWarningAt).toBeUndefined();
+    expect(next.phaseEndsAt).toBe("2026-05-06T00:05:00.000Z");
     expect(next.log).toContain("Seer 突然暴斃死亡。");
   });
 

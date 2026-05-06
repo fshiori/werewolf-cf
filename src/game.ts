@@ -17,6 +17,7 @@ export const NIGHT_MS = 90_000;
 export const DEFAULT_DAY_MINUTES = DAY_MS / 60_000;
 export const DEFAULT_NIGHT_MINUTES = NIGHT_MS / 60_000;
 export const MAX_REVOTES = 1;
+export const SUDDEN_DEATH_WARNING_MS = 120_000;
 const DUMMY_PLAYER_ID = "player_dummy_boy";
 const REFERENCE_ROLE_DECKS: Record<number, GamePlayer["role"][]> = {
   8: ["villager", "villager", "villager", "villager", "villager", "werewolf", "werewolf", "seer"],
@@ -647,18 +648,30 @@ function divinationResultForChildFox(role: GamePlayer["role"], random: () => num
 export function advancePhaseByAlarm(state: GameState, now = Date.now()): GameState {
   if (state.phase === "day") {
     if (isTimedOut(state, now)) {
-      const suddenDeath = applySuddenDeathForTimedOutActors(state, now);
-      if (suddenDeath) {
-        return suddenDeath;
+      const timedOutActors = timedOutActorIds(state);
+      if (timedOutActors.length > 0) {
+        if (!state.suddenDeathWarningAt) {
+          return warnSuddenDeath(state, now);
+        }
+        const suddenDeath = applySuddenDeathForTimedOutActors(state, timedOutActors, now);
+        if (suddenDeath) {
+          return suddenDeath;
+        }
       }
     }
     return resolveDay(state, now);
   }
   if (state.phase === "night") {
     if (isTimedOut(state, now)) {
-      const suddenDeath = applySuddenDeathForTimedOutActors(state, now);
-      if (suddenDeath) {
-        return suddenDeath;
+      const timedOutActors = timedOutActorIds(state);
+      if (timedOutActors.length > 0) {
+        if (!state.suddenDeathWarningAt) {
+          return warnSuddenDeath(state, now);
+        }
+        const suddenDeath = applySuddenDeathForTimedOutActors(state, timedOutActors, now);
+        if (suddenDeath) {
+          return suddenDeath;
+        }
       }
     }
     return resolveNight(state, now);
@@ -806,6 +819,7 @@ function resolveDay(state: GameState, now = Date.now()): GameState {
       ...state,
       votes: {},
       revoteCount: revoteCount + 1,
+      suddenDeathWarningAt: undefined,
       phaseEndsAt: new Date(now + (state.dayMs ?? DAY_MS)).toISOString(),
       log: [...state.log, "投票結果平手，重新投票。"]
     };
@@ -869,8 +883,16 @@ function resolveNight(state: GameState, now = Date.now(), random = Math.random):
   return withWinOrNextDay({ ...clearActionsForDeadPlayers({ ...state, players }), nightKills: {}, divinations: {}, guards: {}, catRevives: {}, log }, now);
 }
 
-function applySuddenDeathForTimedOutActors(state: GameState, now: number): GameState | undefined {
-  const targets = timedOutActorIds(state);
+function warnSuddenDeath(state: GameState, now: number): GameState {
+  return {
+    ...state,
+    suddenDeathWarningAt: new Date(now).toISOString(),
+    phaseEndsAt: new Date(now + SUDDEN_DEATH_WARNING_MS).toISOString(),
+    log: [...state.log, "最後2分還不投票將會暴斃"]
+  };
+}
+
+function applySuddenDeathForTimedOutActors(state: GameState, targets: GamePlayer[], now: number): GameState | undefined {
   if (targets.length === 0) {
     return undefined;
   }
@@ -892,6 +914,7 @@ function applySuddenDeathForTimedOutActors(state: GameState, now: number): GameS
     divinations: {},
     guards: {},
     catRevives: {},
+    suddenDeathWarningAt: undefined,
     log
   });
   const winner = getWinner(resetState);
@@ -946,6 +969,7 @@ function withWinOrNextNight(state: GameState, now: number): GameState {
   return {
     ...state,
     phase: "night",
+    suddenDeathWarningAt: undefined,
     phaseEndsAt: new Date(now + (state.nightMs ?? NIGHT_MS)).toISOString(),
     log: [...state.log, `第 ${state.day} 日夜晚開始。`]
   };
@@ -962,6 +986,7 @@ function withWinOrNextDay(state: GameState, now: number): GameState {
     phase: "day",
     day,
     revoteCount: 0,
+    suddenDeathWarningAt: undefined,
     phaseEndsAt: new Date(now + (state.dayMs ?? DAY_MS)).toISOString(),
     log: [...state.log, `第 ${day} 日白天開始。`]
   };
@@ -981,6 +1006,7 @@ function endGame(state: GameState, winner: GameWinner): GameState {
     phase: "ended",
     winner,
     phaseEndsAt: undefined,
+    suddenDeathWarningAt: undefined,
     votes: {},
     revoteCount: 0,
     nightKills: {},
