@@ -185,3 +185,4 @@ curl -i https://<worker-host>/api/config
 `/api/health` should return HTTP 200 with `ok: true`. `/api/version` should return the expected `appVersion` and bindings list. If `maintenance_mode` is set to `true` in KV, new room creation is blocked with HTTP 503 while existing rooms and read APIs remain available.
 
 Use `docs/deployment-smoke.md` for the full production checklist, including remote D1 verification, automated read-only/write smoke checks, maintenance mode, and optional manual R2 avatar checks.
+Use `docs/production-handoff.md` when Cloudflare production resource IDs still need to be created or copied into `wrangler.toml`.
