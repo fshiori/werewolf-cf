@@ -953,6 +953,13 @@ async function getBbsTopicById(env: Env, topicId: number): Promise<BbsTopicSumma
   return topic ? bbsTopicFromRow(topic) : undefined;
 }
 
+async function getBbsTopicPasswordHash(env: Env, topicId: number): Promise<string | null | undefined> {
+  const row = await env.DB.prepare("SELECT password_hash FROM bbs_topics WHERE id = ? LIMIT 1")
+    .bind(topicId)
+    .first<{ password_hash: string | null }>();
+  return row ? row.password_hash : undefined;
+}
+
 async function countBbsReplies(env: Env, topicId: number): Promise<number> {
   const row = await env.DB.prepare("SELECT COUNT(*) AS count FROM bbs_replies WHERE topic_id = ?")
     .bind(topicId)
@@ -1112,10 +1119,6 @@ async function updateBbsTopicFlags(request: Request, env: Env, topicIdParam: str
 }
 
 async function updateBbsTopicContent(request: Request, env: Env, topicIdParam: string): Promise<Response> {
-  const unauthorized = await requireBbsAdmin(request, env);
-  if (unauthorized) {
-    return unauthorized;
-  }
   const body: unknown = await request.json().catch(() => null);
   if (!isRecord(body)) {
     return json({ error: "Invalid BBS edit request" }, { status: 400 });
@@ -1125,6 +1128,15 @@ async function updateBbsTopicContent(request: Request, env: Env, topicIdParam: s
     const topic = await getBbsTopicById(env, topicId);
     if (!topic) {
       return json({ error: "BBS topic not found" }, { status: 404 });
+    }
+    const adminToken = await env.CONFIG.get("bbs_admin_token");
+    const providedAdminToken = request.headers.get("x-bbs-admin-token") ?? "";
+    const providedPassword = validateBbsPassword(body.password);
+    const passwordHash = await getBbsTopicPasswordHash(env, topicId);
+    const adminAuthorized = Boolean(adminToken && providedAdminToken === adminToken);
+    const passwordAuthorized = Boolean(passwordHash && providedPassword && await bbsPasswordHash(providedPassword) === passwordHash);
+    if (!adminAuthorized && !passwordAuthorized) {
+      return json({ error: "BBS edit password is invalid" }, { status: 403 });
     }
     const title = "title" in body ? validateBbsTitle(body.title) : topic.title;
     const message = "message" in body ? validateBbsMessage(body.message) : topic.message;

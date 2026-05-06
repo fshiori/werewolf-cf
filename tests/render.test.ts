@@ -834,6 +834,8 @@ describe("render", () => {
     expect(html).toContain("bbsTopicEditButton");
     expect(html).toContain("bbsEditTitle");
     expect(html).toContain("bbsEditMessage");
+    expect(html).toContain("bbsEditPassword");
+    expect(html).toContain('password: document.querySelector("#bbsEditPassword").value');
     expect(html).toContain('"x-bbs-admin-token": token');
     expect(html).toContain("bbsModeratePinned");
     expect(html).toContain("bbsModerateLocked");
