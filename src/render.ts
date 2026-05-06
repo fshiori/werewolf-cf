@@ -15,6 +15,7 @@ function page(title: string, body: string): string {
     body {
       margin: 0;
       background: #ffffff;
+      background-image: url("/assets/reference/img/top_bg.jpg");
       color: #000000;
       font: 14px "Times New Roman", "PMingLiU", "Noto Serif TC", serif;
     }
@@ -32,6 +33,7 @@ function page(title: string, body: string): string {
     .site { width: 100%; }
     .masthead { padding: 8px 8px 0; }
     .title { color: #cc3300; font-size: 28px; font-weight: bold; line-height: 1; }
+    .title-img { border: 0; vertical-align: middle; margin-right: 6px; max-width: 100%; height: auto; }
     .subtitle { text-align: right; font-weight: bold; }
     .side { width: 190px; padding: 8px 0 0 8px; vertical-align: top; }
     .main { padding: 8px 16px 24px 18px; vertical-align: top; }
@@ -123,7 +125,7 @@ function shell(body: string): string {
     <table class="site">
       <tr>
         <td colspan="2" class="masthead">
-          <a href="/" class="title">汝等是人是狼？</a>
+          <a href="/" class="title"><img class="title-img" src="/assets/reference/img/top_title.jpg" alt="汝等是人是狼？">汝等是人是狼？</a>
           <div class="subtitle">Werewolf Cloudflare Port</div>
         </td>
       </tr>
