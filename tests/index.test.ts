@@ -1437,6 +1437,43 @@ describe("worker routes", () => {
     expect(body).toContain("/api/bbs/topics/1/moderation");
   });
 
+  it("renders BBS topic detail page from path route", async () => {
+    const response = await worker.fetch(
+      new Request("http://example.test/bbs/1"),
+      envWithRooms([], {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, new Set(), new Set(), {}, [
+        {
+          id: 1,
+          name: "Alice",
+          title: "Welcome",
+          message: "Topic body",
+          trip_hash: "trip_hash",
+          reply_count: 1,
+          pinned: 1,
+          locked: 0,
+          digest: 1,
+          created_at: "2026-05-06 12:00:00",
+          updated_at: "2026-05-06 12:10:00"
+        }
+      ], [
+        {
+          id: 1,
+          topic_id: 1,
+          name: "Bob",
+          message: "Reply body",
+          trip_hash: null,
+          created_at: "2026-05-06 12:10:00"
+        }
+      ])
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.text();
+    expect(body).toContain("Topic body");
+    expect(body).toContain("Reply body");
+    expect(body).toContain("bbs-topic-pinned");
+    expect(body).toContain("bbs-topic-digest");
+  });
+
   it("returns BBS topic details", async () => {
     const response = await worker.fetch(
       new Request("http://example.test/api/bbs/topics/1"),
