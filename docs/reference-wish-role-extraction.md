@@ -30,27 +30,22 @@ Observed caveat:
 
 ## Current Port
 
-Current TypeScript behavior in `src/game.ts` is intentionally simpler:
+Current TypeScript behavior in `src/game.ts` now follows the rule-relevant reference flow:
 
 - The role deck is prepared with enabled optional roles before wish assignment.
-- Players are processed in current lobby order, not in a pre-shuffled user query order.
-- The first player whose wished role is still available receives that role.
+- Players are processed in a randomized pre-assignment order when wish roles are enabled.
+- The first player in that randomized order whose wished role is still available receives that role.
 - Duplicate or unavailable wishes fall back to the remaining role deck in order.
-- The port uses strict index checks and therefore does not reproduce the PHP index-0 loose-comparison quirk.
+- The port uses strict index checks and intentionally does not reproduce the PHP index-0 loose-comparison quirk.
 
 Focused automated evidence:
 
 - `tests/game.test.ts` covers core wished roles.
+- `tests/game.test.ts` covers randomized duplicate-wish conflict priority.
 - `tests/game.test.ts` covers enabled optional-role wishes before remaining role assignment.
 - `tests/validation.test.ts` covers accepted wished-role values.
 - `tests/render.test.ts` covers the room wish-role selector.
 
-## Remaining Parity Decision
+## Port Decision
 
-Before marking wish-role parity complete, decide whether the Cloudflare port should:
-
-1. Preserve the current deterministic lobby-order behavior for transparency and testability.
-2. Add reference-style pre-assignment randomization and conflict ordering.
-3. Intentionally emulate or explicitly reject the PHP index-0 loose-comparison quirk.
-
-The safest current status is Partial: the functional surface exists, including optional-role wishes, but exact reference ordering and edge-case behavior are not yet ported.
+The Cloudflare port preserves reference-style pre-assignment randomization and conflict ordering. It intentionally rejects the PHP index-0 loose-comparison quirk because it appears to be an accidental implementation detail rather than an explicit gameplay rule.
