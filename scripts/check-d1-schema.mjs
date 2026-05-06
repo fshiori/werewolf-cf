@@ -27,9 +27,16 @@ const args = process.argv.slice(2);
 const remote = args.includes("--remote");
 const inputIndex = args.indexOf("--input");
 const inputPath = inputIndex >= 0 ? args[inputIndex + 1] : undefined;
+const configIndex = args.indexOf("--config");
+const configPath = configIndex >= 0 ? args[configIndex + 1] : undefined;
 
 if (inputIndex >= 0 && !inputPath) {
   console.error("--input requires a file path");
+  process.exit(1);
+}
+
+if (configIndex >= 0 && !configPath) {
+  console.error("--config requires a file path");
   process.exit(1);
 }
 
@@ -92,7 +99,11 @@ function readSchemaFromWrangler() {
     "SELECT NULL AS name, app_tables.name AS table_name, p.name AS column_name FROM app_tables JOIN pragma_table_info(app_tables.name) AS p",
     "ORDER BY name, table_name, column_name"
   ].join(" ");
-  const wranglerArgs = ["wrangler", "d1", "execute", "werewolf-cf", remote ? "--remote" : "--local", "--command", command, "--json"];
+  const wranglerArgs = ["wrangler", "d1", "execute", "werewolf-cf-db", remote ? "--remote" : "--local"];
+  if (configPath) {
+    wranglerArgs.push("--config", configPath);
+  }
+  wranglerArgs.push("--command", command, "--json");
   const result = spawnSync("npx", wranglerArgs, { encoding: "utf8" });
   if (result.status !== 0) {
     throw new Error((result.stderr || result.stdout || "wrangler d1 execute failed").trim());

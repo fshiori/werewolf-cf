@@ -1,6 +1,7 @@
 name = "werewolf-cf"
 main = "src/index.ts"
 compatibility_date = "2026-05-03"
+account_id = "<cloudflare-account-id>"
 
 [[durable_objects.bindings]]
 name = "ROOM_DO"
@@ -13,7 +14,7 @@ new_sqlite_classes = ["RoomDurableObject"]
 [[d1_databases]]
 binding = "DB"
 database_name = "werewolf-cf-db"
-database_id = "local-dev-placeholder"
+database_id = "<production-d1-database-id>"
 migrations_dir = "migrations"
 
 [[r2_buckets]]
@@ -22,4 +23,4 @@ bucket_name = "werewolf-cf-assets"
 
 [[kv_namespaces]]
 binding = "CONFIG"
-id = "local-dev-placeholder"
+id = "<production-kv-namespace-id>"

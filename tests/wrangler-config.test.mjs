@@ -21,7 +21,7 @@ new_sqlite_classes = ["RoomDurableObject"]
 
 [[d1_databases]]
 binding = "DB"
-database_name = "werewolf-cf"
+database_name = "werewolf-cf-db"
 database_id = "${databaseId}"
 migrations_dir = "migrations"
 
@@ -83,10 +83,34 @@ describe("wrangler config verifier", () => {
     expect(result.stderr).toContain("Production KV id must be set to a real resource id");
   });
 
+  it("rejects production configs with example placeholder resource ids", () => {
+    const result = runVerifier(wranglerConfig("<production-d1-database-id>", "<production-kv-namespace-id>"), ["--production"]);
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("Production D1 database_id must be set to a real resource id");
+    expect(result.stderr).toContain("Production KV id must be set to a real resource id");
+  });
+
   it("accepts production configs with explicit resource ids", () => {
     const result = runVerifier(wranglerConfig("prod-d1-id", "prod-kv-id"), ["--production"]);
 
     expect(result.status).toBe(0);
     expect(result.stdout).toContain("wrangler.toml production verification passed");
+  });
+
+  it("accepts an explicit config file path", () => {
+    const cwd = mkdtempSync(join(tmpdir(), "werewolf-cf-wrangler-config-"));
+    writeFileSync(join(cwd, "production.toml"), wranglerConfig("prod-d1-id", "prod-kv-id"));
+    try {
+      const result = spawnSync(process.execPath, [scriptPath, "--production", "--config", "production.toml"], {
+        cwd,
+        encoding: "utf8"
+      });
+
+      expect(result.status).toBe(0);
+      expect(result.stdout).toContain("wrangler.toml production verification passed");
+    } finally {
+      rmSync(cwd, { recursive: true, force: true });
+    }
   });
 });

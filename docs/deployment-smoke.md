@@ -30,10 +30,10 @@ Expected:
 
 ## Remote Resource Setup
 
-If the production config check fails, confirm `wrangler.toml` has production resource IDs, not placeholders:
+If the production config check fails, confirm the ignored `wrangler.production.toml` has production resource IDs, not placeholders:
 
 ```bash
-rg -n "local-dev-placeholder" wrangler.toml
+rg -n "local-dev-placeholder|<.*>" wrangler.production.toml
 ```
 
 Expected:
@@ -43,7 +43,7 @@ Expected:
 Apply remote D1 migrations:
 
 ```bash
-npx wrangler d1 migrations apply werewolf-cf --remote
+npx wrangler d1 migrations apply werewolf-cf-db --remote --config wrangler.production.toml
 ```
 
 Confirm core D1 tables exist:
@@ -55,7 +55,7 @@ npm run check:d1-schema:remote
 Or run the equivalent manual query:
 
 ```bash
-npx wrangler d1 execute werewolf-cf --remote --command "SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name"
+npx wrangler d1 execute werewolf-cf-db --remote --config wrangler.production.toml --command "SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name"
 ```
 
 Expected tables include:
@@ -154,7 +154,7 @@ Only run this when temporarily blocking new rooms is acceptable.
 Enable maintenance mode:
 
 ```bash
-npx wrangler kv key put maintenance_mode true --binding CONFIG --remote
+npx wrangler kv key put maintenance_mode true --binding CONFIG --remote --config wrangler.production.toml
 ```
 
 Verify new room creation is blocked:
@@ -173,7 +173,7 @@ Expected:
 Disable maintenance mode:
 
 ```bash
-npx wrangler kv key put maintenance_mode false --binding CONFIG --remote
+npx wrangler kv key put maintenance_mode false --binding CONFIG --remote --config wrangler.production.toml
 ```
 
 ## Avatar R2 Smoke
