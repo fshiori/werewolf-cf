@@ -114,4 +114,4 @@ The reference uses Flash for notification sounds. A Cloudflare/browser port shou
 
 ## Next Implementation Step
 
-Use the R2-backed `GET /assets/reference/:path` endpoint to wire the copied priority assets into rendered pages, starting with room-list status images and room option icons.
+Use the R2-backed `GET /assets/reference/:path` endpoint to wire more copied priority assets into rendered pages, starting with top title/background and role/result images. Room-list status and option marks already emit reference asset URLs with text fallback.
