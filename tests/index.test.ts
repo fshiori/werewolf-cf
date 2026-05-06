@@ -889,6 +889,55 @@ describe("worker routes", () => {
     expect(body).toContain("村子選項");
   });
 
+  it("renders PHP-style legacy page aliases", async () => {
+    const env = envWithRooms(
+      ["room_finished"],
+      { "room_status:room_finished": "ended" },
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      {},
+      new Set(),
+      new Set(),
+      {},
+      [
+        {
+          id: 1,
+          name: "Alice",
+          title: "Welcome",
+          message: "Hello",
+          trip_hash: null,
+          reply_count: 0,
+          pinned: 0,
+          locked: 0,
+          digest: 0,
+          created_at: "2026-05-06 12:00:00",
+          updated_at: "2026-05-06 12:00:00"
+        }
+      ]
+    );
+    const cases = [
+      ["/list.php", "聯合遊戲列表"],
+      ["/old_log.php", "過去紀錄"],
+      ["/bbs.php", "主題列表"],
+      ["/icon_view.php", "頭像一覽"],
+      ["/icon_upload.php", "上傳頭像"],
+      ["/rule.php", "基本流程"],
+      ["/script_info.php", "Script Info"]
+    ] as const;
+
+    for (const [path, expected] of cases) {
+      const response = await worker.fetch(new Request(`http://example.test${path}`), env);
+      expect(response.status).toBe(200);
+      expect(await response.text()).toContain(expected);
+    }
+  });
+
   it("renders manual page", async () => {
     const response = await worker.fetch(new Request("http://example.test/manual"), envWithRooms([]));
 

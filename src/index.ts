@@ -1676,12 +1676,12 @@ export default {
       return html(renderWinRateAnalysis(await listWinRateAnalysis(env)));
     }
 
-    if (request.method === "GET" && url.pathname === "/list") {
+    if (request.method === "GET" && (url.pathname === "/list" || url.pathname === "/list.php")) {
       const federatedList = await listFederatedRooms(env);
       return html(renderFederatedList(federatedList.rooms, federatedList.peers));
     }
 
-    if (request.method === "GET" && url.pathname === "/logs") {
+    if (request.method === "GET" && (url.pathname === "/logs" || url.pathname === "/old_log.php")) {
       return html(renderOldLogs((await listRooms(env)).filter((room) => room.status === "ended")));
     }
 
@@ -1693,7 +1693,7 @@ export default {
       return html(renderTripLookup());
     }
 
-    if (request.method === "GET" && url.pathname === "/bbs") {
+    if (request.method === "GET" && (url.pathname === "/bbs" || url.pathname === "/bbs.php")) {
       const view = url.searchParams.get("view");
       const digestOnly = url.searchParams.get("digest") === "1" || url.searchParams.get("go") === "dige";
       const page = readPositivePage(url.searchParams.get("page"));
@@ -1736,7 +1736,7 @@ export default {
       }));
     }
 
-    if (request.method === "GET" && url.pathname === "/icons") {
+    if (request.method === "GET" && (url.pathname === "/icons" || url.pathname === "/icon_view.php" || url.pathname === "/icon_upload.php")) {
       return html(renderIconCatalog());
     }
 
@@ -1774,7 +1774,7 @@ export default {
       return getBbsTopic(env, bbsTopicApiMatch[1]);
     }
 
-    if (request.method === "GET" && url.pathname === "/rules") {
+    if (request.method === "GET" && (url.pathname === "/rules" || url.pathname === "/rule.php")) {
       return html(renderRules());
     }
 
@@ -1782,7 +1782,7 @@ export default {
       return html(renderManual());
     }
 
-    if (request.method === "GET" && url.pathname === "/script-info") {
+    if (request.method === "GET" && (url.pathname === "/script-info" || url.pathname === "/script_info.php")) {
       return html(renderScriptInfo());
     }
 
