@@ -67,6 +67,7 @@ describe("render", () => {
     expect(html).toContain('/assets/reference/img/room_option_real_time.gif');
     expect(html).toContain('/assets/reference/img/room_option_poison.gif');
     expect(html).toContain('/assets/reference/img/room_option_wfbig.gif');
+    expect(html).toContain('/assets/reference/img/room_option_rei.gif');
     expect(html).toContain('/assets/reference/img/room_option_trip.gif');
     expect(html).toContain('class="ref-icon"');
     expect(html).toContain("&lt;Test&gt;");
