@@ -48,7 +48,7 @@ Reference files inspected:
 | Reference icons and bitmap assets | R2 upload exists; `docs/reference-asset-inventory.md` classifies 130 reference assets; `/assets/reference/:path` serves vetted copied R2 assets; top chrome, home room-list status/options, rules role rows, live revealed role markers, and game-record victory rows emit reference image URLs with text fallback | Partial |
 | Browser E2E/manual visual verification | Local HTTP UI smoke only; no installed browser detected | Missing |
 | Screenshot/visual parity against ref | No screenshot baseline or comparison artifact | Missing |
-| Complete PHP rule parity | Core roles/options implemented; focused tests now cover lover-only normal wins, one-lover non-wins, big-wolf win counting, child-fox fox wins, vote visibility, and timed sudden-death alarm handling, but no line-by-line rule parity manifest | Partial |
+| Complete PHP rule parity | Core roles/options implemented; focused tests now cover lover-only normal wins, one-lover non-wins, big-wolf win counting, child-fox fox wins, vote visibility, timed sudden-death warning windows, and timed sudden-death alarm handling, but no line-by-line rule parity manifest | Partial |
 | Federated room list (`list.php`) | `/list` renders a reference-style federated list shell from local D1 rooms and marks this Worker as the active server; remote server aggregation is not implemented | Partial |
 | Discussion board (`bbs.php`) | `/bbs` renders a reference-style topic list and post form backed by D1 `bbs_topics`; replies/moderation/digest pages are not implemented | Partial |
 | Icon catalog/upload parity | `/icons` renders the reference default icon catalog; room join can send a vetted default `iconPath`; avatar upload exists | Partial |
@@ -94,14 +94,14 @@ Reference files inspected:
 - `game_functions.php` victory logic includes special handling around lover-only victory and heavy wolf / fox edge cases. Current tests now pin both-lovers win, one-lover non-win, big-wolf counting, and child-fox fox-win cases; more reference scenarios may still need mapping.
 - Reference has "cult" images/options in assets and talk-role handling. Current `PlayerRole` and options do not include cult.
 - Reference has objection/sound/revote SWF paths and cookie-driven sound notifications. Current port has no sound notification equivalent.
-- Reference has silence/sudden-death checks in `game_play.php` flow. Current DO alarm now sudden-deaths timed-out day voters and required night actors, resets action maps, and starts another same-phase deadline; the separate reference-style warning window and conversation-time silence acceleration are still missing.
+- Reference has silence/sudden-death checks in `game_play.php` flow. Current DO alarm now emits the reference-style final 2-minute warning, then sudden-deaths timed-out day voters and required night actors, resets action maps, and starts another same-phase deadline; conversation-time silence acceleration is still missing.
 - Reference has resident exit/reset vote handling while waiting. Current lobby kick exists; voluntary leave/reset semantics are not equivalent.
 - Reference has manual/auto refresh spectator view. Current app is realtime only.
 
 ## Next Concrete Work Items
 
 1. Continue improving `/room/:roomId/log` toward PHP-compatible per-location styling; day/phase grouping, historical vote tables, and private talk/action transcript persistence are now in place.
-2. Add focused parity tests for the remaining warning-window and conversation-time silence behavior; vote table visibility and timed sudden-death actor handling are now pinned.
+2. Add focused parity tests and implementation for the remaining conversation-time silence behavior; vote table visibility, warning windows, and timed sudden-death actor handling are now pinned.
 3. Add a visual parity checklist with screenshots once a browser is available in the environment.
 4. Implement remote-server aggregation for `/list` or explicitly keep it local-only; expand BBS replies/moderation/digest behavior or explicitly defer those PHP-era features.
 

@@ -175,6 +175,7 @@ export interface GameState {
   mediumReading?: MediumReading;
   winner?: GameWinner;
   phaseEndsAt?: string;
+  suddenDeathWarningAt?: string;
   log: string[];
 }
 
