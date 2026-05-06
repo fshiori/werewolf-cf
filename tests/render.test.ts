@@ -417,6 +417,22 @@ describe("render", () => {
           eventType: "game_started",
           payload: { day: 1, players: 4 },
           createdAt: "2026-05-06 12:01:00"
+        },
+        {
+          id: 2,
+          roomId: "room_abc",
+          playerId: "player_a",
+          eventType: "day_vote",
+          payload: { visibility: "private", nickname: "Alice", targetPlayerId: "player_b", targetNickname: "Bob", phase: "day", day: 2 },
+          createdAt: "2026-05-06 12:02:00"
+        },
+        {
+          id: 3,
+          roomId: "room_abc",
+          playerId: "player_b",
+          eventType: "night_kill",
+          payload: { visibility: "private", nickname: "Bob", targetPlayerId: "player_a", targetNickname: "Alice", phase: "night", day: 2 },
+          createdAt: "2026-05-06 12:03:00"
         }
       ]
     );
@@ -428,8 +444,13 @@ describe("render", () => {
     expect(html).toContain("占卜師");
     expect(html).toContain("Bob (player_b)");
     expect(html).toContain("死亡");
-    expect(html).toContain("game_started");
+    expect(html).toContain("遊戲開始");
     expect(html).toContain("第1日");
+    expect(html).toContain("第 2 日 白天");
+    expect(html).toContain("白天投票");
+    expect(html).toContain("第 2 日 夜晚");
+    expect(html).toContain("襲擊");
+    expect(html).toContain("對象名:Bob");
   });
 
   it("renders implemented rules page", () => {

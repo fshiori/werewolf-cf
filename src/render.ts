@@ -238,6 +238,72 @@ function formatEventPayload(payload: unknown): string {
   return fields.length ? fields.join("　") : "";
 }
 
+function eventTypeLabel(eventType: string): string {
+  const labels: Record<string, string> = {
+    public_chat: "公開發言",
+    wolf_chat: "狼人密談",
+    fox_chat: "妖狐密談",
+    common_chat: "共有密談",
+    lovers_chat: "戀人密談",
+    dead_chat: "靈界發言",
+    gm_chat: "GM 發言",
+    gm_whisper: "GM 密語",
+    day_vote: "白天投票",
+    night_kill: "襲擊",
+    divination: "占卜",
+    child_fox_divination: "子狐占卜",
+    guard: "護衛",
+    cat_revive: "貓又復活",
+    game_started: "遊戲開始",
+    game_ended: "遊戲結束",
+    gm_advanced_phase: "GM 推進",
+    gm_ended_game: "GM 結束",
+    gm_set_alive: "GM 生死調整",
+    gm_set_role: "GM 角色調整",
+    gm_set_flag: "GM 旗標調整",
+    player_kicked: "踢出玩家",
+    room_created: "村子建立"
+  };
+  return labels[eventType] ?? eventType;
+}
+
+function eventDayLabel(event: RoomEventSummary): string {
+  const value = recordValue(event.payload);
+  const day = typeof value.day === "number" ? `第 ${value.day} 日` : "系統";
+  const phase = value.phase === "day" ? "白天" : value.phase === "night" ? "夜晚" : "";
+  return phase ? `${day} ${phase}` : day;
+}
+
+function eventSpeakerLabel(event: RoomEventSummary): string {
+  const value = recordValue(event.payload);
+  if (typeof value.nickname === "string" && value.nickname) {
+    return value.nickname;
+  }
+  return event.playerId ?? "系統";
+}
+
+function renderTranscriptEventSections(events: RoomEventSummary[]): string {
+  if (events.length === 0) {
+    return `<tr><td colspan="4" class="muted">尚無事件履歷。</td></tr>`;
+  }
+
+  const groups = new Map<string, RoomEventSummary[]>();
+  for (const event of events) {
+    const label = eventDayLabel(event);
+    groups.set(label, [...(groups.get(label) ?? []), event]);
+  }
+
+  return Array.from(groups.entries()).map(([label, groupEvents]) => `
+    <tr><td colspan="4"><strong>${escapeHtml(label)}</strong></td></tr>
+    ${groupEvents.map((event) => `<tr>
+      <td>${escapeHtml(event.createdAt)}</td>
+      <td>${escapeHtml(eventTypeLabel(event.eventType))}</td>
+      <td>${escapeHtml(eventSpeakerLabel(event))}</td>
+      <td>${escapeHtml(formatEventPayload(event.payload))}</td>
+    </tr>`).join("")}
+  `).join("");
+}
+
 function referenceAssetImg(path: string, alt: string): string {
   return `<img class="ref-icon" src="/assets/reference/${escapeHtml(path)}" alt="${escapeHtml(alt)}" title="${escapeHtml(alt)}">`;
 }
@@ -374,14 +440,7 @@ export function renderRoomTranscript(roomId: string, records: GameRecordSummary[
     }).join("")
     : `<tr><td colspan="4" class="muted">尚無對局結果。</td></tr>`;
 
-  const eventRows = events.length
-    ? events.map((event) => `<tr>
-        <td>${escapeHtml(event.createdAt)}</td>
-        <td>${escapeHtml(event.eventType)}</td>
-        <td>${event.playerId ? escapeHtml(event.playerId) : `<span class="muted">系統</span>`}</td>
-        <td>${escapeHtml(formatEventPayload(event.payload))}</td>
-      </tr>`).join("")
-    : `<tr><td colspan="4" class="muted">尚無事件履歷。</td></tr>`;
+  const eventRows = renderTranscriptEventSections(events);
 
   return page(`Room ${roomId} Log`, shell(`
     <fieldset>
@@ -400,7 +459,7 @@ export function renderRoomTranscript(roomId: string, records: GameRecordSummary[
     <fieldset>
       <legend><strong>事件履歷</strong></legend>
       <table class="form-table" style="margin:12px 20px 18px;">
-        <thead><tr><td><strong>時間</strong></td><td><strong>事件</strong></td><td><strong>玩家</strong></td><td><strong>內容</strong></td></tr></thead>
+        <thead><tr><td><strong>時間</strong></td><td><strong>種類</strong></td><td><strong>發言/行動</strong></td><td><strong>內容</strong></td></tr></thead>
         <tbody>${eventRows}</tbody>
       </table>
     </fieldset>

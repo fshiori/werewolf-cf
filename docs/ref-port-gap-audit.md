@@ -52,7 +52,7 @@ Reference files inspected:
 | Federated room list (`list.php`) | No cross-server/federated list equivalent | Missing |
 | Discussion board (`bbs.php`) | No forum equivalent | Missing |
 | Icon catalog/upload parity | `/icons` renders the reference default icon catalog; room join can send a vetted default `iconPath`; avatar upload exists | Partial |
-| Old logs (`old_log.php`) | `/room/:roomId/log` renders the D1 game-record and filtered room-event transcript summary; public chat plus private talk/vote/night-action replay now persist, with private entries visible only after the room ends | Partial |
+| Old logs (`old_log.php`) | `/room/:roomId/log` renders D1 game records and room-event transcript sections grouped by day/phase with reference-like labels for chat, votes, and night actions; private entries are visible only after the room ends | Partial |
 | Trip identity parity | Trip register/claim/exclusion exists, but no full reference-style Trip public lookup UI | Partial |
 
 ## UI Parity Findings
@@ -70,7 +70,7 @@ Reference files inspected:
 - Reference menu includes `聯合列表`, script info, old logs, icon view/upload, win-rate analysis, BBS, Trip registration. Current menu has the core app pages and a default icon catalog, but not every legacy page.
 - Reference room view has phase-specific body colors, manual/auto refresh links, login/resident registration links, and different layouts for spectator/player/heaven modes. Current room page is a single realtime WebSocket view.
 - Reference player list includes default icons, hover image swap, Trip links, role reveal text colors, already-voted background, and dead icon handling. Current player cards now emit selected default icons, reference role icons for revealed roles, and a grave fallback for dead players, but still lack hover image swap and Trip links.
-- Reference talk log has many location-specific render paths: public day, night wolf, common, lovers, fox, self talk, heaven, GM broadcast/whisper, system action visibility, and post-game/dead visibility. Current WebSocket channels cover the major private channels and public/private transcript entries are persisted with room-status visibility filtering, but the replay formatting is still coarser than the PHP talk-location renderer.
+- Reference talk log has many location-specific render paths: public day, night wolf, common, lovers, fox, self talk, heaven, GM broadcast/whisper, system action visibility, and post-game/dead visibility. Current WebSocket channels cover the major private channels and public/private transcript entries are persisted with room-status visibility filtering; `/room/:id/log` groups replay entries by day/phase, but still lacks full PHP-compatible per-location styling.
 - Reference vote output renders per-day vote tables, open-vote visibility, revote messages, and dead/spectator differences. Current UI shows summary/action state, but not full historical vote-table rendering.
 
 ## Rule Parity Findings
@@ -100,7 +100,7 @@ Reference files inspected:
 
 ## Next Concrete Work Items
 
-1. Expand `/room/:roomId/log` replay formatting into reference-like per-day talk/vote/action tables; private talk, vote, and action transcript persistence with room-status visibility rules is now in place.
+1. Continue improving `/room/:roomId/log` toward PHP-compatible per-location styling and historical vote tables; day/phase grouping plus private talk, vote, and action transcript persistence is now in place.
 2. Add focused parity tests for the remaining warning-window and conversation-time silence behavior; vote table visibility and timed sudden-death actor handling are now pinned.
 3. Add a visual parity checklist with screenshots once a browser is available in the environment.
 4. Decide whether to implement or explicitly defer federated room list and BBS features.
