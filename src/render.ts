@@ -735,7 +735,7 @@ export function renderHome(rooms: RoomSummary[], announcement = DEFAULT_ANNOUNCE
         room.options.lastWords ? optionMark("遺言", "img/room_option_will.gif") : "",
         room.options.openVote ? optionMark("公開票", "img/room_option_open_vote.gif") : "",
         room.options.commonTalkVisible ? optionMark("共有聲", "img/room_option_common.gif") : "",
-        room.options.deadRoleVisible ? optionMark("靈視", "img/rei.gif") : "",
+        room.options.deadRoleVisible ? optionMark("靈視", "img/room_option_rei.gif") : "",
         room.options.wishRole ? optionMark("希望", "img/room_option_wish_role.gif") : "",
         room.options.tripRequired ? optionMark("Trip限定", "img/room_option_trip.gif") : "",
         room.options.gmEnabled ? optionMark("GM制", "img/room_option_gm.gif") : "",
