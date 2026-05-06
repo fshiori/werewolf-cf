@@ -18,6 +18,7 @@ Implemented Cloudflare artifacts:
 - D1 schema: `migrations/`
 - Local rendered UI smoke: `scripts/smoke-local-ui.mjs`
 - Reference asset inventory: `docs/reference-asset-inventory.md`, `scripts/inventory-reference-assets.mjs`
+- Rule parity manifest: `docs/rule-parity-manifest.md`
 - Automated tests: `tests/`
 
 Reference files inspected:
@@ -48,7 +49,7 @@ Reference files inspected:
 | Reference icons and bitmap assets | R2 upload exists; `docs/reference-asset-inventory.md` classifies 130 reference assets; `/assets/reference/:path` serves vetted copied R2 assets; top chrome, home room-list status/options, rules role rows, live revealed role markers, and game-record victory rows emit reference image URLs with text fallback | Partial |
 | Browser E2E/manual visual verification | Local HTTP UI smoke only; no installed browser detected | Missing |
 | Screenshot/visual parity against ref | No screenshot baseline or comparison artifact | Missing |
-| Complete PHP rule parity | Core roles/options implemented; focused tests now cover lover-only normal wins, one-lover non-wins, big-wolf win counting, child-fox fox wins, vote visibility, non-realtime silence acceleration, timed sudden-death warning windows, and timed sudden-death alarm handling, but no line-by-line rule parity manifest | Partial |
+| Complete PHP rule parity | `docs/rule-parity-manifest.md` maps PHP rule areas to TypeScript artifacts and focused tests; core roles/options implemented; focused tests cover lover-only normal wins, one-lover non-wins, big-wolf win counting, child-fox fox wins, vote visibility, non-realtime silence acceleration, timed sudden-death warning windows, and timed sudden-death alarm handling | Partial |
 | Federated room list (`list.php`) | `/list` renders a reference-style federated list from local D1 rooms and optional remote peers configured by KV `federated_servers`; failed peers are ignored | Partial |
 | Discussion board (`bbs.php`) | `/bbs` renders a reference-style topic list, topic detail view, post form, reply form, and topic moderation panel backed by D1 `bbs_topics`/`bbs_replies`; token-protected moderation can pin, lock, and mark digest topics | Partial |
 | Icon catalog/upload parity | `/icons` renders the reference default icon catalog; room join can send a vetted default `iconPath`; avatar upload exists | Partial |
@@ -91,7 +92,7 @@ Reference files inspected:
 ### Still missing or weak
 
 - `game_functions.php` has additional visibility branches for many system talk locations. Current implementation has equivalent permission checks for channels but not full transcript parity.
-- `game_functions.php` victory logic includes special handling around lover-only victory and heavy wolf / fox edge cases. Current tests now pin both-lovers win, one-lover non-win, big-wolf counting, and child-fox fox-win cases; more reference scenarios may still need mapping.
+- `game_functions.php` victory logic includes special handling around lover-only victory and heavy wolf / fox edge cases. The rule manifest now maps implemented winner branches to focused tests; more reference scenarios may still need mapping as discovered.
 - Reference has "cult" images/options in assets and talk-role handling. Current `PlayerRole` and options do not include cult.
 - Reference has objection/sound/revote SWF paths and cookie-driven sound notifications. Current port implements the objection command, count limit, persisted/broadcast notification, and optional browser beep instead of legacy SWF playback; revote/daybreak sound parity is still not exact.
 - Reference has silence/sudden-death checks in `game_play.php` flow. Current DO state now applies non-realtime silence acceleration when conversation resumes after the silence threshold; the DO alarm emits the reference-style final 2-minute warning, then sudden-deaths timed-out day voters and required night actors, resets action maps, and starts another same-phase deadline.
@@ -101,7 +102,7 @@ Reference files inspected:
 ## Next Concrete Work Items
 
 1. Continue improving `/room/:roomId/log` toward PHP-compatible viewer-specific transcript masking; day/phase grouping, historical vote tables, private talk/action transcript persistence, self-talk, and major per-location styling are now in place.
-2. Continue mapping lesser PHP rule branches into focused tests; vote table visibility, non-realtime silence acceleration, warning windows, and timed sudden-death actor handling are now pinned.
+2. Continue converting the remaining partial/missing rows in `docs/rule-parity-manifest.md` into focused tests and implementation slices.
 3. Add a visual parity checklist with screenshots once a browser is available in the environment.
 4. Continue reducing remaining legacy menu/page gaps, including room-admin screens if PHP-era server management pages are needed.
 
