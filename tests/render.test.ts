@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { renderHome, renderPlayerProfile, renderProtocol, renderRoom, renderRules, renderVersion } from "../src/render";
+import { renderHome, renderLeaderboard, renderPlayerProfile, renderProtocol, renderRoom, renderRoomEvents, renderRoomRecords, renderRules, renderVersion } from "../src/render";
 
 describe("render", () => {
   it("renders home with room rows and escaped names", () => {
@@ -62,15 +62,10 @@ describe("render", () => {
     expect(html).toContain("&lt;Friendly&gt;");
     expect(html).toContain("最大30");
     expect(html).toContain("/room/room_abc");
-    expect(html).toContain("/api/rooms/room_abc");
-    expect(html).toContain("/api/stats/leaderboard");
-    expect(html).toContain("排行榜 JSON");
-    expect(html).toContain("/api/config");
-    expect(html).toContain("設定 JSON");
-    expect(html).toContain("/api/health");
-    expect(html).toContain("狀態 JSON");
-    expect(html).toContain("/api/version");
-    expect(html).toContain("版本 JSON");
+    expect(html).toContain("入村");
+    expect(html).toContain("/leaderboard");
+    expect(html).toContain("戰績排行榜");
+    expect(html).toContain("伺服器狀態");
     expect(html).toContain("/rules");
     expect(html).toContain("/protocol");
     expect(html).toContain("通訊協定");
@@ -218,18 +213,18 @@ describe("render", () => {
     expect(html).toContain("/api/players/");
     expect(html).toContain("/stats");
     expect(html).toContain("void refreshStats();");
-    expect(html).toContain("/api/rooms/room_abc");
-    expect(html).toContain("房間JSON");
+    expect(html).toContain("/room/room_abc/records");
+    expect(html).toContain("對局紀錄");
     expect(html).toContain("最近對局");
     expect(html).toContain("個人紀錄");
     expect(html).toContain("/api/rooms/");
     expect(html).toContain("/records");
-    expect(html).toContain("對局JSON");
+    expect(html).toContain("對局紀錄");
     expect(html).toContain("playerRecords");
     expect(html).toContain("/api/players/\" + playerId + \"/records");
     expect(html).toContain("事件");
     expect(html).toContain("/events");
-    expect(html).toContain("事件JSON");
+    expect(html).toContain("事件履歷");
     expect(html).toContain("game.hostId !== currentPlayerId");
     expect(html).toContain("game.revoteCount");
     expect(html).toContain("currentPlayerAlive");
@@ -296,6 +291,54 @@ describe("render", () => {
     expect(html).toContain("/api/players/\" + playerId + \"/records");
     expect(html).toContain("最近參戰紀錄");
     expect(html).toContain("function roleLabel(value)");
+  });
+
+  it("renders leaderboard as a normal HTML page", () => {
+    const html = renderLeaderboard([
+      { rank: 1, playerId: "player_top", gamesPlayed: 8, wins: 5, losses: 3 }
+    ]);
+
+    expect(html).toContain("戰績排行榜");
+    expect(html).toContain("/player/player_top");
+    expect(html).toContain("player_top");
+    expect(html).toContain("<td>5</td>");
+    expect(html).not.toContain("排行榜 JSON");
+  });
+
+  it("renders room records as a normal HTML page", () => {
+    const html = renderRoomRecords("room_abc", [
+      {
+        id: 1,
+        roomId: "room_abc",
+        result: { winner: "werewolves", day: 2, players: [{ playerId: "player_a" }, { playerId: "player_b" }] },
+        createdAt: "2026-05-06 12:00:00"
+      }
+    ]);
+
+    expect(html).toContain("村子對局紀錄");
+    expect(html).toContain("/room/room_abc");
+    expect(html).toContain("人狼勝利");
+    expect(html).toContain("第 2 日");
+    expect(html).toContain("2 人");
+  });
+
+  it("renders room events as a normal HTML page", () => {
+    const html = renderRoomEvents("room_abc", [
+      {
+        id: 1,
+        roomId: "room_abc",
+        playerId: "player_a",
+        eventType: "game_started",
+        payload: { day: 1, players: 4 },
+        createdAt: "2026-05-06 12:00:00"
+      }
+    ]);
+
+    expect(html).toContain("村子事件履歷");
+    expect(html).toContain("game_started");
+    expect(html).toContain("player_a");
+    expect(html).toContain("第1日");
+    expect(html).toContain("4人");
   });
 
   it("renders implemented rules page", () => {

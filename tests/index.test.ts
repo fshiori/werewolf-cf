@@ -709,6 +709,78 @@ describe("worker routes", () => {
     expect(body).toContain("目前功能");
   });
 
+  it("renders leaderboard page", async () => {
+    const response = await worker.fetch(
+      new Request("http://example.test/leaderboard"),
+      envWithRooms([], {}, {
+        player_top: { games_played: 8, wins: 5, losses: 3 }
+      })
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.text();
+    expect(body).toContain("戰績排行榜");
+    expect(body).toContain("/player/player_top");
+    expect(body).toContain("player_top");
+  });
+
+  it("renders room records page", async () => {
+    const response = await worker.fetch(
+      new Request("http://example.test/room/room_records/records"),
+      envWithRooms(
+        ["room_records"],
+        {},
+        {},
+        {
+          room_records: [
+            {
+              id: 1,
+              room_id: "room_records",
+              result_json: "{\"winner\":\"villagers\",\"day\":3,\"players\":[{\"playerId\":\"player_a\"}]}",
+              created_at: "2026-05-06 12:00:00"
+            }
+          ]
+        }
+      )
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.text();
+    expect(body).toContain("村子對局紀錄");
+    expect(body).toContain("村民勝利");
+    expect(body).toContain("第 3 日");
+  });
+
+  it("renders room events page", async () => {
+    const response = await worker.fetch(
+      new Request("http://example.test/room/room_events/events"),
+      envWithRooms(
+        ["room_events"],
+        {},
+        {},
+        {},
+        {
+          room_events: [
+            {
+              id: 1,
+              room_id: "room_events",
+              player_id: "player_host",
+              event_type: "game_started",
+              payload_json: "{\"day\":1,\"players\":4}",
+              created_at: "2026-05-06 12:00:00"
+            }
+          ]
+        }
+      )
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.text();
+    expect(body).toContain("村子事件履歷");
+    expect(body).toContain("game_started");
+    expect(body).toContain("player_host");
+  });
+
   it("renders protocol page", async () => {
     const response = await worker.fetch(new Request("http://example.test/protocol"), envWithRooms([]));
 

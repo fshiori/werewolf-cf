@@ -70,6 +70,18 @@ The Worker expects these bindings from `wrangler.toml`:
 
 ## HTTP API
 
+Browser pages:
+
+- `GET /`: Retro room list, leaderboard preview, Trip tools, and room creation form.
+- `GET /leaderboard`: Rendered leaderboard page.
+- `GET /room/:roomId`: Rendered room page with WebSocket chat, voting, night actions, GM controls, records, events, and avatar controls.
+- `GET /room/:roomId/records`: Rendered room game-record history.
+- `GET /room/:roomId/events`: Rendered room audit-event history.
+- `GET /player/:playerId`: Rendered player profile, avatar, stats, and recent records.
+- `GET /rules`: Rendered rules summary.
+- `GET /protocol`: Rendered WebSocket protocol reference.
+- `GET /version`: Rendered runtime/version summary.
+
 Runtime and public metadata:
 
 - `GET /api/health`: Worker, D1, KV, Durable Object, and R2 binding health.

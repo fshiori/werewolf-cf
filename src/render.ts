@@ -1,4 +1,4 @@
-import type { RoomSummary } from "./types";
+import type { GameRecordSummary, LeaderboardEntry, PlayerRole, RoomEventSummary, RoomSummary } from "./types";
 import { escapeHtml } from "./validation";
 
 function page(title: string, body: string): string {
@@ -131,11 +131,8 @@ function shell(body: string): string {
           <table class="menu-box"><tr><th>選單</th></tr></table>
           <table class="menu-list">
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/">首頁</a></td></tr>
-            <tr><td><small><font color="#666666">・</font></small></td><td><a href="/api/rooms">房間 JSON</a></td></tr>
-            <tr><td><small><font color="#666666">・</font></small></td><td><a href="/api/stats/leaderboard">排行榜 JSON</a></td></tr>
-            <tr><td><small><font color="#666666">・</font></small></td><td><a href="/api/config">設定 JSON</a></td></tr>
-            <tr><td><small><font color="#666666">・</font></small></td><td><a href="/api/health">狀態 JSON</a></td></tr>
-            <tr><td><small><font color="#666666">・</font></small></td><td><a href="/api/version">版本 JSON</a></td></tr>
+            <tr><td><small><font color="#666666">・</font></small></td><td><a href="/leaderboard">戰績排行榜</a></td></tr>
+            <tr><td><small><font color="#666666">・</font></small></td><td><a href="/version">伺服器狀態</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/rules">規則</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/protocol">通訊協定</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/version">版本</a></td></tr>
@@ -148,6 +145,144 @@ function shell(body: string): string {
 }
 
 const DEFAULT_ANNOUNCEMENT = "目前支援建立村子、即時聊天、白天投票、夜晚行動與自動換日。";
+
+function recordValue(value: unknown): Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value) ? value as Record<string, unknown> : {};
+}
+
+function roleLabel(value: unknown): string {
+  const labels: Record<PlayerRole, string> = {
+    villager: "村民",
+    werewolf: "人狼",
+    big_wolf: "大狼",
+    seer: "占卜師",
+    medium: "靈能者",
+    madman: "狂人",
+    guard: "獵人",
+    common: "共有者",
+    fox: "妖狐",
+    poison: "埋毒者",
+    betrayer: "背德者",
+    child_fox: "子狐",
+    cat: "貓又"
+  };
+  return typeof value === "string" && value in labels ? labels[value as PlayerRole] : typeof value === "string" ? value : "不明";
+}
+
+function winnerLabel(value: unknown): string {
+  if (value === "villagers") {
+    return "村民";
+  }
+  if (value === "werewolves") {
+    return "人狼";
+  }
+  if (value === "foxes") {
+    return "妖狐";
+  }
+  if (value === "lovers") {
+    return "戀人";
+  }
+  return "未定";
+}
+
+function formatGameRecord(record: GameRecordSummary): string {
+  const result = recordValue(record.result);
+  const winner = winnerLabel(result.winner);
+  const day = typeof result.day === "number" ? String(result.day) : "?";
+  const players = Array.isArray(result.players) ? result.players.length : 0;
+  return `${record.createdAt}　${winner}勝利　第 ${day} 日　${players} 人`;
+}
+
+function formatEventPayload(payload: unknown): string {
+  const value = recordValue(payload);
+  const fields = [
+    typeof value.name === "string" ? `村名:${value.name}` : "",
+    typeof value.comment === "string" && value.comment ? `說明:${value.comment}` : "",
+    typeof value.winner === "string" ? `勝利:${winnerLabel(value.winner)}` : "",
+    typeof value.day === "number" ? `第${value.day}日` : "",
+    typeof value.players === "number" ? `${value.players}人` : "",
+    typeof value.targetPlayerId === "string" ? `對象:${value.targetPlayerId}` : "",
+    typeof value.phase === "string" ? `階段:${value.phase}` : "",
+    typeof value.role === "string" ? `角色:${roleLabel(value.role)}` : ""
+  ].filter(Boolean);
+  return fields.length ? fields.join("　") : "";
+}
+
+export function renderLeaderboard(entries: LeaderboardEntry[]): string {
+  const rows = entries.length
+    ? entries.map((entry) => `<tr>
+        <td>${escapeHtml(String(entry.rank))}</td>
+        <td><a href="/player/${escapeHtml(entry.playerId)}">${escapeHtml(entry.playerId)}</a></td>
+        <td>${escapeHtml(String(entry.wins))}</td>
+        <td>${escapeHtml(String(entry.losses))}</td>
+        <td>${escapeHtml(String(entry.gamesPlayed))}</td>
+      </tr>`).join("")
+    : `<tr><td colspan="5" class="muted">尚無戰績。</td></tr>`;
+
+  return page("Leaderboard", shell(`
+    <fieldset>
+      <legend><strong>戰績排行榜</strong></legend>
+      <table class="form-table" style="margin:12px 20px 18px;">
+        <thead>
+          <tr>
+            <td><strong>順位</strong></td>
+            <td><strong>玩家</strong></td>
+            <td><strong>勝</strong></td>
+            <td><strong>敗</strong></td>
+            <td><strong>場數</strong></td>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </fieldset>
+  `));
+}
+
+export function renderRoomRecords(roomId: string, records: GameRecordSummary[]): string {
+  const rows = records.length
+    ? records.map((record) => `<tr>
+        <td>${escapeHtml(record.createdAt)}</td>
+        <td>${escapeHtml(formatGameRecord(record))}</td>
+      </tr>`).join("")
+    : `<tr><td colspan="2" class="muted">尚無對局紀錄。</td></tr>`;
+
+  return page(`Room ${roomId} Records`, shell(`
+    <fieldset>
+      <legend><strong>村子對局紀錄</strong></legend>
+      <table class="form-table">
+        <tr><td><strong>　村子：</strong></td><td><a href="/room/${escapeHtml(roomId)}">${escapeHtml(roomId)}</a></td></tr>
+      </table>
+      <table class="form-table" style="margin:12px 20px 18px;">
+        <thead><tr><td><strong>時間</strong></td><td><strong>結果</strong></td></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </fieldset>
+  `));
+}
+
+export function renderRoomEvents(roomId: string, events: RoomEventSummary[]): string {
+  const rows = events.length
+    ? events.map((event) => `<tr>
+        <td>${escapeHtml(event.createdAt)}</td>
+        <td>${escapeHtml(event.eventType)}</td>
+        <td>${event.playerId ? escapeHtml(event.playerId) : `<span class="muted">系統</span>`}</td>
+        <td>${escapeHtml(formatEventPayload(event.payload))}</td>
+      </tr>`).join("")
+    : `<tr><td colspan="4" class="muted">尚無事件。</td></tr>`;
+
+  return page(`Room ${roomId} Events`, shell(`
+    <fieldset>
+      <legend><strong>村子事件履歷</strong></legend>
+      <table class="form-table">
+        <tr><td><strong>　村子：</strong></td><td><a href="/room/${escapeHtml(roomId)}">${escapeHtml(roomId)}</a></td></tr>
+      </table>
+      <table class="form-table" style="margin:12px 20px 18px;">
+        <thead><tr><td><strong>時間</strong></td><td><strong>事件</strong></td><td><strong>玩家</strong></td><td><strong>內容</strong></td></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </fieldset>
+  `));
+}
 
 export function renderHome(rooms: RoomSummary[], announcement = DEFAULT_ANNOUNCEMENT, maintenanceMode = false): string {
   const roomRows = rooms.length === 0
@@ -179,7 +314,7 @@ export function renderHome(rooms: RoomSummary[], announcement = DEFAULT_ANNOUNCE
       ].filter(Boolean).join(" ");
       return `<div class="room-link">
         <a href="/room/${escapeHtml(room.id)}"><span class="room-line"><span class="status status-${status}">${status}</span><small>[${escapeHtml(room.id)}]</small> ${escapeHtml(room.name)}村</span></a>
-        <small> <a href="/api/rooms/${escapeHtml(room.id)}">JSON</a></small>
+        <small> <a href="/room/${escapeHtml(room.id)}">入村</a></small>
         <small class="room-comment">${room.comment ? `～${escapeHtml(room.comment)}～ ` : ""}<span class="option-mark">最大${escapeHtml(String(room.maxPlayers))}</span> ～建立時間：${escapeHtml(room.createdAt)}～ ${optionMarks}</small>
       </div>`;
     }).join("");
@@ -734,9 +869,8 @@ export function renderRoom(roomId: string): string {
               <td>
                 勝利：<span id="winner" class="muted">未定</span>
                 　<a href="/">首頁</a>
-                　<a href="/api/rooms/${escapeHtml(roomId)}">房間JSON</a>
-                　<a href="/api/rooms/${escapeHtml(roomId)}/records">對局JSON</a>
-                　<a href="/api/rooms/${escapeHtml(roomId)}/events">事件JSON</a>
+                　<a href="/room/${escapeHtml(roomId)}/records">對局紀錄</a>
+                　<a href="/room/${escapeHtml(roomId)}/events">事件履歷</a>
               </td>
             </tr>
             <tr>
