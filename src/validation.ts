@@ -369,5 +369,9 @@ export function parseClientMessage(raw: string): ClientMessage {
     return { type: "set_last_words", text: parsed.text };
   }
 
+  if (parsed.type === "objection") {
+    return { type: "objection" };
+  }
+
   throw new Error("Unknown message type");
 }

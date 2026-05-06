@@ -17,6 +17,7 @@ export const NIGHT_MS = 90_000;
 export const DEFAULT_DAY_MINUTES = DAY_MS / 60_000;
 export const DEFAULT_NIGHT_MINUTES = NIGHT_MS / 60_000;
 export const MAX_REVOTES = 1;
+export const MAX_OBJECTIONS = 2;
 export const SUDDEN_DEATH_WARNING_MS = 120_000;
 export const SILENCE_THRESHOLD_MS = 60_000;
 export const SILENCE_ADVANCE_MS = 60 * 60_000;
@@ -70,6 +71,7 @@ export function createLobbyState(roomId: string): GameState {
     guards: {},
     catRevives: {},
     lastWords: {},
+    objectionCounts: {},
     log: ["等待玩家加入。"]
   };
 }
@@ -452,6 +454,7 @@ function startGameWithPlayers(state: GameState, players: GamePlayer[], now: numb
     lastWords: options.dummyBoy && options.customDummy && options.dummyLastWords
       ? { ...(state.lastWords ?? {}), [DUMMY_PLAYER_ID]: options.dummyLastWords }
       : state.lastWords ?? {},
+    objectionCounts: {},
     mediumReading: undefined,
     phaseEndsAt: new Date(now + (options.dummyBoy ? roomOptionNightMs(options) : roomOptionDayMs(options))).toISOString(),
     lastSpokenAt: new Date(now).toISOString(),
@@ -481,6 +484,26 @@ export function recordConversationActivity(state: GameState, now = Date.now()): 
     phaseEndsAt: new Date(nextPhaseEndsAt).toISOString(),
     lastSpokenAt: timestamp,
     log: [...state.log, "・・・・・・・・・・ 持續沉默了 1時間"]
+  };
+}
+
+export function raiseObjection(state: GameState, playerId: string): GameState {
+  if (state.phase === "ended" || state.phase === "night") {
+    throw new Error("Objection is only available before the game or during the day");
+  }
+  const player = assertLivingPlayer(state, playerId);
+  const currentCount = state.objectionCounts?.[playerId] ?? 0;
+  if (currentCount >= MAX_OBJECTIONS) {
+    throw new Error("No objections remaining");
+  }
+  const remaining = MAX_OBJECTIONS - currentCount - 1;
+  return {
+    ...state,
+    objectionCounts: {
+      ...(state.objectionCounts ?? {}),
+      [playerId]: currentCount + 1
+    },
+    log: [...state.log, `${player.nickname} 提出反對。剩餘 ${remaining} 次。`]
   };
 }
 

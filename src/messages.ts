@@ -106,6 +106,16 @@ export function buildGmWhisperMessage(playerId: string, nickname: string, target
   };
 }
 
+export function buildObjectionMessage(playerId: string, nickname: string, remaining: number): ServerMessage {
+  return {
+    type: "objection",
+    playerId,
+    nickname: escapeHtml(nickname),
+    remaining,
+    sentAt: new Date().toISOString()
+  };
+}
+
 export function buildGameStateMessage(state: GameState): ServerMessage {
   return {
     type: "game_state",

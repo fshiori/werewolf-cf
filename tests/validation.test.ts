@@ -154,6 +154,7 @@ describe("validation", () => {
       enabled: true
     });
     expect(parseClientMessage('{"type":"set_last_words","text":"bye"}')).toEqual({ type: "set_last_words", text: "bye" });
+    expect(parseClientMessage('{"type":"objection"}')).toEqual({ type: "objection" });
     expect(parseClientMessage('{"type":"start_game"}')).toEqual({ type: "start_game" });
     expect(parseClientMessage('{"type":"kick_player","targetPlayerId":"player_1"}')).toEqual({
       type: "kick_player",

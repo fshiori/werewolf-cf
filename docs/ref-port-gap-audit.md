@@ -44,7 +44,7 @@ Reference files inspected:
 | Room page client script not inline | `/assets/room-client.js`, `src/room-client.ts`, local UI smoke | Implemented |
 | Reference top/menu visual style | Table layout, side menu, fieldsets, colors, and reference top title/background asset URLs in `src/render.ts` | Partial |
 | Reference room player grid visual style | `renderRoom`, `.player-card`, `.player-icon`, role/death/vote styling; client emits reference role icons for revealed roles and grave fallback for dead players | Partial |
-| Reference chat/log/death/vote sections | Room page has chat/game log/records/events; public and private channel/action events persist to `room_events`; private transcript entries are hidden from `/events` and `/log` until the room status is ended | Partial |
+| Reference chat/log/death/vote sections | Room page has chat/game log/records/events; public and private channel/action events, including objection notifications, persist to `room_events`; private transcript entries are hidden from `/events` and `/log` until the room status is ended | Partial |
 | Reference icons and bitmap assets | R2 upload exists; `docs/reference-asset-inventory.md` classifies 130 reference assets; `/assets/reference/:path` serves vetted copied R2 assets; top chrome, home room-list status/options, rules role rows, live revealed role markers, and game-record victory rows emit reference image URLs with text fallback | Partial |
 | Browser E2E/manual visual verification | Local HTTP UI smoke only; no installed browser detected | Missing |
 | Screenshot/visual parity against ref | No screenshot baseline or comparison artifact | Missing |
@@ -93,7 +93,7 @@ Reference files inspected:
 - `game_functions.php` has additional visibility branches for many system talk locations. Current implementation has equivalent permission checks for channels but not full transcript parity.
 - `game_functions.php` victory logic includes special handling around lover-only victory and heavy wolf / fox edge cases. Current tests now pin both-lovers win, one-lover non-win, big-wolf counting, and child-fox fox-win cases; more reference scenarios may still need mapping.
 - Reference has "cult" images/options in assets and talk-role handling. Current `PlayerRole` and options do not include cult.
-- Reference has objection/sound/revote SWF paths and cookie-driven sound notifications. Current port has no sound notification equivalent.
+- Reference has objection/sound/revote SWF paths and cookie-driven sound notifications. Current port implements the objection command, count limit, persisted/broadcast notification, and optional browser beep instead of legacy SWF playback; revote/daybreak sound parity is still not exact.
 - Reference has silence/sudden-death checks in `game_play.php` flow. Current DO state now applies non-realtime silence acceleration when conversation resumes after the silence threshold; the DO alarm emits the reference-style final 2-minute warning, then sudden-deaths timed-out day voters and required night actors, resets action maps, and starts another same-phase deadline.
 - Reference has resident exit/reset vote handling while waiting. Current lobby kick exists; voluntary leave/reset semantics are not equivalent.
 - Reference has manual/auto refresh spectator view. Current app is realtime only.

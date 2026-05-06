@@ -8,11 +8,29 @@ if (!localStorage.getItem(playerKey)) {
 document.querySelector("#nickname").value = localStorage.getItem("werewolf_cf_nickname") || "";
 document.querySelector("#trip").value = localStorage.getItem("werewolf_cf_trip") || "";
 document.querySelector("#defaultIcon").value = localStorage.getItem("werewolf_cf_default_icon") || "";
+document.querySelector("#soundNotify").checked = localStorage.getItem("werewolf_cf_sound") === "on";
 let ws;
 function append(line) {
   const div = document.createElement("div");
   div.innerHTML = line;
   document.querySelector("#chatLog").appendChild(div);
+}
+function playNotifySound() {
+  if (!document.querySelector("#soundNotify").checked) return;
+  try {
+    const AudioContextImpl = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextImpl) return;
+    const context = new AudioContextImpl();
+    const oscillator = context.createOscillator();
+    const gain = context.createGain();
+    oscillator.type = "square";
+    oscillator.frequency.value = 880;
+    gain.gain.value = 0.03;
+    oscillator.connect(gain);
+    gain.connect(context.destination);
+    oscillator.start();
+    oscillator.stop(context.currentTime + 0.12);
+  } catch {}
 }
 async function refreshStats() {
   const playerId = localStorage.getItem(playerKey);
@@ -140,6 +158,9 @@ document.querySelector("#connect").addEventListener("click", () => {
       append("<font color='#ff6699'>[戀頻]</font> <b>" + msg.nickname + "</b>: " + msg.text);
     } else if (msg.type === "dead_chat") {
       append("<font color='#666666'>[靈界]</font> <b>" + msg.nickname + "</b>: " + msg.text);
+    } else if (msg.type === "objection") {
+      playNotifySound();
+      append("<font color='#cc0000'>[異議あり]</font> <b>" + msg.nickname + "</b> 提出反對。（剩餘 " + msg.remaining + "）");
     } else if (msg.type === "divination_result") {
       const result = msg.result === "werewolf" ? "狼" : "人";
       append("<font color='#660099'>[占卜]</font> " + msg.targetNickname + " 是「" + result + "」。");
@@ -221,6 +242,12 @@ document.querySelector("#sendDeadChat").addEventListener("click", () => {
     ws.send(JSON.stringify({ type: "dead_chat", text: input.value }));
     input.value = "";
   }
+});
+document.querySelector("#sendObjection").addEventListener("click", () => {
+  sendCommand({ type: "objection" });
+});
+document.querySelector("#soundNotify").addEventListener("change", (event) => {
+  localStorage.setItem("werewolf_cf_sound", event.target.checked ? "on" : "off");
 });
 document.querySelector("#sendGmChat").addEventListener("click", () => {
   const input = document.querySelector("#chatText");
@@ -383,6 +410,7 @@ function renderGame(game) {
   document.querySelector("#sendCommonChat").disabled = !(game.phase === "night" && role === "common" && currentPlayerAlive);
   document.querySelector("#sendLoversChat").disabled = !(game.phase === "night" && isLover && currentPlayerAlive);
   document.querySelector("#sendDeadChat").disabled = !(currentPlayerDead && game.phase !== "lobby" && game.phase !== "ended");
+  document.querySelector("#sendObjection").disabled = !(currentPlayerAlive && (game.phase === "lobby" || game.phase === "day"));
   document.querySelector("#sendGmChat").disabled = !isGm;
   document.querySelector("#sendGmWhisper").disabled = !isGm || game.players.length === 0;
   document.querySelector("#gmAdvancePhase").disabled = !isGm || !(game.phase === "day" || game.phase === "night");

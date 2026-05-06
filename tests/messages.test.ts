@@ -15,6 +15,7 @@ import {
   buildLastWordsAckMessage,
   buildLoversChatMessage,
   buildMediumResultMessage,
+  buildObjectionMessage,
   buildPresenceMessage,
   buildRevealedRolesMessage,
   buildRoleMessage,
@@ -62,6 +63,15 @@ describe("messages", () => {
       targetPlayerId: "player_1",
       targetNickname: "&lt;Alice&gt;",
       text: "&lt;secret&gt;"
+    });
+  });
+
+  it("builds escaped objection messages", () => {
+    expect(buildObjectionMessage("player_1", "<Alice>", 1)).toMatchObject({
+      type: "objection",
+      playerId: "player_1",
+      nickname: "&lt;Alice&gt;",
+      remaining: 1
     });
   });
 
