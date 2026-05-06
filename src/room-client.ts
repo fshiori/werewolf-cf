@@ -161,6 +161,8 @@ document.querySelector("#connect").addEventListener("click", () => {
     } else if (msg.type === "objection") {
       playNotifySound();
       append("<font color='#cc0000'>[異議あり]</font> <b>" + msg.nickname + "</b> 提出反對。（剩餘 " + msg.remaining + "）");
+    } else if (msg.type === "lobby_start_vote") {
+      append("<span class='muted'>" + msg.nickname + " 投下開始遊戲一票。（" + msg.votedPlayerIds.length + "/" + msg.required + "）</span>");
     } else if (msg.type === "divination_result") {
       const result = msg.result === "werewolf" ? "狼" : "人";
       append("<font color='#660099'>[占卜]</font> " + msg.targetNickname + " 是「" + result + "」。");
@@ -272,6 +274,9 @@ document.querySelector("#setLastWords").addEventListener("click", () => {
 });
 document.querySelector("#startGame").addEventListener("click", () => {
   sendCommand({ type: "start_game" });
+});
+document.querySelector("#startVote").addEventListener("click", () => {
+  sendCommand({ type: "start_vote" });
 });
 document.querySelector("#leaveRoom").addEventListener("click", () => {
   sendCommand({ type: "leave_room" });
@@ -408,6 +413,7 @@ function renderGame(game) {
   const canManageLobby = game.phase === "lobby" && (game.hostId === currentPlayerId || isGm);
   document.querySelector("#host").textContent = host ? host.nickname : "未定";
   document.querySelector("#startGame").disabled = game.phase !== "lobby" || (game.hostId !== currentPlayerId && !isGm);
+  document.querySelector("#startVote").disabled = !(game.phase === "lobby" && currentPlayer && !isGm && !(game.lobbyStartVotedPlayerIds || []).includes(currentPlayerId));
   document.querySelector("#leaveRoom").disabled = !ws || ws.readyState !== WebSocket.OPEN;
   document.querySelector("#sendWolfChat").disabled = !(game.phase === "night" && isWolfRole(role) && currentPlayerAlive);
   document.querySelector("#sendFoxChat").disabled = !(game.phase === "night" && role === "fox" && currentPlayerAlive);

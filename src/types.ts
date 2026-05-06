@@ -198,6 +198,7 @@ export interface GameState {
   catRevives: Record<string, string>;
   lastWords: Record<string, string>;
   objectionCounts?: Record<string, number>;
+  lobbyStartVotes?: Record<string, boolean>;
   mediumReading?: MediumReading;
   winner?: GameWinner;
   phaseEndsAt?: string;
@@ -290,6 +291,10 @@ export type StartGameClientMessage = {
   type: "start_game";
 };
 
+export type StartVoteClientMessage = {
+  type: "start_vote";
+};
+
 export type KickPlayerClientMessage = {
   type: "kick_player";
   targetPlayerId: string;
@@ -354,6 +359,7 @@ export type ClientMessage =
   | GmSetRoleClientMessage
   | GmSetFlagClientMessage
   | StartGameClientMessage
+  | StartVoteClientMessage
   | KickPlayerClientMessage
   | LeaveRoomClientMessage
   | VoteClientMessage
@@ -377,6 +383,7 @@ export type ServerMessage =
   | { type: "gm_chat"; playerId: string; nickname: string; text: string; sentAt: string }
   | { type: "gm_whisper"; playerId: string; nickname: string; targetPlayerId: string; targetNickname: string; text: string; sentAt: string }
   | { type: "objection"; playerId: string; nickname: string; remaining: number; sentAt: string }
+  | { type: "lobby_start_vote"; playerId: string; nickname: string; votedPlayerIds: string[]; required: number; ready: boolean; sentAt: string }
   | { type: "revealed_roles"; roles: Record<string, PlayerRole> }
   | { type: "divination_result"; targetPlayerId: string; targetNickname: string; result: DivinationResult }
   | { type: "child_fox_result"; targetPlayerId: string; targetNickname: string; result: ChildFoxDivinationResult }
@@ -392,6 +399,7 @@ export type ServerMessage =
       players: PublicGamePlayer[];
       votes: Record<string, string>;
       votedPlayerIds: string[];
+      lobbyStartVotedPlayerIds?: string[];
       winner?: GameWinner;
       phaseEndsAt?: string;
       log: string[];

@@ -10,6 +10,10 @@ type SentMessage = {
   action?: string;
   targetPlayerId?: string;
   playerId?: string;
+  votedPlayerIds?: string[];
+  lobbyStartVotedPlayerIds?: string[];
+  required?: number;
+  ready?: boolean;
   nickname?: string;
   text?: string;
   sentAt?: string;
@@ -1696,6 +1700,115 @@ describe("RoomDurableObject", () => {
     expect(roles).toHaveLength(3);
     expect(roles).toContain("werewolf");
     expect(roles.every((role) => typeof role === "string")).toBe(true);
+  });
+
+  it("starts games when all lobby players cast start votes", async () => {
+    const game: GameState = {
+      roomId: "room_abc",
+      phase: "lobby",
+      day: 0,
+      hostId: "player_host",
+      players: [
+        { playerId: "player_host", nickname: "Host", role: "villager", alive: true },
+        { playerId: "player_guest", nickname: "Guest", role: "villager", alive: true },
+        { playerId: "player_third", nickname: "Third", role: "villager", alive: true }
+      ],
+      votes: {},
+      openVote: false,
+      commonTalkVisible: false,
+      deadRoleVisible: false,
+      wishRole: false,
+      dummyBoy: false,
+      dayMs: 180_000,
+      nightMs: 90_000,
+      selfVote: false,
+      voteStatus: false,
+      revoteCount: 0,
+      nightKills: {},
+      divinations: {},
+      guards: {},
+      catRevives: {},
+      lastWords: {},
+      lobbyStartVotes: {},
+      log: []
+    };
+    const { room, stored, dbRuns } = observableRoomObject(game);
+    const hostMessages: SentMessage[] = [];
+    const guestMessages: SentMessage[] = [];
+    const thirdMessages: SentMessage[] = [];
+    const hostSocket = fakeSocket(hostMessages);
+    const guestSocket = fakeSocket(guestMessages);
+    const thirdSocket = fakeSocket(thirdMessages);
+    connect(room, hostSocket, "player_host", "Host");
+    connect(room, guestSocket, "player_guest", "Guest");
+    connect(room, thirdSocket, "player_third", "Third");
+
+    await sendRaw(room, hostSocket, JSON.stringify({ type: "start_vote" }));
+    await sendRaw(room, guestSocket, JSON.stringify({ type: "start_vote" }));
+    await sendRaw(room, thirdSocket, JSON.stringify({ type: "start_vote" }));
+
+    expect(hostMessages).toContainEqual(expect.objectContaining({ type: "lobby_start_vote", votedPlayerIds: ["player_host"], required: 3, ready: false }));
+    expect(guestMessages).toContainEqual(expect.objectContaining({ type: "lobby_start_vote", votedPlayerIds: ["player_host", "player_guest"], required: 3, ready: false }));
+    for (const messages of [hostMessages, guestMessages, thirdMessages]) {
+      expect(messages).toContainEqual(expect.objectContaining({ type: "lobby_start_vote", votedPlayerIds: ["player_host", "player_guest", "player_third"], required: 3, ready: true }));
+      expect(messages).toContainEqual(expect.objectContaining({ type: "game_state", phase: "day", day: 1 }));
+      expect(messages.filter((message) => message.type === "role")).toHaveLength(1);
+    }
+    expect(stored.get("gameState")).toEqual(expect.objectContaining({ phase: "day", lobbyStartVotes: {} }));
+    expect(dbRuns).toContainEqual(expect.objectContaining({ query: expect.stringContaining("UPDATE rooms SET status = 'playing'"), binds: ["room_abc"] }));
+    expect(dbRuns).toContainEqual(
+      expect.objectContaining({
+        query: expect.stringContaining("INSERT INTO room_events"),
+        binds: ["room_abc", "player_third", "game_started", JSON.stringify({ day: 1, players: 3, startVotes: 3 })]
+      })
+    );
+  });
+
+  it("rejects invalid lobby start vote websocket states", async () => {
+    const activeGame: GameState = {
+      roomId: "room_abc",
+      phase: "day",
+      day: 1,
+      hostId: "player_host",
+      players: [
+        { playerId: "player_host", nickname: "Host", role: "villager", alive: true },
+        { playerId: "player_guest", nickname: "Guest", role: "villager", alive: true },
+        { playerId: "player_wolf", nickname: "Wolf", role: "werewolf", alive: true }
+      ],
+      votes: {},
+      openVote: false,
+      commonTalkVisible: false,
+      deadRoleVisible: false,
+      wishRole: false,
+      dummyBoy: false,
+      dayMs: 180_000,
+      nightMs: 90_000,
+      selfVote: false,
+      voteStatus: false,
+      revoteCount: 0,
+      nightKills: {},
+      divinations: {},
+      guards: {},
+      catRevives: {},
+      lastWords: {},
+      log: []
+    };
+    const lobbyGame: GameState = { ...activeGame, phase: "lobby", day: 0 };
+    const cases: Array<{ game: GameState; playerId: string; nickname: string; gm: boolean; message: string }> = [
+      { game: activeGame, playerId: "player_host", nickname: "Host", gm: false, message: "Start votes are only available before the game starts" },
+      { game: lobbyGame, playerId: "player_gm", nickname: "GM", gm: true, message: "GM cannot cast resident start votes" }
+    ];
+
+    for (const testCase of cases) {
+      const room = roomObject(testCase.game);
+      const messages: SentMessage[] = [];
+      const socket = fakeSocket(messages);
+      connect(room, socket, testCase.playerId, testCase.nickname, testCase.gm);
+
+      await sendRaw(room, socket, JSON.stringify({ type: "start_vote" }));
+
+      expect(messages).toEqual([{ type: "error", message: testCase.message }]);
+    }
   });
 
   it("marks dummy boy games as playing when they start on the first night", async () => {

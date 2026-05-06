@@ -8,6 +8,7 @@ import {
   canUseLoversChannel,
   canUsePublicChat,
   canUseWerewolfChannel,
+  castLobbyStartVote,
   castCatRevive,
   castChildFoxDivination,
   castDayVote,
@@ -51,6 +52,7 @@ import {
   buildGmWhisperMessage,
   buildJoinedMessage,
   buildLastWordsAckMessage,
+  buildLobbyStartVoteMessage,
   buildLoversChatMessage,
   buildMediumResultMessage,
   buildObjectionMessage,
@@ -293,6 +295,33 @@ export class RoomDurableObject {
         await this.persistRoomEvent(member.playerId, "game_started", { day: next.day, players: next.players.length });
         await this.broadcastGameState(next);
         this.sendRoles(next);
+        return;
+      }
+
+      if (message.type === "start_vote") {
+        if (member.gm) {
+          throw new Error("GM cannot cast resident start votes");
+        }
+        const vote = castLobbyStartVote(await this.loadGameState(), member.playerId);
+        await this.persistRoomEvent(member.playerId, "lobby_start_vote", {
+          nickname: member.nickname,
+          votedPlayerIds: vote.votedPlayerIds,
+          required: vote.required,
+          ready: vote.ready
+        });
+        if (vote.ready) {
+          const next = startGame(vote.state, Date.now(), Math.random, await this.loadRoomOptions());
+          await this.saveGameState(next);
+          await this.syncRoomStatus(next);
+          await this.persistRoomEvent(member.playerId, "game_started", { day: next.day, players: next.players.length, startVotes: vote.votedPlayerIds.length });
+          this.broadcast(buildLobbyStartVoteMessage(member.playerId, member.nickname, vote.votedPlayerIds, vote.required, true));
+          await this.broadcastGameState(next);
+          this.sendRoles(next);
+          return;
+        }
+        await this.saveGameState(vote.state);
+        this.broadcast(buildLobbyStartVoteMessage(member.playerId, member.nickname, vote.votedPlayerIds, vote.required, false));
+        await this.broadcastGameState(vote.state);
         return;
       }
 

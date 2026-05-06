@@ -116,6 +116,18 @@ export function buildObjectionMessage(playerId: string, nickname: string, remain
   };
 }
 
+export function buildLobbyStartVoteMessage(playerId: string, nickname: string, votedPlayerIds: string[], required: number, ready: boolean): ServerMessage {
+  return {
+    type: "lobby_start_vote",
+    playerId,
+    nickname: escapeHtml(nickname),
+    votedPlayerIds,
+    required,
+    ready,
+    sentAt: new Date().toISOString()
+  };
+}
+
 export function buildGameStateMessage(state: GameState): ServerMessage {
   return {
     type: "game_state",
@@ -126,6 +138,7 @@ export function buildGameStateMessage(state: GameState): ServerMessage {
     players: publicPlayers(state.players).map((player) => ({ ...player, nickname: escapeHtml(player.nickname) })),
     votes: state.openVote ? state.votes : {},
     votedPlayerIds: state.voteStatus ? Object.keys(state.votes) : [],
+    lobbyStartVotedPlayerIds: state.phase === "lobby" ? state.players.filter((player) => state.lobbyStartVotes?.[player.playerId]).map((player) => player.playerId) : undefined,
     winner: state.winner,
     phaseEndsAt: state.phaseEndsAt,
     log: state.log.map(escapeHtml)
