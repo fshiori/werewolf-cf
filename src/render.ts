@@ -1733,6 +1733,35 @@ export function renderPlayerProfile(playerId: string): string {
           cat: "貓又"
         }[value] || value;
       }
+      function roleIconPath(value) {
+        return {
+          villager: "img/role_human.gif",
+          werewolf: "img/role_wolf.gif",
+          big_wolf: "img/role_heavywolf.gif",
+          seer: "img/role_mage.gif",
+          medium: "img/role_necromancer.gif",
+          madman: "img/role_mad.gif",
+          guard: "img/role_guard.gif",
+          common: "img/role_common.gif",
+          fox: "img/role_fox.gif",
+          poison: "img/role_poison.gif",
+          betrayer: "img/role_cult.gif",
+          child_fox: "img/role_fosi.gif",
+          cat: "img/role_cat.gif"
+        }[value] || "";
+      }
+      function appendRoleIcon(container, role) {
+        const path = roleIconPath(role);
+        if (!path) return;
+        const image = document.createElement("img");
+        image.src = "/assets/reference/" + path;
+        image.alt = roleLabel(role);
+        image.title = roleLabel(role);
+        image.width = 16;
+        image.height = 16;
+        image.className = "ref-icon";
+        container.appendChild(image);
+      }
       document.querySelector("#profileAvatar").addEventListener("error", (event) => {
         event.currentTarget.remove();
       });
@@ -1760,7 +1789,9 @@ export function renderPlayerProfile(playerId: string): string {
             const div = document.createElement("div");
             const winner = record.winner || "unknown";
             const day = record.day || "?";
-            div.textContent = record.createdAt + "　[" + record.roomId + "] " + winner + " 勝　第 " + day + " 日　" + roleLabel(record.role);
+            div.append(record.createdAt + "　[" + record.roomId + "] " + winner + " 勝　第 " + day + " 日　");
+            appendRoleIcon(div, record.role);
+            div.append(roleLabel(record.role));
             recordsTarget.appendChild(div);
           });
         } catch {
