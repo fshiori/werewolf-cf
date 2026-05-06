@@ -684,6 +684,16 @@ describe("worker routes", () => {
     expect(await response.text()).toContain("[room_exists]");
   });
 
+  it("serves the external room client script", async () => {
+    const response = await worker.fetch(new Request("http://example.test/assets/room-client.js"), envWithRooms([]));
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toContain("text/javascript");
+    const body = await response.text();
+    expect(body).toContain("new WebSocket");
+    expect(body).toContain('document.querySelector("[data-room-id]")');
+  });
+
   it("renders player profile pages", async () => {
     const response = await worker.fetch(new Request("http://example.test/player/player_profile"), envWithRooms([]));
 
