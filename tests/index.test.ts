@@ -857,7 +857,7 @@ describe("worker routes", () => {
     expect(body).toContain("村民勝利");
     expect(body).toContain("Alice (player_a)");
     expect(body).toContain("占卜師");
-    expect(body).toContain("game_started");
+    expect(body).toContain("遊戲開始");
     expect(body).toContain("player_host");
   });
 
