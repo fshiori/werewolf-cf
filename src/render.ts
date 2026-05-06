@@ -851,10 +851,26 @@ export function renderWinRateAnalysis(entries: WinRateEntry[]): string {
 
 export function renderRoomRecords(roomId: string, records: GameRecordSummary[]): string {
   const rows = records.length
-    ? records.map((record) => `<tr>
+    ? records.map((record) => {
+      const players = readRecordPlayers(record);
+      const playerRows = players.length
+        ? players.map((player) => `<tr>
+            <td>${escapeHtml(playerRecordLabel(player))}</td>
+            <td>${roleLabelHtml(player.role)}</td>
+            <td>${player.alive === false ? `<font color="#990000">死亡</font>` : "生存"}</td>
+          </tr>`).join("")
+        : `<tr><td colspan="3" class="muted">未保存玩家明細。</td></tr>`;
+      return `<tr>
         <td>${escapeHtml(record.createdAt)}</td>
-        <td>${formatGameRecordHtml(record)}</td>
-      </tr>`).join("")
+        <td>
+          ${formatGameRecordHtml(record)}
+          <table class="form-table" style="margin:6px 0 12px 18px;">
+            <thead><tr><td><strong>玩家</strong></td><td><strong>職業</strong></td><td><strong>結局</strong></td></tr></thead>
+            <tbody>${playerRows}</tbody>
+          </table>
+        </td>
+      </tr>`;
+    }).join("")
     : `<tr><td colspan="2" class="muted">尚無對局紀錄。</td></tr>`;
 
   return page(`Room ${roomId} Records`, shell(`
