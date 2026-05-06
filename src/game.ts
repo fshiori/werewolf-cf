@@ -646,12 +646,28 @@ function divinationResultForChildFox(role: GamePlayer["role"], random: () => num
 
 export function advancePhaseByAlarm(state: GameState, now = Date.now()): GameState {
   if (state.phase === "day") {
+    if (isTimedOut(state, now)) {
+      const suddenDeath = applySuddenDeathForTimedOutActors(state, now);
+      if (suddenDeath) {
+        return suddenDeath;
+      }
+    }
     return resolveDay(state, now);
   }
   if (state.phase === "night") {
+    if (isTimedOut(state, now)) {
+      const suddenDeath = applySuddenDeathForTimedOutActors(state, now);
+      if (suddenDeath) {
+        return suddenDeath;
+      }
+    }
     return resolveNight(state, now);
   }
   return state;
+}
+
+function isTimedOut(state: GameState, now: number): boolean {
+  return state.phaseEndsAt ? Date.parse(state.phaseEndsAt) <= now : false;
 }
 
 export function wolvesForPlayer(state: GameState, playerId: string): RoomMember[] {
@@ -851,6 +867,75 @@ function resolveNight(state: GameState, now = Date.now(), random = Math.random):
     ...lastWordsForNewDeaths(state.players, players, state.lastWords ?? {})
   ];
   return withWinOrNextDay({ ...clearActionsForDeadPlayers({ ...state, players }), nightKills: {}, divinations: {}, guards: {}, catRevives: {}, log }, now);
+}
+
+function applySuddenDeathForTimedOutActors(state: GameState, now: number): GameState | undefined {
+  const targets = timedOutActorIds(state);
+  if (targets.length === 0) {
+    return undefined;
+  }
+  const targetIds = new Set(targets.map((player) => player.playerId));
+  const players = applyLinkedDeaths(state.players.map((player) => (targetIds.has(player.playerId) ? { ...player, alive: false } : player)));
+  const lastWords = lastWordsForNewDeaths(state.players, players, state.lastWords ?? {});
+  const log = [
+    ...state.log,
+    ...targets.map((player) => `${player.nickname} 突然暴斃死亡。`),
+    ...lastWords,
+    "＜投票結果有問題 請重新投票＞"
+  ];
+  const resetState = clearActionsForDeadPlayers({
+    ...state,
+    players,
+    votes: {},
+    revoteCount: 0,
+    nightKills: {},
+    divinations: {},
+    guards: {},
+    catRevives: {},
+    log
+  });
+  const winner = getWinner(resetState);
+  if (winner) {
+    return endGame(resetState, winner);
+  }
+  return {
+    ...resetState,
+    phaseEndsAt: new Date(now + (state.phase === "day" ? state.dayMs ?? DAY_MS : state.nightMs ?? NIGHT_MS)).toISOString()
+  };
+}
+
+function timedOutActorIds(state: GameState): GamePlayer[] {
+  if (state.phase === "day") {
+    const votedIds = new Set(Object.keys(state.votes ?? {}));
+    return livingPlayers(state).filter((player) => !votedIds.has(player.playerId));
+  }
+  if (state.phase !== "night") {
+    return [];
+  }
+
+  const divinationActorIds = new Set(Object.keys(state.divinations ?? {}));
+  const guardActorIds = new Set(Object.keys(state.guards ?? {}));
+  const catReviveActorIds = new Set(Object.keys(state.catRevives ?? {}));
+  const targets = [
+    ...livingDiviners(state).filter((player) => !divinationActorIds.has(player.playerId)),
+    ...livingGuards(state).filter((player) => !guardActorIds.has(player.playerId)),
+    ...livingCatsWithReviveTargets(state).filter((player) => !catReviveActorIds.has(player.playerId))
+  ];
+  if (Object.keys(state.nightKills ?? {}).length === 0) {
+    targets.push(...livingWerewolves(state));
+  }
+  return dedupePlayers(targets);
+}
+
+function dedupePlayers(players: GamePlayer[]): GamePlayer[] {
+  const seen = new Set<string>();
+  return players.filter((player) => {
+    if (seen.has(player.playerId)) {
+      return false;
+    }
+    seen.add(player.playerId);
+    return true;
+  });
 }
 
 function withWinOrNextNight(state: GameState, now: number): GameState {

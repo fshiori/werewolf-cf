@@ -1010,6 +1010,58 @@ describe("game", () => {
     expect(nextDay.divinations).toEqual({});
   });
 
+  it("sudden-deaths day players who have not voted when a timed phase expires", () => {
+    const players: GameState["players"] = [
+      { playerId: "player_1", nickname: "Alice", role: "werewolf", alive: true },
+      { playerId: "player_2", nickname: "Bob", role: "villager", alive: true },
+      { playerId: "player_3", nickname: "Carol", role: "villager", alive: true },
+      { playerId: "player_4", nickname: "Dave", role: "villager", alive: true }
+    ];
+    const day = {
+      ...activeState("day", players),
+      phaseEndsAt: "2026-05-06T00:00:00.000Z",
+      votes: { player_1: "player_2", player_2: "player_1", player_3: "player_2" },
+      lastWords: { player_4: "我先走一步" }
+    };
+
+    const next = advancePhaseByAlarm(day, Date.parse("2026-05-06T00:03:00.000Z"));
+
+    expect(next.phase).toBe("day");
+    expect(next.players.find((player) => player.playerId === "player_4")?.alive).toBe(false);
+    expect(next.votes).toEqual({});
+    expect(next.phaseEndsAt).toBe("2026-05-06T00:06:00.000Z");
+    expect(next.log).toContain("Dave 突然暴斃死亡。");
+    expect(next.log).toContain("Dave 的遺言：我先走一步");
+    expect(next.log.at(-1)).toBe("＜投票結果有問題 請重新投票＞");
+  });
+
+  it("sudden-deaths required night actors who have not acted when a timed phase expires", () => {
+    const players: GameState["players"] = [
+      { playerId: "player_1", nickname: "Wolf", role: "werewolf", alive: true },
+      { playerId: "player_2", nickname: "Seer", role: "seer", alive: true },
+      { playerId: "player_3", nickname: "Guard", role: "guard", alive: true },
+      { playerId: "player_4", nickname: "Villager", role: "villager", alive: true }
+    ];
+    const night = {
+      ...activeState("night", players),
+      phaseEndsAt: "2026-05-06T00:00:00.000Z",
+      nightKills: { player_1: "player_4" },
+      guards: { player_3: "player_2" }
+    };
+
+    const next = advancePhaseByAlarm(night, Date.parse("2026-05-06T00:01:30.000Z"));
+
+    expect(next.phase).toBe("night");
+    expect(next.players.find((player) => player.playerId === "player_1")?.alive).toBe(true);
+    expect(next.players.find((player) => player.playerId === "player_2")?.alive).toBe(false);
+    expect(next.players.find((player) => player.playerId === "player_3")?.alive).toBe(true);
+    expect(next.nightKills).toEqual({});
+    expect(next.divinations).toEqual({});
+    expect(next.guards).toEqual({});
+    expect(next.phaseEndsAt).toBe("2026-05-06T00:03:00.000Z");
+    expect(next.log).toContain("Seer 突然暴斃死亡。");
+  });
+
   it("allows only wolves to perform night kills and detects wolf win", () => {
     let game = startGame(lobby([["player_1", "Alice"], ["player_2", "Bob"], ["player_3", "Carol"], ["player_4", "Dave"]]), 0, () => 0);
     game = castDayVote(game, "player_1", "player_2");
