@@ -2186,6 +2186,45 @@ describe("worker routes", () => {
     });
   });
 
+  it("accepts legacy BBS topic edit form posts", async () => {
+    const env = envWithRooms([], {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, new Set(), new Set(), {}, [
+      {
+        id: 1,
+        name: "Alice",
+        title: "Welcome",
+        message: "Topic body",
+        trip_hash: null,
+        password_hash: await bbsPasswordHash("secret"),
+        reply_count: 0,
+        pinned: 0,
+        locked: 0,
+        digest: 0,
+        created_at: "2026-05-06 12:00:00",
+        updated_at: "2026-05-06 12:00:00"
+      }
+    ]);
+    const body = new FormData();
+    body.set("editis", "editok");
+    body.set("password", "secret");
+    body.set("bbst", "1");
+    body.set("title", "Edited");
+    body.set("mess", "Edited from PHP form");
+
+    const response = await worker.fetch(
+      new Request("http://example.test/bbs.php?go=edit&id=1", {
+        method: "POST",
+        body
+      }),
+      env
+    );
+
+    expect(response.status).toBe(303);
+    expect(response.headers.get("Location")).toBe("/bbs/1");
+    const runs = (env as unknown as { runs: Array<{ query: string; values: unknown[] }> }).runs;
+    expect(runs[0].query).toContain("UPDATE bbs_topics SET title = ?, message = ?");
+    expect(runs[0].values).toEqual(["Edited", "Edited from PHP form", 1]);
+  });
+
   it("rejects BBS topic content edits with the wrong post password", async () => {
     const env = envWithRooms([], {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, new Set(), new Set(), {}, [
       {
@@ -2280,6 +2319,44 @@ describe("worker routes", () => {
     expect(batches[0][1].values).toEqual([1]);
   });
 
+  it("accepts legacy BBS topic delete form posts", async () => {
+    const env = envWithRooms([], {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, new Set(), new Set(), {}, [
+      {
+        id: 1,
+        name: "Alice",
+        title: "Welcome",
+        message: "Topic body",
+        trip_hash: null,
+        password_hash: await bbsPasswordHash("secret"),
+        reply_count: 1,
+        pinned: 0,
+        locked: 0,
+        digest: 0,
+        created_at: "2026-05-06 12:00:00",
+        updated_at: "2026-05-06 12:00:00"
+      }
+    ]);
+    const body = new FormData();
+    body.set("editis", "del");
+    body.set("password", "secret");
+
+    const response = await worker.fetch(
+      new Request("http://example.test/bbs.php?go=edit&id=1", {
+        method: "POST",
+        body
+      }),
+      env
+    );
+
+    expect(response.status).toBe(303);
+    expect(response.headers.get("Location")).toBe("/bbs");
+    const batches = (env as unknown as { batches: Array<Array<{ query: string; values: unknown[] }>> }).batches;
+    expect(batches[0][0].query).toContain("DELETE FROM bbs_replies");
+    expect(batches[0][0].values).toEqual([1]);
+    expect(batches[0][1].query).toContain("DELETE FROM bbs_topics");
+    expect(batches[0][1].values).toEqual([1]);
+  });
+
   it("deletes BBS topics and replies with the post password", async () => {
     const env = envWithRooms([], {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, new Set(), new Set(), {}, [
       {
@@ -2345,6 +2422,41 @@ describe("worker routes", () => {
     expect(await response.json()).toEqual({ error: "BBS topic delete password is invalid" });
     const batches = (env as unknown as { batches: Array<Array<{ query: string; values: unknown[] }>> }).batches;
     expect(batches).toEqual([]);
+  });
+
+  it("accepts legacy BBS admin flag form posts", async () => {
+    const env = envWithRooms([], { bbs_admin_token: "secret" }, {}, {}, {}, {}, {}, {}, {}, {}, {}, new Set(), new Set(), {}, [
+      {
+        id: 1,
+        name: "Alice",
+        title: "Welcome",
+        message: "Topic body",
+        trip_hash: null,
+        reply_count: 0,
+        pinned: 0,
+        locked: 0,
+        digest: 0,
+        created_at: "2026-05-06 12:00:00",
+        updated_at: "2026-05-06 12:00:00"
+      }
+    ]);
+    const body = new FormData();
+    body.set("editis", "tolock");
+    body.set("password", "secret");
+
+    const response = await worker.fetch(
+      new Request("http://example.test/bbs.php?go=edit&id=1", {
+        method: "POST",
+        body
+      }),
+      env
+    );
+
+    expect(response.status).toBe(303);
+    expect(response.headers.get("Location")).toBe("/bbs/1");
+    const runs = (env as unknown as { runs: Array<{ query: string; values: unknown[] }> }).runs;
+    expect(runs[0].query).toContain("UPDATE bbs_topics SET pinned = ?, locked = ?, digest = ?");
+    expect(runs[0].values).toEqual([0, 1, 0, 1]);
   });
 
   it("deletes BBS replies with the configured admin token", async () => {
