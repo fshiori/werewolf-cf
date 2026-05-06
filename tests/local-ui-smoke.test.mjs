@@ -40,6 +40,12 @@ function responseFor(path, method = "GET") {
   if (path === "/admin" && method === "GET") {
     return { contentType: "text/html", body: '<!doctype html><title>管理選單 /admin/rooms /admin/config</title>' };
   }
+  if (path === "/admin/rooms" && method === "GET") {
+    return { contentType: "text/html", body: "<!doctype html><title>廢村管理 roomAdminToken werewolf_cf_room_admin_token</title>" };
+  }
+  if (path === "/admin/config" && method === "GET") {
+    return { contentType: "text/html", body: "<!doctype html><title>系統設定管理 configAdminToken werewolf_cf_config_admin_token</title>" };
+  }
   if (path === "/admin/bbs" && method === "GET") {
     return { contentType: "text/html", body: "<!doctype html><title>討論管理 BBS 管理密碼 bbs-status-mark</title>" };
   }
