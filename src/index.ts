@@ -1,4 +1,4 @@
-import { renderAdminConfig, renderAdminConfigLogin, renderAdminRooms, renderAdminRoomsLogin, renderBbs, renderBbsTopic, renderFederatedList, renderHome, renderIconCatalog, renderLeaderboard, renderManual, renderOldLogs, renderPlayerProfile, renderProtocol, renderRoom, renderRoomEvents, renderRoomRecords, renderRoomTranscript, renderRules, renderScriptInfo, renderStatus, renderTripRegistration, renderTripLookup, renderVersion, renderWinRateAnalysis } from "./render";
+import { renderAdminConfig, renderAdminConfigLogin, renderAdminIndex, renderAdminRooms, renderAdminRoomsLogin, renderBbs, renderBbsTopic, renderFederatedList, renderHome, renderIconCatalog, renderLeaderboard, renderManual, renderOldLogs, renderPlayerProfile, renderProtocol, renderRoom, renderRoomEvents, renderRoomRecords, renderRoomTranscript, renderRules, renderScriptInfo, renderStatus, renderTripRegistration, renderTripLookup, renderVersion, renderWinRateAnalysis } from "./render";
 import { RoomDurableObject } from "./room";
 import { ROOM_CLIENT_SCRIPT } from "./room-client";
 import { DEFAULT_DAY_MINUTES, DEFAULT_NIGHT_MINUTES } from "./game";
@@ -1562,6 +1562,10 @@ export default {
       } catch (error) {
         return json({ error: error instanceof Error ? error.message : "Status check failed" }, { status: 503 });
       }
+    }
+
+    if (request.method === "GET" && url.pathname === "/admin") {
+      return html(renderAdminIndex());
     }
 
     if (request.method === "GET" && url.pathname === "/admin/rooms") {

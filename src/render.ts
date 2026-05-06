@@ -190,6 +190,7 @@ function shell(body: string): string {
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/bbs">人狼討論</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/bbs?digest=1">精華文章</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/status">伺服器狀態</a></td></tr>
+            <tr><td><small><font color="#666666">・</font></small></td><td><a href="/admin">管理選單</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/rules">規則</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/manual">說明書</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/script-info">Script Info</a></td></tr>
@@ -928,6 +929,26 @@ export function renderStatus(status: {
       <legend><strong>Binding 檢查</strong></legend>
       <table class="form-table">
         ${checkRows}
+      </table>
+    </fieldset>
+  `));
+}
+
+export function renderAdminIndex(): string {
+  return page("管理選單", shell(`
+    <fieldset>
+      <legend><strong>管理選單</strong></legend>
+      <table class="form-table">
+        <tr><td><strong>　廢村管理：</strong></td><td><a href="/admin/rooms">村子管理</a> - 檢視進行中/已結束村子，必要時以管理密碼廢村。</td></tr>
+        <tr><td><strong>　系統設定：</strong></td><td><a href="/admin/config">設定管理</a> - 更新首頁公告與維護模式。</td></tr>
+        <tr><td><strong>　伺服器狀態：</strong></td><td><a href="/status">狀態檢查</a> - 檢查 D1、Durable Objects、R2、KV 綁定狀態。</td></tr>
+      </table>
+    </fieldset>
+    <fieldset>
+      <legend><strong>管理說明</strong></legend>
+      <table class="form-table">
+        <tr><td><strong>　認證：</strong></td><td>各管理功能仍需輸入對應管理密碼；本頁只提供入口。</td></tr>
+        <tr><td><strong>　紀錄：</strong></td><td>廢村與設定變更會透過既有 API 寫入對應的 D1 或 KV 狀態。</td></tr>
       </table>
     </fieldset>
   `));
