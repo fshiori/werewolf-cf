@@ -639,7 +639,8 @@ describe("RoomDurableObject", () => {
             targetPlayerId: "player_target",
             targetNickname: "Target",
             phase: "day",
-            day: 1
+            day: 1,
+            revoteCount: 0
           })
         ]
       })

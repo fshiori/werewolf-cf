@@ -403,7 +403,8 @@ export class RoomDurableObject {
           targetPlayerId,
           targetNickname: target?.nickname,
           phase: game.phase,
-          day: game.day
+          day: game.day,
+          revoteCount: game.revoteCount ?? 0
         });
         this.send(socket, buildActionAckMessage("vote", targetPlayerId));
         await this.broadcastGameState(next);
