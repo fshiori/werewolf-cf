@@ -26,22 +26,22 @@ function responseFor(path, method = "GET") {
     return { contentType: "text/html", body: '<!doctype html><title>頭像一覽 上傳頭像 /assets/reference/user_icon/001.gif</title>' };
   }
   if (path === "/trips" && method === "GET") {
-    return { contentType: "text/html", body: "<!doctype html><title>Trip查詢 Trip公開資料</title>" };
+    return { contentType: "text/html", body: "<!doctype html><title>Trip查詢 Trip公開資料 tripStateMark health-mark</title>" };
   }
   if (path === "/trip" && method === "GET") {
-    return { contentType: "text/html", body: "<!doctype html><title>身份登錄 Trip公開資料</title>" };
+    return { contentType: "text/html", body: "<!doctype html><title>身份登錄 Trip公開資料 tripStateMark health-mark</title>" };
   }
   if (path === "/bbs" && method === "GET") {
     return { contentType: "text/html", body: "<!doctype html><title>主題列表 發表主題 精華</title>" };
   }
   if (path === "/status" && method === "GET") {
-    return { contentType: "text/html", body: "<!doctype html><title>伺服器狀態 Binding 檢查</title>" };
+    return { contentType: "text/html", body: "<!doctype html><title>伺服器狀態 Binding 檢查 health-mark</title>" };
   }
   if (path === "/admin" && method === "GET") {
     return { contentType: "text/html", body: '<!doctype html><title>管理選單 /admin/rooms /admin/config</title>' };
   }
   if (path === "/admin/bbs" && method === "GET") {
-    return { contentType: "text/html", body: "<!doctype html><title>討論管理 BBS 管理密碼</title>" };
+    return { contentType: "text/html", body: "<!doctype html><title>討論管理 BBS 管理密碼 bbs-status-mark</title>" };
   }
   if (path === "/manual" && method === "GET") {
     return { contentType: "text/html", body: "<!doctype html><title>說明書 登錄入村</title>" };

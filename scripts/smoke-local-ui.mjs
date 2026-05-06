@@ -78,13 +78,13 @@ try {
   await expectHtml("/leaderboard", ["戰績排行榜"]);
   await expectHtml("/stats", ["勝率分析", "統計場數"]);
   await expectHtml("/icons", ["頭像一覽", "上傳頭像", "/assets/reference/user_icon/001.gif"]);
-  await expectHtml("/trip", ["身份登錄", "Trip公開資料"]);
-  await expectHtml("/trips", ["Trip查詢", "Trip公開資料"]);
+  await expectHtml("/trip", ["身份登錄", "Trip公開資料", "tripStateMark", "health-mark"]);
+  await expectHtml("/trips", ["Trip查詢", "Trip公開資料", "tripStateMark", "health-mark"]);
   await expectHtml("/bbs", ["主題列表", "發表主題"]);
   await expectHtml("/bbs?digest=1", ["精華", "主題列表"]);
-  await expectHtml("/status", ["伺服器狀態", "Binding 檢查"]);
+  await expectHtml("/status", ["伺服器狀態", "Binding 檢查", "health-mark"]);
   await expectHtml("/admin", ["管理選單", "/admin/rooms", "/admin/config"]);
-  await expectHtml("/admin/bbs", ["討論管理", "BBS 管理密碼"]);
+  await expectHtml("/admin/bbs", ["討論管理", "BBS 管理密碼", "bbs-status-mark"]);
   await expectHtml("/manual", ["說明書", "登錄入村"]);
   await expectHtml("/assets/room-client.js", ["new WebSocket", "data-room-id"]);
 
