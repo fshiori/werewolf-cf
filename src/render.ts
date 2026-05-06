@@ -1,4 +1,4 @@
-import type { BbsTopicSummary, GameRecordSummary, LeaderboardEntry, PlayerRole, RoomEventSummary, RoomSummary } from "./types";
+import type { BbsReplySummary, BbsTopicSummary, GameRecordSummary, LeaderboardEntry, PlayerRole, RoomEventSummary, RoomSummary } from "./types";
 import { escapeHtml } from "./validation";
 
 function page(title: string, body: string): string {
@@ -1208,6 +1208,81 @@ export function renderBbs(topics: BbsTopicSummary[]): string {
         location.href = "/bbs";
       });
     </script>
+  `));
+}
+
+function bbsAuthorLabel(name: string, trip: boolean): string {
+  return `${escapeHtml(name)}${trip ? "◆Trip" : ""}`;
+}
+
+export function renderBbsTopic(topic: BbsTopicSummary, replies: BbsReplySummary[]): string {
+  const replyRows = replies.length
+    ? replies.map((reply, index) => `<tr>
+        <td valign="top" align="right"><strong>${escapeHtml(String(index + 1))}</strong></td>
+        <td>
+          <div><strong>${bbsAuthorLabel(reply.name, reply.trip)}</strong> <span class="muted">${escapeHtml(reply.createdAt)}</span></div>
+          <div style="white-space:pre-wrap;margin:6px 0 10px;">${escapeHtml(reply.message)}</div>
+        </td>
+      </tr>`).join("")
+    : `<tr><td colspan="2" class="muted">尚無回覆。</td></tr>`;
+
+  const title = `${topic.pinned ? "[置頂] " : ""}${topic.locked ? "[鎖定] " : ""}${topic.title}${topic.digest ? " (精華)" : ""}`;
+  const replyForm = topic.locked
+    ? `<p class="muted">此主題已鎖定。</p>`
+    : `<table class="form-table">
+        <tr><td><label><strong>　名稱：</strong></label></td><td><input id="bbsReplyName" maxlength="32" size="24"></td></tr>
+        <tr><td><label><strong>　Trip：</strong></label></td><td><input id="bbsReplyTrip" maxlength="32" size="24"></td></tr>
+        <tr><td><label><strong>　內容：</strong></label></td><td><textarea id="bbsReplyMessage" rows="5" cols="64"></textarea></td></tr>
+        <tr><td></td><td><button id="bbsReplyButton">回覆</button> <span id="bbsReplyStatus" class="muted"></span></td></tr>
+      </table>
+      <script>
+        document.querySelector("#bbsReplyName").value = localStorage.getItem("werewolf_cf_nickname") || "";
+        document.querySelector("#bbsReplyTrip").value = localStorage.getItem("werewolf_cf_trip") || "";
+        document.querySelector("#bbsReplyButton").addEventListener("click", async () => {
+          const status = document.querySelector("#bbsReplyStatus");
+          const name = document.querySelector("#bbsReplyName").value;
+          const trip = document.querySelector("#bbsReplyTrip").value;
+          localStorage.setItem("werewolf_cf_nickname", name);
+          localStorage.setItem("werewolf_cf_trip", trip);
+          status.textContent = "送出中";
+          const res = await fetch("/api/bbs/topics/${escapeHtml(String(topic.id))}/replies", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({
+              name,
+              trip,
+              message: document.querySelector("#bbsReplyMessage").value
+            })
+          });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) {
+            status.textContent = data.error || "回覆失敗";
+            return;
+          }
+          location.href = "/bbs?view=${escapeHtml(String(topic.id))}";
+        });
+      </script>`;
+
+  return page("BBS Topic", shell(`
+    <p><a href="/bbs">全部主題</a> <a href="#bbsReplyForm">回覆主題</a></p>
+    <fieldset>
+      <legend><strong>${escapeHtml(title)}</strong></legend>
+      <table class="form-table">
+        <tr><td><strong>　作者：</strong></td><td>${bbsAuthorLabel(topic.name, topic.trip)}</td></tr>
+        <tr><td><strong>　時間：</strong></td><td>${escapeHtml(topic.createdAt)}　更新 ${escapeHtml(topic.updatedAt)}</td></tr>
+        <tr><td><strong>　本文：</strong></td><td><div style="white-space:pre-wrap;">${escapeHtml(topic.message)}</div></td></tr>
+      </table>
+    </fieldset>
+    <fieldset>
+      <legend><strong>回覆列表</strong></legend>
+      <table class="form-table" style="margin:12px 20px 18px;">
+        <tbody>${replyRows}</tbody>
+      </table>
+    </fieldset>
+    <fieldset id="bbsReplyForm">
+      <legend><strong>回覆主題</strong></legend>
+      ${replyForm}
+    </fieldset>
   `));
 }
 

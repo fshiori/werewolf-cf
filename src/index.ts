@@ -1,9 +1,9 @@
-import { renderBbs, renderFederatedList, renderHome, renderIconCatalog, renderLeaderboard, renderPlayerProfile, renderProtocol, renderRoom, renderRoomEvents, renderRoomRecords, renderRoomTranscript, renderRules, renderStatus, renderTripLookup, renderVersion } from "./render";
+import { renderBbs, renderBbsTopic, renderFederatedList, renderHome, renderIconCatalog, renderLeaderboard, renderPlayerProfile, renderProtocol, renderRoom, renderRoomEvents, renderRoomRecords, renderRoomTranscript, renderRules, renderStatus, renderTripLookup, renderVersion } from "./render";
 import { RoomDurableObject } from "./room";
 import { ROOM_CLIENT_SCRIPT } from "./room-client";
 import { DEFAULT_DAY_MINUTES, DEFAULT_NIGHT_MINUTES } from "./game";
 import { registeredTripHash, tripHashForRoom } from "./identity";
-import type { BbsTopicSummary, GamePlayer, GameRecordSummary, GameWinner, LeaderboardEntry, PlayerGameRecordSummary, PlayerStats, RoomEventSummary, RoomOptions, RoomSummary } from "./types";
+import type { BbsReplySummary, BbsTopicSummary, GamePlayer, GameRecordSummary, GameWinner, LeaderboardEntry, PlayerGameRecordSummary, PlayerStats, RoomEventSummary, RoomOptions, RoomSummary } from "./types";
 import {
   isRecord,
   validateNickname,
@@ -618,6 +618,45 @@ function validateBbsMessage(value: unknown): string {
   return message;
 }
 
+function validateBbsTopicId(value: string): number {
+  if (!/^\d+$/.test(value)) {
+    throw new Error("Invalid BBS topic");
+  }
+  const topicId = Number(value);
+  if (!Number.isSafeInteger(topicId) || topicId <= 0) {
+    throw new Error("Invalid BBS topic");
+  }
+  return topicId;
+}
+
+function bbsTopicFromRow(topic: {
+  id: number;
+  name: string;
+  title: string;
+  message: string;
+  trip_hash: string | null;
+  reply_count: number;
+  pinned: number;
+  locked: number;
+  digest: number;
+  created_at: string;
+  updated_at: string;
+}): BbsTopicSummary {
+  return {
+    id: topic.id,
+    name: topic.name,
+    title: topic.title,
+    message: topic.message,
+    trip: Boolean(topic.trip_hash),
+    replyCount: topic.reply_count,
+    pinned: topic.pinned === 1,
+    locked: topic.locked === 1,
+    digest: topic.digest === 1,
+    createdAt: topic.created_at,
+    updatedAt: topic.updated_at
+  };
+}
+
 async function listBbsTopics(env: Env): Promise<BbsTopicSummary[]> {
   const result = await env.DB.prepare(
     "SELECT id, name, title, message, trip_hash, reply_count, pinned, locked, digest, created_at, updated_at FROM bbs_topics ORDER BY pinned DESC, updated_at DESC LIMIT 50"
@@ -634,23 +673,61 @@ async function listBbsTopics(env: Env): Promise<BbsTopicSummary[]> {
     created_at: string;
     updated_at: string;
   }>();
-  return result.results.map((topic) => ({
-    id: topic.id,
-    name: topic.name,
-    title: topic.title,
-    message: topic.message,
-    trip: Boolean(topic.trip_hash),
-    replyCount: topic.reply_count,
-    pinned: topic.pinned === 1,
-    locked: topic.locked === 1,
-    digest: topic.digest === 1,
-    createdAt: topic.created_at,
-    updatedAt: topic.updated_at
+  return result.results.map(bbsTopicFromRow);
+}
+
+async function getBbsTopicById(env: Env, topicId: number): Promise<BbsTopicSummary | undefined> {
+  const topic = await env.DB.prepare(
+    "SELECT id, name, title, message, trip_hash, reply_count, pinned, locked, digest, created_at, updated_at FROM bbs_topics WHERE id = ? LIMIT 1"
+  )
+    .bind(topicId)
+    .first<{
+      id: number;
+      name: string;
+      title: string;
+      message: string;
+      trip_hash: string | null;
+      reply_count: number;
+      pinned: number;
+      locked: number;
+      digest: number;
+      created_at: string;
+      updated_at: string;
+    }>();
+  return topic ? bbsTopicFromRow(topic) : undefined;
+}
+
+async function listBbsReplies(env: Env, topicId: number): Promise<BbsReplySummary[]> {
+  const result = await env.DB.prepare(
+    "SELECT id, topic_id, name, message, trip_hash, created_at FROM bbs_replies WHERE topic_id = ? ORDER BY created_at ASC, id ASC LIMIT 200"
+  )
+    .bind(topicId)
+    .all<{ id: number; topic_id: number; name: string; message: string; trip_hash: string | null; created_at: string }>();
+  return result.results.map((reply) => ({
+    id: reply.id,
+    topicId: reply.topic_id,
+    name: reply.name,
+    message: reply.message,
+    trip: Boolean(reply.trip_hash),
+    createdAt: reply.created_at
   }));
 }
 
 async function getBbsTopics(env: Env): Promise<Response> {
   return json({ topics: await listBbsTopics(env) });
+}
+
+async function getBbsTopic(env: Env, topicIdParam: string): Promise<Response> {
+  try {
+    const topicId = validateBbsTopicId(topicIdParam);
+    const topic = await getBbsTopicById(env, topicId);
+    if (!topic) {
+      return json({ error: "BBS topic not found" }, { status: 404 });
+    }
+    return json({ topic, replies: await listBbsReplies(env, topicId) });
+  } catch (error) {
+    return json({ error: error instanceof Error ? error.message : "Invalid BBS topic" }, { status: 400 });
+  }
 }
 
 async function createBbsTopic(request: Request, env: Env): Promise<Response> {
@@ -670,6 +747,34 @@ async function createBbsTopic(request: Request, env: Env): Promise<Response> {
     return json({ posted: true });
   } catch (error) {
     return json({ error: error instanceof Error ? error.message : "Failed to create BBS topic" }, { status: 400 });
+  }
+}
+
+async function createBbsReply(request: Request, env: Env, topicIdParam: string): Promise<Response> {
+  const body: unknown = await request.json().catch(() => null);
+  if (!isRecord(body)) {
+    return json({ error: "Invalid BBS reply" }, { status: 400 });
+  }
+  try {
+    const topicId = validateBbsTopicId(topicIdParam);
+    const topic = await getBbsTopicById(env, topicId);
+    if (!topic) {
+      return json({ error: "BBS topic not found" }, { status: 404 });
+    }
+    if (topic.locked) {
+      return json({ error: "BBS topic is locked" }, { status: 403 });
+    }
+    const name = typeof body.name === "string" && body.name.trim() ? validateNickname(body.name) : "匿名";
+    const message = validateBbsMessage(body.message);
+    const trip = typeof body.trip === "string" && body.trip.trim() ? validateTrip(body.trip) : undefined;
+    const tripHash = trip ? await registeredTripHash(trip) : null;
+    await env.DB.batch([
+      env.DB.prepare("INSERT INTO bbs_replies (topic_id, name, message, trip_hash) VALUES (?, ?, ?, ?)").bind(topicId, name, message, tripHash),
+      env.DB.prepare("UPDATE bbs_topics SET reply_count = reply_count + 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?").bind(topicId)
+    ]);
+    return json({ posted: true });
+  } catch (error) {
+    return json({ error: error instanceof Error ? error.message : "Failed to create BBS reply" }, { status: 400 });
   }
 }
 
@@ -1061,6 +1166,19 @@ export default {
     }
 
     if (request.method === "GET" && url.pathname === "/bbs") {
+      const view = url.searchParams.get("view");
+      if (view) {
+        try {
+          const topicId = validateBbsTopicId(view);
+          const topic = await getBbsTopicById(env, topicId);
+          if (!topic) {
+            return new Response("BBS topic not found", { status: 404 });
+          }
+          return html(renderBbsTopic(topic, await listBbsReplies(env, topicId)));
+        } catch (error) {
+          return json({ error: error instanceof Error ? error.message : "Invalid BBS topic" }, { status: 400 });
+        }
+      }
       return html(renderBbs(await listBbsTopics(env)));
     }
 
@@ -1086,6 +1204,11 @@ export default {
 
     if (request.method === "GET" && url.pathname === "/api/bbs/topics") {
       return getBbsTopics(env);
+    }
+
+    const bbsTopicApiMatch = url.pathname.match(/^\/api\/bbs\/topics\/(\d+)$/);
+    if (request.method === "GET" && bbsTopicApiMatch) {
+      return getBbsTopic(env, bbsTopicApiMatch[1]);
     }
 
     if (request.method === "GET" && url.pathname === "/rules") {
@@ -1183,6 +1306,11 @@ export default {
 
     if (request.method === "POST" && url.pathname === "/api/bbs/topics") {
       return createBbsTopic(request, env);
+    }
+
+    const bbsReplyApiMatch = url.pathname.match(/^\/api\/bbs\/topics\/(\d+)\/replies$/);
+    if (request.method === "POST" && bbsReplyApiMatch) {
+      return createBbsReply(request, env, bbsReplyApiMatch[1]);
     }
 
     if (request.method === "GET" && url.pathname === "/api/trips/lookup") {
