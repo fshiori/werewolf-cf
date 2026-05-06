@@ -1279,6 +1279,7 @@ export function renderBbsTopic(topic: BbsTopicSummary, replies: BbsReplySummary[
       <table class="form-table">
         <tr><td><strong>　作者：</strong></td><td>${bbsAuthorLabel(topic.name, topic.trip)}</td></tr>
         <tr><td><strong>　時間：</strong></td><td>${escapeHtml(topic.createdAt)}　更新 ${escapeHtml(topic.updatedAt)}</td></tr>
+        <tr><td><strong>　狀態：</strong></td><td>${topic.pinned ? "置頂　" : ""}${topic.locked ? "鎖定　" : ""}${topic.digest ? "精華" : ""}${!topic.pinned && !topic.locked && !topic.digest ? "一般" : ""}</td></tr>
         <tr><td><strong>　本文：</strong></td><td><div style="white-space:pre-wrap;">${escapeHtml(topic.message)}</div></td></tr>
       </table>
     </fieldset>

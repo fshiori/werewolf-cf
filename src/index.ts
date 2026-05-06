@@ -714,6 +714,22 @@ function validateBbsTopicId(value: string): number {
   return topicId;
 }
 
+function readBooleanFlag(value: unknown): boolean {
+  return value === true || value === 1 || value === "1" || value === "true";
+}
+
+async function requireBbsAdmin(request: Request, env: Env): Promise<Response | undefined> {
+  const adminToken = await env.CONFIG.get("bbs_admin_token");
+  if (!adminToken) {
+    return json({ error: "BBS moderation is not configured" }, { status: 403 });
+  }
+  const provided = request.headers.get("x-bbs-admin-token") ?? "";
+  if (provided !== adminToken) {
+    return json({ error: "BBS moderation token is invalid" }, { status: 403 });
+  }
+  return undefined;
+}
+
 function bbsTopicFromRow(topic: {
   id: number;
   name: string;
@@ -860,6 +876,40 @@ async function createBbsReply(request: Request, env: Env, topicIdParam: string):
     return json({ posted: true });
   } catch (error) {
     return json({ error: error instanceof Error ? error.message : "Failed to create BBS reply" }, { status: 400 });
+  }
+}
+
+async function updateBbsTopicFlags(request: Request, env: Env, topicIdParam: string): Promise<Response> {
+  const unauthorized = await requireBbsAdmin(request, env);
+  if (unauthorized) {
+    return unauthorized;
+  }
+  const body: unknown = await request.json().catch(() => null);
+  if (!isRecord(body)) {
+    return json({ error: "Invalid BBS moderation request" }, { status: 400 });
+  }
+  try {
+    const topicId = validateBbsTopicId(topicIdParam);
+    const topic = await getBbsTopicById(env, topicId);
+    if (!topic) {
+      return json({ error: "BBS topic not found" }, { status: 404 });
+    }
+    const pinned = "pinned" in body ? readBooleanFlag(body.pinned) : topic.pinned;
+    const locked = "locked" in body ? readBooleanFlag(body.locked) : topic.locked;
+    const digest = "digest" in body ? readBooleanFlag(body.digest) : topic.digest;
+    await env.DB.prepare("UPDATE bbs_topics SET pinned = ?, locked = ?, digest = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?")
+      .bind(pinned ? 1 : 0, locked ? 1 : 0, digest ? 1 : 0, topicId)
+      .run();
+    return json({
+      topic: {
+        ...topic,
+        pinned,
+        locked,
+        digest
+      }
+    });
+  } catch (error) {
+    return json({ error: error instanceof Error ? error.message : "Failed to update BBS topic" }, { status: 400 });
   }
 }
 
@@ -1396,6 +1446,11 @@ export default {
     const bbsReplyApiMatch = url.pathname.match(/^\/api\/bbs\/topics\/(\d+)\/replies$/);
     if (request.method === "POST" && bbsReplyApiMatch) {
       return createBbsReply(request, env, bbsReplyApiMatch[1]);
+    }
+
+    const bbsModerationApiMatch = url.pathname.match(/^\/api\/bbs\/topics\/(\d+)\/moderation$/);
+    if (request.method === "PATCH" && bbsModerationApiMatch) {
+      return updateBbsTopicFlags(request, env, bbsModerationApiMatch[1]);
     }
 
     if (request.method === "GET" && url.pathname === "/api/trips/lookup") {

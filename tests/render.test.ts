@@ -519,6 +519,7 @@ describe("render", () => {
     expect(html).toContain("Bob");
     expect(html).toContain("Reply body");
     expect(html).toContain("/api/bbs/topics/1/replies");
+    expect(html).toContain("狀態");
   });
 
   it("renders room records as a normal HTML page", () => {
