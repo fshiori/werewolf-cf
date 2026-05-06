@@ -217,6 +217,7 @@ describe("render", () => {
     expect(html).toContain(".player-card { width: 148px; border: 1px solid #b0b0b0; background: #fafafa; table-layout: fixed; }");
     expect(html).toContain(".player-name { padding-left: 5px; max-width: 96px; overflow-wrap: anywhere; word-break: break-word; }");
     expect(html).toContain("#chatLog div, #gameLog div { border-top: 1px dashed silver; padding: 2px 4px; overflow-wrap: anywhere; word-break: break-word; }");
+    expect(html).toContain("#lastWordsLog div { border-top: 1px dotted silver; padding: 2px 4px; overflow-wrap: anywhere; word-break: break-word; }");
     expect(html).toContain("body.room-phase-night .player-card.voted { background: #004000; color: snow; }");
     expect(html).toContain("body.room-phase-night .player-card.voted a { color: #ccffff; }");
     expect(html).toContain("Trip");
@@ -273,6 +274,7 @@ describe("render", () => {
     expect(html).toContain("權力者");
     expect(html).toContain("玩家列表");
     expect(html).toContain("能力發動 / 投票");
+    expect(html).toContain("尚無公開遺言。");
     expect(html).toContain("wishRole");
     expect(html).toContain("<option value=\"seer\">占卜師</option>");
     expect(html).toContain("<option value=\"big_wolf\">大狼</option>");
@@ -399,6 +401,9 @@ describe("render", () => {
     expect(ROOM_CLIENT_SCRIPT).toContain("common_chat");
     expect(ROOM_CLIENT_SCRIPT).toContain("lovers_chat");
     expect(ROOM_CLIENT_SCRIPT).toContain("dead_chat");
+    expect(ROOM_CLIENT_SCRIPT).toContain("function renderLastWordsPanel(game)");
+    expect(ROOM_CLIENT_SCRIPT).toContain('line.includes(" 的遺言：")');
+    expect(ROOM_CLIENT_SCRIPT).toContain("尚無公開遺言。");
     expect(ROOM_CLIENT_SCRIPT).toContain("self_talk");
     expect(ROOM_CLIENT_SCRIPT).toContain("#sendSelfTalk");
     expect(ROOM_CLIENT_SCRIPT).toContain("[自言自語]");

@@ -142,6 +142,8 @@ function page(title: string, body: string, extraHead = ""): string {
     }
     #chatLog div, #gameLog div { border-top: 1px dashed silver; padding: 2px 4px; overflow-wrap: anywhere; word-break: break-word; }
     #gameLog { max-height: 140px; overflow: auto; background: #ffffff; }
+    #lastWordsLog { max-height: 120px; overflow: auto; background: #ffffff; }
+    #lastWordsLog div { border-top: 1px dotted silver; padding: 2px 4px; overflow-wrap: anywhere; word-break: break-word; }
     #players button { margin: 2px 4px 2px 0; min-width: 7em; text-align: left; }
     .transcript-row td { border-top: 1px dashed silver; }
     .transcript-location-system td, .transcript-location-game td { background: #efefef; font-weight: bold; }
@@ -2277,6 +2279,14 @@ export function renderRoom(roomId: string, options: RenderRoomOptions = {}): str
                 <div><input id="lastWordsText" maxlength="500" size="60"> <button id="setLastWords">遺言</button></div>
               </td>
             </tr>
+          </table>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <table class="panel">
+            <tr><th>遺言</th></tr>
+            <tr><td><div id="lastWordsLog" class="muted">尚無公開遺言。</div></td></tr>
           </table>
         </td>
       </tr>
