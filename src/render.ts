@@ -40,8 +40,11 @@ function page(title: string, body: string, extraHead = ""): string {
       background-image: none;
       color: black;
     }
+    .view-spectator-only, .view-heaven-only { display: none; }
     body.room-view-spectator .view-player-only,
-    body.room-view-heaven .view-player-only { color: #666666; }
+    body.room-view-heaven .view-player-only { display: none; }
+    body.room-view-spectator .view-spectator-only,
+    body.room-view-heaven .view-heaven-only { display: table-row; }
     body.room-view-heaven .panel th { background: #cccccc; }
     table { border-collapse: collapse; }
     input, button, select {
@@ -2398,6 +2401,14 @@ export function renderRoom(roomId: string, options: RenderRoomOptions = {}): str
                 <small class="muted">PHP 版 game_play / game_view / heaven 入口對應</small>
               </td>
             </tr>
+            <tr class="view-spectator-only">
+              <td>旁觀</td>
+              <td>只觀看公開資訊與玩家列表；登入、希望角色、頭像與能力操作列不顯示。</td>
+            </tr>
+            <tr class="view-heaven-only">
+              <td>靈界</td>
+              <td>死亡後視點入口；保留靈界發言按鈕，其他生存者登錄與能力操作列不顯示。</td>
+            </tr>
             <tr>
               <td>房主</td>
               <td><span id="host" class="muted">未定</span></td>
@@ -2419,11 +2430,11 @@ export function renderRoom(roomId: string, options: RenderRoomOptions = {}): str
               <td>玩家暱稱</td>
               <td><input id="nickname" maxlength="32" size="28"> <button id="connect">進入房間</button> <button id="startVote" disabled>投開始一票</button> <button id="startGame">開始遊戲</button> <button id="leaveRoom" disabled>退出</button></td>
             </tr>
-            <tr>
+            <tr class="view-player-only">
               <td>Trip</td>
               <td><input id="trip" maxlength="32" size="28"></td>
             </tr>
-            <tr>
+            <tr class="view-player-only">
               <td>希望角色</td>
               <td>
                 <select id="wishRole">
@@ -2444,11 +2455,11 @@ export function renderRoom(roomId: string, options: RenderRoomOptions = {}): str
                 </select>
               </td>
             </tr>
-            <tr>
+            <tr class="view-player-only">
               <td>頭像</td>
               <td><input id="avatarFile" type="file" accept="image/png,image/jpeg,image/gif,image/webp" size="28"> <button id="uploadAvatar">頭像</button> <button id="removeAvatar">刪頭像</button> <small class="muted">PNG/JPEG/GIF/WebP 512KiB以下</small></td>
             </tr>
-            <tr>
+            <tr class="view-player-only">
               <td>預設頭像</td>
               <td>
                 <select id="defaultIcon">
@@ -2470,7 +2481,7 @@ export function renderRoom(roomId: string, options: RenderRoomOptions = {}): str
           </table>
         </td>
       </tr>
-      <tr>
+      <tr class="view-player-only">
         <td>
           <table class="panel">
             <tr><th>玩家列表</th></tr>

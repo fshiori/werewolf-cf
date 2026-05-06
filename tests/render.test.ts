@@ -214,6 +214,9 @@ describe("render", () => {
     expect(html).toContain("room-phase-lobby");
     expect(html).toContain("room-phase-night");
     expect(html).toContain('document.body.classList.add("room-phase-lobby", "room-view-player");');
+    expect(html).toContain(".view-spectator-only, .view-heaven-only { display: none; }");
+    expect(html).toContain("body.room-view-spectator .view-player-only");
+    expect(html).toContain("body.room-view-heaven .view-heaven-only { display: table-row; }");
     expect(html).toContain("進入房間");
     expect(html).toContain(".player-card { width: 148px; border: 1px solid #b0b0b0; background: #fafafa; table-layout: fixed; }");
     expect(html).toContain(".player-name { padding-left: 5px; max-width: 96px; overflow-wrap: anywhere; word-break: break-word; }");
@@ -309,6 +312,8 @@ describe("render", () => {
     expect(spectator).toContain('document.body.classList.add("room-phase-lobby", "room-view-spectator");');
     expect(spectator).toContain('data-room-view="spectator"');
     expect(spectator).toContain("旁觀視點");
+    expect(spectator).toContain("只觀看公開資訊與玩家列表");
+    expect(spectator).toContain('<tr class="view-player-only">\n              <td>玩家暱稱</td>');
     expect(spectator).toContain('<a href="/room/room_abc?view=spectator&amp;auto_reload=15">15秒</a>');
     expect(spectator).toContain('<a href="/room/room_abc?view=heaven&amp;auto_reload=20">靈界</a>');
 
@@ -316,6 +321,7 @@ describe("render", () => {
     expect(heaven).toContain("room-view-heaven");
     expect(heaven).toContain('data-room-view="heaven"');
     expect(heaven).toContain("靈界視點");
+    expect(heaven).toContain("死亡後視點入口");
     expect(heaven).toContain("game_play / game_view / heaven");
   });
 
