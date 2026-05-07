@@ -404,6 +404,7 @@ describe("render", () => {
     expect(spectator).toContain("只觀看公開資訊與玩家列表");
     expect(spectator).toContain('<tr><th>玩家列表</th></tr>');
     expect(spectator).not.toContain('<tr class="view-player-only">\n        <td>\n          <table class="panel">\n            <tr><th>玩家列表</th></tr>');
+    expect(spectator).toContain('<tr class="view-player-only">\n        <td>\n          <table class="panel">\n            <tr><th>能力發動 / 投票</th></tr>');
     expect(spectator).toContain('<tr class="view-player-only">\n              <td><img class="title-img" src="/assets/reference/img/user_regist_handle_name.gif" alt="玩家暱稱">玩家暱稱</td>');
     expect(spectator).toContain('<a href="/room/room_abc?view=spectator&amp;auto_reload=15">15秒</a>');
     expect(spectator).toContain('<a href="/room/room_abc?view=heaven&amp;auto_reload=20">靈界</a>');
@@ -414,6 +415,7 @@ describe("render", () => {
     expect(heaven).toContain("靈界視點");
     expect(heaven).toContain("死亡後視點入口");
     expect(heaven).toContain('<tr><th>玩家列表</th></tr>');
+    expect(heaven).toContain('<tr class="view-player-only">\n        <td>\n          <table class="panel">\n            <tr><th>能力發動 / 投票</th></tr>');
     expect(heaven).toContain("game_play / game_view / heaven");
   });
 

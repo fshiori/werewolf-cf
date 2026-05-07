@@ -3585,7 +3585,7 @@ export function renderRoom(roomId: string, options: RenderRoomOptions = {}): str
           </table>
         </td>
       </tr>
-      <tr>
+      <tr class="view-player-only">
         <td>
           <table class="panel">
             <tr><th>能力發動 / 投票</th></tr>
