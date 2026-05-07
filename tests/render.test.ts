@@ -1778,6 +1778,10 @@ describe("render", () => {
     expect(html).toContain('<td align="left"><strong>Carol</strong></td>\n        <td>0票</td>\n        <td>投票給 2 票 →</td>\n        <td><strong> Bob </strong></td>');
     expect(html).toContain('<td align="left"><strong>Dave</strong></td>\n        <td>0票</td>\n        <td>投票給 1 票 →</td>\n        <td><strong> Alice </strong></td>');
     expect(html).toContain("第 2 日 夜晚");
+    expect(html).toContain('class="transcript-table" border="0" cellspacing="0" cellpadding="2" style="margin:12px 20px 18px;"');
+    expect(html).toContain('class="transcript-day-heading"><td colspan="5">第 2 日 夜晚</td></tr>');
+    expect(html).toContain(".transcript-table { width: 100%; border-collapse: collapse; font-size: 12pt; }");
+    expect(html).toContain(".transcript-day-heading td { background: #eeeeee; color: #000000; font-weight: bold; }");
     expect(html).toContain("襲擊");
     expect(html).toContain("位置");
     expect(html).toContain("襲擊行動");
