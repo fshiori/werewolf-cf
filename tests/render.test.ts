@@ -250,9 +250,10 @@ describe("render", () => {
     expect(html).toContain("房主");
     expect(html).toContain("戰績");
     expect(html).toContain("<a href=\"#nickname\"><strong>[住民登錄]</strong></a>");
-    expect(html).toContain("<a href=\"/trip\">[身份登錄]</a>");
+    expect(html).toContain("<a href=\"/trip.php\">[身份登錄]</a>");
     expect(html).toContain("<a href=\"/trips\">[Trip查詢]</a>");
     expect(html).toContain("<a href=\"/\">[返回]</a>");
+    expect(html).toContain('<small><a href="/icon_view.php">頭像一覽</a></small>');
     expect(html).toContain("/room/room_abc/records");
     expect(html).toContain("對局紀錄");
     expect(html).toContain("最近對局");
