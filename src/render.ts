@@ -594,6 +594,17 @@ function roomTranscriptHref(roomId: string, params: Record<string, string | unde
   return `/room/${escapeHtml(roomId)}/log${query ? `?${escapeHtml(query)}` : ""}`;
 }
 
+function legacyTranscriptHref(path: "/old_log.php" | "/game_log.php", roomId: string, params: Record<string, string | undefined>): string {
+  const baseParams = path === "/old_log.php"
+    ? { log_mode: "on", room_no: roomId }
+    : { room_no: roomId };
+  const query = Object.entries({ ...baseParams, ...params })
+    .filter(([, value]) => value !== undefined && value !== "")
+    .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value ?? "")}`)
+    .join("&");
+  return `${path}?${escapeHtml(query)}`;
+}
+
 const transcriptSystemEventTypes = new Set([
   "objection",
   "lobby_start_vote",
@@ -1073,6 +1084,7 @@ export function renderRoomTranscript(roomId: string, records: GameRecordSummary[
     ...(options.heavenTalk ? { heaven_talk: "on" } : {}),
     ...(options.heavenOnly ? { heaven_only: "on" } : {})
   };
+  const currentTranscriptParams = { ...displayParams, ...viewerParams };
   const playerCandidates = transcriptPlayerCandidates(records, events);
   const playerOptions = playerCandidates.length
     ? playerCandidates.map((player) => `<option value="${escapeHtml(player.playerId)}"${player.playerId === options.viewerPlayerId ? " selected" : ""}>${escapeHtml(player.label)}</option>`).join("")
@@ -1087,6 +1099,7 @@ export function renderRoomTranscript(roomId: string, records: GameRecordSummary[
       <table class="form-table">
         <tr><td><strong>　村子：</strong></td><td><a href="/room/${escapeHtml(roomId)}">${escapeHtml(roomId)}</a></td></tr>
         <tr><td><strong>　索引：</strong></td><td><a href="/room/${escapeHtml(roomId)}/records">對局紀錄</a>　<a href="/room/${escapeHtml(roomId)}/events">事件履歷</a></td></tr>
+        <tr><td><strong>　PHP：</strong></td><td><a href="${legacyTranscriptHref("/old_log.php", roomId, currentTranscriptParams)}">old_log.php</a>　<a href="${legacyTranscriptHref("/game_log.php", roomId, currentTranscriptParams)}">game_log.php</a></td></tr>
         <tr><td><strong>　表示：</strong></td><td>${escapeHtml(modeLabel)}　<a href="${roomTranscriptHref(roomId, viewerParams)}">通常</a>　<a href="${roomTranscriptHref(roomId, { ...viewerParams, heaven_talk: "on" })}">靈</a>　<a href="${roomTranscriptHref(roomId, { ...viewerParams, heaven_only: "on" })}">逝</a>　<a href="${roomTranscriptHref(roomId, { ...viewerParams, reverse_log: "on" })}">逆</a>　<a href="${roomTranscriptHref(roomId, { ...viewerParams, reverse_log: "on", heaven_talk: "on" })}">逆&amp;靈</a>　<a href="${roomTranscriptHref(roomId, { ...viewerParams, reverse_log: "on", heaven_only: "on" })}">逆&amp;逝</a></td></tr>
         <tr><td><strong>　視點：</strong></td><td>${escapeHtml(viewerLabel)}　<a href="${roomTranscriptHref(roomId, { ...displayParams, viewer: "public" })}">旁觀</a>　<a href="${roomTranscriptHref(roomId, { ...displayParams, viewer: "dead", heaven_talk: "on", heaven_only: undefined })}">靈界</a>　<a href="${roomTranscriptHref(roomId, { ...displayParams, viewer: "gm", heaven_talk: "on", heaven_only: undefined })}">GM</a></td></tr>
         <tr><td><strong>　可見範圍：</strong></td><td><span class="muted">${escapeHtml(viewerScopeLabel)}</span></td></tr>

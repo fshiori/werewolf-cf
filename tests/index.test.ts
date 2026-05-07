@@ -3210,6 +3210,8 @@ describe("worker routes", () => {
     expect(body).toContain("村子完整紀錄");
     expect(body).toContain("heaven");
     expect(body).toContain("逆&amp;靈");
+    expect(body).toContain("/game_log.php?room_no=room_log&amp;reverse_log=on&amp;heaven_talk=on");
+    expect(body).toContain("/old_log.php?log_mode=on&amp;room_no=room_log&amp;reverse_log=on&amp;heaven_talk=on");
 
     const missingRoom = await worker.fetch(new Request("http://example.test/game_log.php"), env);
     expect(missingRoom.status).toBe(400);
@@ -3243,6 +3245,8 @@ describe("worker routes", () => {
     expect(body).toContain("村子完整紀錄");
     expect(body).toContain("heaven");
     expect(body).toContain("逆&amp;靈");
+    expect(body).toContain("/game_log.php?room_no=room_log&amp;reverse_log=on&amp;heaven_talk=on");
+    expect(body).toContain("/old_log.php?log_mode=on&amp;room_no=room_log&amp;reverse_log=on&amp;heaven_talk=on");
 
     const missingRoom = await worker.fetch(new Request("http://example.test/old_log.php?log_mode=on"), env);
     expect(missingRoom.status).toBe(400);
