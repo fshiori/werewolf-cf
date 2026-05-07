@@ -608,6 +608,24 @@ function updateActionPrompt(game, currentPlayer, currentPlayerAlive, votedPlayer
     prompt.append(span, document.createElement("br"));
     return;
   }
+  if (game.phase === "night" && game.ownNightActionTarget && game.ownNightActionTarget.targetPlayerId) {
+    const target = game.players.find((player) => player.playerId === game.ownNightActionTarget.targetPlayerId);
+    const labels = {
+      night_kill: "咬人",
+      divine: "占卜",
+      child_fox_divine: "占卜",
+      guard: "護衛",
+      cat_revive: "復活"
+    };
+    const span = document.createElement("span");
+    span.style.fontSize = "14pt";
+    span.style.fontWeight = "bold";
+    span.style.backgroundColor = "#666666";
+    span.style.color = "snow";
+    span.textContent = "　　　已選擇" + (labels[game.ownNightActionTarget.action] || "行動") + "對象：" + (target ? target.nickname : game.ownNightActionTarget.targetPlayerId) + "　　　";
+    prompt.append(span, document.createElement("br"));
+    return;
+  }
   if (votedPlayerIds.has(currentPlayer.playerId)) return;
   let message = "";
   let backgroundColor = "";

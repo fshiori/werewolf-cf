@@ -1,5 +1,5 @@
 import { channelRestrictionsForState, publicPlayers } from "./game";
-import type { ChildFoxDivinationResult, DivinationResult, GameState, MediumReading, PlayerRole, RoomMember, ServerMessage } from "./types";
+import type { ChildFoxDivinationResult, DivinationResult, GameState, MediumReading, NightActionType, PlayerRole, RoomMember, ServerMessage } from "./types";
 import { escapeHtml } from "./validation";
 
 function publicMembers(members: RoomMember[]): RoomMember[] {
@@ -190,6 +190,26 @@ function votesForState(state: GameState, viewerPlayerId?: string): Record<string
   return {};
 }
 
+function ownNightActionTargetForState(state: GameState, viewerPlayerId?: string): { action: NightActionType; targetPlayerId: string } | undefined {
+  if (state.phase !== "night" || !viewerPlayerId) {
+    return undefined;
+  }
+  const viewer = state.players.find((player) => player.playerId === viewerPlayerId);
+  const actionTargets: Array<[NightActionType, Record<string, string> | undefined]> = [
+    ["night_kill", state.nightKills],
+    [viewer?.role === "child_fox" ? "child_fox_divine" : "divine", state.divinations],
+    ["guard", state.guards],
+    ["cat_revive", state.catRevives]
+  ];
+  for (const [action, targets] of actionTargets) {
+    const targetPlayerId = targets?.[viewerPlayerId];
+    if (targetPlayerId) {
+      return { action, targetPlayerId };
+    }
+  }
+  return undefined;
+}
+
 export function buildGameStateMessage(state: GameState, viewerPlayerId?: string): ServerMessage {
   const currentPlayerIds = new Set(state.players.map((player) => player.playerId));
   return {
@@ -205,6 +225,7 @@ export function buildGameStateMessage(state: GameState, viewerPlayerId?: string)
     voteStatus: state.voteStatus,
     votes: votesForState(state, viewerPlayerId),
     votedPlayerIds: votedPlayerIdsForState(state),
+    ownNightActionTarget: ownNightActionTargetForState(state, viewerPlayerId),
     lobbyStartVotedPlayerIds: state.phase === "lobby" ? state.players.filter((player) => state.lobbyStartVotes?.[player.playerId]).map((player) => player.playerId) : undefined,
     lobbyKickVoteTargets:
       state.phase === "lobby"
