@@ -1705,6 +1705,7 @@ describe("worker routes", () => {
     expect(body).toContain("bbs-pagination");
     expect(body).toContain('<a href="/old_log.php?page=1">[1]</a>');
     expect(body).toContain("<strong>[2]</strong>");
+    expect(body).toContain("/old_log.php?log_mode=on&amp;room_no=room_26&amp;page=2");
     expect(body).toContain("room_26");
     expect(body).not.toContain("room_25");
 
@@ -3478,7 +3479,7 @@ describe("worker routes", () => {
       }
     );
 
-    const response = await worker.fetch(new Request("http://example.test/old_log.php?log_mode=on&room_no=room_log&heaven_talk=on&reverse_log=on"), env);
+    const response = await worker.fetch(new Request("http://example.test/old_log.php?log_mode=on&room_no=room_log&heaven_talk=on&reverse_log=on&search=alpha&page=2"), env);
 
     expect(response.status).toBe(200);
     const body = await response.text();
@@ -3487,7 +3488,7 @@ describe("worker routes", () => {
     expect(body).toContain("逆&amp;靈");
     expect(body).toContain("/game_log.php?room_no=room_log&amp;log_mode=on&amp;reverse_log=on&amp;heaven_talk=on");
     expect(body).toContain("/old_log.php?log_mode=on&amp;room_no=room_log&amp;reverse_log=on&amp;heaven_talk=on");
-    expect(body).toContain('<a href="/old_log.php">←返回</a>');
+    expect(body).toContain('<a href="/old_log.php?search=alpha&amp;page=2">←返回</a>');
 
     const missingRoom = await worker.fetch(new Request("http://example.test/old_log.php?log_mode=on"), env);
     expect(missingRoom.status).toBe(400);

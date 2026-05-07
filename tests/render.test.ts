@@ -811,6 +811,53 @@ describe("render", () => {
     expect(html).toContain('<a href="/old_log.php?search=Alpha%20%26%20Beta&page=3">[3]</a>');
   });
 
+  it("preserves old log index state in detail links", () => {
+    const html = renderOldLogs([
+      {
+        id: "room_finished",
+        name: "Finished",
+        comment: "",
+        maxPlayers: 16,
+        status: "ended",
+        createdAt: "2026-05-06 12:00:00",
+        options: {
+          poison: false,
+          bigWolf: false,
+          authority: false,
+          decider: false,
+          lovers: false,
+          betrayer: false,
+          childFox: false,
+          twoFoxes: false,
+          cat: false,
+          lastWords: false,
+          openVote: false,
+          commonTalkVisible: false,
+          deadRoleVisible: false,
+          wishRole: false,
+          dummyBoy: false,
+          customDummy: false,
+          dummyName: "",
+          dummyLastWords: "",
+          realTime: false,
+          dayMinutes: 5,
+          nightMinutes: 3,
+          selfVote: false,
+          voteStatus: false
+        }
+      }
+    ], { search: "Alpha & Beta", page: 2, pageSize: 25, totalRooms: 51 });
+
+    expect(html).toContain("/old_log.php?log_mode=on&amp;room_no=room_finished&amp;search=Alpha+%26+Beta&amp;page=2");
+    expect(html).toContain("room_no=room_finished&amp;search=Alpha+%26+Beta&amp;page=2&amp;reverse_log=on");
+  });
+
+  it("renders transcript return links with preserved old log state", () => {
+    const html = renderRoomTranscript("room_abc", [], [], { oldLogReturnHref: "/old_log.php?search=Alpha%20%26%20Beta&page=2" });
+
+    expect(html).toContain('<a href="/old_log.php?search=Alpha%20%26%20Beta&amp;page=2">←返回</a>');
+  });
+
   it("renders BBS as a normal HTML page", () => {
     const html = renderBbs([
       {
