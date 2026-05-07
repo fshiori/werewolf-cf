@@ -1115,6 +1115,69 @@ describe("game", () => {
     expect(game.players.find((player) => player.playerId === "player_2")?.alive).toBe(false);
   });
 
+  it("plays a core game loop from opening day through village victory", () => {
+    let game = startGame(
+      lobby([
+        ["player_1", "Wolf"],
+        ["player_2", "Seer"],
+        ["player_3", "Medium"],
+        ["player_4", "Villager A"],
+        ["player_5", "Villager B"]
+      ]),
+      0,
+      () => 0
+    );
+
+    expect(game.players.map((player) => [player.playerId, player.role])).toEqual([
+      ["player_1", "werewolf"],
+      ["player_2", "seer"],
+      ["player_3", "medium"],
+      ["player_4", "villager"],
+      ["player_5", "villager"]
+    ]);
+
+    game = castDayVote(game, "player_1", "player_4");
+    game = castDayVote(game, "player_2", "player_4");
+    game = castDayVote(game, "player_3", "player_4");
+    game = castDayVote(game, "player_4", "player_1");
+    game = castDayVote(game, "player_5", "player_1");
+
+    expect(game.phase).toBe("night");
+    expect(game.day).toBe(1);
+    expect(game.players.find((player) => player.playerId === "player_4")?.alive).toBe(false);
+    expect(game.votes).toEqual({});
+    expect(game.log).toContain("Villager A 被投票處決。");
+
+    const divination = castDivination(game, "player_2", "player_1");
+    expect(divination.result).toBe("werewolf");
+    game = divination.state;
+    expect(game.phase).toBe("night");
+
+    game = castNightKill(game, "player_1", "player_5", 0);
+
+    expect(game.phase).toBe("day");
+    expect(game.day).toBe(2);
+    expect(game.players.find((player) => player.playerId === "player_5")?.alive).toBe(false);
+    expect(game.nightKills).toEqual({});
+    expect(game.divinations).toEqual({});
+    expect(mediumReadingForPlayer(game, "player_3")).toEqual({
+      day: 1,
+      targetPlayerId: "player_4",
+      targetNickname: "Villager A",
+      result: "human"
+    });
+
+    game = castDayVote(game, "player_1", "player_2");
+    game = castDayVote(game, "player_2", "player_1");
+    game = castDayVote(game, "player_3", "player_1");
+
+    expect(game.phase).toBe("ended");
+    expect(game.winner).toBe("villagers");
+    expect(game.players.find((player) => player.playerId === "player_1")?.alive).toBe(false);
+    expect(game.log.at(-2)).toBe("Wolf 被投票處決。");
+    expect(game.log.at(-1)).toBe("村民勝利。");
+  });
+
   it("allows self votes only when the room option is enabled", () => {
     const game = activeState("day", [
       { playerId: "player_1", nickname: "Alice", role: "villager", alive: true },
