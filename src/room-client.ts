@@ -588,6 +588,7 @@ function renderGame(game) {
   gmWhisperTarget.innerHTML = "";
   const voteTargets = game.votes || {};
   const votedPlayerIds = new Set(game.votedPlayerIds || []);
+  const lobbyKickVoteTargets = new Map((game.lobbyKickVoteTargets || []).map((target) => [target.targetPlayerId, target.votedPlayerIds || []]));
   const voteSummary = {};
   Object.entries(voteTargets).forEach(([voterId, targetId]) => {
     const voter = game.players.find((candidate) => candidate.playerId === voterId);
@@ -645,6 +646,11 @@ function renderGame(game) {
       const votes = document.createElement("small");
       votes.textContent = "投票：" + voteSummary[player.playerId].join(", ");
       nameCell.append(document.createElement("br"), votes);
+    }
+    if (game.phase === "lobby" && lobbyKickVoteTargets.has(player.playerId)) {
+      const kickVotes = document.createElement("small");
+      kickVotes.textContent = "踢出投票：" + lobbyKickVoteTargets.get(player.playerId).length + "票";
+      nameCell.append(document.createElement("br"), kickVotes);
     }
     cardRow.append(iconCell, nameCell);
     cardTable.appendChild(cardRow);
