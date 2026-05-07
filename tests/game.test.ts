@@ -1020,6 +1020,47 @@ describe("game", () => {
     expect(game.log.at(-1)).toBe("戀人勝利。");
   });
 
+  it("does not give same-faction lovers the win over a normal win condition", () => {
+    let game = activeState("day", [
+      { playerId: "player_1", nickname: "Lover Wolf A", role: "werewolf", alive: true, lover: true },
+      { playerId: "player_2", nickname: "Lover Wolf B", role: "big_wolf", alive: true, lover: true },
+      { playerId: "player_3", nickname: "Villager", role: "villager", alive: true }
+    ]);
+
+    game = castDayVote(game, "player_1", "player_3");
+    game = castDayVote(game, "player_2", "player_3");
+    game = castDayVote(game, "player_3", "player_1");
+
+    expect(game.phase).toBe("ended");
+    expect(game.winner).toBe("werewolves");
+    expect(game.log.at(-1)).toBe("狼人勝利。");
+  });
+
+  it("does not give lovers the win while more than four players remain", () => {
+    let game = activeState("day", [
+      { playerId: "player_1", nickname: "Lover Wolf", role: "werewolf", alive: true, lover: true },
+      { playerId: "player_2", nickname: "Wolf B", role: "werewolf", alive: true },
+      { playerId: "player_3", nickname: "Wolf C", role: "werewolf", alive: true },
+      { playerId: "player_4", nickname: "Lover Villager", role: "villager", alive: true, lover: true },
+      { playerId: "player_5", nickname: "Villager A", role: "villager", alive: true },
+      { playerId: "player_6", nickname: "Villager B", role: "villager", alive: true },
+      { playerId: "player_7", nickname: "Villager C", role: "villager", alive: true }
+    ]);
+
+    game = castDayVote(game, "player_1", "player_7");
+    game = castDayVote(game, "player_2", "player_7");
+    game = castDayVote(game, "player_3", "player_7");
+    game = castDayVote(game, "player_4", "player_7");
+    game = castDayVote(game, "player_5", "player_1");
+    game = castDayVote(game, "player_6", "player_1");
+    game = castDayVote(game, "player_7", "player_1");
+
+    expect(game.phase).toBe("ended");
+    expect(game.winner).toBe("werewolves");
+    expect(game.players.filter((player) => player.alive)).toHaveLength(6);
+    expect(game.log.at(-1)).toBe("狼人勝利。");
+  });
+
   it("does not give lovers the win when only one lover survives a normal win condition", () => {
     const game = activeState("night", [
       { playerId: "player_1", nickname: "Lover Wolf", role: "werewolf", alive: true, lover: true },
