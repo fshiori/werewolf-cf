@@ -663,6 +663,9 @@ function transcriptLocation(event: RoomEventSummary): { className: string; label
     const locations: Record<string, { className: string; label: string }> = {
       "day public": { className: "transcript-location-public", label: "白天公開" },
       "night public": { className: "transcript-location-public", label: "夜晚公開" },
+      "beforegame system": { className: "transcript-location-system", label: "等待室系統" },
+      "day system": { className: "transcript-location-system", label: "白天系統" },
+      "night system": { className: "transcript-location-system", label: "夜晚系統" },
       "night wolf": { className: "transcript-location-wolf", label: "人狼密談" },
       "night wolf lovers": { className: "transcript-location-wolf-lovers", label: "人狼/戀人密談" },
       "night fox": { className: "transcript-location-fox", label: "妖狐密談" },
