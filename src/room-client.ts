@@ -704,6 +704,87 @@ function updateActionPrompt(game, currentPlayer, currentPlayerAlive, votedPlayer
   span.textContent = message;
   prompt.append(span, document.createElement("br"));
 }
+function legacyTargetCommand(game, currentPlayer, currentPlayerAlive, currentPlayerId, canManageLobby, canUsePlayerAction, player) {
+  const canKickVoteLobby = game.phase === "lobby" && currentPlayer && !isGm && player.playerId !== currentPlayerId;
+  const catReviveTarget = game.phase === "night" && game.day > 1 && role === "cat" && !player.alive;
+  const disabled =
+    (!canUsePlayerAction && !(canManageLobby && player.playerId !== currentPlayerId) && !canKickVoteLobby) ||
+    (game.phase === "night" && role === "cat" && !catReviveTarget) ||
+    (!player.alive && !catReviveTarget) ||
+    player.playerId === currentPlayerId ||
+    game.phase === "ended" ||
+    !currentPlayerAlive;
+  if (game.phase === "lobby") {
+    return {
+      disabled,
+      label: canManageLobby && player.playerId !== currentPlayerId ? "踢 " + player.nickname : canKickVoteLobby ? "踢票 " + player.nickname : player.nickname,
+      command: { type: canManageLobby ? "kick_player" : "kick_vote", targetPlayerId: player.playerId }
+    };
+  }
+  if (game.phase === "day") {
+    return { disabled, label: "投將 " + player.nickname + " 處刑一票", command: { type: "vote", targetPlayerId: player.playerId } };
+  }
+  if (game.phase === "night" && isWolfRole(role)) {
+    return { disabled, label: "咬 " + player.nickname, command: { type: "night_kill", targetPlayerId: player.playerId } };
+  }
+  if (game.phase === "night" && role === "seer") {
+    return { disabled, label: "占卜 " + player.nickname, command: { type: "divine", targetPlayerId: player.playerId } };
+  }
+  if (game.phase === "night" && role === "child_fox") {
+    return { disabled, label: "子狐占卜 " + player.nickname, command: { type: "child_fox_divine", targetPlayerId: player.playerId } };
+  }
+  if (game.phase === "night" && role === "guard") {
+    return { disabled, label: "護衛 " + player.nickname, command: { type: "guard", targetPlayerId: player.playerId } };
+  }
+  if (game.phase === "night" && role === "cat") {
+    return { disabled, label: "復活 " + player.nickname, command: { type: "cat_revive", targetPlayerId: player.playerId } };
+  }
+  return { disabled: true, label: player.nickname, command: undefined };
+}
+function updateLegacyVoteTargetList(game, currentPlayer, currentPlayerAlive, currentPlayerId, canManageLobby, canUsePlayerAction) {
+  const container = document.querySelector("#legacyVoteTargetList");
+  if (!container) return;
+  container.innerHTML = "";
+  if (!currentPlayer) {
+    container.textContent = "請先住民登錄。";
+    return;
+  }
+  if (game.phase === "ended") {
+    container.textContent = "遊戲終了。";
+    return;
+  }
+  if (game.players.length === 0) {
+    container.textContent = "尚無玩家。";
+    return;
+  }
+  const table = document.createElement("table");
+  table.className = "legacy-vote-shell";
+  game.players.forEach((player) => {
+    const action = legacyTargetCommand(game, currentPlayer, currentPlayerAlive, currentPlayerId, canManageLobby, canUsePlayerAction, player);
+    const row = document.createElement("tr");
+    const markerCell = document.createElement("td");
+    markerCell.className = "table_votelist1";
+    markerCell.textContent = "◆";
+    const targetCell = document.createElement("td");
+    targetCell.className = "table_votelist2";
+    const radio = document.createElement("input");
+    radio.type = "radio";
+    radio.name = "target_no";
+    radio.value = player.playerId;
+    radio.disabled = action.disabled;
+    const button = document.createElement("button");
+    button.type = "button";
+    button.textContent = action.label;
+    button.disabled = action.disabled;
+    button.addEventListener("click", () => {
+      if (action.command) sendCommand(action.command);
+    });
+    targetCell.append(player.nickname, document.createElement("br"), radio, " ", button);
+    row.append(markerCell, targetCell);
+    table.appendChild(row);
+  });
+  container.appendChild(table);
+}
 function renderLastWordsPanel(game) {
   const lastWordsLog = document.querySelector("#lastWordsLog");
   if (!lastWordsLog) return;
@@ -923,6 +1004,7 @@ function renderGame(game) {
   updateVoteReminder(game, currentPlayer, currentPlayerAlive, votedPlayerIds);
   updateActionPrompt(game, currentPlayer, currentPlayerAlive, votedPlayerIds);
   updateVoteObserverPanel(game, currentPlayer, currentPlayerDead, voteSummary, votedPlayerIds);
+  updateLegacyVoteTargetList(game, currentPlayer, currentPlayerAlive, currentPlayerId, canManageLobby, canUsePlayerAction);
   let row;
   game.players.forEach((player) => {
     const option = document.createElement("option");
