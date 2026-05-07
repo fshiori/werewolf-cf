@@ -2426,9 +2426,9 @@ export function renderTripRegistration(): string {
       </table>
       <form name="trip" method="post" action="/trip.php?go=post" enctype="multipart/form-data" style="margin:10px 20px;">
         <strong>舊式登錄：</strong>
-        TRIP <input name="name" maxlength="32" size="16">
-        密碼 <input name="password" type="password" maxlength="128" size="16">
-        <input name="submit" type="submit" value="送出">
+        TRIP <input type="text" name="name" maxlength="32" size="24" value="">
+        密碼 <input type="password" name="password" maxlength="128" size="24" value="">
+        <input id="submit" name="submit" type="submit" value="送出">
       </form>
     </fieldset>
     <fieldset>
@@ -2438,10 +2438,10 @@ export function renderTripRegistration(): string {
           <li>請輸入登記之Trip，不是加密後的Trip。</li>
           <li>排除紀錄請輸入過去紀錄之玩家暱稱。</li>
         </ul>
-        TRIP <input name="name" maxlength="32" size="16">
-        密碼 <input name="password" type="password" maxlength="128" size="16">
-        暱稱 <input name="aname" maxlength="120" size="20">
-        <input name="submit" type="submit" value="送出">
+        TRIP <input type="text" name="name" maxlength="32" size="24" value="">
+        密碼 <input type="password" name="password" maxlength="128" size="24" value="">
+        暱稱 <input type="text" name="aname" maxlength="120" size="24" value="">
+        <input id="submit" name="submit" type="submit" value="送出">
       </form>
     </fieldset>
     <fieldset>
