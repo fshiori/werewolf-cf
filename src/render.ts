@@ -753,7 +753,7 @@ function isPublicVoteEvent(event: RoomEventSummary): boolean {
   return value.visibility === "public";
 }
 
-function renderTranscriptVoteTables(events: RoomEventSummary[], options: { showTargetCounts?: boolean } = {}): string {
+function renderTranscriptVoteTables(events: RoomEventSummary[], options: { showTargetCounts?: boolean; reverseLog?: boolean } = {}): string {
   const voteEvents = events.filter((event) => event.eventType === "day_vote");
   if (voteEvents.length === 0) {
     return `<tr><td colspan="5" class="muted">尚無投票紀錄。</td></tr>`;
@@ -768,7 +768,12 @@ function renderTranscriptVoteTables(events: RoomEventSummary[], options: { showT
     groups.set(key, [...(groups.get(key) ?? []), event]);
   }
 
-  return Array.from(groups.entries()).sort(([left], [right]) => left.localeCompare(right)).map(([, groupEvents]) => {
+  const sortedGroups = Array.from(groups.entries()).sort(([left], [right]) => left.localeCompare(right));
+  if (options.reverseLog === true) {
+    sortedGroups.reverse();
+  }
+
+  return sortedGroups.map(([, groupEvents]) => {
     const first = recordValue(groupEvents[0]?.payload);
     const day = typeof first.day === "number" ? first.day : undefined;
     const label = day ? `第 ${day} 日 ${voteRoundLabel(first)}` : voteRoundLabel(first);
@@ -778,7 +783,11 @@ function renderTranscriptVoteTables(events: RoomEventSummary[], options: { showT
       targetTotals.set(target, (targetTotals.get(target) ?? 0) + 1);
     }
     const showGroupTargetCounts = options.showTargetCounts === true || groupEvents.some((event) => isPublicVoteEvent(event));
-    const rows = [...groupEvents].sort((left, right) => left.createdAt.localeCompare(right.createdAt)).map((event) => {
+    const sortedGroupEvents = [...groupEvents].sort((left, right) => left.createdAt.localeCompare(right.createdAt));
+    if (options.reverseLog === true) {
+      sortedGroupEvents.reverse();
+    }
+    const rows = sortedGroupEvents.map((event) => {
       const value = recordValue(event.payload);
       const voter = typeof value.nickname === "string" && value.nickname ? value.nickname : event.playerId ?? "不明";
       const target = voteTargetLabel(event);
@@ -1383,7 +1392,7 @@ export function renderRoomTranscript(roomId: string, records: GameRecordSummary[
     : `<tr><td colspan="4" class="muted">尚無對局結果。</td></tr>`;
 
   const eventRows = renderTranscriptEventSections(visibleEvents);
-  const voteRows = renderTranscriptVoteTables(voteEvents, { showTargetCounts: viewerMode !== "public" });
+  const voteRows = renderTranscriptVoteTables(voteEvents, { showTargetCounts: viewerMode !== "public", reverseLog: options.reverseLog });
   const modeLabel = options.heavenOnly ? "逝者靈界" : options.heavenTalk ? "含靈界" : "通常";
   const viewerLabel = {
     legacy: "結束後全紀錄",
