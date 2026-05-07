@@ -515,6 +515,7 @@ function formatEventPayload(payload: unknown): string {
     typeof value.day === "number" ? `第${value.day}日` : "",
     typeof value.revoteCount === "number" ? `投票回合:${value.revoteCount + 1}` : "",
     typeof value.players === "number" ? `${value.players}人` : "",
+    typeof value.maxPlayers === "number" ? `定員:${value.maxPlayers}人` : "",
     votedPlayerIds.length ? `投票數:${votedPlayerIds.length}` : "",
     typeof value.required === "number" ? `必要:${value.required}` : "",
     typeof value.ready === "boolean" ? `成立:${value.ready ? "是" : "否"}` : "",

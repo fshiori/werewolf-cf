@@ -1794,6 +1794,25 @@ describe("render", () => {
     expect(html).not.toContain(">gm_joined<");
   });
 
+  it("renders room-created capacity details in transcript payloads", () => {
+    const html = renderRoomTranscript("room_abc", [], [
+      {
+        id: 1,
+        roomId: "room_abc",
+        playerId: "player_host",
+        eventType: "room_created",
+        payload: { name: "測試村", comment: "歡迎", maxPlayers: 22 },
+        createdAt: "2026-05-06 12:01:00"
+      }
+    ], { viewerMode: "public" });
+
+    expect(html).toContain("村子建立");
+    expect(html).toContain("村名:測試村");
+    expect(html).toContain("說明:歡迎");
+    expect(html).toContain("定員:22人");
+    expect(html).toContain('class="transcript-row transcript-location-system"');
+  });
+
   it("shows player-view private channel rows the selected role could hear", () => {
     const records = [
       {
