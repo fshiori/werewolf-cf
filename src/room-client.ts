@@ -489,7 +489,7 @@ function appendVoteObserverPanel(container, game, currentPlayer, currentPlayerDe
   const panel = document.createElement("div");
   panel.className = "muted";
   const label = currentPlayerDead ? "靈界視點" : "旁觀視點";
-  const visibility = Object.keys(game.votes || {}).length ? "公開投票先" : "投票先非公開";
+  const visibility = game.openVote ? "公開投票先" : "投票先非公開";
   panel.textContent = label + "：" + visibility + "。已投票 " + votedPlayerIds.size + " / " + game.players.filter((player) => player.alive).length + "。";
   container.appendChild(panel);
   if (!Object.keys(voteSummary).length) return;
