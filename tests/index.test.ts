@@ -3231,6 +3231,7 @@ describe("worker routes", () => {
     expect(response.status).toBe(200);
     const body = await response.text();
     expect(body).toContain("村子完整紀錄");
+    expect(body).toContain("/game_view.php?room_no=room_log");
     expect(body).toContain("村民勝利");
     expect(body).toContain("Alice (player_a)");
     expect(body).toContain("占卜師");

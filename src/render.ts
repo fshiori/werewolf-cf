@@ -1100,7 +1100,7 @@ export function renderRoomTranscript(roomId: string, records: GameRecordSummary[
       <legend><strong>村子完整紀錄</strong></legend>
       <p style="margin:0 0 6px 0;"><a href="/old_log.php">←返回</a></p>
       <table class="form-table">
-        <tr><td><strong>　村子：</strong></td><td><a href="/room/${escapeHtml(roomId)}">${escapeHtml(roomId)}</a></td></tr>
+        <tr><td><strong>　村子：</strong></td><td><a href="/game_view.php?room_no=${encodeURIComponent(roomId)}">${escapeHtml(roomId)}</a></td></tr>
         <tr><td><strong>　索引：</strong></td><td><a href="/room/${escapeHtml(roomId)}/records">對局紀錄</a>　<a href="/room/${escapeHtml(roomId)}/events">事件履歷</a></td></tr>
         <tr><td><strong>　PHP：</strong></td><td><a href="${legacyTranscriptHref("/old_log.php", roomId, currentTranscriptParams)}">old_log.php</a>　<a href="${legacyTranscriptHref("/game_log.php", roomId, currentTranscriptParams)}">game_log.php</a></td></tr>
         <tr><td><strong>　表示：</strong></td><td>${escapeHtml(modeLabel)}　<a href="${roomTranscriptHref(roomId, viewerParams)}">通常</a>　<a href="${roomTranscriptHref(roomId, { ...viewerParams, heaven_talk: "on" })}">靈</a>　<a href="${roomTranscriptHref(roomId, { ...viewerParams, heaven_only: "on" })}">逝</a>　<a href="${roomTranscriptHref(roomId, { ...viewerParams, reverse_log: "on" })}">逆</a>　<a href="${roomTranscriptHref(roomId, { ...viewerParams, reverse_log: "on", heaven_talk: "on" })}">逆&amp;靈</a>　<a href="${roomTranscriptHref(roomId, { ...viewerParams, reverse_log: "on", heaven_only: "on" })}">逆&amp;逝</a></td></tr>

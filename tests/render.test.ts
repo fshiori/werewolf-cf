@@ -1114,6 +1114,7 @@ describe("render", () => {
     );
 
     expect(html).toContain("村子完整紀錄");
+    expect(html).toContain("/game_view.php?room_no=room_abc");
     expect(html).toContain("村民勝利");
     expect(html).toContain("/assets/reference/img/victory_role_human.gif");
     expect(html).toContain("Alice (player_a)");
