@@ -2638,6 +2638,23 @@ function bbsTopicPath(topicId: number | string): string {
   return `/bbs.php?view=${encodeURIComponent(String(topicId))}`;
 }
 
+function formatBbsMessageHtml(message: string): string {
+  const escaped = escapeHtml(message);
+  return escaped
+    .replace(/\[url\]((?:www\.|https?:\/\/|ftp:\/\/|telnet:\/\/)[^\["']+?)\[\/url\]/gi, (_match, rawUrl: string) => {
+      const href = rawUrl.startsWith("www.") ? `http://${rawUrl}` : rawUrl;
+      return `<a href="${escapeHtml(href)}" target="_blank">${escapeHtml(rawUrl)}</a>`;
+    })
+    .replace(/\[color=([#a-z0-9]+)\]([\s\S]+?)\[\/color\]/gi, (_match, color: string, content: string) => {
+      if (!/^#[0-9a-f]{3}(?:[0-9a-f]{3})?$/i.test(color) && !/^[a-z]+$/i.test(color)) {
+        return content;
+      }
+      return `<font color="${escapeHtml(color)}">${content}</font>`;
+    })
+    .replace(/\[b\]([\s\S]+?)\[\/b\]/gi, "<b>$1</b>")
+    .replace(/\r?\n/g, "<br />");
+}
+
 function bbsStatusMarks(topic: Pick<BbsTopicSummary, "pinned" | "locked" | "digest">, bracketed = false): string {
   const marks = [
     topic.pinned ? `<span class="bbs-status-mark bbs-topic-pinned">${bracketed ? "[置頂]" : "置頂"}</span>` : "",
@@ -2652,7 +2669,7 @@ export function renderBbsTopic(topic: BbsTopicSummary, replies: BbsReplySummary[
   const pagination = paginationLinks(options.totalReplies, options.page, options.pageSize, topicPath);
   const replyRows = replies.length
     ? replies.map((reply) => `<tr><td class="table3">${bbsAuthorLabel(reply.name, reply.trip)}</td></tr>
-        <tr><td class="table4"><div style="white-space:pre-wrap;">${escapeHtml(reply.message)}</div></td></tr>
+        <tr><td class="table4"><div>${formatBbsMessageHtml(reply.message)}</div></td></tr>
         <tr><td class="table2"><a href="/bbs.php?go=edit&amp;id=${escapeHtml(String(reply.id))}">NO.${escapeHtml(String(reply.id))}</a> &lt;..&gt; [${escapeHtml(reply.createdAt)}]</td></tr>
         <tr><td class="table4">
             <textarea class="bbsReplyEditMessage" data-reply-id="${escapeHtml(String(reply.id))}" rows="3" cols="60">${escapeHtml(reply.message)}</textarea><br>
@@ -2854,7 +2871,7 @@ export function renderBbsTopic(topic: BbsTopicSummary, replies: BbsReplySummary[
       ${pagination}
       <table border="1" class="table1" width="100%" align="center">
         <tr><td class="table3">${topicTitle}<br>${bbsAuthorLabel(topic.name, topic.trip)}</td></tr>
-        <tr><td class="table4"><div style="white-space:pre-wrap;">${escapeHtml(topic.message)}</div></td></tr>
+        <tr><td class="table4"><div>${formatBbsMessageHtml(topic.message)}</div></td></tr>
         <tr><td class="table2"><a href="/bbs.php?go=edit&amp;id=${escapeHtml(String(topic.id))}">NO.${escapeHtml(String(topic.id))}</a> &lt;..&gt; [${escapeHtml(topic.createdAt)}]</td></tr>
       </table>
       ${replies.length ? `<table class="table1" style="width: 600px" align="right">

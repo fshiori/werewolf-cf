@@ -2210,7 +2210,7 @@ describe("worker routes", () => {
           id: 1,
           name: "Alice",
           title: "Welcome",
-          message: "Topic body",
+          message: "Topic [b]body[/b]\n[color=blue]blue[/color]",
           trip_hash: "trip_hash",
           reply_count: 1,
           pinned: 0,
@@ -2224,7 +2224,7 @@ describe("worker routes", () => {
           id: 1,
           topic_id: 1,
           name: "Bob",
-          message: "Reply body",
+          message: "Reply [url]https://example.test[/url]",
           trip_hash: null,
           created_at: "2026-05-06 12:10:00"
         }
@@ -2233,13 +2233,13 @@ describe("worker routes", () => {
 
     expect(response.status).toBe(200);
     const body = await response.text();
-    expect(body).toContain("Topic body");
+    expect(body).toContain('Topic <b>body</b><br /><font color="blue">blue</font>');
     expect(body).toContain("文章列表");
     expect(body).toContain('<div id="table5">');
     expect(body).toContain('<table border="1" class="table1" width="100%" align="center">');
     expect(body).toContain('<td class="table2"><a href="/bbs.php?go=edit&amp;id=1">NO.1</a> &lt;..&gt; [2026-05-06 12:00:00]</td>');
     expect(body).toContain("Bob");
-    expect(body).toContain("Reply body");
+    expect(body).toContain('<a href="https://example.test" target="_blank">https://example.test</a>');
     expect(body).toContain('<table class="table1" style="width: 600px" align="right">');
     expect(body).toContain('action="/bbs.php?go=postre"');
     expect(body).toContain('type="hidden" name="id" value="1"');
