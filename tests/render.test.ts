@@ -2007,6 +2007,58 @@ describe("render", () => {
     expect(html).not.toContain(">admin_room_ended<");
   });
 
+  it("uses payload actor ids for player-view ownership without making private rows public", () => {
+    const events = [
+      {
+        id: 1,
+        roomId: "room_abc",
+        playerId: undefined,
+        eventType: "divination",
+        payload: {
+          visibility: "private",
+          playerId: "player_seer",
+          nickname: "Seer",
+          targetPlayerId: "player_wolf",
+          targetNickname: "Wolf",
+          result: "werewolf",
+          phase: "night",
+          day: 2
+        },
+        createdAt: "2026-05-06 12:01:00"
+      },
+      {
+        id: 2,
+        roomId: "room_abc",
+        playerId: undefined,
+        eventType: "guard",
+        payload: {
+          visibility: "private",
+          actorPlayerId: "player_guard",
+          nickname: "Guard",
+          targetPlayerId: "player_target",
+          targetNickname: "Target",
+          phase: "night",
+          day: 2
+        },
+        createdAt: "2026-05-06 12:02:00"
+      }
+    ];
+
+    const publicView = renderRoomTranscript("room_abc", [], events, { viewerMode: "public", heavenTalk: true });
+    expect(publicView).not.toContain("結果:狼");
+    expect(publicView).not.toContain("護衛行動");
+
+    const seerView = renderRoomTranscript("room_abc", [], events, { viewerMode: "player", viewerPlayerId: "player_seer", heavenTalk: true });
+    expect(seerView).toContain("Seer (player_seer)");
+    expect(seerView).toContain("結果:狼");
+    expect(seerView).not.toContain("護衛行動");
+
+    const guardView = renderRoomTranscript("room_abc", [], events, { viewerMode: "player", viewerPlayerId: "player_guard", heavenTalk: true });
+    expect(guardView).toContain("Guard (player_guard)");
+    expect(guardView).toContain("護衛行動");
+    expect(guardView).not.toContain("結果:狼");
+  });
+
   it("shows player-view private channel rows the selected role could hear", () => {
     const records = [
       {
