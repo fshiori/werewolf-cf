@@ -180,7 +180,17 @@ function votedPlayerIdsForState(state: GameState): string[] {
   return Object.keys(state.votes);
 }
 
-export function buildGameStateMessage(state: GameState): ServerMessage {
+function votesForState(state: GameState, viewerPlayerId?: string): Record<string, string> {
+  if (state.openVote) {
+    return state.votes;
+  }
+  if (viewerPlayerId && state.votes[viewerPlayerId]) {
+    return { [viewerPlayerId]: state.votes[viewerPlayerId] };
+  }
+  return {};
+}
+
+export function buildGameStateMessage(state: GameState, viewerPlayerId?: string): ServerMessage {
   const currentPlayerIds = new Set(state.players.map((player) => player.playerId));
   return {
     type: "game_state",
@@ -193,7 +203,7 @@ export function buildGameStateMessage(state: GameState): ServerMessage {
     players: publicPlayers(state.players).map((player) => ({ ...player, nickname: escapeHtml(player.nickname) })),
     openVote: state.openVote,
     voteStatus: state.voteStatus,
-    votes: state.openVote ? state.votes : {},
+    votes: votesForState(state, viewerPlayerId),
     votedPlayerIds: votedPlayerIdsForState(state),
     lobbyStartVotedPlayerIds: state.phase === "lobby" ? state.players.filter((player) => state.lobbyStartVotes?.[player.playerId]).map((player) => player.playerId) : undefined,
     lobbyKickVoteTargets:

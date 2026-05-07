@@ -277,6 +277,8 @@ describe("messages", () => {
 
     expect(buildGameStateMessage(hidden)).toMatchObject({ type: "game_state", openVote: false, voteStatus: false, votes: {}, votedPlayerIds: [] });
     expect(buildGameStateMessage(statusOnly)).toMatchObject({ type: "game_state", openVote: false, voteStatus: true, votes: {}, votedPlayerIds: ["player_1"] });
+    expect(buildGameStateMessage(statusOnly, "player_1")).toMatchObject({ type: "game_state", openVote: false, voteStatus: true, votes: { player_1: "player_2" }, votedPlayerIds: ["player_1"] });
+    expect(buildGameStateMessage(statusOnly, "player_2")).toMatchObject({ type: "game_state", openVote: false, voteStatus: true, votes: {}, votedPlayerIds: ["player_1"] });
     expect(buildGameStateMessage(visible)).toMatchObject({ type: "game_state", openVote: true, voteStatus: false, votes: { player_1: "player_2" }, votedPlayerIds: [] });
     expect(buildGameStateMessage(visibleWithStatus)).toMatchObject({
       type: "game_state",

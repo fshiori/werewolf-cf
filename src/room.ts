@@ -838,7 +838,9 @@ export class RoomDurableObject {
   }
 
   private async broadcastGameState(gameState: GameState): Promise<void> {
-    this.broadcast(buildGameStateMessage(gameState));
+    for (const [socket, member] of this.sockets) {
+      this.send(socket, buildGameStateMessage(gameState, member.gm ? undefined : member.playerId));
+    }
     if ((await this.loadRoomOptions()).deadRoleVisible || gameState.phase === "ended") {
       this.sendRevealedRoles(gameState);
     }
