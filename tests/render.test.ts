@@ -332,8 +332,11 @@ describe("render", () => {
     expect(html).toContain('id="actionPrompt"');
     expect(html).toContain('id="voteReminder"');
     expect(ROOM_CLIENT_SCRIPT).toContain("function renderGameLogPanel(game)");
+    expect(ROOM_CLIENT_SCRIPT).toContain("function gameLogText(line)");
+    expect(ROOM_CLIENT_SCRIPT).toContain('return "< < 早晨來臨 " + dayStart[1] + " 日目的早上開始 > >";');
+    expect(ROOM_CLIENT_SCRIPT).toContain('return "< < 日落、黑暗的夜晚來臨 > >";');
     expect(ROOM_CLIENT_SCRIPT).toContain("row.className = gameLogClass(line);");
-    expect(ROOM_CLIENT_SCRIPT).toContain('cell.textContent = "　　　　　　　　　　　　" + line;');
+    expect(ROOM_CLIENT_SCRIPT).toContain('cell.textContent = "　　　　　　　　　　　　" + gameLogText(line);');
     expect(html).toContain("尚無公開遺言。");
     expect(html).toContain("wishRole");
     expect(html).toContain("<option value=\"seer\">占卜師</option>");
