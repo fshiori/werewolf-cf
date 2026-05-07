@@ -1985,6 +1985,44 @@ describe("render", () => {
     expect(html).toContain("來源頻道:人狼");
   });
 
+  it("renders role ability result labels in transcript payloads", () => {
+    const html = renderRoomTranscript("room_abc", [], [
+      {
+        id: 1,
+        roomId: "room_abc",
+        playerId: "player_seer",
+        eventType: "divination",
+        payload: { visibility: "private", nickname: "Seer", targetPlayerId: "player_wolf", targetNickname: "Wolf", result: "werewolf", phase: "night", day: 2 },
+        createdAt: "2026-05-06 12:01:00"
+      },
+      {
+        id: 2,
+        roomId: "room_abc",
+        playerId: "player_child",
+        eventType: "child_fox_divination",
+        payload: { visibility: "private", nickname: "Child", targetPlayerId: "player_target", targetNickname: "Target", result: "failed", phase: "night", day: 2 },
+        createdAt: "2026-05-06 12:02:00"
+      },
+      {
+        id: 3,
+        roomId: "room_abc",
+        playerId: "player_medium",
+        eventType: "medium_result",
+        payload: { visibility: "private", nickname: "Medium", targetPlayerId: "player_big_wolf", targetNickname: "Big Wolf", result: "big_wolf", phase: "day", day: 3 },
+        createdAt: "2026-05-06 12:03:00"
+      }
+    ]);
+
+    expect(html).toContain("占卜行動");
+    expect(html).toContain("子狐占卜");
+    expect(html).toContain("結果:狼");
+    expect(html).toContain("結果:失敗");
+    expect(html).toContain("結果:大狼");
+    expect(html).not.toContain("結果:werewolf");
+    expect(html).not.toContain("結果:failed");
+    expect(html).not.toContain("結果:big_wolf");
+  });
+
   it("renders room transcript reverse log controls", () => {
     const html = renderRoomTranscript(
       "room_abc",
