@@ -794,6 +794,29 @@ describe("worker routes", () => {
     expect(runs[0].values[1]).toBe("Blocked nickname");
   });
 
+  it("returns legacy Trip edit compatibility result pages", async () => {
+    for (const [go, title] of [["edit", "修改Trip"], ["edit2", "修改紀錄"]] as const) {
+      const body = new FormData();
+      body.set("name", "ab12CD");
+      body.set("password", "secret");
+
+      const response = await worker.fetch(
+        new Request(`http://example.test/trip.php?go=${go}`, {
+          method: "POST",
+          body
+        }),
+        envWithRooms([])
+      );
+      const html = await response.text();
+
+      expect(response.status).toBe(501);
+      expect(html).toContain(`<legend><strong>${title}</strong></legend>`);
+      expect(html).toContain("此 Cloudflare 版本不保存");
+      expect(html).toContain(`/trip.php?go=${go}`);
+      expect(html).toContain("Trip頁面");
+    }
+  });
+
   it("renders the legacy Trip icon upload alias", async () => {
     const response = await worker.fetch(new Request("http://example.test/trip.php?go=icon"), envWithRooms([]));
 

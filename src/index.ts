@@ -77,6 +77,27 @@ function legacyIconResult(title: string, message: string, backHref = "/icon_uplo
 </html>`, { status });
 }
 
+function legacyTripResult(title: string, message: string, backHref = "/trip.php", status = 200): Response {
+  return html(`<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <title>${escapeHtml(title)}</title>
+  <meta http-equiv="refresh" content="5; url=${escapeHtml(backHref)}">
+</head>
+<body bgcolor="white">
+  <br><br>
+  <fieldset>
+    <legend><strong>${escapeHtml(title)}</strong></legend>
+    <div style="line-height:135%;margin:20px 20px 30px;">
+      <strong>${message}</strong>
+    </div>
+  </fieldset>
+  <br>5秒後跳回<a href="${escapeHtml(backHref)}">Trip頁面</a>
+</body>
+</html>`, { status });
+}
+
 function legacyApiField(value: string): string {
   return value.replaceAll("\t", " ").replaceAll("\r", " ").replaceAll("\n", " ");
 }
@@ -2666,6 +2687,14 @@ export default {
 
     if (request.method === "POST" && url.pathname === "/trip.php" && url.searchParams.get("go") === "out") {
       return excludeLegacyTrip(request, env);
+    }
+
+    if (request.method === "POST" && url.pathname === "/trip.php" && url.searchParams.get("go") === "edit") {
+      return legacyTripResult("修改Trip", "此 Cloudflare 版本不保存舊 PHP 管理密碼；請使用認領身份流程綁定目前玩家。", "/trip.php?go=edit", 501);
+    }
+
+    if (request.method === "POST" && url.pathname === "/trip.php" && url.searchParams.get("go") === "edit2") {
+      return legacyTripResult("修改紀錄", "此 Cloudflare 版本不保存過去紀錄村民註冊密碼；請使用認領身份流程綁定目前玩家。", "/trip.php?go=edit2", 501);
     }
 
     if (request.method === "POST" && url.pathname === "/api/bbs/topics") {
