@@ -6,6 +6,7 @@ import type {
   ChildFoxDivinationResult,
   ChannelRestrictions,
   MediumReading,
+  MediumResult,
   PlayerFlag,
   PlayerStatUpdate,
   PublicGamePlayer,
@@ -1141,7 +1142,7 @@ function resolveDay(state: GameState, now = Date.now()): GameState {
         day: state.day,
         targetPlayerId: executed.playerId,
         targetNickname: executed.nickname,
-        result: isWerewolfRole(executed.role) ? "werewolf" : "human"
+        result: mediumResultForRole(executed.role)
       }
     : undefined;
   const log = [
@@ -1373,6 +1374,16 @@ function wolfWinFoxCount(state: GameState, foxes: number): number {
   }
   const livingBigWolvesAndFoxes = livingPlayers(state).filter((player) => player.role === "big_wolf" || player.role === "fox").length;
   return livingBigWolvesAndFoxes < 2 ? 0 : foxes;
+}
+
+function mediumResultForRole(role: GamePlayer["role"]): MediumResult {
+  if (role === "big_wolf") {
+    return "big_wolf";
+  }
+  if (role === "child_fox") {
+    return "child_fox";
+  }
+  return isWerewolfRole(role) ? "werewolf" : "human";
 }
 
 function hasBigWolfChildFoxVictoryRule(state: GameState): boolean {

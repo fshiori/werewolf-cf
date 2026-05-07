@@ -83,7 +83,7 @@ export type GamePhase = "lobby" | "day" | "night" | "ended";
 export type GameWinner = "villagers" | "werewolves" | "foxes" | "lovers" | "draw";
 export type DivinationResult = "human" | "werewolf";
 export type ChildFoxDivinationResult = DivinationResult | "failed";
-export type MediumResult = "human" | "werewolf";
+export type MediumResult = "human" | "werewolf" | "big_wolf" | "child_fox";
 export type NightActionType = "night_kill" | "divine" | "child_fox_divine" | "guard" | "cat_revive";
 
 export interface MediumReading {

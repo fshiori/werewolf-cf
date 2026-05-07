@@ -156,14 +156,14 @@ describe("messages", () => {
         day: 1,
         targetPlayerId: "player_1",
         targetNickname: "<Victim>",
-        result: "human"
+        result: "big_wolf"
       })
     ).toEqual({
       type: "medium_result",
       day: 1,
       targetPlayerId: "player_1",
       targetNickname: "&lt;Victim&gt;",
-      result: "human"
+      result: "big_wolf"
     });
   });
 

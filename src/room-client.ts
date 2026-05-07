@@ -245,7 +245,7 @@ document.querySelector("#connect").addEventListener("click", () => {
       const result = msg.result === "failed" ? "失敗" : msg.result === "werewolf" ? "狼" : "人";
       append("<font color='#990099'>[子狐]</font> " + msg.targetNickname + " 是「" + result + "」。");
     } else if (msg.type === "medium_result") {
-      const result = msg.result === "werewolf" ? "狼" : "人";
+      const result = { human: "人", werewolf: "狼", big_wolf: "大狼", child_fox: "子狐" }[msg.result] || "人";
       append("<font color='#006666'>[靈能]</font> 第 " + msg.day + " 日被處決的 " + msg.targetNickname + " 是「" + result + "」。");
     } else if (msg.type === "revealed_roles") {
       revealedRoles = msg.roles || {};
