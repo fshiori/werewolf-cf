@@ -980,6 +980,8 @@ describe("worker routes", () => {
     expect(body).toContain("Trip參與紀錄");
     expect(body).toContain("room_new");
     expect(body).toContain("room_old");
+    expect(body).toContain("/old_log.php?log_mode=on&amp;room_no=room_new");
+    expect(body).toContain('target="_blank"');
     expect(body).toContain("Current");
     expect(body).toContain("Old Name");
     expect(body).toContain("人狼");
