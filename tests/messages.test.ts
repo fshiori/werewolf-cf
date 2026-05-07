@@ -276,6 +276,8 @@ describe("messages", () => {
     const visibleWithStatus = { ...visible, voteStatus: true };
 
     expect(buildGameStateMessage(hidden)).toMatchObject({ type: "game_state", openVote: false, voteStatus: false, votes: {}, votedPlayerIds: [] });
+    expect(buildGameStateMessage(hidden, "player_1")).toMatchObject({ type: "game_state", openVote: false, voteStatus: false, votes: { player_1: "player_2" }, votedPlayerIds: ["player_1"] });
+    expect(buildGameStateMessage(hidden, "player_2")).toMatchObject({ type: "game_state", openVote: false, voteStatus: false, votes: {}, votedPlayerIds: [] });
     expect(buildGameStateMessage(statusOnly)).toMatchObject({ type: "game_state", openVote: false, voteStatus: true, votes: {}, votedPlayerIds: ["player_1"] });
     expect(buildGameStateMessage(statusOnly, "player_1")).toMatchObject({ type: "game_state", openVote: false, voteStatus: true, votes: { player_1: "player_2" }, votedPlayerIds: ["player_1"] });
     expect(buildGameStateMessage(statusOnly, "player_2")).toMatchObject({ type: "game_state", openVote: false, voteStatus: true, votes: {}, votedPlayerIds: ["player_1"] });
@@ -345,6 +347,7 @@ describe("messages", () => {
 
     expect(buildGameStateMessage(game, "player_wolf")).toMatchObject({
       type: "game_state",
+      votedPlayerIds: ["player_wolf", "player_seer", "player_guard", "player_cat"],
       ownNightActionTarget: { action: "night_kill", targetPlayerId: "target_wolf" }
     });
     expect(buildGameStateMessage(game, "player_seer")).toMatchObject({
@@ -371,6 +374,22 @@ describe("messages", () => {
     expect(buildGameStateMessage(childFoxGame, "player_seer")).toMatchObject({
       type: "game_state",
       ownNightActionTarget: { action: "child_fox_divine", targetPlayerId: "target_seer" }
+    });
+
+    const hiddenStatusGame = { ...game, voteStatus: false };
+    expect(buildGameStateMessage(hiddenStatusGame)).toMatchObject({
+      type: "game_state",
+      votedPlayerIds: []
+    });
+    expect(buildGameStateMessage(hiddenStatusGame, "player_wolf")).toMatchObject({
+      type: "game_state",
+      votedPlayerIds: ["player_wolf"],
+      ownNightActionTarget: { action: "night_kill", targetPlayerId: "target_wolf" }
+    });
+    expect(buildGameStateMessage(hiddenStatusGame, "player_bystander")).toMatchObject({
+      type: "game_state",
+      votedPlayerIds: [],
+      ownNightActionTarget: undefined
     });
   });
 
