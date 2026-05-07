@@ -2292,6 +2292,54 @@ describe("render", () => {
         eventType: "public_chat",
         payload: { nickname: "Cat", text: "CAT_DO\tEve", location: "night system", phase: "night", day: 2 },
         createdAt: "2026-05-06 12:04:00"
+      },
+      {
+        id: 5,
+        roomId: "room_abc",
+        playerId: "player_host",
+        eventType: "public_chat",
+        payload: { nickname: "Host", text: "FKICK_DO\tFrank", location: "beforegame system", phase: "lobby", day: 0 },
+        createdAt: "2026-05-06 12:05:00"
+      },
+      {
+        id: 6,
+        roomId: "room_abc",
+        playerId: "player_seer",
+        eventType: "public_chat",
+        payload: { nickname: "Seer", text: "MAGE_DO\tGrace", location: "night system", phase: "night", day: 2 },
+        createdAt: "2026-05-06 12:06:00"
+      },
+      {
+        id: 7,
+        roomId: "room_abc",
+        playerId: "player_fosi",
+        eventType: "public_chat",
+        payload: { nickname: "Child", text: "FOSI_DO\tHeidi", location: "night system", phase: "night", day: 2 },
+        createdAt: "2026-05-06 12:07:00"
+      },
+      {
+        id: 8,
+        roomId: "room_abc",
+        playerId: "player_guard",
+        eventType: "public_chat",
+        payload: { nickname: "Guard", text: "GUARD_DO\tIvan", location: "night system", phase: "night", day: 2 },
+        createdAt: "2026-05-06 12:08:00"
+      },
+      {
+        id: 9,
+        roomId: "room_abc",
+        playerId: "player_judy",
+        eventType: "public_chat",
+        payload: { nickname: "Judy", text: "OBJECTION", location: "day system", phase: "day", day: 2 },
+        createdAt: "2026-05-06 12:09:00"
+      },
+      {
+        id: 10,
+        roomId: "room_abc",
+        playerId: "player_mallory",
+        eventType: "public_chat",
+        payload: { nickname: "Mallory", text: "ROOMEND", location: "day system", phase: "day", day: 2 },
+        createdAt: "2026-05-06 12:10:00"
       }
     ]);
 
@@ -2299,8 +2347,15 @@ describe("render", () => {
     expect(html).toContain("內容:將 Carol 投票處死");
     expect(html).toContain("內容:人狼對 Dave 鎖定為目標");
     expect(html).toContain("內容:貓又對 Eve 進行復活");
+    expect(html).toContain("內容:村長對 Frank 強制踢出");
+    expect(html).toContain("內容:對 Grace 進行占卜");
+    expect(html).toContain("內容:子狐對 Heidi 進行占卜");
+    expect(html).toContain("內容:對 Ivan 進行護衛");
+    expect(html).toContain("內容:表示抗議");
+    expect(html).toContain("內容:要求廢村");
     expect(html).not.toContain("內容:KICK_DO");
     expect(html).not.toContain("內容:VOTE_DO");
+    expect(html).not.toContain("內容:GUARD_DO");
   });
 
   it("renders saved GM operation details in transcript payloads", () => {
