@@ -1402,7 +1402,9 @@ describe("render", () => {
     expect(html).toContain("background-image:url('/assets/reference/img/old_log_bg.jpg')");
     expect(html).toContain('<img class="title-img" src="/assets/reference/img/old_log_title.jpg" alt="過去紀錄"><br>');
     expect(html).toContain("/game_view.php?room_no=room_abc");
+    expect(html).toContain("/old_log.php?log_mode=on&amp;room_no=room_abc");
     expect(html).toContain("/game_log.php?room_no=room_abc&amp;log_mode=on");
+    expect(html).toContain("old_log.php</a> / <a href=\"/game_log.php?room_no=room_abc&amp;log_mode=on\">game_log.php</a>");
     expect(html).toContain("人狼勝利");
     expect(html).toContain("/assets/reference/img/victory_role_wolf.gif");
     expect(html).toContain("第 2 日");
@@ -1449,6 +1451,7 @@ describe("render", () => {
     expect(html).toContain("background-image:url('/assets/reference/img/old_log_bg.jpg')");
     expect(html).toContain('<img class="title-img" src="/assets/reference/img/old_log_title.jpg" alt="過去紀錄"><br>');
     expect(html).toContain("/game_view.php?room_no=room_abc");
+    expect(html).toContain("/old_log.php?log_mode=on&amp;room_no=room_abc");
     expect(html).toContain("/game_log.php?room_no=room_abc&amp;log_mode=on");
     expect(html).toContain("遊戲開始");
     expect(html).not.toContain(">game_started<");
