@@ -1322,6 +1322,7 @@ describe("worker routes", () => {
       }
       if (pageMode !== "full") {
         expect(body).toContain(`data-legacy-entry="${path.slice(1).split("?")[0]}"`);
+        expect(body).toContain(`<a href="/${path.slice(1).split("?")[0]}?room_no=room_exists&amp;auto_reload=15">15秒</a>`);
       }
       expect(body).toContain("<strong>[住民登錄]</strong>");
       expect(body).toContain('<meta http-equiv="refresh" content="20">');
