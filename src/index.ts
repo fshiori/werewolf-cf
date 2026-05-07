@@ -1,4 +1,4 @@
-import { renderAdminConfig, renderAdminConfigLogin, renderAdminIndex, renderAdminRooms, renderAdminRoomsLogin, renderBbs, renderBbsAdmin, renderBbsTopic, renderFederatedList, renderHome, renderIconCatalog, renderLeaderboard, renderManual, renderOldLogs, renderPlayerProfile, renderProtocol, renderRoom, renderRoomEvents, renderRoomRecords, renderRoomTranscript, renderRules, renderScriptInfo, renderStatus, renderTripDetail, renderTripRegistration, renderTripLookup, renderTripRoomRecords, renderVersion, renderWinRateAnalysis } from "./render";
+import { renderAdminConfig, renderAdminConfigLogin, renderAdminIndex, renderAdminRooms, renderAdminRoomsLogin, renderBbs, renderBbsAdmin, renderBbsTopic, renderFederatedList, renderHome, renderIconCatalog, renderLeaderboard, renderManual, renderOldLogs, renderPlayerProfile, renderProtocol, renderRoom, renderRoomEvents, renderRoomRecords, renderRoomTranscript, renderRules, renderScriptInfo, renderStatus, renderTripComments, renderTripDetail, renderTripRegistration, renderTripLookup, renderTripRoomRecords, renderVersion, renderWinRateAnalysis } from "./render";
 import { RoomDurableObject } from "./room";
 import { ROOM_CLIENT_SCRIPT } from "./room-client";
 import { DEFAULT_DAY_MINUTES, DEFAULT_NIGHT_MINUTES } from "./game";
@@ -2268,6 +2268,13 @@ export default {
       }
       if (url.pathname === "/trip.php" && url.searchParams.get("go") === "room" && url.searchParams.get("id")) {
         return getLegacyTripRoomRecords(env, url.searchParams.get("id") ?? "", url.searchParams.get("play"), url.searchParams.get("page"));
+      }
+      if (url.pathname === "/trip.php" && url.searchParams.get("go") === "smess" && url.searchParams.get("id")) {
+        try {
+          return html(renderTripComments(validateTrip(url.searchParams.get("id") ?? "")));
+        } catch (error) {
+          return json({ error: error instanceof Error ? error.message : "Invalid Trip" }, { status: 400 });
+        }
       }
       if (url.pathname === "/trip.php" && url.searchParams.get("go") === "search") {
         const searchName = url.searchParams.get("sname") ?? "";

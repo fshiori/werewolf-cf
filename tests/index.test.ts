@@ -963,8 +963,19 @@ describe("worker routes", () => {
     expect(body).toContain("player_b");
     expect(body).toContain("正:3/負:4/場:7");
     expect(body).toContain("/trip.php?go=room&id=ab12CD");
+    expect(body).toContain("/trip.php?go=smess&id=ab12CD");
     expect(body).toContain("參與紀錄");
     expect(body).not.toContain(tripHash);
+  });
+
+  it("renders legacy Trip comment surface", async () => {
+    const response = await worker.fetch(new Request("http://example.test/trip.php?go=smess&id=ab12CD"), envWithRooms([]));
+
+    expect(response.status).toBe(200);
+    const body = await response.text();
+    expect(body).toContain("評語");
+    expect(body).toContain("村莊ID");
+    expect(body).toContain("沒有資料");
   });
 
   it("renders legacy Trip room record pages without exposing Trip hashes", async () => {

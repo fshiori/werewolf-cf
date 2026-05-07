@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { renderAdminConfig, renderAdminConfigLogin, renderAdminIndex, renderAdminRooms, renderAdminRoomsLogin, renderBbs, renderBbsAdmin, renderBbsTopic, renderFederatedList, renderHome, renderIconCatalog, renderLeaderboard, renderManual, renderOldLogs, renderPlayerProfile, renderProtocol, renderRoom, renderRoomEvents, renderRoomRecords, renderRoomTranscript, renderRules, renderScriptInfo, renderStatus, renderTripLookup, renderTripRegistration, renderTripRoomRecords, renderVersion, renderWinRateAnalysis } from "../src/render";
+import { renderAdminConfig, renderAdminConfigLogin, renderAdminIndex, renderAdminRooms, renderAdminRoomsLogin, renderBbs, renderBbsAdmin, renderBbsTopic, renderFederatedList, renderHome, renderIconCatalog, renderLeaderboard, renderManual, renderOldLogs, renderPlayerProfile, renderProtocol, renderRoom, renderRoomEvents, renderRoomRecords, renderRoomTranscript, renderRules, renderScriptInfo, renderStatus, renderTripComments, renderTripLookup, renderTripRegistration, renderTripRoomRecords, renderVersion, renderWinRateAnalysis } from "../src/render";
 import { ROOM_CLIENT_SCRIPT } from "../src/room-client";
 
 describe("render", () => {
@@ -534,6 +534,18 @@ describe("render", () => {
     expect(html).toContain('<a href="/trip.php?go=room&id=ab12CD&play=16&page=1">[1]</a>');
     expect(html).toContain("<strong>[2]</strong>");
     expect(html).toContain('<a href="/trip.php?go=room&id=ab12CD&play=16&page=3">[3]</a>');
+  });
+
+  it("renders legacy Trip comment surface", () => {
+    const html = renderTripComments("ab12CD");
+
+    expect(html).toContain("評語");
+    expect(html).toContain("/trip.php?go=trip&id=ab12CD");
+    expect(html).toContain("/trip.php?go=room&id=ab12CD");
+    expect(html).toContain("村莊ID");
+    expect(html).toContain("評論者");
+    expect(html).toContain("評價");
+    expect(html).toContain("沒有資料");
   });
 
   it("renders dedicated Trip registration page", () => {
