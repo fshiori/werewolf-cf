@@ -579,7 +579,10 @@ function updateActionPrompt(game, currentPlayer, currentPlayerAlive, votedPlayer
   if (votedPlayerIds.has(currentPlayer.playerId)) return;
   let message = "";
   let backgroundColor = "";
-  if (game.phase === "day") {
+  if (game.phase === "day" && game.revoteCount > 0) {
+    message = "　　　投票重新開始　　　";
+    backgroundColor = "red";
+  } else if (game.phase === "day") {
     message = "　　　請選擇投票處死的對象　　　";
     backgroundColor = "#999900";
   } else if (game.phase === "night" && isWolfRole(role)) {
