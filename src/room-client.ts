@@ -552,13 +552,20 @@ function winnerLabel(value) {
     lovers: "戀人"
   }[value] || "未定";
 }
+function phaseLabel(game) {
+  if (game.phase === "lobby") return "遊戲前";
+  if (game.phase === "ended") return "遊戲終了";
+  const day = game.day || 0;
+  const aliveCount = game.players.filter((player) => player.alive).length;
+  const revote = game.revoteCount ? " ( " + game.revoteCount + " 回目)" : "";
+  return day + " 日目 <small>(生存者" + aliveCount + "人)</small>" + revote;
+}
 function isWolfRole(value) {
   return value === "werewolf" || value === "big_wolf";
 }
 function renderGame(game) {
   setRoomPhaseClass(game.phase);
-  document.querySelector("#phase").textContent =
-    game.phase + (game.day ? " " + game.day : "") + (game.revoteCount ? " 再投票 " + game.revoteCount : "");
+  document.querySelector("#phase").innerHTML = phaseLabel(game);
   document.querySelector("#winner").textContent = winnerLabel(game.winner);
   const currentPlayerId = localStorage.getItem(playerKey);
   const currentPlayer = game.players.find((player) => player.playerId === currentPlayerId);
