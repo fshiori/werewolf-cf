@@ -2548,7 +2548,7 @@ describe("render", () => {
     expect(html).toContain("/admin.php?go=rooms");
     expect(html).toContain("/admin.php?go=config");
     expect(html).toContain("/admin.php?go=bbs");
-    expect(html).toContain("/status");
+    expect(html).toContain("/admin.php?go=status");
     expect(html).toContain('action="/admin.php?go=in"');
     expect(html).toContain('name="apass"');
     expect(html).not.toContain('name="adpass"');
