@@ -3133,6 +3133,7 @@ export function renderRoom(roomId: string, options: RenderRoomOptions = {}): str
             <tr>
               <td>登錄</td>
               <td>
+                <img class="title-img" src="/assets/reference/img/user_regist_title.gif" alt="住民登錄">
                 <a href="#nickname"><strong>[住民登錄]</strong></a>
                 　<a href="/trip.php">[身份登錄]</a>
                 　<a href="/trips">[Trip查詢]</a>
@@ -3140,15 +3141,15 @@ export function renderRoom(roomId: string, options: RenderRoomOptions = {}): str
               </td>
             </tr>
             <tr class="view-player-only">
-              <td>玩家暱稱</td>
+              <td><img class="title-img" src="/assets/reference/img/user_regist_handle_name.gif" alt="玩家暱稱">玩家暱稱</td>
               <td><input id="nickname" maxlength="32" size="28"> <button id="connect">進入房間</button> <button id="startVote" disabled>投開始一票</button> <button id="startGame">開始遊戲</button> <button id="leaveRoom" disabled>退出</button></td>
             </tr>
             <tr class="view-player-only">
-              <td>Trip</td>
+              <td><img class="title-img" src="/assets/reference/img/user_regist_handle_trip.gif" alt="Trip">Trip</td>
               <td><input id="trip" maxlength="32" size="28"></td>
             </tr>
             <tr class="view-player-only">
-              <td>希望角色</td>
+              <td><img class="title-img" src="/assets/reference/img/user_regist_role.gif" alt="希望角色">希望角色</td>
               <td>
                 <select id="wishRole">
                   <option value="none" selected>無</option>
@@ -3169,7 +3170,7 @@ export function renderRoom(roomId: string, options: RenderRoomOptions = {}): str
               </td>
             </tr>
             <tr class="view-player-only">
-              <td>頭像</td>
+              <td><img class="title-img" src="/assets/reference/img/user_regist_icon.gif" alt="頭像">頭像</td>
               <td><input id="avatarFile" type="file" accept="image/png,image/jpeg,image/gif,image/webp" size="28"> <button id="uploadAvatar">頭像</button> <button id="removeAvatar">刪頭像</button> <small class="muted">PNG/JPEG/GIF/WebP 512KiB以下</small></td>
             </tr>
             <tr class="view-player-only">
