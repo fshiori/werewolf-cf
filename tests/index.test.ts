@@ -1411,6 +1411,7 @@ describe("worker routes", () => {
       const body = await response.text();
 
       expect(response.status).toBe(200);
+      expect(body).toContain("<title>用戶圖像上傳</title>");
       expect(body).toContain('<td><b><a href="/icon_upload.php">頭像上傳</a></b></td>');
       expect(body).toContain('<td><a href="/icon_view.php">頭像一覽</a></td>');
     }
@@ -3508,6 +3509,7 @@ describe("worker routes", () => {
 
     expect(response.status).toBe(200);
     const body = await response.text();
+    expect(body).toContain("<title>用戶圖像一覽</title>");
     expect(body).toContain("頭像一覽");
     expect(body).toContain("/assets/reference/img/icon_view_title.jpg");
     expect(body).toContain("/icon_upload.php#upload");
