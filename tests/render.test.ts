@@ -690,10 +690,11 @@ describe("render", () => {
     expect(html).toContain("iconRemoveButton");
     expect(html).toContain('action="/upload.php"');
     expect(html).toContain('name="player_id"');
-    expect(html).toContain('name="icon_file"');
+    expect(html).toContain('name="icon_file" type="file" accept="image/png,image/jpeg,image/gif,image/webp" size="80" style="border-width:1px;border-color:black;border-style:solid;background-color:aliceblue;"');
     expect(html).toContain("請勿上傳動態GIF");
     expect(html).toContain("圖像名稱");
-    expect(html).toContain('name="icon_name"');
+    expect(html).toContain('name="icon_name" type="text" maxlength="20" size="20" style="border-width:1px;border-color:black;border-style:solid;background-color:aliceblue;"');
+    expect(html).toContain('name="submit" type="submit" value="登錄" style="border-width:1px;border-color:black;border-style:solid;"');
     expect(html).toContain("圖像的顏色選擇");
     expect(html).toContain('name="color" value="#000000"');
     expect(html).toContain('name="color" value="#6699cc"');

@@ -3501,7 +3501,9 @@ describe("worker routes", () => {
     expect(body).toContain("上傳頭像");
     expect(body).toContain("iconUploadButton");
     expect(body).toContain('action="/upload.php"');
-    expect(body).toContain('name="icon_name"');
+    expect(body).toContain('name="icon_file" type="file" accept="image/png,image/jpeg,image/gif,image/webp" size="80"');
+    expect(body).toContain('name="icon_name" type="text" maxlength="20" size="20"');
+    expect(body).toContain('name="submit" type="submit" value="登錄"');
     expect(body).toContain('name="color" value="#6699cc"');
     expect(body).toContain('action="/upload2.php"');
     expect(body).toContain("/api/assets/avatar");
