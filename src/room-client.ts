@@ -531,7 +531,17 @@ function updateActionPrompt(game, currentPlayer, currentPlayerAlive, votedPlayer
   const prompt = document.querySelector("#actionPrompt");
   if (!prompt) return;
   prompt.innerHTML = "";
-  if (!currentPlayer || !currentPlayerAlive || game.phase === "lobby" || game.phase === "ended") return;
+  if (!currentPlayer || game.phase === "lobby" || game.phase === "ended") return;
+  if (!currentPlayerAlive) {
+    const span = document.createElement("span");
+    span.style.fontSize = "14pt";
+    span.style.fontWeight = "bold";
+    span.style.backgroundColor = "#CC0000";
+    span.style.color = "snow";
+    span.textContent = "　　　お前はもう死んでいる・・・　　　";
+    prompt.append(span, document.createElement("br"));
+    return;
+  }
   if (votedPlayerIds.has(currentPlayer.playerId)) return;
   let message = "";
   let backgroundColor = "";
