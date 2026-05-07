@@ -255,6 +255,8 @@ describe("render", () => {
     expect(html).toContain("#lastWordsLog div { border-top: 1px dotted silver; padding: 2px 4px; overflow-wrap: anywhere; word-break: break-word; }");
     expect(html).toContain("#lastWordsLog .last-words-heading td { background-color: #ccddff; color: black; font-weight: bold; }");
     expect(html).toContain("#lastWordsLog .last-words-row { background-color: #eeeeff; color: black; }");
+    expect(html).toContain("body.room-view-spectator .room-chat-controls { display: none; }");
+    expect(html).toContain("body.room-view-heaven .room-live-chat-only { display: none; }");
     expect(html).toContain("body.room-phase-night .player-card.voted { background: #004000; color: snow; }");
     expect(html).toContain("body.room-phase-night .player-card.voted a { color: #ccffff; }");
     expect(html).toContain("Trip");
@@ -287,6 +289,10 @@ describe("render", () => {
     expect(html).toContain("共有頻");
     expect(html).toContain("戀頻");
     expect(html).toContain("靈界");
+    expect(html).toContain('<div class="room-chat-controls">');
+    expect(html).toContain('<button id="sendChat" class="room-live-chat-only">送出</button>');
+    expect(html).toContain('<button id="sendDeadChat" disabled>靈界</button>');
+    expect(html).toContain('<button id="sendRoomEndVote" class="room-live-chat-only" disabled>廢</button>');
     expect(html).toContain('id="gmControlPanel"');
     expect(html).toContain("GM行動");
     expect(html).toContain('id="gmStatus"');
@@ -402,6 +408,7 @@ describe("render", () => {
     expect(spectator).toContain('data-room-view="spectator"');
     expect(spectator).toContain("旁觀視點");
     expect(spectator).toContain("只觀看公開資訊與玩家列表");
+    expect(spectator).toContain("body.room-view-spectator .room-chat-controls { display: none; }");
     expect(spectator).toContain('<tr><th>玩家列表</th></tr>');
     expect(spectator).not.toContain('<tr class="view-player-only">\n        <td>\n          <table class="panel">\n            <tr><th>玩家列表</th></tr>');
     expect(spectator).toContain('<tr class="view-player-only">\n        <td>\n          <table class="panel">\n            <tr><th>能力發動 / 投票</th></tr>');
@@ -414,6 +421,8 @@ describe("render", () => {
     expect(heaven).toContain('data-room-view="heaven"');
     expect(heaven).toContain("靈界視點");
     expect(heaven).toContain("死亡後視點入口");
+    expect(heaven).toContain("body.room-view-heaven .room-live-chat-only { display: none; }");
+    expect(heaven).toContain('<button id="sendDeadChat" disabled>靈界</button>');
     expect(heaven).toContain('<tr><th>玩家列表</th></tr>');
     expect(heaven).toContain('<tr class="view-player-only">\n        <td>\n          <table class="panel">\n            <tr><th>能力發動 / 投票</th></tr>');
     expect(heaven).toContain("game_play / game_view / heaven");
