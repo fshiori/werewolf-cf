@@ -1486,8 +1486,15 @@ describe("render", () => {
     expect(html).toContain("建立村子");
     expect(html).toContain("登錄入村");
     expect(html).toContain("GM操作");
-    expect(html).toContain("/logs");
-    expect(html).toContain("/icons#upload");
+    expect(html).toContain("/old_log.php");
+    expect(html).toContain("/icon_view.php");
+    expect(html).toContain("/icon_upload.php");
+    expect(html).toContain("/trip.php");
+    expect(html).toContain("/stats.php");
+    expect(html).toContain("/bbs.php");
+    expect(html).toContain("/rule.php");
+    expect(html).toContain("/script_info.php");
+    expect(html).toContain("/version.php");
     expect(html).toContain("/protocol");
   });
 

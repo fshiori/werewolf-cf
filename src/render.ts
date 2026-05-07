@@ -2689,20 +2689,20 @@ export function renderManual(): string {
     <fieldset>
       <legend><strong>身份與紀錄</strong></legend>
       <table class="form-table">
-        <tr><td><strong>　Trip：</strong></td><td><a href="/trip">身份登錄</a> 可登記、認領與排除 Trip；<a href="/trips">Trip查詢</a> 顯示公開狀態與彙總戰績，不公開 Trip hash。</td></tr>
-        <tr><td><strong>　頭像：</strong></td><td><a href="/icons">頭像一覽</a> 可選擇參考預設圖；<a href="/icons#upload">頭像上傳</a> 可上傳或刪除 R2-backed 個人頭像。</td></tr>
-        <tr><td><strong>　過去紀錄：</strong></td><td><a href="/logs">過去紀錄</a> 顯示結束村，支援通常、逆序、靈界、逝者與公開/玩家/靈界/GM視點。</td></tr>
-        <tr><td><strong>　戰績：</strong></td><td><a href="/leaderboard">戰績排行榜</a>、<a href="/stats">勝率分析</a> 與玩家頁使用 D1 結束紀錄彙總。</td></tr>
-        <tr><td><strong>　討論：</strong></td><td><a href="/bbs">人狼討論</a> 可發主題、回覆、瀏覽精華，管理者可置頂、鎖定與標記精華。</td></tr>
+        <tr><td><strong>　Trip：</strong></td><td><a href="/trip.php">身份登錄</a> 可登記、認領與排除 Trip；<a href="/trips">Trip查詢</a> 顯示公開狀態與彙總戰績，不公開 Trip hash。</td></tr>
+        <tr><td><strong>　頭像：</strong></td><td><a href="/icon_view.php">頭像一覽</a> 可選擇參考預設圖；<a href="/icon_upload.php">頭像上傳</a> 可上傳或刪除 R2-backed 個人頭像。</td></tr>
+        <tr><td><strong>　過去紀錄：</strong></td><td><a href="/old_log.php">過去紀錄</a> 顯示結束村，支援通常、逆序、靈界、逝者與公開/玩家/靈界/GM視點。</td></tr>
+        <tr><td><strong>　戰績：</strong></td><td><a href="/leaderboard">戰績排行榜</a>、<a href="/stats.php">勝率分析</a> 與玩家頁使用 D1 結束紀錄彙總。</td></tr>
+        <tr><td><strong>　討論：</strong></td><td><a href="/bbs.php">人狼討論</a> 可發主題、回覆、瀏覽精華，管理者可置頂、鎖定與標記精華。</td></tr>
       </table>
     </fieldset>
     <fieldset>
       <legend><strong>相關文件</strong></legend>
       <table class="form-table">
-        <tr><td><strong>　規則：</strong></td><td><a href="/rules">/rules</a></td></tr>
-        <tr><td><strong>　Script Info：</strong></td><td><a href="/script-info">/script-info</a></td></tr>
+        <tr><td><strong>　規則：</strong></td><td><a href="/rule.php">/rule.php</a></td></tr>
+        <tr><td><strong>　Script Info：</strong></td><td><a href="/script_info.php">/script_info.php</a></td></tr>
         <tr><td><strong>　通訊協定：</strong></td><td><a href="/protocol">/protocol</a></td></tr>
-        <tr><td><strong>　版本：</strong></td><td><a href="/version">/version</a></td></tr>
+        <tr><td><strong>　版本：</strong></td><td><a href="/version.php">/version.php</a></td></tr>
       </table>
     </fieldset>
   `));
