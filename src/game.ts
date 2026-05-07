@@ -856,6 +856,9 @@ export function castGuard(state: GameState, actorId: string, targetId: string, n
   if (guards[actorId]) {
     throw new Error("Guard action is already used tonight");
   }
+  if (actorId === targetId) {
+    throw new Error("Guards cannot protect themselves");
+  }
   const target = assertLivingPlayer(state, targetId);
   const next = { ...state, guards: { ...guards, [actorId]: target.playerId } };
   if (areNightActionsComplete(next)) {
