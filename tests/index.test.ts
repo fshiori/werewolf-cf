@@ -695,6 +695,101 @@ describe("worker routes", () => {
     }
   });
 
+  it("creates rooms from the legacy room_manager.php form fields", async () => {
+    const env = envWithRooms([]);
+    const response = await worker.fetch(
+      new Request("http://example.test/room_manager.php", {
+        method: "POST",
+        body: new URLSearchParams({
+          command: "CREATE_ROOM",
+          player_id: "player_legacy_owner",
+          nickname: "Legacy Owner",
+          room_name: "Legacy Room",
+          room_comment: "Legacy comment",
+          max_user: "16",
+          game_option_wish_role: "wish_role",
+          game_option_real_time: "real_time",
+          game_option_real_time_day: "4",
+          game_option_real_time_night: "2",
+          game_option_dummy_boy: "dummy_boy",
+          game_option_cust_dummy: "cust_dummy",
+          dummy_name: "Legacy Dummy",
+          dummy_lw: "Legacy last words",
+          game_option_open_vote: "open_vote",
+          game_option_comm_out: "comoutl",
+          dellook: "1",
+          game_option_will: "will",
+          game_option_vote_me: "votedme",
+          game_option_trip: "istrip",
+          game_option_votedisplay: "votedisplay",
+          game_option_manager_trip: "gm1234",
+          game_option_gm: "as_gm",
+          option_role_lovers: "lovers",
+          option_role_decide: "decide",
+          option_role_authority: "authority",
+          option_wfbig_poison: "wfbig",
+          option_role_poison: "poison",
+          option_role_foxs: "betr",
+          option_role_pobe: "pobe"
+        })
+      }),
+      env
+    );
+    const batches = (env as unknown as { batches: Array<Array<{ query: string; values: unknown[] }>> }).batches;
+    const roomInsert = batches[0].find((statement) => statement.query.includes("INSERT INTO rooms"));
+    const playerInsert = batches[0].find((statement) => statement.query.includes("INSERT INTO players"));
+    const eventInsert = batches[0].find((statement) => statement.query.includes("room_created"));
+    const roomId = String(roomInsert?.values[0]);
+
+    expect(response.status).toBe(303);
+    expect(response.headers.get("Location")).toBe(`/login.php?room_no=${roomId}`);
+    expect(roomId).toMatch(/^room_[0-9a-f]{16}$/);
+    expect(playerInsert?.values).toContain("player_legacy_owner");
+    expect(playerInsert?.values).toContain("Legacy Owner");
+    expect(roomInsert?.values).toContain("Legacy Room");
+    expect(roomInsert?.values).toContain("Legacy comment");
+    expect(roomInsert?.values).toContain(16);
+    expect(roomInsert?.values).toContain(1);
+    expect(roomInsert?.values).toContain("Legacy Dummy");
+    expect(roomInsert?.values).toContain("Legacy last words");
+    expect(String(roomInsert?.values.at(-2))).toMatch(/^[0-9a-f]{64}$/);
+    expect(roomInsert?.values.at(-1)).toBe("poison wfbig authority decide lovers betr will open_vote comoutl wish_role istrip as_gm dummy_boy cust_dummy real_time:4:2 votedme votedisplay");
+    expect(JSON.parse(String(eventInsert?.values.at(-1)))).toMatchObject({
+      name: "Legacy Room",
+      comment: "Legacy comment",
+      maxPlayers: 16,
+      options: {
+        poison: true,
+        bigWolf: true,
+        authority: true,
+        decider: true,
+        lovers: true,
+        betrayer: true,
+        cat: false,
+        deadRoleVisible: true,
+        wishRole: true,
+        tripRequired: true,
+        gmEnabled: true,
+        dummyBoy: true,
+        customDummy: true,
+        dummyName: "Legacy Dummy",
+        dummyLastWords: "Legacy last words",
+        realTime: true,
+        dayMinutes: 4,
+        nightMinutes: 2,
+        selfVote: true,
+        voteStatus: true
+      }
+    });
+
+    const invalidCommand = await worker.fetch(new Request("http://example.test/room_manager.php", {
+      method: "POST",
+      body: new URLSearchParams({ command: "DELETE_ROOM", room_name: "Bad", room_comment: "Bad", max_user: "16" })
+    }), env);
+    expect(invalidCommand.status).toBe(400);
+    expect(await invalidCommand.json()).toEqual({ error: "Invalid room_manager.php command" });
+  });
+
   it("rejects GM rooms without a GM Trip", async () => {
     const response = await worker.fetch(
       new Request("http://example.test/api/rooms", {

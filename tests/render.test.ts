@@ -132,7 +132,7 @@ describe("render", () => {
     expect(html).toContain("optionChildFox");
     expect(html).toContain("optionTwoFoxes");
     expect(html).toContain("optionFoxNone");
-    expect(html).toContain('name="optionFoxVariant" type="radio"');
+    expect(html).toContain('name="option_role_foxs" value="betr" type="radio"');
     expect(html).toContain("追加なし");
     expect(html).toContain("optionCat");
     expect(html).toContain("optionLastWords");
@@ -209,6 +209,17 @@ describe("render", () => {
     expect(html).toContain(".room-link > a");
     expect(html).toContain(".room-comment { display: block; text-align: right; margin-left: 100px; color: #333333; overflow-wrap: anywhere; word-break: break-word; }");
     expect(html).toContain("建立房間");
+    expect(html).toContain('form id="legacyRoomCreateForm" name="room" method="POST" action="/room_manager.php" onsubmit="return false"');
+    expect(html).toContain('<input type="hidden" name="command" value="CREATE_ROOM">');
+    expect(html).toContain('<input id="legacyCreatePlayerId" type="hidden" name="player_id" value="">');
+    expect(html).toContain('<input id="roomName" name="room_name" maxlength="48" size="45"> 村');
+    expect(html).toContain('<input id="roomComment" name="room_comment" maxlength="120" size="50">');
+    expect(html).toContain('<select id="maxPlayers" name="max_user">');
+    expect(html).toContain('name="game_option_real_time" value="real_time"');
+    expect(html).toContain('name="option_role_poison" value="poison"');
+    expect(html).toContain('name="option_role_foxs" value="betr"');
+    expect(html).toContain('name="game_option_dummy_boy" value="dummy_boy"');
+    expect(html).toContain('document.querySelector("#legacyCreatePlayerId").value = localStorage.getItem(playerKey);');
   });
 
   it("renders escaped runtime announcements", () => {

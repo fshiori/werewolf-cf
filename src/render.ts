@@ -2164,23 +2164,26 @@ export function renderHome(rooms: RoomSummary[], announcement = DEFAULT_ANNOUNCE
     </fieldset>
     <fieldset>
       <legend><strong>建立村子</strong></legend>
+      <form id="legacyRoomCreateForm" name="room" method="POST" action="/room_manager.php" onsubmit="return false">
+      <input type="hidden" name="command" value="CREATE_ROOM">
+      <input id="legacyCreatePlayerId" type="hidden" name="player_id" value="">
       <table class="form-table">
         <tr>
           <td><label><strong>　玩家暱稱：</strong></label></td>
-          <td><input id="nickname" maxlength="32" size="28"></td>
+          <td><input id="nickname" name="nickname" maxlength="32" size="28"></td>
         </tr>
         <tr>
           <td><label><strong>　村子名稱：</strong></label></td>
-          <td><input id="roomName" maxlength="48" size="45"> 村</td>
+          <td><input id="roomName" name="room_name" maxlength="48" size="45"> 村</td>
         </tr>
         <tr>
           <td><label><strong>　村子說明：</strong></label></td>
-          <td><input id="roomComment" maxlength="120" size="50"></td>
+          <td><input id="roomComment" name="room_comment" maxlength="120" size="50"></td>
         </tr>
         <tr>
           <td><label><strong>　最大人數：</strong></label></td>
           <td>
-            <select id="maxPlayers">
+            <select id="maxPlayers" name="max_user">
               <optgroup label="最大人數">
                 <option value="8">8</option>
                 <option value="16">16</option>
@@ -2193,119 +2196,121 @@ export function renderHome(rooms: RoomSummary[], announcement = DEFAULT_ANNOUNCE
         <tr>
           <td><label><strong>　${referenceAssetImg("img/room_option_real_time.gif", "限時")}限時時間：</strong></label></td>
           <td>
-            <label><input id="optionRealTime" type="checkbox"> <small>日：</small></label>
-            <input id="optionDayMinutes" type="number" min="1" max="99" step="0.5" value="3" size="4">
+            <label><input id="optionRealTime" name="game_option_real_time" value="real_time" type="checkbox"> <small>日：</small></label>
+            <input id="optionDayMinutes" name="game_option_real_time_day" type="number" min="1" max="99" step="0.5" value="3" size="4">
             <small>分　夜：</small>
-            <input id="optionNightMinutes" type="number" min="1" max="99" step="0.5" value="1.5" size="4">
+            <input id="optionNightMinutes" name="game_option_real_time_night" type="number" min="1" max="99" step="0.5" value="1.5" size="4">
             <small>分</small>
           </td>
         </tr>
         <tr>
           <td><label><strong>　${referenceAssetImg("img/room_option_poison.gif", "埋毒者")}20人以上埋毒者選項：</strong></label></td>
-          <td><label><input id="optionPoison" type="checkbox"> <small>埋毒者登場</small></label></td>
+          <td><label><input id="optionPoison" name="option_role_poison" value="poison" type="checkbox"> <small>埋毒者登場</small></label></td>
         </tr>
         <tr>
           <td><label><strong>　${referenceAssetImg("img/room_option_wfbig.gif", "大狼")}20人以上時大狼出場：</strong></label></td>
-          <td><label><input id="optionBigWolf" type="checkbox"> <small>狼群隨機一隻取代為大狼</small></label></td>
+          <td><label><input id="optionBigWolf" name="option_wfbig_poison" value="wfbig" type="checkbox"> <small>狼群隨機一隻取代為大狼</small></label></td>
         </tr>
         <tr>
           <td><label><strong>　${referenceAssetImg("img/room_option_authority.gif", "權力者")}16人以上權力者出場：</strong></label></td>
-          <td><label><input id="optionAuthority" type="checkbox"> <small>處刑投票時一票算兩票</small></label></td>
+          <td><label><input id="optionAuthority" name="option_role_authority" value="authority" type="checkbox"> <small>處刑投票時一票算兩票</small></label></td>
         </tr>
         <tr>
           <td><label><strong>　${referenceAssetImg("img/room_option_decide.gif", "決定者")}16人以上決定者出場：</strong></label></td>
-          <td><label><input id="optionDecider" type="checkbox"> <small>同票時決定者投票優先</small></label></td>
+          <td><label><input id="optionDecider" name="option_role_decide" value="decide" type="checkbox"> <small>同票時決定者投票優先</small></label></td>
         </tr>
         <tr>
           <td><label><strong>　${referenceAssetImg("img/room_option_lovers.gif", "戀人")}13人以上戀人出場：</strong></label></td>
-          <td><label><input id="optionLovers" type="checkbox"> <small>兩名戀人生存到勝利條件時戀人勝利</small></label></td>
+          <td><label><input id="optionLovers" name="option_role_lovers" value="lovers" type="checkbox"> <small>兩名戀人生存到勝利條件時戀人勝利</small></label></td>
         </tr>
         <tr>
           <td><label><strong>　${referenceAssetImg("img/room_option_betr.gif", "背德者")}20人以上妖狐的選項：</strong></label></td>
           <td>
-            <label><input id="optionFoxNone" name="optionFoxVariant" type="radio" checked> <small>追加なし</small></label>
-            <label><input id="optionBetrayer" name="optionFoxVariant" type="radio"> <small>背德者登場，妖狐死亡時跟隨死亡</small></label>
+            <label><input id="optionFoxNone" name="option_role_foxs" value="" type="radio" checked> <small>追加なし</small></label>
+            <label><input id="optionBetrayer" name="option_role_foxs" value="betr" type="radio"> <small>背德者登場，妖狐死亡時跟隨死亡</small></label>
           </td>
         </tr>
         <tr>
           <td><label><strong>　${referenceAssetImg("img/room_option_fosi.gif", "子狐")}20人以上妖狐的占：</strong></label></td>
-          <td><label><input id="optionChildFox" name="optionFoxVariant" type="radio"> <small>子狐登場，可於夜晚占卜但可能失敗</small></label></td>
+          <td><label><input id="optionChildFox" name="option_role_foxs" value="fosi" type="radio"> <small>子狐登場，可於夜晚占卜但可能失敗</small></label></td>
         </tr>
         <tr>
           <td><label><strong>　${referenceAssetImg("img/room_option_foxs.gif", "雙狐")}20人以上兩隻妖狐：</strong></label></td>
-          <td><label><input id="optionTwoFoxes" name="optionFoxVariant" type="radio"> <small>第二隻妖狐登場</small></label></td>
+          <td><label><input id="optionTwoFoxes" name="option_role_foxs" value="foxs" type="radio"> <small>第二隻妖狐登場</small></label></td>
         </tr>
         <tr>
           <td><label><strong>　${referenceAssetImg("img/room_option_cat.gif", "貓又")}20人以上貓又登場：</strong></label></td>
-          <td><label><input id="optionCat" type="checkbox"> <small>貓又登場，可牽連死亡並嘗試復活</small></label></td>
+          <td><label><input id="optionCat" name="option_role_poison" value="cat" type="checkbox"> <small>貓又登場，可牽連死亡並嘗試復活</small></label></td>
         </tr>
         <tr>
           <td><label><strong>　${referenceAssetImg("img/room_option_will.gif", "遺言")}遺言：</strong></label></td>
-          <td><label><input id="optionLastWords" type="checkbox"> <small>生存中可留下死亡時公開的遺言</small></label></td>
+          <td><label><input id="optionLastWords" name="game_option_will" value="will" type="checkbox"> <small>生存中可留下死亡時公開的遺言</small></label></td>
         </tr>
         <tr>
           <td><label><strong>　${referenceAssetImg("img/room_option_open_vote.gif", "公開投票")}公開投票：</strong></label></td>
-          <td><label><input id="optionOpenVote" type="checkbox"> <small>白天公開目前投票目標</small></label></td>
+          <td><label><input id="optionOpenVote" name="game_option_open_vote" value="open_vote" type="checkbox"> <small>白天公開目前投票目標</small></label></td>
         </tr>
         <tr>
           <td><label><strong>　${referenceAssetImg("img/room_option_common.gif", "共有者")}共生者夜晚對話顯示：</strong></label></td>
-          <td><label><input id="optionCommonTalkVisible" type="checkbox"> <small>允許晚上顯示共生者悄悄話</small></label></td>
+          <td><label><input id="optionCommonTalkVisible" name="game_option_comm_out" value="comoutl" type="checkbox"> <small>允許晚上顯示共生者悄悄話</small></label></td>
         </tr>
         <tr>
           <td><label><strong>　${referenceAssetImg("img/room_option_rei.gif", "靈界")}幽靈是否可以看角色：</strong></label></td>
-          <td><label><input id="optionDeadRoleVisible" type="checkbox"> <small>允許幽靈觀看角色</small></label></td>
+          <td><label><input id="optionDeadRoleVisible" name="dellook" value="1" type="checkbox"> <small>允許幽靈觀看角色</small></label></td>
         </tr>
         <tr>
           <td><label><strong>　${referenceAssetImg("img/room_option_wish_role.gif", "希望角色")}希望角色制：</strong></label></td>
-          <td><label><input id="optionWishRole" type="checkbox"> <small>允許加入時選擇希望角色</small></label></td>
+          <td><label><input id="optionWishRole" name="game_option_wish_role" value="wish_role" type="checkbox"> <small>允許加入時選擇希望角色</small></label></td>
         </tr>
         <tr>
           <td><label><strong>　${referenceAssetImg("img/room_option_trip.gif", "Trip")}啟用強制Trip登記：</strong></label></td>
-          <td><label><input id="optionTripRequired" type="checkbox"> <small>沒有英數 Trip 身分碼將無法登錄成村民</small></label></td>
+          <td><label><input id="optionTripRequired" name="game_option_trip" value="istrip" type="checkbox"> <small>沒有英數 Trip 身分碼將無法登錄成村民</small></label></td>
         </tr>
         <tr>
           <td><label><strong>　${referenceAssetImg("img/room_option_gm.gif", "GM")}啟用GM系統：</strong></label></td>
-          <td><label><input id="optionGmEnabled" type="checkbox"> <small>指定 Trip 進房後成為 GM，不加入角色分配</small></label></td>
+          <td><label><input id="optionGmEnabled" name="game_option_gm" value="as_gm" type="checkbox"> <small>指定 Trip 進房後成為 GM，不加入角色分配</small></label></td>
         </tr>
         <tr>
           <td><label><strong>　GM Trip：</strong></label></td>
-          <td><input id="gmTrip" maxlength="32" size="10"></td>
+          <td><input id="gmTrip" name="game_option_manager_trip" maxlength="32" size="10"></td>
         </tr>
         <tr>
           <td><label><strong>　${referenceAssetImg("img/room_option_dummy_boy.gif", "替身君")}替身君：</strong></label></td>
-          <td><label><input id="optionDummyBoy" type="checkbox"> <small>加入替身君並從第一夜開始</small></label></td>
+          <td><label><input id="optionDummyBoy" name="game_option_dummy_boy" value="dummy_boy" type="checkbox"> <small>加入替身君並從第一夜開始</small></label></td>
         </tr>
         <tr>
           <td><label><strong>　${referenceAssetImg("img/room_option_dummy_boy.gif", "替身君")}替身君自訂：</strong></label></td>
-          <td><label><input id="optionCustomDummy" type="checkbox"> <small>自訂替身君名稱及遺言</small></label></td>
+          <td><label><input id="optionCustomDummy" name="game_option_cust_dummy" value="cust_dummy" type="checkbox"> <small>自訂替身君名稱及遺言</small></label></td>
         </tr>
         <tr>
           <td></td>
-          <td><input id="dummyName" maxlength="32" size="10" value="替身君"> <small>的遺言</small></td>
+          <td><input id="dummyName" name="dummy_name" maxlength="32" size="10" value="替身君"> <small>的遺言</small></td>
         </tr>
         <tr>
           <td></td>
-          <td><textarea id="dummyLastWords" maxlength="500" cols="38" rows="4"></textarea></td>
+          <td><textarea id="dummyLastWords" name="dummy_lw" maxlength="500" cols="38" rows="4"></textarea></td>
         </tr>
         <tr>
           <td><label><strong>　${referenceAssetImg("img/room_option_voteme.gif", "自投")}啟用白天自投功能：</strong></label></td>
-          <td><label><input id="optionSelfVote" type="checkbox"> <small>允許玩家白天投票給自己</small></label></td>
+          <td><label><input id="optionSelfVote" name="game_option_vote_me" value="votedme" type="checkbox"> <small>允許玩家白天投票給自己</small></label></td>
         </tr>
         <tr>
           <td><label><strong>　${referenceAssetImg("img/conn_look.gif", "投票顯示")}啟用白天投票顯示：</strong></label></td>
-          <td><label><input id="optionVoteStatus" type="checkbox"> <small>已投票玩家以特殊底色顯示</small></label></td>
+          <td><label><input id="optionVoteStatus" name="game_option_votedisplay" value="votedisplay" type="checkbox"> <small>已投票玩家以特殊底色顯示</small></label></td>
         </tr>
         <tr>
           <td></td>
           <td><button id="createRoom"${maintenanceMode ? " disabled" : ""}>建立房間</button></td>
         </tr>
       </table>
+      </form>
     </fieldset>
     <script>
       const playerKey = "werewolf_cf_player_id";
       if (!localStorage.getItem(playerKey)) {
         localStorage.setItem(playerKey, "player_" + crypto.randomUUID().replaceAll("-", ""));
       }
+      document.querySelector("#legacyCreatePlayerId").value = localStorage.getItem(playerKey);
       const nick = localStorage.getItem("werewolf_cf_nickname") || "";
       document.querySelector("#nickname").value = nick;
       document.querySelector("#registerTrip").value = localStorage.getItem("werewolf_cf_trip") || "";
