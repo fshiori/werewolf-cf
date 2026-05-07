@@ -1443,11 +1443,15 @@ function pickCatRevival(state: GameState, players: GamePlayer[], random: () => n
 
 function areNightActionsComplete(state: GameState): boolean {
   return (
-    haveAllActions(livingWerewolves(state), state.nightKills ?? {}) &&
+    haveWolfPackAction(state) &&
     haveAllActions(livingGuards(state), state.guards ?? {}) &&
     haveAllActions(livingDiviners(state), state.divinations ?? {}) &&
     haveAllActions(livingCatsWithReviveTargets(state), state.catRevives ?? {})
   );
+}
+
+function haveWolfPackAction(state: GameState): boolean {
+  return livingWerewolves(state).length === 0 || Object.keys(state.nightKills ?? {}).length > 0;
 }
 
 function haveAllActions(players: GamePlayer[], actions: Record<string, string>): boolean {

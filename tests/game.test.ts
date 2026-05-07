@@ -1400,6 +1400,7 @@ describe("game", () => {
     const game = activeState("night", [
       { playerId: "player_1", nickname: "Wolf A", role: "werewolf", alive: true },
       { playerId: "player_2", nickname: "Wolf B", role: "werewolf", alive: true },
+      { playerId: "player_seer", nickname: "Seer", role: "seer", alive: true },
       { playerId: "player_3", nickname: "Villager A", role: "villager", alive: true },
       { playerId: "player_4", nickname: "Villager B", role: "villager", alive: true }
     ]);
@@ -1407,6 +1408,23 @@ describe("game", () => {
 
     expect(voted).toMatchObject({ phase: "night", nightKills: { player_1: "player_3" } });
     expect(() => castNightKill(voted, "player_1", "player_4", 0)).toThrow("Night kill is already used tonight");
+  });
+
+  it("counts the werewolf pack as complete after one night kill target", () => {
+    const game = activeState("night", [
+      { playerId: "player_1", nickname: "Wolf A", role: "werewolf", alive: true },
+      { playerId: "player_2", nickname: "Wolf B", role: "big_wolf", alive: true },
+      { playerId: "player_3", nickname: "Villager A", role: "villager", alive: true },
+      { playerId: "player_4", nickname: "Villager B", role: "villager", alive: true },
+      { playerId: "player_5", nickname: "Villager C", role: "villager", alive: true },
+      { playerId: "player_6", nickname: "Villager D", role: "villager", alive: true }
+    ]);
+
+    const next = castNightKill(game, "player_1", "player_3", 0);
+
+    expect(next.phase).toBe("day");
+    expect(next.day).toBe(2);
+    expect(next.players.find((player) => player.playerId === "player_3")?.alive).toBe(false);
   });
 
   it("gives foxes the win when a normal win condition happens while a fox is alive", () => {
