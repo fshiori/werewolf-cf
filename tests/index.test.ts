@@ -1273,6 +1273,8 @@ describe("worker routes", () => {
       ["/bbs.php", "主題列表"],
       ["/icon_view.php", "頭像一覽"],
       ["/icon_upload.php", "上傳頭像"],
+      ["/upload.php", "上傳頭像"],
+      ["/upload2.php", "上傳頭像"],
       ["/rule.php", "基本流程"],
       ["/script_info.php", "Script Info"],
       ["/stats.php", "勝率分析"],
