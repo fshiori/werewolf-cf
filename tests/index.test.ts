@@ -208,7 +208,8 @@ function envWithRooms(
                   return { results: records[String(values[0])] ?? [] };
                 }
                 if (query.includes("FROM room_events")) {
-                  return { results: events[String(values[0])] ?? [] };
+                  const rows = events[String(values[0])] ?? [];
+                  return { results: query.includes("LIMIT 50") ? rows.slice(0, 50) : rows };
                 }
                 if (query.includes("FROM trip_scores") && query.includes("GROUP BY score")) {
                   const rows = tripScores.filter((score) => score.target_trip === String(values[0]));
@@ -3660,6 +3661,34 @@ describe("worker routes", () => {
     expect(body).toContain("表示");
     expect(body).toContain("heaven_talk=on");
     expect(body).toContain("heaven_only=on");
+  });
+
+  it("renders full room transcript history beyond the recent event API window", async () => {
+    const events = Array.from({ length: 55 }, (_, index) => {
+      const id = 55 - index;
+      return {
+        id,
+        room_id: "room_log",
+        player_id: `player_${id}`,
+        event_type: "public_chat",
+        payload_json: JSON.stringify({ nickname: `Player ${id}`, text: `entry ${id}`, phase: "day", day: 1 }),
+        created_at: `2026-05-06 12:${String(id).padStart(2, "0")}:00`
+      };
+    });
+    const env = envWithRooms(["room_log"], {}, {}, {}, { room_log: events });
+
+    const transcript = await worker.fetch(new Request("http://example.test/room/room_log/log"), env);
+    const transcriptBody = await transcript.text();
+    expect(transcript.status).toBe(200);
+    expect(transcriptBody).toContain("entry 55");
+    expect(transcriptBody).toContain("entry 1");
+
+    const api = await worker.fetch(new Request("http://example.test/api/rooms/room_log/events"), env);
+    const apiBody = await api.json() as { events: unknown[] };
+    expect(api.status).toBe(200);
+    expect(apiBody.events).toHaveLength(50);
+    expect(JSON.stringify(apiBody)).toContain("entry 55");
+    expect(apiBody.events).not.toContainEqual(expect.objectContaining({ id: 1 }));
   });
 
   it("renders legacy game_log.php transcript alias", async () => {
