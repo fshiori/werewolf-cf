@@ -1813,6 +1813,24 @@ describe("render", () => {
     expect(html).toContain('class="transcript-row transcript-location-system"');
   });
 
+  it("renders admin room-ended events as localized system transcript rows", () => {
+    const html = renderRoomTranscript("room_abc", [], [
+      {
+        id: 1,
+        roomId: "room_abc",
+        playerId: undefined,
+        eventType: "admin_room_ended",
+        payload: { status: "ended" },
+        createdAt: "2026-05-06 12:01:00"
+      }
+    ], { viewerMode: "public" });
+
+    expect(html).toContain("管理廢村");
+    expect(html).toContain("狀態:已結束");
+    expect(html).toContain('class="transcript-row transcript-location-system"');
+    expect(html).not.toContain(">admin_room_ended<");
+  });
+
   it("shows player-view private channel rows the selected role could hear", () => {
     const records = [
       {

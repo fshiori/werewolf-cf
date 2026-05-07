@@ -503,6 +503,19 @@ function phaseValueLabel(value: unknown): string {
   return typeof value === "string" ? value : "";
 }
 
+function roomStatusLabel(value: unknown): string {
+  if (value === "lobby") {
+    return "等待中";
+  }
+  if (value === "playing") {
+    return "進行中";
+  }
+  if (value === "ended") {
+    return "已結束";
+  }
+  return typeof value === "string" ? value : "";
+}
+
 function formatEventPayload(payload: unknown): string {
   const value = recordValue(payload);
   const votedPlayerIds = Array.isArray(value.votedPlayerIds) ? value.votedPlayerIds.filter((entry): entry is string => typeof entry === "string") : [];
@@ -534,7 +547,8 @@ function formatEventPayload(payload: unknown): string {
     isRecordValue(value.restrictions) ? `頻道限制:${channelRestrictionsLabel(value.restrictions)}` : "",
     typeof value.sourceChannel === "string" ? `來源頻道:${sourceChannelLabel(value.sourceChannel)}` : "",
     typeof value.phase === "string" ? `階段:${phaseValueLabel(value.phase)}` : "",
-    typeof value.role === "string" ? `角色:${roleLabel(value.role)}` : ""
+    typeof value.role === "string" ? `角色:${roleLabel(value.role)}` : "",
+    typeof value.status === "string" ? `狀態:${roomStatusLabel(value.status)}` : ""
   ].filter(Boolean);
   return fields.length ? fields.join("　") : "";
 }
@@ -574,6 +588,7 @@ function eventTypeLabel(eventType: string): string {
     gm_set_common_voice: "GM 共有公開調整",
     gm_set_channel_restrictions: "GM 頻道限制調整",
     player_kicked: "踢出玩家",
+    admin_room_ended: "管理廢村",
     room_created: "村子建立"
   };
   return labels[eventType] ?? eventType;
@@ -657,6 +672,7 @@ function transcriptLocation(event: RoomEventSummary): { className: string; label
     player_joined: { className: "transcript-location-system", label: "系統" },
     gm_joined: { className: "transcript-location-system", label: "系統" },
     player_kicked: { className: "transcript-location-system", label: "系統" },
+    admin_room_ended: { className: "transcript-location-system", label: "系統" },
     room_created: { className: "transcript-location-system", label: "系統" },
     game_started: { className: "transcript-location-game", label: "遊戲" },
     game_ended: { className: "transcript-location-game", label: "遊戲" },
@@ -819,6 +835,7 @@ const transcriptSystemEventTypes = new Set([
   "player_joined",
   "gm_joined",
   "player_kicked",
+  "admin_room_ended",
   "room_created",
   "game_started",
   "game_ended",
