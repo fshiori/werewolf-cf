@@ -471,8 +471,22 @@ function abilityResultLabel(value: unknown): string {
   return typeof value === "string" ? value : "";
 }
 
+function kickMethodLabel(value: unknown): string {
+  if (value === "gm") {
+    return "GM";
+  }
+  if (value === "host") {
+    return "村長";
+  }
+  if (value === "vote") {
+    return "居民投票";
+  }
+  return typeof value === "string" ? value : "";
+}
+
 function formatEventPayload(payload: unknown): string {
   const value = recordValue(payload);
+  const votedPlayerIds = Array.isArray(value.votedPlayerIds) ? value.votedPlayerIds.filter((entry): entry is string => typeof entry === "string") : [];
   const fields = [
     typeof value.name === "string" ? `村名:${value.name}` : "",
     typeof value.comment === "string" && value.comment ? `說明:${value.comment}` : "",
@@ -481,6 +495,12 @@ function formatEventPayload(payload: unknown): string {
     typeof value.winner === "string" ? `勝利:${winnerLabel(value.winner)}` : "",
     typeof value.day === "number" ? `第${value.day}日` : "",
     typeof value.players === "number" ? `${value.players}人` : "",
+    votedPlayerIds.length ? `投票數:${votedPlayerIds.length}` : "",
+    typeof value.required === "number" ? `必要:${value.required}` : "",
+    typeof value.ready === "boolean" ? `成立:${value.ready ? "是" : "否"}` : "",
+    typeof value.startVotes === "number" ? `開始票:${value.startVotes}` : "",
+    typeof value.kickVotes === "number" ? `踢出票:${value.kickVotes}` : "",
+    typeof value.method === "string" ? `方式:${kickMethodLabel(value.method)}` : "",
     typeof value.targetPlayerId === "string" ? `對象:${value.targetPlayerId}` : "",
     typeof value.targetNickname === "string" ? `對象名:${value.targetNickname}` : "",
     typeof value.remaining === "number" ? `剩餘:${value.remaining}` : "",

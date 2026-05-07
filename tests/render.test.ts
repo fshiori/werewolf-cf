@@ -1985,6 +1985,52 @@ describe("render", () => {
     expect(html).toContain("來源頻道:人狼");
   });
 
+  it("renders lobby vote details in transcript payloads", () => {
+    const html = renderRoomTranscript("room_abc", [], [
+      {
+        id: 1,
+        roomId: "room_abc",
+        playerId: "player_a",
+        eventType: "lobby_start_vote",
+        payload: { nickname: "Alice", votedPlayerIds: ["player_a", "player_b"], required: 8, ready: false },
+        createdAt: "2026-05-06 12:01:00"
+      },
+      {
+        id: 2,
+        roomId: "room_abc",
+        playerId: "player_b",
+        eventType: "lobby_kick_vote",
+        payload: { nickname: "Bob", targetPlayerId: "player_target", targetNickname: "Target", votedPlayerIds: ["player_a", "player_b", "player_c", "player_d", "player_e"], required: 5, ready: true },
+        createdAt: "2026-05-06 12:02:00"
+      },
+      {
+        id: 3,
+        roomId: "room_abc",
+        playerId: "player_b",
+        eventType: "player_kicked",
+        payload: { targetPlayerId: "player_target", targetNickname: "Target", method: "vote", kickVotes: 5 },
+        createdAt: "2026-05-06 12:03:00"
+      },
+      {
+        id: 4,
+        roomId: "room_abc",
+        playerId: "player_h",
+        eventType: "game_started",
+        payload: { day: 1, players: 8, startVotes: 8 },
+        createdAt: "2026-05-06 12:04:00"
+      }
+    ]);
+
+    expect(html).toContain("開始投票");
+    expect(html).toContain("踢人投票");
+    expect(html).toContain("踢出玩家");
+    expect(html).toContain("投票數:2　必要:8　成立:否");
+    expect(html).toContain("投票數:5　必要:5　成立:是");
+    expect(html).toContain("方式:居民投票");
+    expect(html).toContain("踢出票:5");
+    expect(html).toContain("開始票:8");
+  });
+
   it("renders role ability result labels in transcript payloads", () => {
     const html = renderRoomTranscript("room_abc", [], [
       {
