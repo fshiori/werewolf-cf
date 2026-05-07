@@ -2128,6 +2128,27 @@ describe("render", () => {
     expect(html).not.toContain("勝利:未定");
   });
 
+  it("renders finalized game-ended rows with localized winner and player counts", () => {
+    const html = renderRoomTranscript("room_abc", [], [
+      {
+        id: 1,
+        roomId: "room_abc",
+        playerId: undefined,
+        eventType: "game_ended",
+        payload: { winner: "werewolves", day: 5, players: 12 },
+        createdAt: "2026-05-06 12:01:00"
+      }
+    ]);
+
+    expect(html).toContain("遊戲結束");
+    expect(html).toContain("勝利:人狼");
+    expect(html).toContain("第5日");
+    expect(html).toContain("12人");
+    expect(html).toContain('class="transcript-row transcript-location-game"');
+    expect(html).not.toContain("勝利:werewolves");
+    expect(html).not.toContain(">game_ended<");
+  });
+
   it("renders role ability result labels in transcript payloads", () => {
     const html = renderRoomTranscript("room_abc", [], [
       {
