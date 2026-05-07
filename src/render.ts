@@ -48,16 +48,19 @@ function page(title: string, body: string, extraHead = ""): string {
     body.room-view-spectator .view-spectator-only,
     body.room-view-heaven .view-heaven-only { display: table-row; }
     body.room-view-heaven .panel th { background: #cccccc; }
-    .page-frame-only, .page-up-only, .page-vote-only { display: none; }
+    .page-frame-only, .page-up-only, .page-vote-only, .page-bottom-only { display: none; }
     body.room-page-frame .page-frame-only,
     body.room-page-up .page-up-only,
-    body.room-page-vote .page-vote-only { display: table-row; }
+    body.room-page-vote .page-vote-only,
+    body.room-page-bottom .page-bottom-only { display: table-row; }
     body.room-page-frame .room-aux-panel,
     body.room-page-up .room-aux-panel,
-    body.room-page-vote .room-aux-panel { display: none; }
+    body.room-page-vote .room-aux-panel,
+    body.room-page-bottom .room-aux-panel { display: none; }
     body.room-page-frame .room-registration-row,
     body.room-page-up .room-registration-row,
-    body.room-page-vote .room-registration-row { display: none; }
+    body.room-page-vote .room-registration-row,
+    body.room-page-bottom .room-registration-row { display: none; }
     body.room-page-up .room-panel-members,
     body.room-page-up .room-panel-actions,
     body.room-page-up .room-panel-lastwords,
@@ -66,6 +69,7 @@ function page(title: string, body: string, extraHead = ""): string {
     body.room-page-vote .room-panel-lastwords,
     body.room-page-vote .room-panel-chat,
     body.room-page-vote .room-panel-system { display: none; }
+    body.room-page-bottom .game-header .full-room-only { display: none; }
     .legacy-entry-map { width: 100%; border: 1px solid silver; margin-top: 3px; }
     .legacy-entry-map th { background: #eeeeee; color: black; text-align: left; padding: 2px 4px; }
     .legacy-entry-map td { border-top: 1px dotted silver; padding: 2px 4px; }
@@ -3596,7 +3600,7 @@ export type LegacyRoomPath = "/game_play.php" | "/game_view.php" | "/game_frame.
 export type RenderRoomOptions = {
   autoReloadSeconds?: number;
   viewMode?: "player" | "spectator" | "heaven";
-  pageMode?: "full" | "frame" | "up" | "vote";
+  pageMode?: "full" | "frame" | "up" | "vote" | "bottom";
   legacyPath?: LegacyRoomPath;
 };
 
@@ -3614,8 +3618,8 @@ function normalizeRoomViewMode(value: string | undefined | null): "player" | "sp
   return value === "spectator" || value === "heaven" ? value : "player";
 }
 
-function normalizeRoomPageMode(value: string | undefined | null): "full" | "frame" | "up" | "vote" {
-  return value === "frame" || value === "up" || value === "vote" ? value : "full";
+function normalizeRoomPageMode(value: string | undefined | null): "full" | "frame" | "up" | "vote" | "bottom" {
+  return value === "frame" || value === "up" || value === "vote" || value === "bottom" ? value : "full";
 }
 
 function roomViewHref(roomPath: string, viewMode: "player" | "spectator" | "heaven", autoReloadSeconds: 0 | 15 | 20 | 30): string {
@@ -3639,7 +3643,16 @@ function legacyRoomHref(path: LegacyRoomPath, roomId: string, autoReloadSeconds:
   return `${path}?${escapeHtml(params)}`;
 }
 
-function currentRoomReloadHref(roomPath: string, roomId: string, viewMode: "player" | "spectator" | "heaven", pageMode: "full" | "frame" | "up" | "vote", autoReloadSeconds: 0 | 15 | 20 | 30, legacyPath?: LegacyRoomPath): string {
+function legacyRoomBottomFrameHref(roomId: string, autoReloadSeconds: 0 | 15 | 20 | 30): string {
+  const params = [
+    `room_no=${encodeURIComponent(roomId)}`,
+    autoReloadSeconds > 0 ? `auto_reload=${autoReloadSeconds}` : "",
+    "frame=bottom"
+  ].filter(Boolean).join("&");
+  return `/game_play.php?${escapeHtml(params)}`;
+}
+
+function currentRoomReloadHref(roomPath: string, roomId: string, viewMode: "player" | "spectator" | "heaven", pageMode: "full" | "frame" | "up" | "vote" | "bottom", autoReloadSeconds: 0 | 15 | 20 | 30, legacyPath?: LegacyRoomPath): string {
   if (pageMode === "frame") {
     return legacyRoomHref("/game_frame.php", roomId, autoReloadSeconds);
   }
@@ -3649,14 +3662,18 @@ function currentRoomReloadHref(roomPath: string, roomId: string, viewMode: "play
   if (pageMode === "vote") {
     return legacyRoomHref("/game_vote.php", roomId, autoReloadSeconds);
   }
+  if (pageMode === "bottom") {
+    return legacyRoomBottomFrameHref(roomId, autoReloadSeconds);
+  }
   if (legacyPath) {
     return legacyRoomHref(legacyPath, roomId, autoReloadSeconds, viewMode === "player" ? undefined : viewMode);
   }
   return roomReloadHref(roomPath, viewMode, autoReloadSeconds);
 }
 
-function legacyRoomEntryMap(roomId: string, autoReloadSeconds: 0 | 15 | 20 | 30, pageMode: "full" | "frame" | "up" | "vote"): string {
+function legacyRoomEntryMap(roomId: string, autoReloadSeconds: 0 | 15 | 20 | 30, pageMode: "full" | "frame" | "up" | "vote" | "bottom"): string {
   const gamePlayHref = legacyRoomHref("/game_play.php", roomId, autoReloadSeconds);
+  const gamePlayBottomHref = legacyRoomBottomFrameHref(roomId, autoReloadSeconds);
   const gameUpHref = legacyRoomHref("/game_up.php", roomId, autoReloadSeconds);
   const gameVoteHref = legacyRoomHref("/game_vote.php", roomId, autoReloadSeconds);
   if (pageMode === "frame") {
@@ -3665,7 +3682,7 @@ function legacyRoomEntryMap(roomId: string, autoReloadSeconds: 0 | 15 | 20 | 30,
                   <tr><th colspan="3">game_frame.php frameset</th></tr>
                   <tr><td>rows</td><td colspan="2">85,*</td></tr>
                   <tr><td>frame name="up"</td><td>src</td><td><a href="${gameUpHref}#game_top">game_up.php#game_top</a></td></tr>
-                  <tr><td>frame name="bottom"</td><td>src</td><td><a href="${gamePlayHref}#game_top">game_play.php#game_top</a></td></tr>
+                  <tr><td>frame name="bottom"</td><td>src</td><td><a href="${gamePlayBottomHref}#game_top">game_play.php?frame=bottom#game_top</a></td></tr>
                   <tr><td>noframes</td><td colspan="2">瀏覽器不支援框架</td></tr>
                 </table>`;
   }
@@ -3693,6 +3710,16 @@ function legacyRoomEntryMap(roomId: string, autoReloadSeconds: 0 | 15 | 20 | 30,
                   <tr><td>back</td><td colspan="2"><a href="${gameUpHref}#game_top">←上一頁&amp;重新整理</a></td></tr>
                   <tr><td>submit</td><td colspan="2">投將該員'處刑'一票 / 咬下去 / 占卜對象 / 護衛對象 / 復活對象</td></tr>
                   <tr><td>action panel</td><td colspan="2">共用 WebSocket 指令，送至 Room Durable Object 驗證</td></tr>
+                </table>`;
+  }
+  if (pageMode === "bottom") {
+    return `
+                <table class="legacy-entry-map" data-legacy-entry="game_play.php bottom">
+                  <tr><th colspan="3">game_play.php 下框</th></tr>
+                  <tr><td>frame name="bottom"</td><td>mode</td><td>main game output</td></tr>
+                  <tr><td>hidden chrome</td><td colspan="2">住民登錄、PHP入口列表、診斷紀錄面板</td></tr>
+                  <tr><td>kept panels</td><td colspan="2">玩家列表、能力/投票、遺言、發言紀錄、系統訊息</td></tr>
+                  <tr><td>up</td><td colspan="2"><a href="${gameUpHref}#game_top">game_up.php#game_top</a></td></tr>
                 </table>`;
   }
   return "";
@@ -3755,7 +3782,7 @@ function legacyVoteFormShell(roomId: string, autoReloadSeconds: 0 | 15 | 20 | 30
       </tr>`;
 }
 
-function roomPageTitle(roomId: string, pageMode: "full" | "frame" | "up" | "vote", viewMode: "player" | "spectator" | "heaven"): string {
+function roomPageTitle(roomId: string, pageMode: "full" | "frame" | "up" | "vote" | "bottom", viewMode: "player" | "spectator" | "heaven"): string {
   if (pageMode === "frame") {
     return "汝等是人是狼？＜遊戲＞";
   }
@@ -3764,6 +3791,9 @@ function roomPageTitle(roomId: string, pageMode: "full" | "frame" | "up" | "vote
   }
   if (pageMode === "vote") {
     return "汝等是人是狼？＜投票＞";
+  }
+  if (pageMode === "bottom") {
+    return "汝等是人是狼？＜遊戲＞";
   }
   if (viewMode === "spectator") {
     return "汝等是人是狼？[觀戰]";
@@ -3774,7 +3804,7 @@ function roomPageTitle(roomId: string, pageMode: "full" | "frame" | "up" | "vote
 export function renderLegacyGameFrame(roomId: string, options: Pick<RenderRoomOptions, "autoReloadSeconds"> = {}): string {
   const autoReloadSeconds = normalizeAutoReloadSeconds(options.autoReloadSeconds);
   const gameUpHref = legacyRoomHref("/game_up.php", roomId, autoReloadSeconds);
-  const gamePlayHref = legacyRoomHref("/game_play.php", roomId, autoReloadSeconds);
+  const gamePlayHref = legacyRoomBottomFrameHref(roomId, autoReloadSeconds);
   return `<!doctype html>
 <html lang="zh-Hant">
 <head>
@@ -3800,7 +3830,7 @@ export function renderRoom(roomId: string, options: RenderRoomOptions = {}): str
   const legacyPath = options.legacyPath;
   const roomPath = `/room/${escapeHtml(roomId)}`;
   const viewLabel = viewMode === "spectator" ? "旁觀視點" : viewMode === "heaven" ? "靈界視點" : "玩家視點";
-  const pageLabel = pageMode === "frame" ? "框架入口" : pageMode === "up" ? "上方更新" : pageMode === "vote" ? "投票入口" : "完整頁面";
+  const pageLabel = pageMode === "frame" ? "框架入口" : pageMode === "up" ? "上方更新" : pageMode === "vote" ? "投票入口" : pageMode === "bottom" ? "下方遊戲" : "完整頁面";
   const legacyEntryMap = legacyRoomEntryMap(roomId, autoReloadSeconds, pageMode);
   const autoReloadMeta = autoReloadSeconds > 0 ? `<meta http-equiv="refresh" content="${autoReloadSeconds}">` : "";
   return page(roomPageTitle(roomId, pageMode, viewMode), `
@@ -3822,12 +3852,14 @@ export function renderRoom(roomId: string, options: RenderRoomOptions = {}): str
               <td style="width: 180px;">階段：<span id="phase">lobby</span><div id="phaseWarning"></div></td>
               <td>
                 勝利：<span id="winner" class="muted">未定</span>
+                <span class="full-room-only">
                 　<a href="/">首頁</a>
                 　<a href="${roomPath}/records">對局紀錄</a>
                 　<a href="${roomPath}/events">事件履歷</a>
                 　<a href="${roomPath}/log">完整紀錄</a>
                 　<button id="manualRefresh" type="button">手動更新</button>
                 <label><input id="autoRefresh" type="checkbox"> 自動更新</label>
+                </span>
               </td>
             </tr>
             <tr>
@@ -3842,7 +3874,7 @@ export function renderRoom(roomId: string, options: RenderRoomOptions = {}): str
                 <small class="muted">目前：${autoReloadSeconds > 0 ? `${autoReloadSeconds}秒` : "手動"}</small>
               </td>
             </tr>
-            <tr>
+            <tr class="full-room-only">
               <td>視點</td>
               <td>
                 <strong>${viewLabel}</strong>
@@ -3852,7 +3884,7 @@ export function renderRoom(roomId: string, options: RenderRoomOptions = {}): str
                 <small class="muted">PHP 版 game_play / game_view / heaven 入口對應</small>
               </td>
             </tr>
-            <tr>
+            <tr class="full-room-only">
               <td>PHP入口</td>
               <td>
                 <a href="${legacyRoomHref("/game_play.php", roomId, autoReloadSeconds)}">game_play.php</a>
@@ -3881,6 +3913,10 @@ export function renderRoom(roomId: string, options: RenderRoomOptions = {}): str
             <tr class="page-vote-only">
               <td>投票</td>
               <td>著重能力發動與投票操作；發言、遺言、系統與診斷面板不顯示。</td>
+            </tr>
+            <tr class="page-bottom-only">
+              <td>下方</td>
+              <td>game_frame.php 下框；保留主遊戲輸出，隱藏登錄、入口列表與診斷面板。</td>
             </tr>
             <tr class="view-spectator-only">
               <td>旁觀</td>

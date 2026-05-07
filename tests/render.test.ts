@@ -271,9 +271,9 @@ describe("render", () => {
     expect(html).toContain("#lastWordsLog .last-words-row { background-color: #eeeeff; color: black; }");
     expect(html).toContain("body.room-view-spectator .room-chat-controls { display: none; }");
     expect(html).toContain("body.room-view-heaven .room-live-chat-only { display: none; }");
-    expect(html).toContain(".page-frame-only, .page-up-only, .page-vote-only { display: none; }");
+    expect(html).toContain(".page-frame-only, .page-up-only, .page-vote-only, .page-bottom-only { display: none; }");
     expect(html).toContain("body.room-page-frame .room-aux-panel");
-    expect(html).toContain("body.room-page-vote .room-registration-row { display: none; }");
+    expect(html).toContain("body.room-page-vote .room-registration-row,\n    body.room-page-bottom .room-registration-row { display: none; }");
     expect(html).toContain("body.room-page-up .room-panel-members");
     expect(html).toContain("body.room-page-up #chatLog { display: none; }");
     expect(html).toContain("body.room-page-vote .room-panel-system { display: none; }");
@@ -496,8 +496,24 @@ describe("render", () => {
     expect(frame).toContain("body.room-page-frame .room-registration-row");
     expect(frame).toContain("<tr><td>rows</td><td colspan=\"2\">85,*</td></tr>");
     expect(frame).toContain('<tr><td>frame name="up"</td><td>src</td><td><a href="/game_up.php?room_no=room_abc#game_top">game_up.php#game_top</a></td></tr>');
-    expect(frame).toContain('<tr><td>frame name="bottom"</td><td>src</td><td><a href="/game_play.php?room_no=room_abc#game_top">game_play.php#game_top</a></td></tr>');
+    expect(frame).toContain('<tr><td>frame name="bottom"</td><td>src</td><td><a href="/game_play.php?room_no=room_abc&amp;frame=bottom#game_top">game_play.php?frame=bottom#game_top</a></td></tr>');
     expect(frame).toContain('<tr class="room-aux-panel">');
+
+    const bottom = renderRoom("room_abc", { pageMode: "bottom" });
+    expect(bottom).toContain("<title>汝等是人是狼？＜遊戲＞</title>");
+    expect(bottom).toContain('data-room-page="bottom"');
+    expect(bottom).toContain("下方遊戲");
+    expect(bottom).toContain("game_frame.php 下框；保留主遊戲輸出");
+    expect(bottom).toContain("body.room-page-bottom .room-registration-row");
+    expect(bottom).toContain("body.room-page-bottom .game-header .full-room-only { display: none; }");
+    expect(bottom).toContain('data-legacy-entry="game_play.php bottom"');
+    expect(bottom).toContain('[<a href="/game_play.php?room_no=room_abc&amp;frame=bottom">手動更新</a>]');
+    expect(bottom).toContain('<a href="/game_play.php?room_no=room_abc&amp;auto_reload=15&amp;frame=bottom">15秒</a>');
+    expect(bottom).toContain("game_play.php 下框");
+    expect(bottom).toContain('<tr><td>hidden chrome</td><td colspan="2">住民登錄、PHP入口列表、診斷紀錄面板</td></tr>');
+    expect(bottom).toContain('<tr class="room-panel-members">');
+    expect(bottom).toContain('<tr class="room-panel-chat">');
+    expect(bottom).toContain('<tr class="room-aux-panel">');
 
     const up = renderRoom("room_abc", { pageMode: "up" });
     expect(up).toContain("<title>汝等是人是狼？＜發言＞</title>");
@@ -551,8 +567,8 @@ describe("render", () => {
     expect(html).toContain("<title>汝等是人是狼？＜遊戲＞</title>");
     expect(html).toContain('<frameset rows="85,*" border="0" frameborder="0" framespacing="0" data-legacy-entry="game_frame.php">');
     expect(html).toContain('<frame name="up" src="/game_up.php?room_no=room_abc&amp;auto_reload=20#game_top" scrolling="no" noresize>');
-    expect(html).toContain('<frame name="bottom" src="/game_play.php?room_no=room_abc&amp;auto_reload=20#game_top">');
-    expect(html).toContain('<a href="/game_play.php?room_no=room_abc&amp;auto_reload=20#game_top">game_play.php#game_top</a>');
+    expect(html).toContain('<frame name="bottom" src="/game_play.php?room_no=room_abc&amp;auto_reload=20&amp;frame=bottom#game_top">');
+    expect(html).toContain('<a href="/game_play.php?room_no=room_abc&amp;auto_reload=20&amp;frame=bottom#game_top">game_play.php#game_top</a>');
     expect(html).not.toContain('data-room-page="frame"');
   });
 
