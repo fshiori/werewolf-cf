@@ -49,6 +49,7 @@ describe("render", () => {
     ]);
 
     expect(html).toContain("<fieldset>");
+    expect(html).toContain('<body bgcolor="white">');
     expect(html).toContain("選單");
     expect(html).toContain('background-image: url("/assets/reference/img/top_bg.jpg")');
     expect(html).toContain('/assets/reference/img/top_title.jpg');
