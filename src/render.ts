@@ -740,7 +740,7 @@ function federatedRoomValue(room: RoomSummary | FederatedRoomSummary): Federated
   if ("roomUrl" in room) {
     return room;
   }
-  return { ...room, serverName: "本伺服器", serverUrl: "/", roomUrl: `/room/${room.id}`, local: true };
+  return { ...room, serverName: "本伺服器", serverUrl: "/", roomUrl: `/login.php?room_no=${encodeURIComponent(room.id)}`, local: true };
 }
 
 export function renderFederatedList(rooms: Array<RoomSummary | FederatedRoomSummary>, peers: FederatedServerStatus[] = []): string {

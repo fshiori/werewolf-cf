@@ -253,7 +253,7 @@ async function listFederatedRooms(env: Env): Promise<{ rooms: FederatedRoomSumma
     ...room,
     serverName: "本伺服器",
     serverUrl: "/",
-    roomUrl: `/room/${room.id}`,
+    roomUrl: `/login.php?room_no=${encodeURIComponent(room.id)}`,
     local: true
   }));
   let servers: FederatedServerConfig[];
