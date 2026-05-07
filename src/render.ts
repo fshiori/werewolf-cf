@@ -505,11 +505,12 @@ function renderTranscriptVoteTables(events: RoomEventSummary[]): string {
       const voter = typeof value.nickname === "string" && value.nickname ? value.nickname : event.playerId ?? "不明";
       const target = voteTargetLabel(event);
       const targetTotal = targetTotals.get(target) ?? 0;
+      const voterReceivedTotal = targetTotals.get(voter) ?? 0;
       return `<tr class="vote-ballot-row">
         <td>${escapeHtml(voter)}</td>
-        <td>→</td>
+        <td>${voterReceivedTotal}票</td>
+        <td>投票給 ${targetTotal} 票 →</td>
         <td>${escapeHtml(target)}</td>
-        <td>${targetTotal}票</td>
         <td>${escapeHtml(event.createdAt)}</td>
       </tr>`;
     }).join("");
@@ -518,7 +519,7 @@ function renderTranscriptVoteTables(events: RoomEventSummary[]): string {
       <tr class="vote-total-row"><td colspan="5">得票：${renderVoteTargetTotals(groupEvents)}</td></tr>
       <tr><td colspan="5">
         <table class="form-table vote-table" cellspacing="1" style="margin:6px 0 12px 18px;">
-          <thead><tr><td><strong>投票者</strong></td><td></td><td><strong>投票先</strong></td><td><strong>得票</strong></td><td><strong>時間</strong></td></tr></thead>
+          <thead><tr><td><strong>投票者</strong></td><td><strong>得票</strong></td><td><strong>投票</strong></td><td><strong>投票先</strong></td><td><strong>時間</strong></td></tr></thead>
           <tbody>${rows}</tbody>
         </table>
       </td></tr>`;
