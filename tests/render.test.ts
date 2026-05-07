@@ -228,6 +228,11 @@ describe("render", () => {
     expect(html).toContain("Trip");
     expect(html).toContain("avatarFile");
     expect(html).toContain("defaultIcon");
+    expect(html).toContain("/assets/reference/img/user_regist_title.gif");
+    expect(html).toContain("/assets/reference/img/user_regist_handle_name.gif");
+    expect(html).toContain("/assets/reference/img/user_regist_handle_trip.gif");
+    expect(html).toContain("/assets/reference/img/user_regist_role.gif");
+    expect(html).toContain("/assets/reference/img/user_regist_icon.gif");
     expect(html).toContain("user_icon/001.gif");
     expect(html).toContain("頭像一覽");
     expect(html).toContain("image/png,image/jpeg,image/gif,image/webp");
@@ -317,7 +322,7 @@ describe("render", () => {
     expect(spectator).toContain('data-room-view="spectator"');
     expect(spectator).toContain("旁觀視點");
     expect(spectator).toContain("只觀看公開資訊與玩家列表");
-    expect(spectator).toContain('<tr class="view-player-only">\n              <td>玩家暱稱</td>');
+    expect(spectator).toContain('<tr class="view-player-only">\n              <td><img class="title-img" src="/assets/reference/img/user_regist_handle_name.gif" alt="玩家暱稱">玩家暱稱</td>');
     expect(spectator).toContain('<a href="/room/room_abc?view=spectator&amp;auto_reload=15">15秒</a>');
     expect(spectator).toContain('<a href="/room/room_abc?view=heaven&amp;auto_reload=20">靈界</a>');
 
