@@ -33,6 +33,7 @@ import {
   publicPlayers,
   raiseObjection,
   recordConversationActivity,
+  requestRoomEnd,
   removeLobbyPlayer,
   setLastWords,
   startGame,
@@ -1314,6 +1315,35 @@ describe("game", () => {
     ]);
 
     expect(() => raiseObjection(game, "player_1")).toThrow("Objection is only available");
+  });
+
+  it("ends the room when room-end requests exceed half of living players", () => {
+    let game = activeState("day", [
+      { playerId: "player_1", nickname: "Alice", role: "villager", alive: true },
+      { playerId: "player_2", nickname: "Bob", role: "villager", alive: true },
+      { playerId: "player_3", nickname: "Carol", role: "werewolf", alive: true }
+    ]);
+
+    game = requestRoomEnd(game, "player_1");
+    expect(game.phase).toBe("day");
+    expect(game.roomEndVotes).toEqual({ player_1: 1 });
+
+    game = requestRoomEnd(game, "player_2");
+    expect(game.phase).toBe("ended");
+    expect(game.winner).toBeUndefined();
+    expect(game.phaseEndsAt).toBeUndefined();
+    expect(game.log).toEqual(expect.arrayContaining(["Alice 要求廢村。", "Bob 要求廢村。", "抗議人數超過生存人數一半，廢村。"]));
+  });
+
+  it("rejects duplicate and night room-end requests", () => {
+    let game = activeState("day", [
+      { playerId: "player_1", nickname: "Alice", role: "villager", alive: true },
+      { playerId: "player_2", nickname: "Bob", role: "werewolf", alive: true }
+    ]);
+    game = requestRoomEnd(game, "player_1");
+
+    expect(() => requestRoomEnd(game, "player_1")).toThrow("already requested");
+    expect(() => requestRoomEnd({ ...game, phase: "night" }, "player_2")).toThrow("Room end requests are only available");
   });
 
   it("allows only wolves to perform night kills and detects wolf win", () => {

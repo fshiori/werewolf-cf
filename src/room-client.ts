@@ -297,6 +297,9 @@ document.querySelector("#sendSelfTalk").addEventListener("click", () => {
 document.querySelector("#sendObjection").addEventListener("click", () => {
   sendCommand({ type: "objection" });
 });
+document.querySelector("#sendRoomEndVote").addEventListener("click", () => {
+  sendCommand({ type: "room_end_vote" });
+});
 document.querySelector("#soundNotify").addEventListener("change", (event) => {
   localStorage.setItem("werewolf_cf_sound", event.target.checked ? "on" : "off");
 });
@@ -563,6 +566,7 @@ function renderGame(game) {
   const objectionRemaining = currentPlayer ? Math.max(0, maxObjections - ((game.objectionCounts || {})[currentPlayerId] || 0)) : maxObjections;
   document.querySelector("#objectionRemaining").textContent = String(objectionRemaining);
   document.querySelector("#sendObjection").disabled = !(currentPlayerAlive && (game.phase === "lobby" || game.phase === "day") && objectionRemaining > 0);
+  document.querySelector("#sendRoomEndVote").disabled = !(currentPlayerAlive && (game.phase === "lobby" || game.phase === "day") && !(game.roomEndVotedPlayerIds || []).includes(currentPlayerId));
   document.querySelector("#sendGmChat").disabled = !isGm;
   document.querySelector("#sendGmWhisper").disabled = !isGm || game.players.length === 0;
   document.querySelector("#gmAdvancePhase").disabled = !isGm || !(game.phase === "day" || game.phase === "night");

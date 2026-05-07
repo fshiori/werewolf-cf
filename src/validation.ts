@@ -437,5 +437,9 @@ export function parseClientMessage(raw: string): ClientMessage {
     return { type: "objection" };
   }
 
+  if (parsed.type === "room_end_vote") {
+    return { type: "room_end_vote" };
+  }
+
   throw new Error("Unknown message type");
 }

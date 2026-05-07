@@ -169,6 +169,7 @@ describe("validation", () => {
     });
     expect(parseClientMessage('{"type":"set_last_words","text":"bye"}')).toEqual({ type: "set_last_words", text: "bye" });
     expect(parseClientMessage('{"type":"objection"}')).toEqual({ type: "objection" });
+    expect(parseClientMessage('{"type":"room_end_vote"}')).toEqual({ type: "room_end_vote" });
     expect(parseClientMessage('{"type":"start_game"}')).toEqual({ type: "start_game" });
     expect(parseClientMessage('{"type":"start_vote"}')).toEqual({ type: "start_vote" });
     expect(parseClientMessage('{"type":"kick_player","targetPlayerId":"player_1"}')).toEqual({

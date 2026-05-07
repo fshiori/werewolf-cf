@@ -704,7 +704,8 @@ function getProtocol(): Response {
         "guard",
         "cat_revive",
         "set_last_words",
-        "objection"
+        "objection",
+        "room_end_vote"
       ],
       serverMessages: [
         "joined",

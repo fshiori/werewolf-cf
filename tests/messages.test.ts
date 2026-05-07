@@ -252,6 +252,11 @@ describe("messages", () => {
       objectionCounts: { player_1: 2 }
     });
 
+    expect(buildGameStateMessage({ ...game, roomEndVotes: { player_1: game.day, player_2: game.day - 1, missing_player: game.day } })).toMatchObject({
+      type: "game_state",
+      roomEndVotedPlayerIds: ["player_1"]
+    });
+
     const suddenDeathWarningAt = "2026-05-06T00:03:00.000Z";
     expect(buildGameStateMessage({ ...game, suddenDeathWarningAt })).toMatchObject({
       type: "game_state",

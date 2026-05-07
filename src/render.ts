@@ -2968,6 +2968,7 @@ export function renderProtocol(): string {
         <tr><td><strong>　dead_chat：</strong></td><td>遊戲進行中死亡玩家的靈界頻道。</td></tr>
         <tr><td><strong>　vote：</strong></td><td>白天投票，payload 含 <code>targetPlayerId</code>。</td></tr>
         <tr><td><strong>　objection：</strong></td><td>提出反對，白天或大廳可用，每人最多2次，伺服器會廣播音效通知事件。</td></tr>
+        <tr><td><strong>　room_end_vote：</strong></td><td>要求廢村，白天或大廳可用；同一天不同生存玩家超過半數時房間結束且不宣告勝方。</td></tr>
         <tr><td><strong>　night_kill / divine / child_fox_divine / guard / cat_revive：</strong></td><td>夜晚或角色能力行動，payload 含 <code>targetPlayerId</code>。</td></tr>
         <tr><td><strong>　set_last_words：</strong></td><td>遺言啟用時可儲存死亡時公開文字。</td></tr>
         <tr><td><strong>　start_game / kick_player：</strong></td><td>房主或 GM 的大廳控制。</td></tr>
@@ -3311,6 +3312,7 @@ export function renderRoom(roomId: string, options: RenderRoomOptions = {}): str
                 <button id="sendDeadChat" disabled>靈界</button>
                 <button id="sendSelfTalk" disabled>自言</button>
                 <button id="sendObjection" class="objection-button" disabled>${referenceAssetImg("img/objection.gif", "提出反對")}(<span id="objectionRemaining">2</span>)</button>
+                <button id="sendRoomEndVote" disabled>廢</button>
                 <label><input id="soundNotify" type="checkbox"> 音效</label>
                 <button id="sendGmChat" disabled>GM</button>
                 <select id="gmWhisperTarget"></select>

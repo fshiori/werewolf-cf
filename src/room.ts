@@ -31,6 +31,7 @@ import {
   mediumReadingForPlayer,
   playerStatUpdates,
   raiseObjection,
+  requestRoomEnd,
   recordConversationActivity as recordGameConversationActivity,
   removeLobbyPlayer,
   setLastWords,
@@ -566,6 +567,15 @@ export class RoomDurableObject {
         const remaining = MAX_OBJECTIONS - (next.objectionCounts?.[member.playerId] ?? 0);
         await this.persistRoomEvent(member.playerId, "objection", { nickname: member.nickname, remaining, phase: next.phase, day: next.day });
         this.broadcast(buildObjectionMessage(member.playerId, member.nickname, remaining));
+        await this.broadcastGameState(next);
+        return;
+      }
+
+      if (message.type === "room_end_vote") {
+        const next = requestRoomEnd(await this.loadGameState(), member.playerId);
+        await this.saveGameState(next);
+        await this.syncRoomStatus(next);
+        await this.persistRoomEvent(member.playerId, "room_end_requested", { nickname: member.nickname, phase: next.phase, day: next.day });
         await this.broadcastGameState(next);
         return;
       }
