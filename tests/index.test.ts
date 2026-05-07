@@ -3524,9 +3524,11 @@ describe("worker routes", () => {
     expect(body).toContain("頭像一覽");
     expect(body).toContain('<a href="/index.php">←返回</a><br>');
     expect(body).not.toContain('<p><a href="/index.php">←返回</a></p>');
-    expect(body).toContain("/assets/reference/img/icon_view_title.jpg");
+    expect(body).toContain('<img class="title-img" src="/assets/reference/img/icon_view_title.jpg" alt="頭像一覽"><br>');
+    expect(body).not.toContain('<p><img class="title-img" src="/assets/reference/img/icon_view_title.jpg" alt="頭像一覽"></p>');
     expect(body).toContain("/icon_upload.php#upload");
-    expect(body).toContain("/assets/reference/img/icon_upload_title.jpg");
+    expect(body).toContain('<img class="title-img" src="/assets/reference/img/icon_upload_title.jpg" alt="上傳頭像"><br>');
+    expect(body).not.toContain('<p><img class="title-img" src="/assets/reference/img/icon_upload_title.jpg" alt="上傳頭像"></p>');
     expect(body).toContain("/icon_view.php");
     expect(body).toContain("/assets/reference/user_icon/001.gif");
     expect(body).toContain('<table border="0" style="font-size:12pt;margin:12px auto 18px;">');

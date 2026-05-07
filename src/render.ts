@@ -1619,7 +1619,7 @@ export function renderIconCatalog(activeMenu = "/icon_view.php"): string {
     <fieldset style="background-image:url('/assets/reference/img/icon_view_bg.jpg'); background-repeat: repeat;">
       <legend><strong>頭像一覽</strong></legend>
       <a href="/index.php">←返回</a><br>
-      <p><img class="title-img" src="/assets/reference/img/icon_view_title.jpg" alt="頭像一覽"></p>
+      <img class="title-img" src="/assets/reference/img/icon_view_title.jpg" alt="頭像一覽"><br>
       <p><a href="/icon_upload.php#upload" style="font-size:12pt;color:blue;">→頭像登錄</a></p>
       <table class="form-table">
         <tr><td><strong>　來源：</strong></td><td>Reference default icons copied to R2 under <code>reference/user_icon/</code>.</td></tr>
@@ -1633,7 +1633,7 @@ export function renderIconCatalog(activeMenu = "/icon_view.php"): string {
     <fieldset id="upload" style="background-image:url('/assets/reference/img/icon_upload_bg.jpg'); background-repeat: repeat;">
       <legend><strong>上傳頭像</strong></legend>
       <a href="/index.php">←返回</a><br>
-      <p><img class="title-img" src="/assets/reference/img/icon_upload_title.jpg" alt="上傳頭像"></p>
+      <img class="title-img" src="/assets/reference/img/icon_upload_title.jpg" alt="上傳頭像"><br>
       <p><a href="/icon_view.php" style="font-size:12pt;color:blue;">→圖像一覽</a></p>
       <p align="right">請勿上傳動態GIF，上傳後會以 Cloudflare R2 保存為玩家頭像。</p>
       <table class="form-table">
