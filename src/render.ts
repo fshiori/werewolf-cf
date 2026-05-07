@@ -982,8 +982,39 @@ function transcriptViewerPlayer(records: GameRecordSummary[], viewerPlayerId?: s
   return undefined;
 }
 
+function transcriptViewerPlayerFromEvents(events: RoomEventSummary[], viewerPlayerId?: string): Record<string, unknown> | undefined {
+  if (!viewerPlayerId) {
+    return undefined;
+  }
+  for (const event of events) {
+    if (event.playerId !== viewerPlayerId) {
+      continue;
+    }
+    const value = recordValue(event.payload);
+    if (typeof value.role === "string" || typeof value.playerRole === "string" || typeof value.phpRole === "string" || value.lover === true || value.lovers === true) {
+      return {
+        playerId: viewerPlayerId,
+        nickname: typeof value.nickname === "string" ? value.nickname : viewerPlayerId,
+        role: typeof value.role === "string" ? value.role : typeof value.playerRole === "string" ? value.playerRole : value.phpRole,
+        lover: value.lover === true || value.lovers === true
+      };
+    }
+  }
+  return undefined;
+}
+
+function transcriptRoleText(role: unknown): string {
+  return typeof role === "string" ? role : "";
+}
+
 function isWerewolfTranscriptRole(role: unknown): boolean {
-  return role === "werewolf" || role === "big_wolf";
+  const text = transcriptRoleText(role);
+  return role === "werewolf" || role === "big_wolf" || text === "wolf" || text.startsWith("wolf ");
+}
+
+function isFoxTranscriptRole(role: unknown): boolean {
+  const text = transcriptRoleText(role);
+  return role === "fox" || role === "child_fox" || text === "fosi" || text.startsWith("fox") || text.startsWith("fosi ");
 }
 
 function isCompositeLoversTranscriptEvent(event: RoomEventSummary): boolean {
@@ -1002,7 +1033,7 @@ function isViewerChannelTranscriptEvent(event: RoomEventSummary, viewerPlayer?: 
     case "wolf_chat":
       return isWerewolfTranscriptRole(viewerPlayer.role) || (viewerPlayer.lover === true && isCompositeLoversTranscriptEvent(event));
     case "fox_chat":
-      return viewerPlayer.role === "fox" || (viewerPlayer.lover === true && isCompositeLoversTranscriptEvent(event));
+      return isFoxTranscriptRole(viewerPlayer.role) || (viewerPlayer.lover === true && isCompositeLoversTranscriptEvent(event));
     case "common_chat":
       return viewerPlayer.role === "common";
     case "lovers_chat":
@@ -1017,7 +1048,9 @@ function filterTranscriptEventsByViewer(events: RoomEventSummary[], records: Gam
   if (mode === "legacy" || mode === "gm") {
     return events;
   }
-  const viewerPlayer = mode === "player" ? transcriptViewerPlayer(records, options.viewerPlayerId) : undefined;
+  const viewerPlayer = mode === "player"
+    ? transcriptViewerPlayer(records, options.viewerPlayerId) ?? transcriptViewerPlayerFromEvents(events, options.viewerPlayerId)
+    : undefined;
   return events.filter((event) => {
     if (!isPrivateTranscriptEvent(event)) {
       return true;

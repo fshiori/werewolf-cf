@@ -2094,6 +2094,40 @@ describe("render", () => {
     expect(seerView).toContain("可聽見的同陣營密談");
   });
 
+  it("infers player-view channel visibility from event payload roles when records are missing", () => {
+    const events = [
+      {
+        id: 1,
+        roomId: "room_abc",
+        playerId: "viewer_wolf",
+        eventType: "public_chat",
+        payload: { nickname: "Viewer Wolf", role: "wolf wfbig", text: "hello", phase: "day", day: 2 },
+        createdAt: "2026-05-06 12:01:00"
+      },
+      {
+        id: 2,
+        roomId: "room_abc",
+        playerId: "other_wolf",
+        eventType: "wolf_chat",
+        payload: { visibility: "private", nickname: "Other Wolf", text: "pack imported", phase: "night", day: 2 },
+        createdAt: "2026-05-06 12:02:00"
+      },
+      {
+        id: 3,
+        roomId: "room_abc",
+        playerId: "other_fox",
+        eventType: "fox_chat",
+        payload: { visibility: "private", nickname: "Other Fox", text: "fox imported", phase: "night", day: 2 },
+        createdAt: "2026-05-06 12:03:00"
+      }
+    ];
+
+    const wolfView = renderRoomTranscript("room_abc", [], events, { viewerMode: "player", viewerPlayerId: "viewer_wolf", heavenTalk: true });
+    expect(wolfView).toContain("Viewer Wolf (viewer_wolf)");
+    expect(wolfView).toContain("pack imported");
+    expect(wolfView).not.toContain("fox imported");
+  });
+
   it("shows composite wolf or fox lover transcript rows to lover player views", () => {
     const records = [
       {
