@@ -1,4 +1,4 @@
-import { DEFAULT_ANNOUNCEMENT, renderAdminConfig, renderAdminConfigLogin, renderAdminIndex, renderAdminRooms, renderAdminRoomsLogin, renderBbs, renderBbsAdmin, renderBbsTopic, renderFederatedList, renderHome, renderIconCatalog, renderLeaderboard, renderManual, renderOldLogs, renderPlayerProfile, renderProtocol, renderRoom, renderRoomEvents, renderRoomRecords, renderRoomTranscript, renderRules, renderScriptInfo, renderStatus, renderTripComments, renderTripDetail, renderTripRating, renderTripRegistration, renderTripLookup, renderTripRoomRecords, renderVersion, renderWinRateAnalysis } from "./render";
+import { DEFAULT_ANNOUNCEMENT, renderAdminConfig, renderAdminConfigLogin, renderAdminIndex, renderAdminRooms, renderAdminRoomsLogin, renderBbs, renderBbsAdmin, renderBbsTopic, renderFederatedList, renderHome, renderIconCatalog, renderLeaderboard, renderLegacyGameFrame, renderManual, renderOldLogs, renderPlayerProfile, renderProtocol, renderRoom, renderRoomEvents, renderRoomRecords, renderRoomTranscript, renderRules, renderScriptInfo, renderStatus, renderTripComments, renderTripDetail, renderTripRating, renderTripRegistration, renderTripLookup, renderTripRoomRecords, renderVersion, renderWinRateAnalysis } from "./render";
 import type { LegacyRoomPath } from "./render";
 import { RoomDurableObject } from "./room";
 import { ROOM_CLIENT_SCRIPT } from "./room-client";
@@ -3019,6 +3019,11 @@ export default {
           return new Response("Room not found", { status: 404 });
         }
         const autoReloadParam = url.searchParams.get("auto_reload");
+        if (url.pathname === "/game_frame.php") {
+          return html(renderLegacyGameFrame(roomId, {
+            autoReloadSeconds: autoReloadParam ? Number(autoReloadParam) : 0
+          }));
+        }
         const viewModeParam = url.searchParams.get("view");
         const viewMode = viewModeParam === "spectator" || viewModeParam === "heaven" ? viewModeParam : url.pathname === "/game_view.php" ? "spectator" : "player";
         const pageMode = url.pathname === "/game_frame.php" ? "frame" : url.pathname === "/game_up.php" ? "up" : url.pathname === "/game_vote.php" ? "vote" : "full";

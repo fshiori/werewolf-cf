@@ -1395,7 +1395,6 @@ describe("worker routes", () => {
     const cases = [
       ["/game_view.php?room_no=room_exists&auto_reload=20", "spectator", "旁觀視點", "full", "完整頁面", "汝等是人是狼？[觀戰]"],
       ["/game_play.php?room_no=room_exists&auto_reload=20", "player", "玩家視點", "full", "完整頁面"],
-      ["/game_frame.php?room_no=room_exists&auto_reload=20", "player", "玩家視點", "frame", "框架入口", "汝等是人是狼？＜遊戲＞"],
       ["/game_up.php?room_no=room_exists&auto_reload=20", "player", "玩家視點", "up", "上方更新", "汝等是人是狼？＜發言＞"],
       ["/game_vote.php?room_no=room_exists&auto_reload=20", "player", "玩家視點", "vote", "投票入口", "汝等是人是狼？＜投票＞"],
       ["/login.php?room_no=room_exists&auto_reload=20", "player", "玩家視點", "full", "完整頁面"],
@@ -1426,6 +1425,15 @@ describe("worker routes", () => {
       expect(body).toContain("/game_view.php?room_no=room_exists&amp;auto_reload=20");
       expect(body).toContain("/game_view.php?room_no=room_exists&amp;auto_reload=20&amp;view=heaven");
     }
+
+    const frameResponse = await worker.fetch(new Request("http://example.test/game_frame.php?room_no=room_exists&auto_reload=20"), env);
+    expect(frameResponse.status).toBe(200);
+    const frameBody = await frameResponse.text();
+    expect(frameBody).toContain("<title>汝等是人是狼？＜遊戲＞</title>");
+    expect(frameBody).toContain('<frameset rows="85,*" border="0" frameborder="0" framespacing="0" data-legacy-entry="game_frame.php">');
+    expect(frameBody).toContain('<frame name="up" src="/game_up.php?room_no=room_exists&amp;auto_reload=20#game_top" scrolling="no" noresize>');
+    expect(frameBody).toContain('<frame name="bottom" src="/game_play.php?room_no=room_exists&amp;auto_reload=20#game_top">');
+    expect(frameBody).not.toContain('data-room-page="frame"');
 
     const missingRoomNo = await worker.fetch(new Request("http://example.test/game_view.php"), env);
     expect(missingRoomNo.status).toBe(400);
