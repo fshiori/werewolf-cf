@@ -266,6 +266,11 @@ function page(title: string, body: string, extraHead = ""): string {
     .transcript-row td { border-top: 1px dashed silver; }
     .transcript-table { width: 100%; border-collapse: collapse; font-size: 12pt; }
     .transcript-table td { padding: 2px 4px; vertical-align: top; }
+    .transcript-time-cell { width: 9em; white-space: nowrap; }
+    .transcript-location-cell { width: 7em; white-space: nowrap; }
+    .transcript-type-cell { width: 8em; white-space: nowrap; }
+    .transcript-speaker-cell { width: 12em; overflow-wrap: anywhere; word-break: break-word; }
+    .transcript-payload-cell { overflow-wrap: anywhere; word-break: break-word; }
     .transcript-day-heading td { background: #eeeeee; color: #000000; font-weight: bold; }
     .transcript-location-system td, .transcript-location-game td { background: #efefef; font-weight: bold; }
     .transcript-location-wolf td { background: #000030; color: #ffccff; }
@@ -887,11 +892,11 @@ function renderTranscriptEventSections(events: RoomEventSummary[]): string {
     ${groupEvents.map((event) => {
       const location = transcriptLocation(event);
       return `<tr class="transcript-row ${location.className}">
-      <td>${escapeHtml(event.createdAt)}</td>
-      <td><span class="location-badge">${escapeHtml(location.label)}</span></td>
-      <td>${escapeHtml(eventTypeLabel(event.eventType))}</td>
-      <td>${eventSpeakerLabelHtml(event)}</td>
-      <td>${escapeHtml(formatEventPayload(event.payload))}</td>
+      <td class="transcript-time-cell">${escapeHtml(event.createdAt)}</td>
+      <td class="transcript-location-cell"><span class="location-badge">${escapeHtml(location.label)}</span></td>
+      <td class="transcript-type-cell">${escapeHtml(eventTypeLabel(event.eventType))}</td>
+      <td class="transcript-speaker-cell">${eventSpeakerLabelHtml(event)}</td>
+      <td class="transcript-payload-cell">${escapeHtml(formatEventPayload(event.payload))}</td>
     </tr>`;
     }).join("")}
   `).join("");
@@ -1606,7 +1611,7 @@ export function renderRoomTranscript(roomId: string, records: GameRecordSummary[
     <fieldset>
       <legend><strong>事件履歷</strong></legend>
       <table class="transcript-table" border="0" cellspacing="0" cellpadding="2" style="margin:12px 20px 18px;">
-        <thead><tr><td><strong>時間</strong></td><td><strong>位置</strong></td><td><strong>種類</strong></td><td><strong>發言/行動</strong></td><td><strong>內容</strong></td></tr></thead>
+        <thead><tr><td class="transcript-time-cell"><strong>時間</strong></td><td class="transcript-location-cell"><strong>位置</strong></td><td class="transcript-type-cell"><strong>種類</strong></td><td class="transcript-speaker-cell"><strong>發言/行動</strong></td><td class="transcript-payload-cell"><strong>內容</strong></td></tr></thead>
         <tbody>${eventRows}</tbody>
       </table>
     </fieldset>
