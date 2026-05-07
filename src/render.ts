@@ -3061,7 +3061,7 @@ export function renderManual(): string {
         <tr><td><strong>　建立村子：</strong></td><td>首頁輸入村名、說明、人數與村子選項後建立。Trip限定、GM制、替身君、限時、公開票與角色追加都在同一表單設定。</td></tr>
         <tr><td><strong>　登錄入村：</strong></td><td>進入房間後填寫玩家ID、暱稱、Trip、希望角色與頭像。Trip限定村必須使用已登記且未排除的 Trip。</td></tr>
         <tr><td><strong>　開始遊戲：</strong></td><td>房主或 GM 可直接開始；居民可投開始票，8人以上達有效票數後自動開始，替身君會折抵一票。</td></tr>
-        <tr><td><strong>　白天行動：</strong></td><td>生存玩家公開發言並投票。平手時會重新投票一次；啟用公開票或投票顯示時，畫面會公開對應的投票狀態。</td></tr>
+        <tr><td><strong>　白天行動：</strong></td><td>生存玩家公開發言並投票。平手時會重新投票，達到 10 回平手時遊戲和局；啟用公開票或投票顯示時，畫面會公開對應的投票狀態。</td></tr>
         <tr><td><strong>　夜晚行動：</strong></td><td>人狼、占卜師、獵人、子狐、貓又依角色使用能力；人狼、妖狐、共有者、戀人與靈界頻道會由 Durable Object 依身份過濾。</td></tr>
         <tr><td><strong>　GM操作：</strong></td><td>GM可私語、廣播、換日、裁定勝負、調整生死/角色/旗標、切換共有公開與頻道限制。</td></tr>
       </table>

@@ -1893,7 +1893,10 @@ function winnerDisplayLabel(winner: GameWinner): string {
   if (winner === "foxes") {
     return "狐勝";
   }
-  return "戀勝";
+  if (winner === "lovers") {
+    return "戀勝";
+  }
+  return "平手";
 }
 
 async function listWinRateAnalysis(env: Env): Promise<WinRateEntry[]> {
@@ -1901,7 +1904,7 @@ async function listWinRateAnalysis(env: Env): Promise<WinRateEntry[]> {
     .all<{ result_json: string }>();
   const winners = result.results.map((record) => readRecordWinner(parseRecordResult(record.result_json))).filter((winner): winner is GameWinner => Boolean(winner));
   const total = winners.length;
-  const order: GameWinner[] = ["villagers", "werewolves", "foxes", "lovers"];
+  const order: GameWinner[] = ["villagers", "werewolves", "foxes", "lovers", "draw"];
   return order.map((winner) => {
     const wins = winners.filter((value) => value === winner).length;
     return {
@@ -1953,7 +1956,7 @@ function readRecordWinner(value: unknown): GameWinner | undefined {
   if (!isRecord(value)) {
     return undefined;
   }
-  return value.winner === "villagers" || value.winner === "werewolves" || value.winner === "foxes" || value.winner === "lovers"
+  return value.winner === "villagers" || value.winner === "werewolves" || value.winner === "foxes" || value.winner === "lovers" || value.winner === "draw"
     ? value.winner
     : undefined;
 }

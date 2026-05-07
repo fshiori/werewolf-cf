@@ -702,7 +702,8 @@ function winnerLabel(value) {
     villagers: "村民",
     werewolves: "人狼",
     foxes: "妖狐",
-    lovers: "戀人"
+    lovers: "戀人",
+    draw: "平手"
   }[value] || "未定";
 }
 function phaseLabel(game) {

@@ -90,7 +90,7 @@ describe("validation", () => {
 
   it("validates game winners", () => {
     expect(validateGameWinner("villagers")).toBe("villagers");
-    expect(() => validateGameWinner("draw")).toThrow("Invalid winner");
+    expect(validateGameWinner("draw")).toBe("draw");
   });
 
   it("validates trip codes", () => {

@@ -17,7 +17,7 @@ export const DAY_MS = 180_000;
 export const NIGHT_MS = 90_000;
 export const DEFAULT_DAY_MINUTES = DAY_MS / 60_000;
 export const DEFAULT_NIGHT_MINUTES = NIGHT_MS / 60_000;
-export const MAX_REVOTES = 1;
+export const MAX_REVOTES = 10;
 export const MAX_OBJECTIONS = 2;
 export const LOBBY_START_VOTE_MIN_PLAYERS = 8;
 export const LOBBY_KICK_VOTES_REQUIRED = 5;
@@ -1096,7 +1096,7 @@ export function forceSetPlayerFlag(state: GameState, targetPlayerId: string, fla
 function resolveDay(state: GameState, now = Date.now()): GameState {
   const executedId = pickTopTarget(state);
   const revoteCount = state.revoteCount ?? 0;
-  if (!executedId && Object.keys(state.votes ?? {}).length > 0 && revoteCount < MAX_REVOTES) {
+  if (!executedId && Object.keys(state.votes ?? {}).length > 0 && revoteCount + 1 < MAX_REVOTES) {
     return {
       ...state,
       votes: {},
@@ -1106,6 +1106,17 @@ function resolveDay(state: GameState, now = Date.now()): GameState {
       phaseEndsAt: new Date(now + (state.dayMs ?? DAY_MS)).toISOString(),
       log: [...state.log, "投票結果平手，重新投票。"]
     };
+  }
+  if (!executedId && Object.keys(state.votes ?? {}).length > 0) {
+    return endGame(
+      {
+        ...state,
+        votes: {},
+        revoteCount: 0,
+        log: [...state.log, "投票結果平手達到上限，遊戲和局。"]
+      },
+      "draw"
+    );
   }
 
   const executed = executedId ? state.players.find((player) => player.playerId === executedId) : undefined;
@@ -1328,7 +1339,7 @@ function endGame(state: GameState, winner: GameWinner): GameState {
     mediumReading: undefined,
     log: [
       ...state.log,
-      winner === "villagers" ? "村民勝利。" : winner === "werewolves" ? "狼人勝利。" : winner === "foxes" ? "妖狐勝利。" : "戀人勝利。"
+      winner === "villagers" ? "村民勝利。" : winner === "werewolves" ? "狼人勝利。" : winner === "foxes" ? "妖狐勝利。" : winner === "lovers" ? "戀人勝利。" : "平手。"
     ]
   };
 }

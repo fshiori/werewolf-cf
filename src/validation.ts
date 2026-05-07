@@ -35,7 +35,7 @@ const WISH_ROLES = [
   "child_fox",
   "cat"
 ] as const;
-const GAME_WINNERS = ["villagers", "werewolves", "foxes", "lovers"] as const;
+const GAME_WINNERS = ["villagers", "werewolves", "foxes", "lovers", "draw"] as const;
 const PLAYER_FLAGS = ["authority", "decider", "lover"] as const;
 
 export function isRecord(value: unknown): value is Record<string, unknown> {

@@ -741,11 +741,13 @@ describe("render", () => {
       { winner: "villagers", label: "人勝", wins: 2, total: 4, rate: 50 },
       { winner: "werewolves", label: "狼勝", wins: 1, total: 4, rate: 25 },
       { winner: "foxes", label: "狐勝", wins: 1, total: 4, rate: 25 },
-      { winner: "lovers", label: "戀勝", wins: 0, total: 4, rate: 0 }
+      { winner: "lovers", label: "戀勝", wins: 0, total: 4, rate: 0 },
+      { winner: "draw", label: "平手", wins: 0, total: 4, rate: 0 }
     ]);
 
     expect(html).toContain("勝率分析");
     expect(html).toContain("－人勝－");
+    expect(html).toContain("－平手－");
     expect(html).toContain("2 / 4");
     expect(html).toContain("勝率 50.00 %");
     expect(html).toContain("/api/stats/win-rate");

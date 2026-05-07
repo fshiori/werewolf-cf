@@ -80,7 +80,7 @@ export type PlayerRole =
   | "child_fox"
   | "cat";
 export type GamePhase = "lobby" | "day" | "night" | "ended";
-export type GameWinner = "villagers" | "werewolves" | "foxes" | "lovers";
+export type GameWinner = "villagers" | "werewolves" | "foxes" | "lovers" | "draw";
 export type DivinationResult = "human" | "werewolf";
 export type ChildFoxDivinationResult = DivinationResult | "failed";
 export type MediumResult = "human" | "werewolf";
