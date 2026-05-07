@@ -2465,7 +2465,7 @@ export function renderBbsTopic(topic: BbsTopicSummary, replies: BbsReplySummary[
             return;
           }
           const replyPage = Number(data.page);
-          location.href = Number.isInteger(replyPage) && replyPage > 1 ? "${topicPath}?page=" + encodeURIComponent(String(replyPage)) : "${topicPath}";
+          location.href = Number.isInteger(replyPage) && replyPage > 1 ? "${topicPath}&page=" + encodeURIComponent(String(replyPage)) : "${topicPath}";
         });
       </script>`;
   const moderationPanel = `<form method="post" action="/bbs.php?go=edit&amp;id=${escapeHtml(String(topic.id))}" enctype="multipart/form-data" style="margin:10px 20px;">
@@ -2555,7 +2555,7 @@ export function renderBbsTopic(topic: BbsTopicSummary, replies: BbsReplySummary[
           status.textContent = data.error || "刪除失敗";
           return;
         }
-        location.href = "/bbs";
+        location.href = "/bbs.php";
       });
       document.querySelectorAll(".bbsReplyEditButton").forEach((button) => {
         button.addEventListener("click", async () => {
@@ -2605,7 +2605,7 @@ export function renderBbsTopic(topic: BbsTopicSummary, replies: BbsReplySummary[
     </script>`;
 
   return page("BBS Topic", shell(`
-    <p><a href="/bbs">全部主題</a> <a href="#bbsReplyForm">回覆主題</a></p>
+    <p><a href="/bbs.php">全部主題</a> <a href="#bbsReplyForm">回覆主題</a></p>
     <fieldset>
       <legend><strong>${escapeHtml(title)}</strong></legend>
       <table class="form-table">
