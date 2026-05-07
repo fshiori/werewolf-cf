@@ -227,7 +227,9 @@ function page(title: string, body: string, extraHead = ""): string {
     .transcript-row td { border-top: 1px dashed silver; }
     .transcript-location-system td, .transcript-location-game td { background: #efefef; font-weight: bold; }
     .transcript-location-wolf td { background: #000030; color: #ffccff; }
+    .transcript-location-wolf-lovers td { background: #000030; color: #ffccff; }
     .transcript-location-common td, .transcript-location-fox td, .transcript-location-lovers td { background: #000030; color: #ccffcc; }
+    .transcript-location-fox-lovers td { background: #000030; color: #ccffcc; }
     .transcript-location-self td { background: #000030; color: snow; }
     .transcript-location-dead td { background: #cccccc; color: #000000; }
     .transcript-location-gm td, .transcript-location-gm-whisper td { color: #cc0000; }
@@ -495,6 +497,24 @@ function eventSpeakerLabelHtml(event: RoomEventSummary): string {
 function transcriptLocation(event: RoomEventSummary): { className: string; label: string } {
   const value = recordValue(event.payload);
   const phase = value.phase === "night" ? "夜晚" : value.phase === "day" ? "白天" : "";
+  if (typeof value.location === "string") {
+    const locations: Record<string, { className: string; label: string }> = {
+      "day public": { className: "transcript-location-public", label: "白天公開" },
+      "night public": { className: "transcript-location-public", label: "夜晚公開" },
+      "night wolf": { className: "transcript-location-wolf", label: "人狼密談" },
+      "night wolf lovers": { className: "transcript-location-wolf-lovers", label: "人狼/戀人密談" },
+      "night fox": { className: "transcript-location-fox", label: "妖狐密談" },
+      "night fox lovers": { className: "transcript-location-fox-lovers", label: "妖狐/戀人密談" },
+      "night common": { className: "transcript-location-common", label: "共有密談" },
+      "night lovers": { className: "transcript-location-lovers", label: "戀人密談" },
+      "night self_talk": { className: "transcript-location-self", label: "夜晚自言自語" },
+      "night dead": { className: "transcript-location-dead", label: "靈界" }
+    };
+    const location = locations[value.location];
+    if (location) {
+      return location;
+    }
+  }
   const locations: Record<string, { className: string; label: string }> = {
     public_chat: { className: "transcript-location-public", label: phase ? `${phase}公開` : "公開" },
     wolf_chat: { className: "transcript-location-wolf", label: "人狼密談" },
