@@ -729,7 +729,7 @@ describe("render", () => {
           voteStatus: false
         }
       }
-    ]);
+    ], { winners: { room_finished: "villagers" } });
 
     expect(html).toContain("過去紀錄");
     expect(html).toContain("村No");
@@ -742,6 +742,8 @@ describe("render", () => {
     expect(html).toContain("/old_log.php?log_mode=on&amp;room_no=room_finished");
     expect(html).toContain("/assets/reference/img/max16.gif");
     expect(html).toContain("最大16");
+    expect(html).toContain("/assets/reference/img/victory_role_human.gif");
+    expect(html).toContain("村民勝利");
     expect(html).toContain("reverse_log=on");
     expect(html).toContain("heaven_talk=on");
     expect(html).toContain("heaven_only=on");

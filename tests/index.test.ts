@@ -181,6 +181,15 @@ function envWithRooms(
                       .slice(0, 20)
                   };
                 }
+                if (query.includes("FROM game_records") && query.includes("room_id IN")) {
+                  const roomIds = new Set(values.map(String));
+                  return {
+                    results: Object.values(records)
+                      .flat()
+                      .filter((record) => roomIds.has(record.room_id))
+                      .sort((a, b) => b.created_at.localeCompare(a.created_at))
+                  };
+                }
                 if (query.includes("FROM game_records")) {
                   return { results: records[String(values[0])] ?? [] };
                 }
@@ -1580,7 +1589,16 @@ describe("worker routes", () => {
         ["room_active", "room_finished"],
         { "room_status:room_finished": "ended" },
         {},
-        {},
+        {
+          room_finished: [
+            {
+              id: 1,
+              room_id: "room_finished",
+              result_json: '{"winner":"werewolves"}',
+              created_at: "2026-05-06 12:00:00"
+            }
+          ]
+        },
         {},
         { room_finished: "poison real_time:5:3 open_vote" },
         {},
@@ -1595,6 +1613,8 @@ describe("worker routes", () => {
     expect(body).toContain("/old_log.php?log_mode=on&amp;room_no=room_finished&amp;reverse_log=on");
     expect(body).toContain("/old_log.php?log_mode=on&amp;room_no=room_finished&amp;heaven_talk=on");
     expect(body).toContain("/old_log.php?log_mode=on&amp;room_no=room_finished&amp;heaven_only=on");
+    expect(body).toContain("/assets/reference/img/victory_role_wolf.gif");
+    expect(body).toContain("人狼勝利");
     expect(body).toContain("埋毒");
     expect(body).not.toContain("room_active");
   });
