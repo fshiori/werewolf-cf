@@ -166,13 +166,16 @@ function envWithRooms(
                 }
                 if (query.includes("FROM game_records") && query.includes("result_json LIKE")) {
                   const allRecords = Object.values(records).flat();
+                  const hasCapacityFilter = query.includes("JOIN rooms") && query.includes("rooms.max_user = ?");
+                  const patterns = hasCapacityFilter ? values.slice(0, -1) : values;
+                  const filteredCapacity = hasCapacityFilter ? Number(values[values.length - 1]) : undefined;
                   return {
                     results: allRecords
                       .filter((record) =>
-                        values.some((pattern) => {
+                        patterns.some((pattern) => {
                           const playerId = String(pattern).match(/"playerId":"([^"]+)"/)?.[1];
                           return playerId ? record.result_json.includes(`"playerId":"${playerId}"`) : false;
-                        })
+                        }) && (filteredCapacity === undefined || (roomCapacities[record.room_id] ?? 22) === filteredCapacity)
                       )
                       .sort((a, b) => b.created_at.localeCompare(a.created_at))
                       .slice(0, 20)
@@ -995,6 +998,53 @@ describe("worker routes", () => {
     expect(body).toContain("村民");
     expect(body).not.toContain("Other");
     expect(body).not.toContain(tripHash);
+  });
+
+  it("filters legacy Trip room records by reference play capacity", async () => {
+    const tripHash = await registeredTripHash("ab12CD");
+    const response = await worker.fetch(
+      new Request("http://example.test/trip.php?go=room&id=ab12CD&play=16"),
+      envWithRooms(
+        ["room_16", "room_22"],
+        {},
+        {},
+        {
+          room_16: [
+            {
+              id: 1,
+              room_id: "room_16",
+              result_json: '{"winner":"villagers","day":2,"players":[{"playerId":"player_current","nickname":"Filtered","role":"villager","alive":true}]}',
+              created_at: "2026-05-04 03:00:00"
+            }
+          ],
+          room_22: [
+            {
+              id: 2,
+              room_id: "room_22",
+              result_json: '{"winner":"werewolves","day":4,"players":[{"playerId":"player_current","nickname":"Too Large","role":"werewolf","alive":false}]}',
+              created_at: "2026-05-04 05:00:00"
+            }
+          ]
+        },
+        {},
+        {},
+        {},
+        { room_16: 16, room_22: 22 },
+        {},
+        {},
+        {},
+        new Set([tripHash]),
+        new Set(),
+        { player_current: tripHash }
+      )
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.text();
+    expect(body).toContain("room_16");
+    expect(body).toContain("Filtered");
+    expect(body).not.toContain("room_22");
+    expect(body).not.toContain("Too Large");
   });
 
   it("returns 404 for formatted room ids missing from D1", async () => {
