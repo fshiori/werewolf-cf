@@ -230,6 +230,7 @@ describe("render", () => {
 
     expect(html).toContain("[room_abc]");
     expect(html).toContain('data-room-id="room_abc"');
+    expect(html).toContain('id="phaseWarning"');
     expect(html).toContain('<script src="/assets/room-client.js" defer></script>');
     expect(html).not.toContain("new WebSocket");
     expect(html).toContain("room-phase-lobby");
@@ -422,6 +423,10 @@ describe("render", () => {
     expect(ROOM_CLIENT_SCRIPT).toContain("function phaseLabel(game)");
     expect(ROOM_CLIENT_SCRIPT).toContain('" 日目 <small>(生存者" + aliveCount + "人)</small>"');
     expect(ROOM_CLIENT_SCRIPT).toContain('document.querySelector("#phase").innerHTML = phaseLabel(game);');
+    expect(ROOM_CLIENT_SCRIPT).toContain("function updatePhaseWarning(game)");
+    expect(ROOM_CLIENT_SCRIPT).toContain('alert.style.backgroundColor = "#CC3300";');
+    expect(ROOM_CLIENT_SCRIPT).toContain("快要日落了。請趕快投票");
+    expect(ROOM_CLIENT_SCRIPT).toContain("快要日出了。請趕快投票");
     expect(ROOM_CLIENT_SCRIPT).toContain("currentPlayerAlive");
     expect(ROOM_CLIENT_SCRIPT).toContain("currentPlayerDead");
     expect(ROOM_CLIENT_SCRIPT).toContain("voteSummary");

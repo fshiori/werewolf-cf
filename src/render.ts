@@ -3259,7 +3259,7 @@ export function renderRoom(roomId: string, options: RenderRoomOptions = {}): str
           <table class="game-header">
             <tr><th colspan="2">[${escapeHtml(roomId)}] 汝等是人是狼？</th></tr>
             <tr>
-              <td style="width: 180px;">階段：<span id="phase">lobby</span></td>
+              <td style="width: 180px;">階段：<span id="phase">lobby</span><div id="phaseWarning"></div></td>
               <td>
                 勝利：<span id="winner" class="muted">未定</span>
                 　<a href="/">首頁</a>
