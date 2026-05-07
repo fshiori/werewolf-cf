@@ -3513,7 +3513,7 @@ function currentRoomReloadHref(roomPath: string, roomId: string, viewMode: "play
     return legacyRoomHref("/game_vote.php", roomId, autoReloadSeconds);
   }
   if (legacyPath) {
-    return legacyRoomHref(legacyPath, roomId, autoReloadSeconds, viewMode === "heaven" ? "heaven" : undefined);
+    return legacyRoomHref(legacyPath, roomId, autoReloadSeconds, viewMode === "player" ? undefined : viewMode);
   }
   return roomReloadHref(roomPath, viewMode, autoReloadSeconds);
 }
