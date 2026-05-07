@@ -1,4 +1,4 @@
-import type { BbsReplySummary, BbsTopicSummary, FederatedRoomSummary, FederatedServerStatus, GameRecordSummary, GameWinner, LeaderboardEntry, PlayerRole, RoomEventSummary, RoomSummary, TripPublicSummary, TripRoomRecordSummary, WinRateEntry } from "./types";
+import type { BbsReplySummary, BbsTopicSummary, FederatedRoomSummary, FederatedServerStatus, GameRecordSummary, GameWinner, LeaderboardEntry, PlayerRole, RoomEventSummary, RoomSummary, TripPublicSummary, TripRoomRecordSummary, TripScoreSummary, WinRateEntry } from "./types";
 import { escapeHtml } from "./validation";
 
 function page(title: string, body: string, extraHead = ""): string {
@@ -2182,7 +2182,7 @@ export function renderTripDetail(tripId: string, summary: TripPublicSummary): st
       <strong>Trip公開資料</strong><br>
       該Trip使用 ${summary.stats.gamesPlayed} 次，已知使用玩家如下(排除重複)<br>
       <a href="/trip.php?go=room&id=${escapeHtml(tripId)}">參與紀錄</a>
-      <a href="/trip.php?go=smess&id=${escapeHtml(tripId)}">評語詳細</a>
+      (正:${summary.scores.positive}/負:${summary.scores.negative})<a href="/trip.php?go=smess&id=${escapeHtml(tripId)}">評語詳細</a>
       <a href="/trips">Trip查詢</a>
     </center>
     <table border="1" class="table1" bordercolor="#CCCCCC" align="center">
@@ -2218,7 +2218,18 @@ export function renderTripDetail(tripId: string, summary: TripPublicSummary): st
   `));
 }
 
-export function renderTripComments(tripId: string): string {
+export function renderTripComments(tripId: string, scores: TripScoreSummary[] = [], options: { page?: number; pageSize?: number; totalScores?: number } = {}): string {
+  const pagination = paginationLinks(options.totalScores, options.page, options.pageSize, `/trip.php?go=smess&id=${encodeURIComponent(tripId)}`);
+  const rows = scores.length
+    ? scores.map((score) => `
+      <tr>
+        <td align="center"><a href="/old_log.php?log_mode=on&amp;room_no=${escapeHtml(score.roomId)}">${escapeHtml(score.roomId)}</a></td>
+        <td align="center"><a href="/trip.php?go=trip&id=${escapeHtml(score.reviewerTrip)}">${escapeHtml(score.reviewerTrip || "--")}</a></td>
+        <td align="center">${score.score === 1 ? "正" : "負"}</td>
+        <td align="center">${escapeHtml(score.message || "無評語")}</td>
+      </tr>
+    `).join("")
+    : `<tr><td colspan="4" align="center" class="muted">沒有資料</td></tr>`;
   return page("Trip Comments", shell(`
     <center>
       <strong>評語</strong><br>
@@ -2226,6 +2237,7 @@ export function renderTripComments(tripId: string): string {
       <a href="/trip.php?go=room&id=${escapeHtml(tripId)}">參與紀錄</a>
       <a href="/trips">Trip查詢</a>
     </center>
+    ${pagination}
     <table border="1" class="table1" bordercolor="#CCCCCC" align="center">
       <tr class="table3">
         <td align="center" width="70">村莊ID</td>
@@ -2233,10 +2245,9 @@ export function renderTripComments(tripId: string): string {
         <td align="center" width="50">評價</td>
         <td align="center" width="400">評語</td>
       </tr>
-      <tr>
-        <td colspan="4" align="center" class="muted">沒有資料</td>
-      </tr>
+      ${rows}
     </table>
+    ${pagination}
   `));
 }
 

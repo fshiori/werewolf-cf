@@ -11,6 +11,7 @@ const requiredTables = [
   "room_events",
   "registered_trips",
   "excluded_trips",
+  "trip_scores",
   "bbs_topics",
   "bbs_replies"
 ];
@@ -23,6 +24,7 @@ const requiredColumns = {
   room_events: ["id", "room_id", "player_id", "event_type", "payload_json", "created_at"],
   registered_trips: ["trip_hash", "created_at"],
   excluded_trips: ["trip_hash", "reason", "created_at"],
+  trip_scores: ["id", "reviewer_trip", "room_id", "target_trip", "message", "score", "created_at"],
   bbs_topics: ["id", "name", "title", "message", "trip_hash", "password_hash", "reply_count", "pinned", "locked", "digest", "created_at", "updated_at"],
   bbs_replies: ["id", "topic_id", "name", "message", "trip_hash", "password_hash", "created_at"]
 };

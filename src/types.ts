@@ -140,11 +140,25 @@ export interface TripPublicSummary {
   registered: boolean;
   excluded: boolean;
   players: string[];
+  scores: {
+    positive: number;
+    negative: number;
+  };
   stats: {
     gamesPlayed: number;
     wins: number;
     losses: number;
   };
+}
+
+export interface TripScoreSummary {
+  id: number;
+  roomId: string;
+  reviewerTrip: string;
+  targetTrip: string;
+  message: string;
+  score: 1 | 2;
+  createdAt: string;
 }
 
 export interface TripRoomRecordSummary {

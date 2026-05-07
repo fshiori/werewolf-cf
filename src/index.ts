@@ -3,7 +3,7 @@ import { RoomDurableObject } from "./room";
 import { ROOM_CLIENT_SCRIPT } from "./room-client";
 import { DEFAULT_DAY_MINUTES, DEFAULT_NIGHT_MINUTES } from "./game";
 import { bbsPasswordHash, registeredTripHash, tripHashForRoom } from "./identity";
-import type { BbsReplySummary, BbsTopicSummary, ChannelRestrictions, FederatedRoomSummary, FederatedServerStatus, GamePlayer, GameRecordSummary, GameWinner, LeaderboardEntry, PlayerGameRecordSummary, PlayerStats, RoomEventSummary, RoomOptions, RoomSummary, TripPublicSummary, TripRoomRecordSummary, WinRateEntry } from "./types";
+import type { BbsReplySummary, BbsTopicSummary, ChannelRestrictions, FederatedRoomSummary, FederatedServerStatus, GamePlayer, GameRecordSummary, GameWinner, LeaderboardEntry, PlayerGameRecordSummary, PlayerStats, RoomEventSummary, RoomOptions, RoomSummary, TripPublicSummary, TripRoomRecordSummary, TripScoreSummary, WinRateEntry } from "./types";
 import {
   isRecord,
   validateNickname,
@@ -909,7 +909,7 @@ async function claimTrip(request: Request, env: Env): Promise<Response> {
 async function readTripPublicSummary(env: Env, tripValue: string): Promise<TripPublicSummary> {
   const trip = validateTrip(tripValue);
   const tripHash = await registeredTripHash(trip);
-  const [registered, excluded, players, stats] = await Promise.all([
+  const [registered, excluded, players, stats, scoreCounts] = await Promise.all([
     env.DB.prepare("SELECT trip_hash FROM registered_trips WHERE trip_hash = ? LIMIT 1")
       .bind(tripHash)
       .first<{ trip_hash: string }>(),
@@ -923,18 +923,54 @@ async function readTripPublicSummary(env: Env, tripValue: string): Promise<TripP
       "SELECT COALESCE(SUM(ps.games_played), 0) AS games_played, COALESCE(SUM(ps.wins), 0) AS wins, COALESCE(SUM(ps.losses), 0) AS losses FROM player_stats ps INNER JOIN players p ON p.id = ps.player_id WHERE p.registered_trip_hash = ?"
     )
       .bind(tripHash)
-      .first<{ games_played: number; wins: number; losses: number }>()
+      .first<{ games_played: number; wins: number; losses: number }>(),
+    env.DB.prepare("SELECT score, COUNT(*) AS count FROM trip_scores WHERE target_trip = ? GROUP BY score")
+      .bind(trip)
+      .all<{ score: number; count: number }>()
   ]);
+  const scoreRows = scoreCounts.results ?? [];
   return {
     registered: Boolean(registered),
     excluded: Boolean(excluded),
     players: players.results.map((player) => player.id),
+    scores: {
+      positive: scoreRows.filter((row) => row.score === 1).reduce((sum, row) => sum + row.count, 0),
+      negative: scoreRows.filter((row) => row.score === 2).reduce((sum, row) => sum + row.count, 0)
+    },
     stats: {
       gamesPlayed: stats?.games_played ?? 0,
       wins: stats?.wins ?? 0,
       losses: stats?.losses ?? 0
     }
   };
+}
+
+function tripScoreRow(row: { id: number; room_id: string; reviewer_trip: string; target_trip: string; message: string; score: number; created_at: string }): TripScoreSummary {
+  return {
+    id: row.id,
+    roomId: row.room_id,
+    reviewerTrip: row.reviewer_trip,
+    targetTrip: row.target_trip,
+    message: row.message,
+    score: row.score === 1 ? 1 : 2,
+    createdAt: row.created_at
+  };
+}
+
+async function listTripScores(env: Env, tripValue: string, limit: number, offset: number): Promise<TripScoreSummary[]> {
+  const trip = validateTrip(tripValue);
+  const result = await env.DB.prepare("SELECT id, reviewer_trip, room_id, target_trip, message, score, created_at FROM trip_scores WHERE target_trip = ? ORDER BY id DESC LIMIT ? OFFSET ?")
+    .bind(trip, limit, offset)
+    .all<{ id: number; reviewer_trip: string; room_id: string; target_trip: string; message: string; score: number; created_at: string }>();
+  return (result.results ?? []).map(tripScoreRow);
+}
+
+async function countTripScores(env: Env, tripValue: string): Promise<number> {
+  const trip = validateTrip(tripValue);
+  const result = await env.DB.prepare("SELECT COUNT(*) AS count FROM trip_scores WHERE target_trip = ?")
+    .bind(trip)
+    .first<{ count: number }>();
+  return result?.count ?? 0;
 }
 
 async function getTripLookup(request: Request, env: Env): Promise<Response> {
@@ -1132,6 +1168,7 @@ const BBS_TOPIC_PAGE_SIZE = 15;
 const BBS_REPLY_PAGE_SIZE = 10;
 const OLD_LOG_PAGE_SIZE = 25;
 const TRIP_ROOM_PAGE_SIZE = 15;
+const TRIP_SCORE_PAGE_SIZE = 15;
 
 async function countBbsTopics(env: Env, digestOnly = false): Promise<number> {
   const row = await env.DB.prepare(`SELECT COUNT(*) AS count FROM bbs_topics${digestOnly ? " WHERE digest = 1" : ""}`)
@@ -2328,7 +2365,13 @@ export default {
       }
       if (url.pathname === "/trip.php" && url.searchParams.get("go") === "smess" && url.searchParams.get("id")) {
         try {
-          return html(renderTripComments(validateTrip(url.searchParams.get("id") ?? "")));
+          const trip = validateTrip(url.searchParams.get("id") ?? "");
+          const page = readPositivePage(url.searchParams.get("page"));
+          return html(renderTripComments(trip, await listTripScores(env, trip, TRIP_SCORE_PAGE_SIZE, (page - 1) * TRIP_SCORE_PAGE_SIZE), {
+            page,
+            pageSize: TRIP_SCORE_PAGE_SIZE,
+            totalScores: await countTripScores(env, trip)
+          }));
         } catch (error) {
           return json({ error: error instanceof Error ? error.message : "Invalid Trip" }, { status: 400 });
         }
