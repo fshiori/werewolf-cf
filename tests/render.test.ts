@@ -260,6 +260,7 @@ describe("render", () => {
     expect(html).toContain("body.room-view-heaven .room-live-chat-only { display: none; }");
     expect(html).toContain(".page-frame-only, .page-up-only, .page-vote-only { display: none; }");
     expect(html).toContain("body.room-page-frame .room-aux-panel");
+    expect(html).toContain("body.room-page-vote .room-registration-row { display: none; }");
     expect(html).toContain("body.room-page-up .room-panel-members");
     expect(html).toContain("body.room-page-up #chatLog { display: none; }");
     expect(html).toContain("body.room-page-vote .room-panel-system { display: none; }");
@@ -316,6 +317,8 @@ describe("render", () => {
     expect(html).toContain("開始遊戲");
     expect(html).toContain("房主");
     expect(html).toContain("戰績");
+    expect(html).toContain('<tr class="room-registration-row">\n              <td>登錄</td>');
+    expect(html).toContain('<tr class="view-player-only room-registration-row">\n              <td><img class="title-img" src="/assets/reference/img/user_regist_handle_name.gif" alt="玩家暱稱">玩家暱稱</td>');
     expect(html).toContain("<a href=\"#nickname\"><strong>[住民登錄]</strong></a>");
     expect(html).toContain("<a href=\"/trip.php\">[身份登錄]</a>");
     expect(html).toContain("<a href=\"/trips\">[Trip查詢]</a>");
@@ -430,7 +433,7 @@ describe("render", () => {
     expect(spectator).toContain('<tr><th>玩家列表</th></tr>');
     expect(spectator).not.toContain('<tr class="view-player-only">\n        <td>\n          <table class="panel">\n            <tr><th>玩家列表</th></tr>');
     expect(spectator).toContain('<tr class="view-player-only room-panel-actions">\n        <td>\n          <table class="panel">\n            <tr><th>能力發動 / 投票</th></tr>');
-    expect(spectator).toContain('<tr class="view-player-only">\n              <td><img class="title-img" src="/assets/reference/img/user_regist_handle_name.gif" alt="玩家暱稱">玩家暱稱</td>');
+    expect(spectator).toContain('<tr class="view-player-only room-registration-row">\n              <td><img class="title-img" src="/assets/reference/img/user_regist_handle_name.gif" alt="玩家暱稱">玩家暱稱</td>');
     expect(spectator).toContain('<a href="/room/room_abc?view=spectator&amp;auto_reload=15">15秒</a>');
     expect(spectator).toContain('<a href="/room/room_abc?view=heaven&amp;auto_reload=20">靈界</a>');
     expect(spectator).toContain('<a href="/game_view.php?room_no=room_abc&amp;auto_reload=20">game_view.php</a>');
@@ -456,6 +459,7 @@ describe("render", () => {
     expect(frame).toContain("保留主要遊戲畫面與即時更新，隱藏診斷性紀錄面板。");
     expect(frame).toContain('data-legacy-entry="game_frame.php"');
     expect(frame).toContain("game_frame.php frameset");
+    expect(frame).toContain("body.room-page-frame .room-registration-row");
     expect(frame).toContain("<tr><td>rows</td><td colspan=\"2\">85,*</td></tr>");
     expect(frame).toContain('<tr><td>frame name="up"</td><td>src</td><td><a href="/game_up.php?room_no=room_abc#game_top">game_up.php#game_top</a></td></tr>');
     expect(frame).toContain('<tr><td>frame name="bottom"</td><td>src</td><td><a href="/game_play.php?room_no=room_abc#game_top">game_play.php#game_top</a></td></tr>');
@@ -465,6 +469,7 @@ describe("render", () => {
     expect(up).toContain('data-room-page="up"');
     expect(up).toContain("上方更新");
     expect(up).toContain("發言上框；保留發言、頻道按鈕與投票入口");
+    expect(up).toContain("body.room-page-up .room-registration-row");
     expect(up).toContain('data-legacy-entry="game_up.php"');
     expect(up).toContain('form name="send"');
     expect(up).toContain("<tr><td>form name=\"send\"</td><td>target</td><td>bottom</td></tr>");
@@ -475,6 +480,7 @@ describe("render", () => {
     expect(vote).toContain('data-room-page="vote"');
     expect(vote).toContain("投票入口");
     expect(vote).toContain("著重能力發動與投票操作");
+    expect(vote).toContain("body.room-page-vote .room-registration-row");
     expect(vote).toContain('data-legacy-entry="game_vote.php"');
     expect(vote).toContain("game_vote.php 投票 / 能力入口");
     expect(vote).toContain("<tr><td>command</td><td colspan=\"2\">vote</td></tr>");
