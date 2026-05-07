@@ -567,7 +567,10 @@ function appendPlayerIcon(iconCell, player, initial) {
   });
   iconCell.appendChild(avatar);
 }
-function appendVoteObserverPanel(container, game, currentPlayer, currentPlayerDead, voteSummary, votedPlayerIds) {
+function updateVoteObserverPanel(game, currentPlayer, currentPlayerDead, voteSummary, votedPlayerIds) {
+  const container = document.querySelector("#voteObserverPanel");
+  if (!container) return;
+  container.innerHTML = "";
   if (game.phase !== "day" && game.phase !== "night") return;
   const observer = !currentPlayer || currentPlayerDead;
   if (!observer) return;
@@ -916,7 +919,7 @@ function renderGame(game) {
   });
   updateVoteReminder(game, currentPlayer, currentPlayerAlive, votedPlayerIds);
   updateActionPrompt(game, currentPlayer, currentPlayerAlive, votedPlayerIds);
-  appendVoteObserverPanel(players, game, currentPlayer, currentPlayerDead, voteSummary, votedPlayerIds);
+  updateVoteObserverPanel(game, currentPlayer, currentPlayerDead, voteSummary, votedPlayerIds);
   let row;
   game.players.forEach((player) => {
     const option = document.createElement("option");
