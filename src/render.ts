@@ -892,6 +892,8 @@ export type RoomTranscriptViewOptions = {
   viewerMode?: "legacy" | "public" | "player" | "dead" | "gm";
   viewerPlayerId?: string;
   oldLogReturnHref?: string;
+  playerViewFormAction?: string;
+  playerViewHiddenInputs?: Record<string, string | undefined>;
 };
 
 function roomTranscriptHref(roomId: string, params: Record<string, string | undefined>): string {
@@ -1469,6 +1471,10 @@ export function renderRoomTranscript(roomId: string, records: GameRecordSummary[
   };
   const currentTranscriptParams = { ...displayParams, ...viewerParams };
   const oldLogReturnHref = options.oldLogReturnHref ?? "/old_log.php";
+  const playerViewFormAction = options.playerViewFormAction ?? `/room/${escapeHtml(roomId)}/log`;
+  const playerViewHiddenInputs = Object.entries(options.playerViewHiddenInputs ?? {})
+    .map(([name, value]) => hiddenTranscriptInput(name, value))
+    .join("");
   const playerOptions = playerCandidates.length
     ? playerCandidates.map((player) => `<option value="${escapeHtml(player.playerId)}"${player.playerId === options.viewerPlayerId ? " selected" : ""}>${escapeHtml(player.label)}</option>`).join("")
     : `<option value="">玩家資料不足</option>`;
@@ -1498,7 +1504,8 @@ export function renderRoomTranscript(roomId: string, records: GameRecordSummary[
         <tr><td><strong>　PHP視點：</strong></td><td>${legacyViewerLinks}</td></tr>
         <tr><td><strong>　可見範圍：</strong></td><td><span class="muted">${escapeHtml(viewerScopeLabel)}</span></td></tr>
         <tr><td><strong>　玩家視點：</strong></td><td>
-          <form method="get" action="/room/${escapeHtml(roomId)}/log" style="margin:0;">
+          <form method="get" action="${escapeHtml(playerViewFormAction)}" style="margin:0;">
+            ${playerViewHiddenInputs}
             <input type="hidden" name="viewer" value="player">
             ${hiddenTranscriptInput("reverse_log", displayParams.reverse_log)}
             ${hiddenTranscriptInput("heaven_talk", displayParams.heaven_talk)}

@@ -3806,6 +3806,9 @@ describe("worker routes", () => {
     expect(body).toContain("逆&amp;靈");
     expect(body).toContain("/game_log.php?room_no=room_log&amp;log_mode=on&amp;reverse_log=on&amp;heaven_talk=on");
     expect(body).toContain("/old_log.php?log_mode=on&amp;room_no=room_log&amp;reverse_log=on&amp;heaven_talk=on");
+    expect(body).toContain('<form method="get" action="/old_log.php"');
+    expect(body).toContain('<input type="hidden" name="log_mode" value="on">');
+    expect(body).toContain('<input type="hidden" name="room_no" value="room_log">');
     expect(body).toContain('<a href="/old_log.php?search=alpha&amp;page=2">←返回</a>');
 
     const missingRoom = await worker.fetch(new Request("http://example.test/old_log.php?log_mode=on"), env);
@@ -3872,6 +3875,9 @@ describe("worker routes", () => {
     expect(gmBody).toContain("howl");
     expect(gmBody).toContain("heaven");
     expect(gmBody).toContain("/game_log.php?room_no=room_log&amp;log_mode=on&amp;heaven_talk=on&amp;viewer=gm");
+    expect(gmBody).toContain('<form method="get" action="/game_log.php"');
+    expect(gmBody).toContain('<input type="hidden" name="room_no" value="room_log">');
+    expect(gmBody).toContain('<input type="hidden" name="log_mode" value="on">');
   });
 
   it("applies old-log heaven filters on room transcript page", async () => {

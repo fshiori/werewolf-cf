@@ -2087,7 +2087,11 @@ async function getRoomTranscriptPage(request: Request, env: Env, roomIdParam: st
     reverseLog: url.searchParams.get("reverse_log") === "on",
     viewerMode,
     viewerPlayerId: viewerPlayerIdParam ? validatePlayerId(viewerPlayerIdParam) : undefined,
-    oldLogReturnHref: oldLogReturnHref(url)
+    oldLogReturnHref: oldLogReturnHref(url),
+    playerViewFormAction: url.pathname === "/old_log.php" || url.pathname === "/game_log.php" ? url.pathname : undefined,
+    playerViewHiddenInputs: url.pathname === "/old_log.php" || url.pathname === "/game_log.php"
+      ? { ...(url.pathname === "/old_log.php" ? { log_mode: "on", room_no: roomId } : { room_no: roomId, log_mode: "on" }) }
+      : undefined
   }));
 }
 
