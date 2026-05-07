@@ -452,6 +452,25 @@ function channelRestrictionsLabel(value: unknown): string {
     .join("、");
 }
 
+function abilityResultLabel(value: unknown): string {
+  if (value === "human") {
+    return "人";
+  }
+  if (value === "werewolf") {
+    return "狼";
+  }
+  if (value === "failed") {
+    return "失敗";
+  }
+  if (value === "big_wolf") {
+    return "大狼";
+  }
+  if (value === "child_fox") {
+    return "子狐";
+  }
+  return typeof value === "string" ? value : "";
+}
+
 function formatEventPayload(payload: unknown): string {
   const value = recordValue(payload);
   const fields = [
@@ -465,7 +484,7 @@ function formatEventPayload(payload: unknown): string {
     typeof value.targetPlayerId === "string" ? `對象:${value.targetPlayerId}` : "",
     typeof value.targetNickname === "string" ? `對象名:${value.targetNickname}` : "",
     typeof value.remaining === "number" ? `剩餘:${value.remaining}` : "",
-    typeof value.result === "string" ? `結果:${value.result}` : "",
+    typeof value.result === "string" ? `結果:${abilityResultLabel(value.result)}` : "",
     typeof value.alive === "boolean" ? `生死:${value.alive ? "生存" : "死亡"}` : "",
     typeof value.enabled === "boolean" ? `狀態:${value.enabled ? "開啟" : "關閉"}` : "",
     typeof value.flag === "string" ? `旗標:${playerFlagLabel(value.flag)}` : "",
