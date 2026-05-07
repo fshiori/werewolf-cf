@@ -1156,6 +1156,22 @@ async function listBbsReplies(env: Env, topicId: number, limit = 200, offset = 0
   }));
 }
 
+async function getBbsReplyById(env: Env, replyId: number): Promise<BbsReplySummary | undefined> {
+  const reply = await env.DB.prepare(
+    "SELECT id, topic_id, name, message, trip_hash, created_at FROM bbs_replies WHERE id = ? LIMIT 1"
+  )
+    .bind(replyId)
+    .first<{ id: number; topic_id: number; name: string; message: string; trip_hash: string | null; created_at: string }>();
+  return reply ? {
+    id: reply.id,
+    topicId: reply.topic_id,
+    name: reply.name,
+    message: reply.message,
+    trip: Boolean(reply.trip_hash),
+    createdAt: reply.created_at
+  } : undefined;
+}
+
 async function bbsReplyExists(env: Env, topicId: number, replyId: number): Promise<boolean> {
   const reply = await env.DB.prepare("SELECT id FROM bbs_replies WHERE id = ? AND topic_id = ? LIMIT 1")
     .bind(replyId, topicId)
@@ -1347,6 +1363,26 @@ async function authorizeLegacyBbsTopic(env: Env, topicId: number, passwordValue:
   return { topic, adminAuthorized };
 }
 
+async function authorizeLegacyBbsReply(env: Env, replyId: number, passwordValue: unknown, action: "edit" | "delete"): Promise<BbsReplySummary> {
+  const reply = await getBbsReplyById(env, replyId);
+  if (!reply) {
+    const error = new Error("BBS reply not found") as Error & { status: number };
+    error.status = 404;
+    throw error;
+  }
+  const providedPassword = validateBbsPassword(passwordValue);
+  const adminToken = await env.CONFIG.get("bbs_admin_token");
+  const passwordHash = await getBbsReplyPasswordHash(env, reply.topicId, replyId);
+  const adminAuthorized = Boolean(adminToken && providedPassword === adminToken);
+  const passwordAuthorized = Boolean(passwordHash && providedPassword && await bbsPasswordHash(providedPassword) === passwordHash);
+  if (!adminAuthorized && !passwordAuthorized) {
+    const error = new Error(action === "edit" ? "BBS reply edit password is invalid" : "BBS reply delete password is invalid") as Error & { status: number };
+    error.status = 403;
+    throw error;
+  }
+  return reply;
+}
+
 async function requireLegacyBbsAdmin(env: Env, passwordValue: unknown): Promise<void> {
   const adminToken = await env.CONFIG.get("bbs_admin_token");
   if (!adminToken) {
@@ -1373,49 +1409,97 @@ async function updateLegacyBbsTopicFlags(env: Env, topic: BbsTopicSummary, editi
 
 async function editLegacyBbsTopic(request: Request, env: Env, topicIdParam: string): Promise<Response> {
   try {
-    const topicId = validateBbsTopicId(topicIdParam);
+    const entryId = validateBbsTopicId(topicIdParam);
     const body = await readLegacyBbsForm(request);
     const editis = typeof body.editis === "string" ? body.editis : "";
     if (editis === "edit") {
-      await authorizeLegacyBbsTopic(env, topicId, body.password, "edit");
+      if (await getBbsTopicById(env, entryId)) {
+        await authorizeLegacyBbsTopic(env, entryId, body.password, "edit");
+      } else {
+        await authorizeLegacyBbsReply(env, entryId, body.password, "edit");
+      }
       return new Response(null, {
         status: 303,
-        headers: { Location: `/bbs.php?go=edit&id=${topicId}` }
+        headers: { Location: `/bbs.php?go=edit&id=${entryId}` }
       });
     }
     if (editis === "editok") {
-      const { topic } = await authorizeLegacyBbsTopic(env, topicId, body.password, "edit");
-      const title = typeof body.title === "string" ? validateBbsTitle(body.title) : topic.title;
+      const topic = await getBbsTopicById(env, entryId);
+      const reply = await getBbsReplyById(env, entryId);
+      if (topic) {
+        try {
+          await authorizeLegacyBbsTopic(env, entryId, body.password, "edit");
+          const title = typeof body.title === "string" ? validateBbsTitle(body.title) : topic.title;
+          const message = validateBbsMessage(body.message);
+          await env.DB.prepare("UPDATE bbs_topics SET title = ?, message = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?")
+            .bind(title, message, entryId)
+            .run();
+          return new Response(null, {
+            status: 303,
+            headers: { Location: `/bbs/${entryId}` }
+          });
+        } catch (error) {
+          if (!reply) {
+            throw error;
+          }
+        }
+      }
+      if (!reply) {
+        return json({ error: "BBS topic not found" }, { status: 404 });
+      }
+      await authorizeLegacyBbsReply(env, entryId, body.password, "edit");
       const message = validateBbsMessage(body.message);
-      await env.DB.prepare("UPDATE bbs_topics SET title = ?, message = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?")
-        .bind(title, message, topicId)
+      await env.DB.prepare("UPDATE bbs_replies SET message = ? WHERE id = ? AND topic_id = ?")
+        .bind(message, entryId, reply.topicId)
         .run();
       return new Response(null, {
         status: 303,
-        headers: { Location: `/bbs/${topicId}` }
+        headers: { Location: `/bbs/${reply.topicId}` }
       });
     }
     if (editis === "del") {
-      await authorizeLegacyBbsTopic(env, topicId, body.password, "delete");
+      const topic = await getBbsTopicById(env, entryId);
+      const reply = await getBbsReplyById(env, entryId);
+      if (topic) {
+        try {
+          await authorizeLegacyBbsTopic(env, entryId, body.password, "delete");
+          await env.DB.batch([
+            env.DB.prepare("DELETE FROM bbs_replies WHERE topic_id = ?").bind(entryId),
+            env.DB.prepare("DELETE FROM bbs_topics WHERE id = ?").bind(entryId)
+          ]);
+          return new Response(null, {
+            status: 303,
+            headers: { Location: "/bbs" }
+          });
+        } catch (error) {
+          if (!reply) {
+            throw error;
+          }
+        }
+      }
+      if (!reply) {
+        return json({ error: "BBS topic not found" }, { status: 404 });
+      }
+      await authorizeLegacyBbsReply(env, entryId, body.password, "delete");
       await env.DB.batch([
-        env.DB.prepare("DELETE FROM bbs_replies WHERE topic_id = ?").bind(topicId),
-        env.DB.prepare("DELETE FROM bbs_topics WHERE id = ?").bind(topicId)
+        env.DB.prepare("DELETE FROM bbs_replies WHERE id = ? AND topic_id = ?").bind(entryId, reply.topicId),
+        env.DB.prepare("UPDATE bbs_topics SET reply_count = MAX(reply_count - 1, 0), updated_at = CURRENT_TIMESTAMP WHERE id = ?").bind(reply.topicId)
       ]);
       return new Response(null, {
         status: 303,
-        headers: { Location: "/bbs" }
+        headers: { Location: `/bbs/${reply.topicId}` }
       });
     }
     if (["tolock", "nolock", "totop", "notop", "todige", "nodige"].includes(editis)) {
       await requireLegacyBbsAdmin(env, body.password);
-      const topic = await getBbsTopicById(env, topicId);
+      const topic = await getBbsTopicById(env, entryId);
       if (!topic) {
         return json({ error: "BBS topic not found" }, { status: 404 });
       }
       await updateLegacyBbsTopicFlags(env, topic, editis);
       return new Response(null, {
         status: 303,
-        headers: { Location: `/bbs/${topicId}` }
+        headers: { Location: `/bbs/${entryId}` }
       });
     }
     return json({ error: "Invalid BBS edit operation" }, { status: 400 });
