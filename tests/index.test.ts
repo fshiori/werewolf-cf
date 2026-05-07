@@ -3158,6 +3158,8 @@ describe("worker routes", () => {
     expect(response.status).toBe(200);
     const body = await response.text();
     expect(body).toContain("村子對局紀錄");
+    expect(body).toContain("/game_view.php?room_no=room_records");
+    expect(body).toContain("/game_log.php?room_no=room_records&amp;log_mode=on");
     expect(body).toContain("村民勝利");
     expect(body).toContain("第 3 日");
   });
@@ -3188,6 +3190,8 @@ describe("worker routes", () => {
     expect(response.status).toBe(200);
     const body = await response.text();
     expect(body).toContain("村子事件履歷");
+    expect(body).toContain("/game_view.php?room_no=room_events");
+    expect(body).toContain("/game_log.php?room_no=room_events&amp;log_mode=on");
     expect(body).toContain("game_started");
     expect(body).toContain("player_host");
   });

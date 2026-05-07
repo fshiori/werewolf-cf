@@ -991,7 +991,8 @@ describe("render", () => {
     ]);
 
     expect(html).toContain("村子對局紀錄");
-    expect(html).toContain("/room/room_abc");
+    expect(html).toContain("/game_view.php?room_no=room_abc");
+    expect(html).toContain("/game_log.php?room_no=room_abc&amp;log_mode=on");
     expect(html).toContain("人狼勝利");
     expect(html).toContain("/assets/reference/img/victory_role_wolf.gif");
     expect(html).toContain("第 2 日");
@@ -1016,6 +1017,8 @@ describe("render", () => {
     ]);
 
     expect(html).toContain("村子事件履歷");
+    expect(html).toContain("/game_view.php?room_no=room_abc");
+    expect(html).toContain("/game_log.php?room_no=room_abc&amp;log_mode=on");
     expect(html).toContain("game_started");
     expect(html).toContain("player_a");
     expect(html).toContain("第1日");
