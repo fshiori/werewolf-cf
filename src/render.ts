@@ -2121,7 +2121,7 @@ export function renderTripRoomRecords(tripId: string, records: TripRoomRecordSum
   const recordRows = records.length
     ? records.map((record) => `
         <tr>
-          <td align="center"><a href="/room/${escapeHtml(record.roomId)}/records">${escapeHtml(record.roomId)}</a></td>
+          <td align="center"><a href="/old_log.php?log_mode=on&amp;room_no=${encodeURIComponent(record.roomId)}" target="_blank">${escapeHtml(record.roomId)}</a></td>
           <td align="center"><a href="/player/${escapeHtml(record.playerId)}">${escapeHtml(record.nickname)}</a></td>
           <td align="center">${roleLabelHtml(record.role)}</td>
           <td align="center">${record.alive ? "生存" : "死亡"}</td>
