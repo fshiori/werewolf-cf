@@ -2222,6 +2222,43 @@ describe("render", () => {
     expect(heavenOnly).not.toContain("ground row");
   });
 
+  it("uses saved PHP system talk locations for transcript labels", () => {
+    const html = renderRoomTranscript("room_abc", [], [
+      {
+        id: 1,
+        roomId: "room_abc",
+        playerId: "player_a",
+        eventType: "public_chat",
+        payload: { nickname: "Alice", text: "kick vote", location: "beforegame system", phase: "lobby", day: 0 },
+        createdAt: "2026-05-06 12:01:00"
+      },
+      {
+        id: 2,
+        roomId: "room_abc",
+        playerId: "player_b",
+        eventType: "public_chat",
+        payload: { nickname: "Bob", text: "vote action", location: "day system", phase: "day", day: 2 },
+        createdAt: "2026-05-06 12:02:00"
+      },
+      {
+        id: 3,
+        roomId: "room_abc",
+        playerId: "player_c",
+        eventType: "public_chat",
+        payload: { nickname: "Carol", text: "night action", location: "night system", phase: "night", day: 2 },
+        createdAt: "2026-05-06 12:03:00"
+      }
+    ]);
+
+    expect(html).toContain("等待室系統");
+    expect(html).toContain("白天系統");
+    expect(html).toContain("夜晚系統");
+    expect(html).toContain('class="transcript-row transcript-location-system"');
+    expect(html).toContain("kick vote");
+    expect(html).toContain("vote action");
+    expect(html).toContain("night action");
+  });
+
   it("renders saved GM operation details in transcript payloads", () => {
     const html = renderRoomTranscript("room_abc", [], [
       {
