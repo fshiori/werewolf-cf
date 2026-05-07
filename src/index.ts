@@ -182,6 +182,11 @@ type FederatedServerConfig = {
   url: string;
 };
 
+function federatedServerBaseUrl(url: URL): string {
+  const pathname = url.pathname.replace(/\/+$/, "");
+  return pathname ? `${url.origin}${pathname}` : url.origin;
+}
+
 function readFederatedServers(value: string | null): FederatedServerConfig[] {
   if (!value) {
     return [];
@@ -201,7 +206,7 @@ function readFederatedServers(value: string | null): FederatedServerConfig[] {
       }
       return [{
         name: typeof entry.name === "string" && entry.name.trim() ? entry.name.trim() : url.host,
-        url: url.origin
+        url: federatedServerBaseUrl(url)
       }];
     } catch {
       return [];
