@@ -3258,6 +3258,7 @@ describe("render", () => {
     expect(html).toContain("請選擇要廢除的村");
     expect(html).toContain("表示：");
     expect(html).toContain("<strong>全部</strong>");
+    expect(html).toContain('<table class="form-table table1 admin-room-table" border="1" cellspacing="1" cellpadding="2" bgcolor="#CCCCCC" style="margin:12px 20px 18px;width:100%">');
     expect(html).toContain("/admin.php?go=rooms&amp;status=active&amp;token=secret%20token");
     expect(html).toContain("/admin.php?go=rooms&amp;status=ended&amp;token=secret%20token");
     expect(html).toContain("room_abc");
