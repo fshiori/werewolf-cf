@@ -1391,9 +1391,10 @@ export function renderRoomTranscript(roomId: string, records: GameRecordSummary[
   ].join("<br>");
 
   return page(`Room ${roomId} Log`, shell(`
-    <fieldset>
+    <fieldset style="background-image:url('/assets/reference/img/old_log_bg.jpg'); background-repeat:no-repeat; background-position:100% 100%; background-attachment:fixed;">
       <legend><strong>村子完整紀錄</strong></legend>
       <p style="margin:0 0 6px 0;"><a href="${escapeHtml(oldLogReturnHref)}">←返回</a></p>
+      <img class="title-img" src="/assets/reference/img/old_log_title.jpg" alt="過去紀錄"><br>
       <table class="form-table">
         <tr><td><strong>　村子：</strong></td><td><a href="/game_view.php?room_no=${encodeURIComponent(roomId)}">${escapeHtml(roomId)}</a></td></tr>
         <tr><td><strong>　索引：</strong></td><td><a href="/room/${escapeHtml(roomId)}/records">對局紀錄</a>　<a href="/room/${escapeHtml(roomId)}/events">事件履歷</a></td></tr>

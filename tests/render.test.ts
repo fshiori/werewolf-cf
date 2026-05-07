@@ -1550,6 +1550,8 @@ describe("render", () => {
     );
 
     expect(html).toContain("村子完整紀錄");
+    expect(html).toContain("background-image:url('/assets/reference/img/old_log_bg.jpg')");
+    expect(html).toContain('<img class="title-img" src="/assets/reference/img/old_log_title.jpg" alt="過去紀錄"><br>');
     expect(html).toContain("/game_view.php?room_no=room_abc");
     expect(html).toContain("村民勝利");
     expect(html).toContain("/assets/reference/img/victory_role_human.gif");
