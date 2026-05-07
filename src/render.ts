@@ -1533,17 +1533,12 @@ export function renderIconCatalog(): string {
     }).join("");
     return `<tr>${cells}</tr>`;
   }).join("");
-  const rows = icons.map((icon, index) => {
+  const iconCells = icons.map((icon, index) => {
     const path = `user_icon/${icon.file}`;
-    return `<tr>
-      <td>${escapeHtml(String(index + 1))}</td>
-      <td><img src="/assets/reference/${escapeHtml(path)}" alt="${escapeHtml(icon.name)}" title="${escapeHtml(icon.name)}" width="32" height="32"></td>
-      <td>${escapeHtml(icon.name)}</td>
-      <td><font color="${escapeHtml(icon.color)}">◆</font> ${escapeHtml(icon.color)}</td>
-      <td><code>${escapeHtml(path)}</code></td>
-      <td><button class="iconPickButton" data-icon-path="${escapeHtml(path)}">使用</button></td>
-    </tr>`;
-  }).join("");
+    return `<td valign="top"><img src="/assets/reference/${escapeHtml(path)}" alt="${escapeHtml(icon.name)}" title="${escapeHtml(icon.name)}" width="32" height="32" border="2" style="border-color:${escapeHtml(icon.color)};"></td>
+      <td width="150px">(${escapeHtml(String(index + 1))})<br>${escapeHtml(icon.name)}<br><font color="${escapeHtml(icon.color)}">◆</font><span style="font-family:新細明體;">${escapeHtml(icon.color)}</span><br><button class="iconPickButton" data-icon-path="${escapeHtml(path)}">使用</button></td>`;
+  });
+  const iconRows = Array.from({ length: Math.ceil(iconCells.length / 5) }, (_, rowIndex) => `<tr>${iconCells.slice(rowIndex * 5, rowIndex * 5 + 5).join("")}</tr>`).join("");
 
   return page("Icons", shell(`
     <fieldset style="background-image:url('/assets/reference/img/icon_view_bg.jpg'); background-repeat: repeat;">
@@ -1555,9 +1550,8 @@ export function renderIconCatalog(): string {
         <tr><td><strong>　尺寸：</strong></td><td>32 x 32</td></tr>
         <tr><td><strong>　選擇：</strong></td><td><span id="iconPickStatus" class="muted">選定後會套用到入村表單。</span></td></tr>
       </table>
-      <table class="form-table" style="margin:12px 20px 18px;">
-        <thead><tr><td><strong>No.</strong></td><td><strong>圖</strong></td><td><strong>名稱</strong></td><td><strong>色碼</strong></td><td><strong>R2 path</strong></td><td><strong>選擇</strong></td></tr></thead>
-        <tbody>${rows}</tbody>
+      <table border="0" style="font-size:12pt;margin:12px auto 18px;">
+        ${iconRows}
       </table>
     </fieldset>
     <fieldset id="upload" style="background-image:url('/assets/reference/img/icon_upload_bg.jpg'); background-repeat: repeat;">

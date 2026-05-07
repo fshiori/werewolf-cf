@@ -593,6 +593,9 @@ describe("render", () => {
     expect(html).toContain("/assets/reference/user_icon/010.gif");
     expect(html).toContain("#DDDDDD");
     expect(html).toContain("#FF9999");
+    expect(html).toContain('<table border="0" style="font-size:12pt;margin:12px auto 18px;">');
+    expect(html).toContain('width="32" height="32" border="2" style="border-color:#DDDDDD;"');
+    expect(html).toContain('<td width="150px">(1)<br>明灰<br><font color="#DDDDDD">◆</font><span style="font-family:新細明體;">#DDDDDD</span><br><button class="iconPickButton" data-icon-path="user_icon/001.gif">使用</button></td>');
     expect(html).toContain("32 x 32");
     expect(html).toContain("iconPickStatus");
     expect(html).toContain("iconPickButton");
