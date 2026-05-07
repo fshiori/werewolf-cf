@@ -1298,22 +1298,24 @@ describe("worker routes", () => {
   it("renders PHP-style live room page aliases", async () => {
     const env = envWithRooms(["room_exists"]);
     const cases = [
-      ["/game_view.php?room_no=room_exists&auto_reload=20", "spectator", "旁觀視點"],
-      ["/game_play.php?room_no=room_exists&auto_reload=20", "player", "玩家視點"],
-      ["/game_frame.php?room_no=room_exists&auto_reload=20", "player", "玩家視點"],
-      ["/game_up.php?room_no=room_exists&auto_reload=20", "player", "玩家視點"],
-      ["/game_vote.php?room_no=room_exists&auto_reload=20", "player", "玩家視點"],
-      ["/login.php?room_no=room_exists&auto_reload=20", "player", "玩家視點"],
-      ["/user_manager.php?room_no=room_exists&auto_reload=20", "player", "玩家視點"]
+      ["/game_view.php?room_no=room_exists&auto_reload=20", "spectator", "旁觀視點", "full", "完整頁面"],
+      ["/game_play.php?room_no=room_exists&auto_reload=20", "player", "玩家視點", "full", "完整頁面"],
+      ["/game_frame.php?room_no=room_exists&auto_reload=20", "player", "玩家視點", "frame", "框架入口"],
+      ["/game_up.php?room_no=room_exists&auto_reload=20", "player", "玩家視點", "up", "上方更新"],
+      ["/game_vote.php?room_no=room_exists&auto_reload=20", "player", "玩家視點", "vote", "投票入口"],
+      ["/login.php?room_no=room_exists&auto_reload=20", "player", "玩家視點", "full", "完整頁面"],
+      ["/user_manager.php?room_no=room_exists&auto_reload=20", "player", "玩家視點", "full", "完整頁面"]
     ] as const;
 
-    for (const [path, viewMode, label] of cases) {
+    for (const [path, viewMode, label, pageMode, pageLabel] of cases) {
       const response = await worker.fetch(new Request(`http://example.test${path}`), env);
       expect(response.status).toBe(200);
       const body = await response.text();
       expect(body).toContain("[room_exists]");
       expect(body).toContain(`data-room-view="${viewMode}"`);
+      expect(body).toContain(`data-room-page="${pageMode}"`);
       expect(body).toContain(label);
+      expect(body).toContain(pageLabel);
       expect(body).toContain("<strong>[住民登錄]</strong>");
       expect(body).toContain('<meta http-equiv="refresh" content="20">');
       expect(body).toContain("/game_play.php?room_no=room_exists&amp;auto_reload=20");

@@ -235,7 +235,8 @@ describe("render", () => {
     expect(html).not.toContain("new WebSocket");
     expect(html).toContain("room-phase-lobby");
     expect(html).toContain("room-phase-night");
-    expect(html).toContain('document.body.classList.add("room-phase-lobby", "room-view-player");');
+    expect(html).toContain('document.body.classList.add("room-phase-lobby", "room-view-player", "room-page-full");');
+    expect(html).toContain('data-room-page="full"');
     expect(html).toContain(".view-spectator-only, .view-heaven-only { display: none; }");
     expect(html).toContain("body.room-view-spectator .view-player-only");
     expect(html).toContain("body.room-view-heaven .view-heaven-only { display: table-row; }");
@@ -257,6 +258,10 @@ describe("render", () => {
     expect(html).toContain("#lastWordsLog .last-words-row { background-color: #eeeeff; color: black; }");
     expect(html).toContain("body.room-view-spectator .room-chat-controls { display: none; }");
     expect(html).toContain("body.room-view-heaven .room-live-chat-only { display: none; }");
+    expect(html).toContain(".page-frame-only, .page-up-only, .page-vote-only { display: none; }");
+    expect(html).toContain("body.room-page-frame .room-aux-panel");
+    expect(html).toContain("body.room-page-up .room-panel-chat { display: none; }");
+    expect(html).toContain("body.room-page-vote .room-panel-system { display: none; }");
     expect(html).toContain("body.room-phase-night .player-card.voted { background: #004000; color: snow; }");
     expect(html).toContain("body.room-phase-night .player-card.voted a { color: #ccffff; }");
     expect(html).toContain("Trip");
@@ -335,6 +340,8 @@ describe("render", () => {
     expect(html).toContain("<a href=\"/room/room_abc?view=spectator\">旁觀</a>");
     expect(html).toContain("<a href=\"/room/room_abc?view=heaven\">靈界</a>");
     expect(html).toContain("PHP入口");
+    expect(html).toContain("完整頁面");
+    expect(html).toContain("PHP 版 frame/up/vote 入口的顯示模式");
     expect(html).toContain('<a href="/game_play.php?room_no=room_abc">game_play.php</a>');
     expect(html).toContain('<a href="/game_view.php?room_no=room_abc">game_view.php</a>');
     expect(html).toContain('<a href="/game_view.php?room_no=room_abc&amp;view=heaven">heaven</a>');
@@ -413,14 +420,14 @@ describe("render", () => {
 
   it("renders room spectator and heaven view links", () => {
     const spectator = renderRoom("room_abc", { viewMode: "spectator", autoReloadSeconds: 20 });
-    expect(spectator).toContain('document.body.classList.add("room-phase-lobby", "room-view-spectator");');
+    expect(spectator).toContain('document.body.classList.add("room-phase-lobby", "room-view-spectator", "room-page-full");');
     expect(spectator).toContain('data-room-view="spectator"');
     expect(spectator).toContain("旁觀視點");
     expect(spectator).toContain("只觀看公開資訊與玩家列表");
     expect(spectator).toContain("body.room-view-spectator .room-chat-controls { display: none; }");
     expect(spectator).toContain('<tr><th>玩家列表</th></tr>');
     expect(spectator).not.toContain('<tr class="view-player-only">\n        <td>\n          <table class="panel">\n            <tr><th>玩家列表</th></tr>');
-    expect(spectator).toContain('<tr class="view-player-only">\n        <td>\n          <table class="panel">\n            <tr><th>能力發動 / 投票</th></tr>');
+    expect(spectator).toContain('<tr class="view-player-only room-panel-actions">\n        <td>\n          <table class="panel">\n            <tr><th>能力發動 / 投票</th></tr>');
     expect(spectator).toContain('<tr class="view-player-only">\n              <td><img class="title-img" src="/assets/reference/img/user_regist_handle_name.gif" alt="玩家暱稱">玩家暱稱</td>');
     expect(spectator).toContain('<a href="/room/room_abc?view=spectator&amp;auto_reload=15">15秒</a>');
     expect(spectator).toContain('<a href="/room/room_abc?view=heaven&amp;auto_reload=20">靈界</a>');
@@ -435,8 +442,29 @@ describe("render", () => {
     expect(heaven).toContain("body.room-view-heaven .room-live-chat-only { display: none; }");
     expect(heaven).toContain('<button id="sendDeadChat" disabled>靈界</button>');
     expect(heaven).toContain('<tr><th>玩家列表</th></tr>');
-    expect(heaven).toContain('<tr class="view-player-only">\n        <td>\n          <table class="panel">\n            <tr><th>能力發動 / 投票</th></tr>');
+    expect(heaven).toContain('<tr class="view-player-only room-panel-actions">\n        <td>\n          <table class="panel">\n            <tr><th>能力發動 / 投票</th></tr>');
     expect(heaven).toContain("game_play / game_view / heaven");
+  });
+
+  it("renders PHP-style room panel modes", () => {
+    const frame = renderRoom("room_abc", { pageMode: "frame" });
+    expect(frame).toContain('document.body.classList.add("room-phase-lobby", "room-view-player", "room-page-frame");');
+    expect(frame).toContain('data-room-page="frame"');
+    expect(frame).toContain("框架入口");
+    expect(frame).toContain("保留主要遊戲畫面與即時更新，隱藏診斷性紀錄面板。");
+    expect(frame).toContain('<tr class="room-aux-panel">');
+
+    const up = renderRoom("room_abc", { pageMode: "up" });
+    expect(up).toContain('data-room-page="up"');
+    expect(up).toContain("上方更新");
+    expect(up).toContain("著重玩家列表與系統更新");
+    expect(up).toContain('<tr class="room-panel-chat">');
+
+    const vote = renderRoom("room_abc", { pageMode: "vote" });
+    expect(vote).toContain('data-room-page="vote"');
+    expect(vote).toContain("投票入口");
+    expect(vote).toContain("著重能力發動與投票操作");
+    expect(vote).toContain('<tr class="view-player-only room-panel-actions">');
   });
 
   it("serves room client behavior from a separate script artifact", () => {
