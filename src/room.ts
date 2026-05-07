@@ -218,8 +218,15 @@ export class RoomDurableObject {
         }
         const text = validateChatText(message.text);
         const next = await this.recordConversationActivity(game);
-        await this.persistRoomEvent(member.playerId, "wolf_chat", { visibility: "private", nickname: member.nickname, text, phase: next.phase, day: next.day });
-        this.broadcastWerewolf(game, buildWolfChatMessage(member.playerId, member.nickname, text));
+        await this.persistRoomEvent(member.playerId, "wolf_chat", {
+          visibility: "private",
+          nickname: member.nickname,
+          text,
+          phase: next.phase,
+          day: next.day,
+          ...(this.isCompositeLoversTalk(game, member.playerId) ? { location: "night wolf lovers" } : {})
+        });
+        this.broadcastWerewolfWithCompositeLovers(game, member.playerId, buildWolfChatMessage(member.playerId, member.nickname, text));
         return;
       }
 
@@ -230,8 +237,15 @@ export class RoomDurableObject {
         }
         const text = validateChatText(message.text);
         const next = await this.recordConversationActivity(game);
-        await this.persistRoomEvent(member.playerId, "fox_chat", { visibility: "private", nickname: member.nickname, text, phase: next.phase, day: next.day });
-        this.broadcastFox(game, buildFoxChatMessage(member.playerId, member.nickname, text));
+        await this.persistRoomEvent(member.playerId, "fox_chat", {
+          visibility: "private",
+          nickname: member.nickname,
+          text,
+          phase: next.phase,
+          day: next.day,
+          ...(this.isCompositeLoversTalk(game, member.playerId) ? { location: "night fox lovers" } : {})
+        });
+        this.broadcastFoxWithCompositeLovers(game, member.playerId, buildFoxChatMessage(member.playerId, member.nickname, text));
         return;
       }
 
@@ -753,10 +767,28 @@ export class RoomDurableObject {
     }
   }
 
+  private broadcastWerewolfWithCompositeLovers(gameState: GameState, actorPlayerId: string, message: unknown): void {
+    const encoded = JSON.stringify(message);
+    for (const [socket, member] of this.sockets) {
+      if (canUseWerewolfChannel(gameState, member.playerId) || this.canHearCompositeLoversTalk(gameState, actorPlayerId, member.playerId)) {
+        socket.send(encoded);
+      }
+    }
+  }
+
   private broadcastFox(gameState: GameState, message: unknown): void {
     const encoded = JSON.stringify(message);
     for (const [socket, member] of this.sockets) {
       if (canUseFoxChannel(gameState, member.playerId)) {
+        socket.send(encoded);
+      }
+    }
+  }
+
+  private broadcastFoxWithCompositeLovers(gameState: GameState, actorPlayerId: string, message: unknown): void {
+    const encoded = JSON.stringify(message);
+    for (const [socket, member] of this.sockets) {
+      if (canUseFoxChannel(gameState, member.playerId) || this.canHearCompositeLoversTalk(gameState, actorPlayerId, member.playerId)) {
         socket.send(encoded);
       }
     }
@@ -787,6 +819,15 @@ export class RoomDurableObject {
         socket.send(encoded);
       }
     }
+  }
+
+  private isCompositeLoversTalk(gameState: GameState, actorPlayerId: string): boolean {
+    const actor = gameState.players.find((player) => player.playerId === actorPlayerId);
+    return actor?.lover === true && canUseLoversChannel(gameState, actorPlayerId);
+  }
+
+  private canHearCompositeLoversTalk(gameState: GameState, actorPlayerId: string, listenerPlayerId: string): boolean {
+    return this.isCompositeLoversTalk(gameState, actorPlayerId) && canUseLoversChannel(gameState, listenerPlayerId);
   }
 
   private broadcastDead(gameState: GameState, message: unknown): void {
