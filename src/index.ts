@@ -2269,6 +2269,21 @@ export default {
       if (url.pathname === "/trip.php" && url.searchParams.get("go") === "room" && url.searchParams.get("id")) {
         return getLegacyTripRoomRecords(env, url.searchParams.get("id") ?? "", url.searchParams.get("play"), url.searchParams.get("page"));
       }
+      if (url.pathname === "/trip.php" && url.searchParams.get("go") === "search") {
+        const searchName = url.searchParams.get("sname") ?? "";
+        if (searchName) {
+          try {
+            const trip = validateTrip(searchName);
+            return new Response(null, {
+              status: 303,
+              headers: { Location: `/trip.php?go=trip&id=${encodeURIComponent(trip)}` }
+            });
+          } catch {
+            return html(renderTripLookup());
+          }
+        }
+        return html(renderTripLookup());
+      }
       if (url.pathname === "/trip.php" && url.searchParams.get("go") === "icon") {
         return html(renderIconCatalog());
       }
