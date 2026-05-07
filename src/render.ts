@@ -992,11 +992,12 @@ function transcriptViewerPlayerFromEvents(events: RoomEventSummary[], viewerPlay
     }
     const value = recordValue(event.payload);
     if (typeof value.role === "string" || typeof value.playerRole === "string" || typeof value.phpRole === "string" || value.lover === true || value.lovers === true) {
+      const role = typeof value.role === "string" ? value.role : typeof value.playerRole === "string" ? value.playerRole : value.phpRole;
       return {
         playerId: viewerPlayerId,
         nickname: typeof value.nickname === "string" ? value.nickname : viewerPlayerId,
-        role: typeof value.role === "string" ? value.role : typeof value.playerRole === "string" ? value.playerRole : value.phpRole,
-        lover: value.lover === true || value.lovers === true
+        role,
+        lover: value.lover === true || value.lovers === true || (typeof role === "string" && role.includes("lovers"))
       };
     }
   }
