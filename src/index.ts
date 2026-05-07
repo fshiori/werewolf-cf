@@ -880,6 +880,10 @@ function readFormString(form: FormData, name: string): string | undefined {
   return typeof value === "string" ? value : undefined;
 }
 
+function hasFormValue(form: FormData, name: string): boolean {
+  return form.get(name) !== null;
+}
+
 function legacyBbsTopicLocation(topicId: number | string, page?: number): string {
   const base = `/bbs.php?view=${encodeURIComponent(String(topicId))}`;
   return page && page > 1 ? `${base}&page=${encodeURIComponent(String(page))}` : base;
@@ -2218,45 +2222,115 @@ async function createRoom(request: Request, env: Env): Promise<Response> {
   }
 
   try {
-    const roomId = generateRoomId();
-    const name = validateRoomName(body.name);
-    const comment = validateRoomComment(typeof body.comment === "string" ? body.comment : "");
-    const maxPlayers = validateRoomCapacity(body.maxPlayers ?? 22);
-    const playerId = validatePlayerId(body.playerId);
-    const nickname = validateNickname(body.nickname);
-    const options = readRoomOptions(body.options);
-    const gmTrip = readGmTrip(body.options, options.gmEnabled === true);
-    const gmTripHash = gmTrip ? await tripHashForRoom(roomId, gmTrip) : null;
-    const optionRole = serializeRoomOptions(options);
-
-    await env.DB.batch([
-      env.DB.prepare(
-        "INSERT INTO players (id, nickname, last_seen_at) VALUES (?, ?, CURRENT_TIMESTAMP) ON CONFLICT(id) DO UPDATE SET nickname = excluded.nickname, last_seen_at = CURRENT_TIMESTAMP"
-      ).bind(playerId, nickname),
-      env.DB.prepare(
-        "INSERT INTO rooms (id, name, room_comment, max_user, dellook, dummy_name, dummy_last_words, gm_trip_hash, status, option_role) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'lobby', ?)"
-      ).bind(
-        roomId,
-        name,
-        comment,
-        maxPlayers,
-        options.deadRoleVisible ? 1 : 0,
-        options.customDummy ? options.dummyName : "替身君",
-        options.customDummy ? options.dummyLastWords : "",
-        gmTripHash,
-        optionRole
-      ),
-      env.DB.prepare("INSERT INTO room_events (room_id, player_id, event_type, payload_json) VALUES (?, ?, 'room_created', ?)").bind(
-        roomId,
-        playerId,
-        JSON.stringify({ name, comment, maxPlayers, options })
-      )
-    ]);
+    const roomId = await createRoomFromData(env, body);
 
     return json({ roomId });
   } catch (error) {
     return json({ error: error instanceof Error ? error.message : "Failed to create room" }, { status: 400 });
   }
+}
+
+async function createLegacyRoom(request: Request, env: Env): Promise<Response> {
+  if (await isMaintenanceMode(env)) {
+    return json({ error: "Server is under maintenance" }, { status: 503 });
+  }
+
+  const form = await request.formData().catch(() => null);
+  if (!form) {
+    return json({ error: "Invalid request" }, { status: 400 });
+  }
+
+  try {
+    const command = readFormString(form, "command") ?? "";
+    if (command !== "CREATE_ROOM") {
+      throw new Error("Invalid room_manager.php command");
+    }
+    const foxVariant = readFormString(form, "option_role_foxs") ?? "";
+    const poisonVariants = form.getAll("option_role_poison").filter((value): value is string => typeof value === "string");
+    const poisonVariant = poisonVariants.includes("cat") ? "cat" : poisonVariants.includes("poison") ? "poison" : "";
+    const forcePoisonWithFox = foxVariant !== "" && hasFormValue(form, "option_role_pobe");
+    const playerId = readFormString(form, "playerId") ?? readFormString(form, "player_id") ?? `player_${crypto.randomUUID().replaceAll("-", "")}`;
+    const nickname = readFormString(form, "nickname") ?? readFormString(form, "handle_name") ?? "建村者";
+    const options = {
+      poison: poisonVariant === "poison" || forcePoisonWithFox,
+      bigWolf: hasFormValue(form, "option_wfbig_poison"),
+      authority: hasFormValue(form, "option_role_authority"),
+      decider: hasFormValue(form, "option_role_decide"),
+      lovers: hasFormValue(form, "option_role_lovers"),
+      betrayer: foxVariant === "betr",
+      childFox: foxVariant === "fosi",
+      twoFoxes: foxVariant === "foxs",
+      cat: poisonVariant === "cat",
+      lastWords: hasFormValue(form, "game_option_will"),
+      openVote: hasFormValue(form, "game_option_open_vote"),
+      commonTalkVisible: hasFormValue(form, "game_option_comm_out"),
+      deadRoleVisible: poisonVariant === "cat" ? false : readFormString(form, "dellook") === "1",
+      wishRole: hasFormValue(form, "game_option_wish_role"),
+      tripRequired: hasFormValue(form, "game_option_trip"),
+      gmEnabled: hasFormValue(form, "game_option_gm"),
+      gmTrip: readFormString(form, "game_option_manager_trip") ?? "",
+      dummyBoy: hasFormValue(form, "game_option_dummy_boy"),
+      customDummy: hasFormValue(form, "game_option_cust_dummy"),
+      dummyName: readFormString(form, "dummy_name") ?? "替身君",
+      dummyLastWords: readFormString(form, "dummy_lw") ?? "",
+      realTime: hasFormValue(form, "game_option_real_time"),
+      dayMinutes: readFormString(form, "game_option_real_time_day") ?? DEFAULT_DAY_MINUTES,
+      nightMinutes: readFormString(form, "game_option_real_time_night") ?? DEFAULT_NIGHT_MINUTES,
+      selfVote: hasFormValue(form, "game_option_vote_me"),
+      voteStatus: hasFormValue(form, "game_option_votedisplay")
+    };
+    const roomId = await createRoomFromData(env, {
+      name: readFormString(form, "room_name") ?? "",
+      comment: readFormString(form, "room_comment") ?? "",
+      maxPlayers: readFormString(form, "max_user") ?? 22,
+      playerId,
+      nickname,
+      options
+    });
+
+    return new Response(null, { status: 303, headers: { Location: `/login.php?room_no=${encodeURIComponent(roomId)}` } });
+  } catch (error) {
+    return json({ error: error instanceof Error ? error.message : "Failed to create room" }, { status: 400 });
+  }
+}
+
+async function createRoomFromData(env: Env, body: Record<string, unknown>): Promise<string> {
+  const roomId = generateRoomId();
+  const name = validateRoomName(String(body.name));
+  const comment = validateRoomComment(typeof body.comment === "string" ? body.comment : "");
+  const maxPlayers = validateRoomCapacity(body.maxPlayers ?? 22);
+  const playerId = validatePlayerId(String(body.playerId));
+  const nickname = validateNickname(String(body.nickname));
+  const options = readRoomOptions(body.options);
+  const gmTrip = readGmTrip(body.options, options.gmEnabled === true);
+  const gmTripHash = gmTrip ? await tripHashForRoom(roomId, gmTrip) : null;
+  const optionRole = serializeRoomOptions(options);
+
+  await env.DB.batch([
+    env.DB.prepare(
+      "INSERT INTO players (id, nickname, last_seen_at) VALUES (?, ?, CURRENT_TIMESTAMP) ON CONFLICT(id) DO UPDATE SET nickname = excluded.nickname, last_seen_at = CURRENT_TIMESTAMP"
+    ).bind(playerId, nickname),
+    env.DB.prepare(
+      "INSERT INTO rooms (id, name, room_comment, max_user, dellook, dummy_name, dummy_last_words, gm_trip_hash, status, option_role) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'lobby', ?)"
+    ).bind(
+      roomId,
+      name,
+      comment,
+      maxPlayers,
+      options.deadRoleVisible ? 1 : 0,
+      options.customDummy ? options.dummyName : "替身君",
+      options.customDummy ? options.dummyLastWords : "",
+      gmTripHash,
+      optionRole
+    ),
+    env.DB.prepare("INSERT INTO room_events (room_id, player_id, event_type, payload_json) VALUES (?, ?, 'room_created', ?)").bind(
+      roomId,
+      playerId,
+      JSON.stringify({ name, comment, maxPlayers, options })
+    )
+  ]);
+
+  return roomId;
 }
 
 async function uploadAvatar(request: Request, env: Env, legacyResult = false): Promise<Response> {
@@ -2745,6 +2819,10 @@ export default {
 
     if (request.method === "POST" && url.pathname === "/api/rooms") {
       return createRoom(request, env);
+    }
+
+    if (request.method === "POST" && url.pathname === "/room_manager.php") {
+      return createLegacyRoom(request, env);
     }
 
     if (request.method === "POST" && url.pathname === "/api/trips") {
