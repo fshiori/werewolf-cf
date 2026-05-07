@@ -80,7 +80,7 @@ describe("render", () => {
     expect(html).toContain("&lt;Test&gt;");
     expect(html).toContain("&lt;Friendly&gt;");
     expect(html).toContain("最大30");
-    expect(html).toContain("/room/room_abc");
+    expect(html).toContain("/login.php?room_no=room_abc");
     expect(html).toContain("入村");
     expect(html).toContain("/list.php");
     expect(html).toContain("聯合列表");

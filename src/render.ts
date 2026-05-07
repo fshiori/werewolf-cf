@@ -1539,6 +1539,7 @@ export function renderHome(rooms: RoomSummary[], announcement = DEFAULT_ANNOUNCE
     ? `<div class="muted">目前沒有村子。</div>`
     : rooms.map((room) => {
       const status = escapeHtml(room.status);
+      const roomEntryUrl = `/login.php?room_no=${encodeURIComponent(room.id)}`;
       const optionMarks = [
         room.options.realTime ? optionMark(`限時 ${String(room.options.dayMinutes)}/${String(room.options.nightMinutes)}`, "img/room_option_real_time.gif") : optionMark("即時", "img/room_option_real_time.gif"),
         room.options.poison ? optionMark("埋毒", "img/room_option_poison.gif") : "",
@@ -1564,8 +1565,8 @@ export function renderHome(rooms: RoomSummary[], announcement = DEFAULT_ANNOUNCE
         room.options.voteStatus ? optionMark("投票済", "img/conn_look.gif") : ""
       ].filter(Boolean).join(" ");
       return `<div class="room-link">
-        <a href="/room/${escapeHtml(room.id)}"><span class="room-line"><span class="status status-${status}">${roomStatusIcon(room.status)}${status}</span><small>[${escapeHtml(room.id)}]</small> ${escapeHtml(room.name)}村</span></a>
-        <small> <a href="/room/${escapeHtml(room.id)}">入村</a></small>
+        <a href="${escapeHtml(roomEntryUrl)}"><span class="room-line"><span class="status status-${status}">${roomStatusIcon(room.status)}${status}</span><small>[${escapeHtml(room.id)}]</small> ${escapeHtml(room.name)}村</span></a>
+        <small> <a href="${escapeHtml(roomEntryUrl)}">入村</a></small>
         <small class="room-comment">${room.comment ? `～${escapeHtml(room.comment)}～ ` : ""}${maxPlayersMark(room.maxPlayers)} ～建立時間：${escapeHtml(room.createdAt)}～ ${optionMarks}</small>
       </div>`;
     }).join("");
