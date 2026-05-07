@@ -597,7 +597,7 @@ function roomTranscriptHref(roomId: string, params: Record<string, string | unde
 function legacyTranscriptHref(path: "/old_log.php" | "/game_log.php", roomId: string, params: Record<string, string | undefined>): string {
   const baseParams = path === "/old_log.php"
     ? { log_mode: "on", room_no: roomId }
-    : { room_no: roomId };
+    : { room_no: roomId, log_mode: "on" };
   const query = Object.entries({ ...baseParams, ...params })
     .filter(([, value]) => value !== undefined && value !== "")
     .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value ?? "")}`)
@@ -1096,6 +1096,7 @@ export function renderRoomTranscript(roomId: string, records: GameRecordSummary[
   return page(`Room ${roomId} Log`, shell(`
     <fieldset>
       <legend><strong>村子完整紀錄</strong></legend>
+      <p style="margin:0 0 6px 0;"><a href="/old_log.php">←返回</a></p>
       <table class="form-table">
         <tr><td><strong>　村子：</strong></td><td><a href="/room/${escapeHtml(roomId)}">${escapeHtml(roomId)}</a></td></tr>
         <tr><td><strong>　索引：</strong></td><td><a href="/room/${escapeHtml(roomId)}/records">對局紀錄</a>　<a href="/room/${escapeHtml(roomId)}/events">事件履歷</a></td></tr>
