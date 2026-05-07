@@ -3158,7 +3158,7 @@ export function renderVersion(): string {
 }
 
 export function renderScriptInfo(): string {
-  return page("Script Info", shell(`
+  return page("汝等是人是狼？ Werewolf Cloudflare Port 系統特點", shell(`
     <fieldset style="background-image:url('/assets/reference/img/script_info_bg.jpg'); background-repeat:no-repeat; background-position:100% 100%; background-attachment:fixed;">
       <legend><strong>Script Info</strong></legend>
       <p><img class="title-img" src="/assets/reference/img/script_info_title.jpg" alt="Script Info"></p>
