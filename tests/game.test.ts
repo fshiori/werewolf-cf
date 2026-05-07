@@ -109,7 +109,7 @@ describe("game", () => {
     expect(game.players.filter((player) => player.role === "werewolf")).toHaveLength(1);
     expect(game.players.filter((player) => player.role === "seer")).toHaveLength(1);
     expect(game.players.filter((player) => player.role === "medium")).toHaveLength(0);
-    expect(wolvesForPlayer(game, "player_1")).toEqual([{ playerId: "player_1", nickname: "Alice" }]);
+    expect(wolvesForPlayer(game, "player_1")).toEqual([]);
     expect(wolvesForPlayer(game, "player_2")).toEqual([]);
   });
 
@@ -277,7 +277,6 @@ describe("game", () => {
       expect.objectContaining({ playerId: "player_13", role: "common" })
     ]);
     expect(commonsForPlayer(game, "player_12")).toEqual([
-      { playerId: "player_12", nickname: "Player 12" },
       { playerId: "player_13", nickname: "Player 13" }
     ]);
     expect(commonsForPlayer(game, "player_10")).toEqual([]);
@@ -358,7 +357,6 @@ describe("game", () => {
     expect(game.players.filter((player) => player.role === "big_wolf")).toHaveLength(1);
     expect(game.players.filter((player) => player.role === "werewolf")).toHaveLength(2);
     expect(wolvesForPlayer(game, "player_12")).toEqual([
-      { playerId: "player_12", nickname: "Player 12" },
       { playerId: "player_13", nickname: "Player 13" },
       { playerId: "player_14", nickname: "Player 14" }
     ]);
@@ -461,7 +459,6 @@ describe("game", () => {
       expect.objectContaining({ playerId: "player_2" })
     ]);
     expect(loversForPlayer(game, "player_1")).toEqual([
-      { playerId: "player_1", nickname: "Player 1" },
       { playerId: "player_2", nickname: "Player 2" }
     ]);
     expect(loversForPlayer(game, "player_3")).toEqual([]);
@@ -498,7 +495,7 @@ describe("game", () => {
       expect.objectContaining({ playerId: "player_1", role: "betrayer" })
     ]);
     expect(foxesForPlayer(game, "player_1")).toEqual([{ playerId: "player_11", nickname: "Player 11" }]);
-    expect(foxesForPlayer(game, "player_11")).toEqual([{ playerId: "player_11", nickname: "Player 11" }]);
+    expect(foxesForPlayer(game, "player_11")).toEqual([]);
     expect(foxesForPlayer(game, "player_2")).toEqual([]);
   });
 
@@ -567,7 +564,6 @@ describe("game", () => {
       expect.objectContaining({ playerId: "player_11", role: "fox" })
     ]);
     expect(foxesForPlayer(game, "player_1")).toEqual([
-      { playerId: "player_1", nickname: "Player 1" },
       { playerId: "player_11", nickname: "Player 11" }
     ]);
   });
