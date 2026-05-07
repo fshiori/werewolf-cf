@@ -611,6 +611,7 @@ function startGameWithPlayers(state: GameState, players: GamePlayer[], now: numb
     lobbyStartVotes: {},
     lobbyKickVotes: {},
     mediumReading: undefined,
+    mediumReadings: undefined,
     phaseEndsAt: new Date(now + (options.dummyBoy ? roomOptionNightMs(options) : roomOptionDayMs(options))).toISOString(),
     lastSpokenAt: new Date(now).toISOString(),
     log: [...state.log, "遊戲開始。", options.dummyBoy ? "替身君的第一夜開始。" : "第 1 日白天開始。"]
@@ -697,6 +698,7 @@ export function requestRoomEnd(state: GameState, playerId: string): GameState {
       guards: {},
       catRevives: {},
       mediumReading: undefined,
+      mediumReadings: undefined,
       log: [...next.log, "抗議人數超過生存人數一半，廢村。"]
     };
   }
@@ -991,11 +993,16 @@ export function foxesForPlayer(state: GameState, playerId: string): RoomMember[]
 }
 
 export function mediumReadingForPlayer(state: GameState, playerId: string): MediumReading | undefined {
+  return mediumReadingsForPlayer(state, playerId)[0];
+}
+
+export function mediumReadingsForPlayer(state: GameState, playerId: string): MediumReading[] {
   const player = state.players.find((candidate) => candidate.playerId === playerId);
-  if (state.phase !== "day" || !state.mediumReading || !player?.alive || player.role !== "medium") {
-    return undefined;
+  if (state.phase !== "day" || !player?.alive || player.role !== "medium") {
+    return [];
   }
-  return state.mediumReading;
+  const readings = state.mediumReadings ?? (state.mediumReading ? [state.mediumReading] : []);
+  return readings.filter((reading) => reading.day === state.day - 1);
 }
 
 export function playerStatUpdates(state: GameState): PlayerStatUpdate[] {
@@ -1145,13 +1152,14 @@ function resolveDay(state: GameState, now = Date.now()): GameState {
         result: mediumResultForRole(executed.role)
       }
     : undefined;
+  const mediumReadings = appendMediumReadingsForDay(state, mediumReading ? [mediumReading] : []);
   const log = [
     ...state.log,
     executed ? `${executed.nickname} 被投票處決。` : "白天沒有共識，無人被處決。",
     ...(poisonTarget ? [`${poisonTarget.nickname} 被${executed?.role === "cat" ? "貓又" : "埋毒者"}牽連死亡。`] : []),
     ...lastWordsForNewDeaths(state.players, players, state.lastWords ?? {})
   ];
-  return withWinOrNextNight({ ...clearActionsForDeadPlayers({ ...state, players }), votes: {}, revoteCount: 0, mediumReading, log }, now);
+  return withWinOrNextNight({ ...clearActionsForDeadPlayers({ ...state, players }), votes: {}, revoteCount: 0, mediumReading, mediumReadings, log }, now);
 }
 
 function resolveNight(state: GameState, now = Date.now(), random = Math.random): GameState {
@@ -1206,6 +1214,17 @@ function applySuddenDeathForTimedOutActors(state: GameState, targets: GamePlayer
     ...lastWords,
     "＜投票結果有問題 請重新投票＞"
   ];
+  const mediumReadings = state.phase === "day"
+    ? appendMediumReadingsForDay(
+        state,
+        targets.map((player) => ({
+          day: state.day,
+          targetPlayerId: player.playerId,
+          targetNickname: player.nickname,
+          result: mediumResultForRole(player.role)
+        }))
+      )
+    : state.mediumReadings;
   const resetState = clearActionsForDeadPlayers({
     ...state,
     players,
@@ -1215,6 +1234,8 @@ function applySuddenDeathForTimedOutActors(state: GameState, targets: GamePlayer
     divinations: {},
     guards: {},
     catRevives: {},
+    mediumReading: mediumReadings?.at(0),
+    mediumReadings,
     suddenDeathWarningAt: undefined,
     log
   });
@@ -1347,6 +1368,7 @@ function endGame(state: GameState, winner: GameWinner): GameState {
     guards: {},
     catRevives: {},
     mediumReading: undefined,
+    mediumReadings: undefined,
     log: [
       ...state.log,
       winner === "villagers" ? "村民勝利。" : winner === "werewolves" ? "狼人勝利。" : winner === "foxes" ? "妖狐勝利。" : winner === "lovers" ? "戀人勝利。" : "平手。"
@@ -1384,6 +1406,12 @@ function mediumResultForRole(role: GamePlayer["role"]): MediumResult {
     return "child_fox";
   }
   return isWerewolfRole(role) ? "werewolf" : "human";
+}
+
+function appendMediumReadingsForDay(state: GameState, readings: MediumReading[]): MediumReading[] | undefined {
+  const existingReadings = state.mediumReadings ?? (state.mediumReading ? [state.mediumReading] : []);
+  const nextReadings = [...existingReadings, ...readings];
+  return nextReadings.length > 0 ? nextReadings : undefined;
 }
 
 function hasBigWolfChildFoxVictoryRule(state: GameState): boolean {
