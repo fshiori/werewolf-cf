@@ -1956,7 +1956,7 @@ describe("render", () => {
         roomId: "room_abc",
         playerId: "player_gm",
         eventType: "gm_set_alive",
-        payload: { targetPlayerId: "player_target", alive: false, phase: "night", day: 2 },
+        payload: { targetPlayerId: "player_target", targetNickname: "Target", alive: false, phase: "night", day: 2 },
         createdAt: "2026-05-06 12:01:00"
       },
       {
@@ -1964,7 +1964,7 @@ describe("render", () => {
         roomId: "room_abc",
         playerId: "player_gm",
         eventType: "gm_set_flag",
-        payload: { targetPlayerId: "player_target", flag: "lover", enabled: true, phase: "night", day: 2 },
+        payload: { targetPlayerId: "player_target", targetNickname: "Target", flag: "lover", enabled: true, phase: "night", day: 2 },
         createdAt: "2026-05-06 12:02:00"
       },
       {
@@ -1994,7 +1994,7 @@ describe("render", () => {
     ]);
 
     expect(html).toContain("GM 生死調整");
-    expect(html).toContain("對象:player_target　生死:死亡");
+    expect(html).toContain("對象:player_target　對象名:Target　生死:死亡");
     expect(html).toContain("GM 旗標調整");
     expect(html).toContain("狀態:開啟　旗標:戀人");
     expect(html).toContain("GM 共有公開調整");
