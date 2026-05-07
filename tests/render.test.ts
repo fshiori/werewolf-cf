@@ -456,6 +456,7 @@ describe("render", () => {
 
   it("renders PHP-style room panel modes", () => {
     const frame = renderRoom("room_abc", { pageMode: "frame" });
+    expect(frame).toContain("<title>汝等是人是狼？＜遊戲＞</title>");
     expect(frame).toContain('document.body.classList.add("room-phase-lobby", "room-view-player", "room-page-frame");');
     expect(frame).toContain('data-room-page="frame"');
     expect(frame).toContain("框架入口");
@@ -469,6 +470,7 @@ describe("render", () => {
     expect(frame).toContain('<tr class="room-aux-panel">');
 
     const up = renderRoom("room_abc", { pageMode: "up" });
+    expect(up).toContain("<title>汝等是人是狼？＜發言＞</title>");
     expect(up).toContain('data-room-page="up"');
     expect(up).toContain("上方更新");
     expect(up).toContain("發言上框；保留發言、頻道按鈕與投票入口");
@@ -480,6 +482,7 @@ describe("render", () => {
     expect(up).toContain('<tr class="room-panel-chat">');
 
     const vote = renderRoom("room_abc", { pageMode: "vote" });
+    expect(vote).toContain("<title>汝等是人是狼？＜投票＞</title>");
     expect(vote).toContain('data-room-page="vote"');
     expect(vote).toContain("投票入口");
     expect(vote).toContain("著重能力發動與投票操作");

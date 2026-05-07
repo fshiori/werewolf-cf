@@ -3536,6 +3536,19 @@ function legacyRoomEntryMap(roomId: string, autoReloadSeconds: 0 | 15 | 20 | 30,
   return "";
 }
 
+function roomPageTitle(roomId: string, pageMode: "full" | "frame" | "up" | "vote"): string {
+  if (pageMode === "frame") {
+    return "汝等是人是狼？＜遊戲＞";
+  }
+  if (pageMode === "up") {
+    return "汝等是人是狼？＜發言＞";
+  }
+  if (pageMode === "vote") {
+    return "汝等是人是狼？＜投票＞";
+  }
+  return `Room ${roomId}`;
+}
+
 export function renderRoom(roomId: string, options: RenderRoomOptions = {}): string {
   const autoReloadSeconds = normalizeAutoReloadSeconds(options.autoReloadSeconds);
   const viewMode = normalizeRoomViewMode(options.viewMode);
@@ -3545,7 +3558,7 @@ export function renderRoom(roomId: string, options: RenderRoomOptions = {}): str
   const pageLabel = pageMode === "frame" ? "框架入口" : pageMode === "up" ? "上方更新" : pageMode === "vote" ? "投票入口" : "完整頁面";
   const legacyEntryMap = legacyRoomEntryMap(roomId, autoReloadSeconds, pageMode);
   const autoReloadMeta = autoReloadSeconds > 0 ? `<meta http-equiv="refresh" content="${autoReloadSeconds}">` : "";
-  return page(`Room ${roomId}`, `
+  return page(roomPageTitle(roomId, pageMode), `
     <script>document.body.classList.add("room-phase-lobby", "room-view-${viewMode}", "room-page-${pageMode}");</script>
     <table class="game-shell" data-room-id="${escapeHtml(roomId)}" data-room-view="${viewMode}" data-room-page="${pageMode}">
       <tr>

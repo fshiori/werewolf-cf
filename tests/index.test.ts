@@ -1300,14 +1300,14 @@ describe("worker routes", () => {
     const cases = [
       ["/game_view.php?room_no=room_exists&auto_reload=20", "spectator", "旁觀視點", "full", "完整頁面"],
       ["/game_play.php?room_no=room_exists&auto_reload=20", "player", "玩家視點", "full", "完整頁面"],
-      ["/game_frame.php?room_no=room_exists&auto_reload=20", "player", "玩家視點", "frame", "框架入口"],
-      ["/game_up.php?room_no=room_exists&auto_reload=20", "player", "玩家視點", "up", "上方更新"],
-      ["/game_vote.php?room_no=room_exists&auto_reload=20", "player", "玩家視點", "vote", "投票入口"],
+      ["/game_frame.php?room_no=room_exists&auto_reload=20", "player", "玩家視點", "frame", "框架入口", "汝等是人是狼？＜遊戲＞"],
+      ["/game_up.php?room_no=room_exists&auto_reload=20", "player", "玩家視點", "up", "上方更新", "汝等是人是狼？＜發言＞"],
+      ["/game_vote.php?room_no=room_exists&auto_reload=20", "player", "玩家視點", "vote", "投票入口", "汝等是人是狼？＜投票＞"],
       ["/login.php?room_no=room_exists&auto_reload=20", "player", "玩家視點", "full", "完整頁面"],
       ["/user_manager.php?room_no=room_exists&auto_reload=20", "player", "玩家視點", "full", "完整頁面"]
     ] as const;
 
-    for (const [path, viewMode, label, pageMode, pageLabel] of cases) {
+    for (const [path, viewMode, label, pageMode, pageLabel, title] of cases) {
       const response = await worker.fetch(new Request(`http://example.test${path}`), env);
       expect(response.status).toBe(200);
       const body = await response.text();
@@ -1316,6 +1316,9 @@ describe("worker routes", () => {
       expect(body).toContain(`data-room-page="${pageMode}"`);
       expect(body).toContain(label);
       expect(body).toContain(pageLabel);
+      if (title) {
+        expect(body).toContain(`<title>${title}</title>`);
+      }
       if (pageMode !== "full") {
         expect(body).toContain(`data-legacy-entry="${path.slice(1).split("?")[0]}"`);
       }
