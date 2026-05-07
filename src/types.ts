@@ -136,6 +136,17 @@ export interface WinRateEntry {
   rate: number;
 }
 
+export interface TripPublicSummary {
+  registered: boolean;
+  excluded: boolean;
+  players: string[];
+  stats: {
+    gamesPlayed: number;
+    wins: number;
+    losses: number;
+  };
+}
+
 export interface GameRecordSummary {
   id: number;
   roomId: string;
