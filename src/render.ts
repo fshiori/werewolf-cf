@@ -2840,9 +2840,9 @@ export function renderScriptInfo(): string {
     <fieldset>
       <legend><strong>相關頁面</strong></legend>
       <table class="form-table">
-        <tr><td><strong>　版本：</strong></td><td><a href="/version">/version</a></td></tr>
+        <tr><td><strong>　版本：</strong></td><td><a href="/version.php">/version.php</a></td></tr>
         <tr><td><strong>　狀態：</strong></td><td><a href="/status">/status</a></td></tr>
-        <tr><td><strong>　規則：</strong></td><td><a href="/rules">/rules</a></td></tr>
+        <tr><td><strong>　規則：</strong></td><td><a href="/rule.php">/rule.php</a></td></tr>
         <tr><td><strong>　通訊協定：</strong></td><td><a href="/protocol">/protocol</a></td></tr>
       </table>
     </fieldset>

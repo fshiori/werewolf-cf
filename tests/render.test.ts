@@ -1521,6 +1521,8 @@ describe("render", () => {
     expect(html).toContain("時間設定");
     expect(html).toContain("60秒沉默後推進1時間");
     expect(html).toContain("BBS 標題");
+    expect(html).toContain("/version.php");
+    expect(html).toContain("/rule.php");
     expect(html).toContain("/protocol");
   });
 
