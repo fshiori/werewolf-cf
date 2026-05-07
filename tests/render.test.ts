@@ -968,9 +968,9 @@ describe("render", () => {
 
     const paginated = renderBbsAdmin(topics, { page: 2, pageSize: 15, totalTopics: 31 });
     expect(paginated).toContain("bbs-pagination");
-    expect(paginated).toContain('<a href="/admin/bbs?page=1">[1]</a>');
+    expect(paginated).toContain('<a href="/admin.php?go=bbs&page=1">[1]</a>');
     expect(paginated).toContain("<strong>[2]</strong>");
-    expect(paginated).toContain('<a href="/admin/bbs?page=3">[3]</a>');
+    expect(paginated).toContain('<a href="/admin.php?go=bbs&page=3">[3]</a>');
   });
 
   it("renders room records as a normal HTML page", () => {
@@ -1632,8 +1632,8 @@ describe("render", () => {
     expect(html).toContain("請選擇要廢除的村");
     expect(html).toContain("表示：");
     expect(html).toContain("<strong>全部</strong>");
-    expect(html).toContain("/admin/rooms?status=active&amp;token=secret%20token");
-    expect(html).toContain("/admin/rooms?status=ended&amp;token=secret%20token");
+    expect(html).toContain("/admin.php?go=rooms&amp;status=active&amp;token=secret%20token");
+    expect(html).toContain("/admin.php?go=rooms&amp;status=ended&amp;token=secret%20token");
     expect(html).toContain("room_abc");
     expect(html).toContain("Need review");
     expect(html).toContain("room_ended");
@@ -1675,9 +1675,9 @@ describe("render", () => {
     const html = renderAdminIndex();
 
     expect(html).toContain("管理選單");
-    expect(html).toContain("/admin/rooms");
-    expect(html).toContain("/admin/config");
-    expect(html).toContain("/admin/bbs");
+    expect(html).toContain("/admin.php?go=rooms");
+    expect(html).toContain("/admin.php?go=config");
+    expect(html).toContain("/admin.php?go=bbs");
     expect(html).toContain("/status");
     expect(html).toContain('action="/admin.php?go=in"');
     expect(html).toContain('name="adpass"');

@@ -1187,9 +1187,9 @@ describe("worker routes", () => {
     expect(response.status).toBe(200);
     const body = await response.text();
     expect(body).toContain("管理選單");
-    expect(body).toContain("/admin/rooms");
-    expect(body).toContain("/admin/config");
-    expect(body).toContain("/admin/bbs");
+    expect(body).toContain("/admin.php?go=rooms");
+    expect(body).toContain("/admin.php?go=config");
+    expect(body).toContain("/admin.php?go=bbs");
     expect(body).toContain('action="/admin.php?go=in"');
     expect(body).toContain('name="adpass"');
     expect(body).toContain("各管理功能仍需輸入對應管理密碼");
@@ -1205,7 +1205,7 @@ describe("worker routes", () => {
     );
 
     expect(response.status).toBe(303);
-    expect(response.headers.get("Location")).toBe("/admin/rooms?token=secret%20token");
+    expect(response.headers.get("Location")).toBe("/admin.php?go=rooms&token=secret%20token");
   });
 
   it("supports the legacy admin.php logout link", async () => {
@@ -1229,6 +1229,18 @@ describe("worker routes", () => {
     expect(body).toContain("系統設定管理");
     expect(body).toContain("configAdminToken");
     expect(body).not.toContain("configHomeAnnouncement");
+  });
+
+  it("supports the legacy admin.php config alias", async () => {
+    const response = await worker.fetch(
+      new Request("http://example.test/admin.php?go=config&token=secret"),
+      envWithRooms([], { config_admin_token: "secret", home_announcement: "Runtime notice", maintenance_mode: "false" })
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.text();
+    expect(body).toContain("首頁公告");
+    expect(body).toContain("Runtime notice");
   });
 
   it("renders runtime config admin page with a valid token", async () => {
@@ -1287,6 +1299,19 @@ describe("worker routes", () => {
     expect(body).toContain("廢村管理");
     expect(body).toContain("roomAdminToken");
     expect(body).not.toContain("room_admin村");
+  });
+
+  it("supports the legacy admin.php room list alias", async () => {
+    const response = await worker.fetch(
+      new Request("http://example.test/admin.php?go=rooms&token=secret"),
+      envWithRooms(["room_admin"], { room_admin_token: "secret" })
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.text();
+    expect(body).toContain("請選擇要廢除的村");
+    expect(body).toContain("room_admin");
+    expect(body).toContain("/admin.php?go=del&amp;id=room_admin&amp;token=secret");
   });
 
   it("renders active rooms on the room admin page with a valid token", async () => {
@@ -1367,7 +1392,7 @@ describe("worker routes", () => {
     );
 
     expect(response.status).toBe(303);
-    expect(response.headers.get("Location")).toBe("/admin/rooms?token=secret&ended=room_admin");
+    expect(response.headers.get("Location")).toBe("/admin.php?go=rooms&token=secret&ended=room_admin");
     const runs = (env as unknown as { runs: Array<{ query: string; values: unknown[] }> }).runs;
     expect(runs).toContainEqual(
       expect.objectContaining({
@@ -1771,11 +1796,37 @@ describe("worker routes", () => {
     expect(response.status).toBe(200);
     const body = await response.text();
     expect(body).toContain("bbs-pagination");
-    expect(body).toContain('<a href="/admin/bbs?page=1">[1]</a>');
+    expect(body).toContain('<a href="/admin.php?go=bbs&page=1">[1]</a>');
     expect(body).toContain("<strong>[2]</strong>");
-    expect(body).toContain('<a href="/admin/bbs?page=3">[3]</a>');
+    expect(body).toContain('<a href="/admin.php?go=bbs&page=3">[3]</a>');
     expect(body).toContain("Topic 16");
     expect(body).not.toContain("Topic 1</a>");
+  });
+
+  it("supports the legacy admin.php BBS alias", async () => {
+    const response = await worker.fetch(
+      new Request("http://example.test/admin.php?go=bbs"),
+      envWithRooms([], {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, new Set(), new Set(), {}, [
+        {
+          id: 1,
+          name: "Admin",
+          title: "Pinned",
+          message: "Hello",
+          trip_hash: null,
+          reply_count: 0,
+          pinned: 1,
+          locked: 0,
+          digest: 0,
+          created_at: "2026-05-06 12:00:00",
+          updated_at: "2026-05-06 12:00:00"
+        }
+      ])
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.text();
+    expect(body).toContain("討論管理");
+    expect(body).toContain("Pinned");
   });
 
   it("returns BBS topics", async () => {
