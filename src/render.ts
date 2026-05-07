@@ -3828,6 +3828,7 @@ export function renderRoom(roomId: string, options: RenderRoomOptions = {}): str
                 <a href="${legacyRoomHref("/game_vote.php", roomId, autoReloadSeconds)}">game_vote.php</a>
                 <a href="${legacyRoomHref("/login.php", roomId, autoReloadSeconds)}">login.php</a>
                 <a href="${legacyRoomHref("/user_manager.php", roomId, autoReloadSeconds)}">user_manager.php</a>
+                <a href="/game_play.php?go=out&amp;room_no=${encodeURIComponent(roomId)}" target="_top">[登出]</a>
               </td>
             </tr>
             <tr>
