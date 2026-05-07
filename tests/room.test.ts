@@ -3628,6 +3628,45 @@ describe("RoomDurableObject", () => {
     expect(messages).toEqual([{ type: "error", message: "Only werewolves can perform night kills" }]);
   });
 
+  it("rejects duplicate night kills from the same wolf through the websocket handler", async () => {
+    const game: GameState = {
+      roomId: "room_abc",
+      phase: "night",
+      day: 1,
+      players: [
+        { playerId: "player_wolf", nickname: "Wolf", role: "werewolf", alive: true },
+        { playerId: "player_other_wolf", nickname: "Other Wolf", role: "werewolf", alive: true },
+        { playerId: "player_target", nickname: "Target", role: "villager", alive: true },
+        { playerId: "player_other", nickname: "Other", role: "villager", alive: true }
+      ],
+      votes: {},
+      openVote: false,
+      commonTalkVisible: false,
+      deadRoleVisible: false,
+      wishRole: false,
+      dummyBoy: false,
+      dayMs: 180_000,
+      nightMs: 90_000,
+      selfVote: false,
+      voteStatus: false,
+      revoteCount: 0,
+      nightKills: { player_wolf: "player_target" },
+      divinations: {},
+      guards: {},
+      catRevives: {},
+      lastWords: {},
+      log: []
+    };
+    const room = roomObject(game);
+    const messages: SentMessage[] = [];
+    const socket = fakeSocket(messages);
+    connect(room, socket, "player_wolf", "Wolf");
+
+    await sendRaw(room, socket, JSON.stringify({ type: "night_kill", targetPlayerId: "player_other" }));
+
+    expect(messages).toEqual([{ type: "error", message: "Night kill is already used tonight" }]);
+  });
+
   it("rejects night role actions from unauthorized websocket players", async () => {
     const game: GameState = {
       roomId: "room_abc",

@@ -1400,6 +1400,19 @@ describe("game", () => {
     expect(game.winner).toBe("werewolves");
   });
 
+  it("rejects duplicate night kills from the same wolf", () => {
+    const game = activeState("night", [
+      { playerId: "player_1", nickname: "Wolf A", role: "werewolf", alive: true },
+      { playerId: "player_2", nickname: "Wolf B", role: "werewolf", alive: true },
+      { playerId: "player_3", nickname: "Villager A", role: "villager", alive: true },
+      { playerId: "player_4", nickname: "Villager B", role: "villager", alive: true }
+    ]);
+    const voted = castNightKill(game, "player_1", "player_3", 0);
+
+    expect(voted).toMatchObject({ phase: "night", nightKills: { player_1: "player_3" } });
+    expect(() => castNightKill(voted, "player_1", "player_4", 0)).toThrow("Night kill is already used tonight");
+  });
+
   it("gives foxes the win when a normal win condition happens while a fox is alive", () => {
     let game = activeState("day", [
       { playerId: "player_1", nickname: "Wolf", role: "werewolf", alive: true },

@@ -751,6 +751,9 @@ export function castNightKill(state: GameState, actorId: string, targetId: strin
   if (state.dummyBoy && state.day === 0 && target.playerId !== DUMMY_PLAYER_ID) {
     throw new Error("Werewolves must target the dummy boy on the first night");
   }
+  if (state.nightKills?.[actorId]) {
+    throw new Error("Night kill is already used tonight");
+  }
 
   const next = { ...state, nightKills: { ...state.nightKills, [actorId]: targetId } };
   if (areNightActionsComplete(next)) {
