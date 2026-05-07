@@ -1148,6 +1148,15 @@ export function renderAdminIndex(): string {
       </table>
     </fieldset>
     <fieldset>
+      <legend><strong>舊式管理登入</strong></legend>
+      <form action="/admin.php?go=in" method="post">
+        <table class="form-table">
+          <tr><td><label><strong>　管理密碼：</strong></label></td><td><input name="adpass" type="password" maxlength="128" size="24"> <input type="submit" value="登入"></td></tr>
+          <tr><td></td><td class="muted">相容 reference 的 <code>admin.php?go=in</code>，登入後進入廢村管理。</td></tr>
+        </table>
+      </form>
+    </fieldset>
+    <fieldset>
       <legend><strong>管理說明</strong></legend>
       <table class="form-table">
         <tr><td><strong>　認證：</strong></td><td>各管理功能仍需輸入對應管理密碼；本頁只提供入口。</td></tr>
