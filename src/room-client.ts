@@ -578,7 +578,10 @@ function updateVoteObserverPanel(game, currentPlayer, currentPlayerDead, voteSum
   panel.className = "muted";
   const label = currentPlayerDead ? "靈界視點" : "旁觀視點";
   const visibility = game.openVote ? "公開投票先" : "投票先非公開";
-  panel.textContent = label + "：" + visibility + "。已投票 " + votedPlayerIds.size + " / " + game.players.filter((player) => player.alive).length + "。";
+  const statusText = game.phase === "night"
+    ? "已行動 " + votedPlayerIds.size + "。"
+    : "已投票 " + votedPlayerIds.size + " / " + game.players.filter((player) => player.alive).length + "。";
+  panel.textContent = label + "：" + visibility + "。" + statusText;
   container.appendChild(panel);
   if (!game.openVote || !Object.keys(voteSummary).length) return;
   const table = document.createElement("table");
