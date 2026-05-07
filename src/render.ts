@@ -3575,7 +3575,7 @@ export function renderRoom(roomId: string, options: RenderRoomOptions = {}): str
           </table>
         </td>
       </tr>
-      <tr class="view-player-only">
+      <tr>
         <td>
           <table class="panel">
             <tr><th>玩家列表</th></tr>
