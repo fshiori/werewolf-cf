@@ -3303,15 +3303,18 @@ describe("render", () => {
     const html = renderAdminIndex();
 
     expect(html).toContain("管理選單");
+    expect(html).toContain('<table class="form-table table1 admin-menu-table" border="1" cellspacing="1" cellpadding="2" bgcolor="#CCCCCC" style="width:100%;margin:12px 0 18px;">');
     expect(html).toContain("/admin.php?go=rooms");
     expect(html).toContain("/admin.php?go=config");
     expect(html).toContain("/admin.php?go=bbs");
     expect(html).toContain("/admin.php?go=status");
     expect(html).toContain("/admin/status");
     expect(html).toContain('action="/admin.php?go=in"');
+    expect(html).toContain('<table class="form-table table1 admin-login-table" border="1" cellspacing="1" cellpadding="2" bgcolor="#CCCCCC" style="width:100%;margin:12px 0 18px;">');
     expect(html).toContain('name="apass"');
     expect(html).not.toContain('name="adpass"');
     expect(html).toContain("各管理功能仍需輸入對應管理密碼");
+    expect(html).toContain('<table class="form-table table1 admin-help-table" border="1" cellspacing="1" cellpadding="2" bgcolor="#CCCCCC" style="width:100%;margin:12px 0 18px;">');
   });
 
   it("renders websocket protocol page", () => {
