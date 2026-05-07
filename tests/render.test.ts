@@ -1647,7 +1647,8 @@ describe("render", () => {
     expect(html).toContain("埋毒 / 大狼 / 戀人");
     expect(html).toContain("頻道限:狼/狐");
     expect(html).toContain("Trip限定 / GM制");
-    expect(html).toContain("/room/room_abc/log");
+    expect(html).toContain("/game_view.php?room_no=room_abc");
+    expect(html).toContain("/game_log.php?room_no=room_abc&amp;log_mode=on");
     expect(html).toContain("/room/room_abc/events");
     expect(html).toContain("/admin.php?go=del&amp;id=room_abc&amp;token=secret%20token");
     expect(html).toContain("adminEndRoom");

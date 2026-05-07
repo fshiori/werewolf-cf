@@ -1390,14 +1390,14 @@ export function renderAdminRooms(rooms: RoomSummary[], statusFilter: AdminRoomSt
   };
   const rows = rooms.length
     ? rooms.map((room) => `<tr>
-        <td><a href="/room/${escapeHtml(room.id)}">${escapeHtml(room.id)}</a></td>
+        <td><a href="/game_view.php?room_no=${encodeURIComponent(room.id)}">${escapeHtml(room.id)}</a></td>
         <td>${escapeHtml(room.name)}村</td>
         <td>${escapeHtml(room.comment || "－")}</td>
         <td>${maxPlayersMark(room.maxPlayers)}</td>
         <td>${roomStatusIcon(room.status)}${escapeHtml(federatedStatusLabel(room.status))}</td>
         <td title="${escapeHtml(optionSummary(room))}">${optionMarkers(room) || escapeHtml(optionSummary(room))}</td>
         <td>${escapeHtml(room.createdAt)}</td>
-        <td><a href="/room/${escapeHtml(room.id)}/log">紀錄</a> / <a href="/room/${escapeHtml(room.id)}/events">事件</a></td>
+        <td><a href="/game_log.php?room_no=${encodeURIComponent(room.id)}&amp;log_mode=on">紀錄</a> / <a href="/room/${escapeHtml(room.id)}/events">事件</a></td>
         <td>${room.status === "ended" ? `<span class="muted">已結束</span>` : `<a href="${legacyEndHref(room.id)}">廢村</a> / <button class="adminEndRoom" data-room-id="${escapeHtml(room.id)}">API</button>`}</td>
       </tr>`).join("")
     : `<tr><td colspan="9" class="muted">目前沒有可廢除的村。</td></tr>`;

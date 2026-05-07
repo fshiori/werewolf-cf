@@ -1312,6 +1312,8 @@ describe("worker routes", () => {
     expect(body).toContain("請選擇要廢除的村");
     expect(body).toContain("room_admin");
     expect(body).toContain("/admin.php?go=del&amp;id=room_admin&amp;token=secret");
+    expect(body).toContain("/game_view.php?room_no=room_admin");
+    expect(body).toContain("/game_log.php?room_no=room_admin&amp;log_mode=on");
   });
 
   it("renders active rooms on the room admin page with a valid token", async () => {
@@ -1327,7 +1329,8 @@ describe("worker routes", () => {
     expect(body).toContain("room_admin");
     expect(body).not.toContain("room_ended村");
     expect(body).toContain("參照");
-    expect(body).toContain("/room/room_admin/log");
+    expect(body).toContain("/game_view.php?room_no=room_admin");
+    expect(body).toContain("/game_log.php?room_no=room_admin&amp;log_mode=on");
     expect(body).toContain("/room/room_admin/events");
     expect(body).toContain("/admin.php?go=del&amp;id=room_admin&amp;token=secret");
     expect(body).toContain("adminEndRoom");
