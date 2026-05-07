@@ -3610,6 +3610,7 @@ describe("worker routes", () => {
     expect(response.status).toBe(200);
     const body = await response.text();
     expect(body).toContain("村子對局紀錄");
+    expect(body).toContain('<a href="/old_log.php">←返回</a>');
     expect(body).toContain("/game_view.php?room_no=room_records");
     expect(body).toContain("/old_log.php?log_mode=on&amp;room_no=room_records");
     expect(body).toContain("/game_log.php?room_no=room_records&amp;log_mode=on");
@@ -3643,6 +3644,7 @@ describe("worker routes", () => {
     expect(response.status).toBe(200);
     const body = await response.text();
     expect(body).toContain("村子事件履歷");
+    expect(body).toContain('<a href="/old_log.php">←返回</a>');
     expect(body).toContain("/game_view.php?room_no=room_events");
     expect(body).toContain("/old_log.php?log_mode=on&amp;room_no=room_events");
     expect(body).toContain("/game_log.php?room_no=room_events&amp;log_mode=on");

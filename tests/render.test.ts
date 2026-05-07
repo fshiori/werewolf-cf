@@ -1399,6 +1399,7 @@ describe("render", () => {
     ]);
 
     expect(html).toContain("村子對局紀錄");
+    expect(html).toContain('<a href="/old_log.php">←返回</a>');
     expect(html).toContain("background-image:url('/assets/reference/img/old_log_bg.jpg')");
     expect(html).toContain('<img class="title-img" src="/assets/reference/img/old_log_title.jpg" alt="過去紀錄"><br>');
     expect(html).toContain("/game_view.php?room_no=room_abc");
@@ -1448,6 +1449,7 @@ describe("render", () => {
     ]);
 
     expect(html).toContain("村子事件履歷");
+    expect(html).toContain('<a href="/old_log.php">←返回</a>');
     expect(html).toContain("background-image:url('/assets/reference/img/old_log_bg.jpg')");
     expect(html).toContain('<img class="title-img" src="/assets/reference/img/old_log_title.jpg" alt="過去紀錄"><br>');
     expect(html).toContain("/game_view.php?room_no=room_abc");

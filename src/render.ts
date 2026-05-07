@@ -1281,6 +1281,7 @@ export function renderRoomRecords(roomId: string, records: GameRecordSummary[]):
   return page(`Room ${roomId} Records`, shell(`
     <fieldset style="background-image:url('/assets/reference/img/old_log_bg.jpg'); background-repeat:no-repeat; background-position:100% 100%; background-attachment:fixed;">
       <legend><strong>村子對局紀錄</strong></legend>
+      <p style="margin:0 0 6px 0;"><a href="/old_log.php">←返回</a></p>
       <img class="title-img" src="/assets/reference/img/old_log_title.jpg" alt="過去紀錄"><br>
       <table class="form-table">
         <tr><td><strong>　村子：</strong></td><td><a href="/game_view.php?room_no=${encodeURIComponent(roomId)}">${escapeHtml(roomId)}</a></td></tr>
@@ -1307,6 +1308,7 @@ export function renderRoomEvents(roomId: string, events: RoomEventSummary[]): st
   return page(`Room ${roomId} Events`, shell(`
     <fieldset style="background-image:url('/assets/reference/img/old_log_bg.jpg'); background-repeat:no-repeat; background-position:100% 100%; background-attachment:fixed;">
       <legend><strong>村子事件履歷</strong></legend>
+      <p style="margin:0 0 6px 0;"><a href="/old_log.php">←返回</a></p>
       <img class="title-img" src="/assets/reference/img/old_log_title.jpg" alt="過去紀錄"><br>
       <table class="form-table">
         <tr><td><strong>　村子：</strong></td><td><a href="/game_view.php?room_no=${encodeURIComponent(roomId)}">${escapeHtml(roomId)}</a></td></tr>
