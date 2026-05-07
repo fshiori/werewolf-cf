@@ -334,6 +334,15 @@ describe("render", () => {
     expect(html).toContain('data-room-view="player"');
     expect(html).toContain("<a href=\"/room/room_abc?view=spectator\">旁觀</a>");
     expect(html).toContain("<a href=\"/room/room_abc?view=heaven\">靈界</a>");
+    expect(html).toContain("PHP入口");
+    expect(html).toContain('<a href="/game_play.php?room_no=room_abc">game_play.php</a>');
+    expect(html).toContain('<a href="/game_view.php?room_no=room_abc">game_view.php</a>');
+    expect(html).toContain('<a href="/game_view.php?room_no=room_abc&amp;view=heaven">heaven</a>');
+    expect(html).toContain('<a href="/game_frame.php?room_no=room_abc">game_frame.php</a>');
+    expect(html).toContain('<a href="/game_up.php?room_no=room_abc">game_up.php</a>');
+    expect(html).toContain('<a href="/game_vote.php?room_no=room_abc">game_vote.php</a>');
+    expect(html).toContain('<a href="/login.php?room_no=room_abc">login.php</a>');
+    expect(html).toContain('<a href="/user_manager.php?room_no=room_abc">user_manager.php</a>');
     expect(html).toContain("/events");
     expect(html).toContain("事件履歷");
     expect(html).toContain("/room/room_abc/log");
@@ -415,6 +424,8 @@ describe("render", () => {
     expect(spectator).toContain('<tr class="view-player-only">\n              <td><img class="title-img" src="/assets/reference/img/user_regist_handle_name.gif" alt="玩家暱稱">玩家暱稱</td>');
     expect(spectator).toContain('<a href="/room/room_abc?view=spectator&amp;auto_reload=15">15秒</a>');
     expect(spectator).toContain('<a href="/room/room_abc?view=heaven&amp;auto_reload=20">靈界</a>');
+    expect(spectator).toContain('<a href="/game_view.php?room_no=room_abc&amp;auto_reload=20">game_view.php</a>');
+    expect(spectator).toContain('<a href="/game_view.php?room_no=room_abc&amp;auto_reload=20&amp;view=heaven">heaven</a>');
 
     const heaven = renderRoom("room_abc", { viewMode: "heaven" });
     expect(heaven).toContain("room-view-heaven");

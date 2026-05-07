@@ -1316,6 +1316,9 @@ describe("worker routes", () => {
       expect(body).toContain(label);
       expect(body).toContain("<strong>[住民登錄]</strong>");
       expect(body).toContain('<meta http-equiv="refresh" content="20">');
+      expect(body).toContain("/game_play.php?room_no=room_exists&amp;auto_reload=20");
+      expect(body).toContain("/game_view.php?room_no=room_exists&amp;auto_reload=20");
+      expect(body).toContain("/game_view.php?room_no=room_exists&amp;auto_reload=20&amp;view=heaven");
     }
 
     const missingRoomNo = await worker.fetch(new Request("http://example.test/game_view.php"), env);
