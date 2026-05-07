@@ -221,7 +221,12 @@ function page(title: string, body: string, extraHead = ""): string {
 </html>`;
 }
 
-function shell(body: string): string {
+function menuItem(href: string, label: string, activeMenu?: string): string {
+  const link = `<a href="${href}">${label}</a>`;
+  return `<tr><td><small><font color="#666666">・</font></small></td><td>${activeMenu === href ? `<b>${link}</b>` : link}</td></tr>`;
+}
+
+function shell(body: string, activeMenu?: string): string {
   return `
     <table class="site">
       <tr>
@@ -234,24 +239,24 @@ function shell(body: string): string {
         <td class="side">
           <table class="menu-box"><tr><th>選單</th></tr></table>
           <table class="menu-list">
-            <tr><td><small><font color="#666666">・</font></small></td><td><a href="/">首頁</a></td></tr>
-            <tr><td><small><font color="#666666">・</font></small></td><td><a href="/list.php">聯合列表</a></td></tr>
-            <tr><td><small><font color="#666666">・</font></small></td><td><a href="/old_log.php">過去紀錄</a></td></tr>
-            <tr><td><small><font color="#666666">・</font></small></td><td><a href="/leaderboard">戰績排行榜</a></td></tr>
-            <tr><td><small><font color="#666666">・</font></small></td><td><a href="/stats.php">勝率分析</a></td></tr>
-            <tr><td><small><font color="#666666">・</font></small></td><td><a href="/icon_view.php">頭像一覽</a></td></tr>
-            <tr><td><small><font color="#666666">・</font></small></td><td><a href="/icon_upload.php">頭像上傳</a></td></tr>
-            <tr><td><small><font color="#666666">・</font></small></td><td><a href="/trip.php">身份登錄</a></td></tr>
-            <tr><td><small><font color="#666666">・</font></small></td><td><a href="/trips">Trip查詢</a></td></tr>
-            <tr><td><small><font color="#666666">・</font></small></td><td><a href="/bbs.php">人狼討論</a></td></tr>
-            <tr><td><small><font color="#666666">・</font></small></td><td><a href="/bbs.php?go=dige">精華文章</a></td></tr>
-            <tr><td><small><font color="#666666">・</font></small></td><td><a href="/status">伺服器狀態</a></td></tr>
-            <tr><td><small><font color="#666666">・</font></small></td><td><a href="/admin.php">管理選單</a></td></tr>
-            <tr><td><small><font color="#666666">・</font></small></td><td><a href="/rule.php">規則</a></td></tr>
-            <tr><td><small><font color="#666666">・</font></small></td><td><a href="/manual">說明書</a></td></tr>
-            <tr><td><small><font color="#666666">・</font></small></td><td><a href="/script_info.php">Script Info</a></td></tr>
-            <tr><td><small><font color="#666666">・</font></small></td><td><a href="/protocol">通訊協定</a></td></tr>
-            <tr><td><small><font color="#666666">・</font></small></td><td><a href="/version.php">版本</a></td></tr>
+            ${menuItem("/", "首頁", activeMenu)}
+            ${menuItem("/list.php", "聯合列表", activeMenu)}
+            ${menuItem("/old_log.php", "過去紀錄", activeMenu)}
+            ${menuItem("/leaderboard", "戰績排行榜", activeMenu)}
+            ${menuItem("/stats.php", "勝率分析", activeMenu)}
+            ${menuItem("/icon_view.php", "頭像一覽", activeMenu)}
+            ${menuItem("/icon_upload.php", "頭像上傳", activeMenu)}
+            ${menuItem("/trip.php", "身份登錄", activeMenu)}
+            ${menuItem("/trips", "Trip查詢", activeMenu)}
+            ${menuItem("/bbs.php", "人狼討論", activeMenu)}
+            ${menuItem("/bbs.php?go=dige", "精華文章", activeMenu)}
+            ${menuItem("/status", "伺服器狀態", activeMenu)}
+            ${menuItem("/admin.php", "管理選單", activeMenu)}
+            ${menuItem("/rule.php", "規則", activeMenu)}
+            ${menuItem("/manual", "說明書", activeMenu)}
+            ${menuItem("/script_info.php", "Script Info", activeMenu)}
+            ${menuItem("/protocol", "通訊協定", activeMenu)}
+            ${menuItem("/version.php", "版本", activeMenu)}
           </table>
         </td>
         <td class="main">${body}</td>
@@ -844,7 +849,7 @@ export function renderFederatedList(rooms: Array<RoomSummary | FederatedRoomSumm
         ${peerRows}
       </table>
     </fieldset>
-  `));
+  `, "/list.php"));
 }
 
 export function renderOldLogs(rooms: RoomSummary[], options: { search?: string; winners?: Record<string, GameWinner>; page?: number; pageSize?: number; totalRooms?: number; showAll?: boolean } = {}): string {
@@ -923,7 +928,7 @@ export function renderOldLogs(rooms: RoomSummary[], options: { search?: string; 
       </table>
       ${pagination}
     </fieldset>
-  `));
+  `, "/old_log.php"));
 }
 
 function readRecordPlayers(record: GameRecordSummary): Record<string, unknown>[] {
@@ -995,7 +1000,7 @@ export function renderLeaderboard(entries: LeaderboardEntry[]): string {
         <tbody>${rows}</tbody>
       </table>
     </fieldset>
-  `));
+  `, "/leaderboard"));
 }
 
 export function renderWinRateAnalysis(entries: WinRateEntry[]): string {
@@ -1023,7 +1028,7 @@ export function renderWinRateAnalysis(entries: WinRateEntry[]): string {
         <tr><td><strong>　排行榜：</strong></td><td><a href="/leaderboard">戰績排行榜</a></td></tr>
       </table>
     </fieldset>
-  `));
+  `, "/stats.php"));
 }
 
 export function renderRoomRecords(roomId: string, records: GameRecordSummary[]): string {
@@ -1239,7 +1244,7 @@ export function renderStatus(status: {
         ${checkRows}
       </table>
     </fieldset>
-  `));
+  `, "/status"));
 }
 
 export function renderAdminIndex(): string {
@@ -1269,7 +1274,7 @@ export function renderAdminIndex(): string {
         <tr><td><strong>　紀錄：</strong></td><td>廢村與設定變更會透過既有 API 寫入對應的 D1 或 KV 狀態。</td></tr>
       </table>
     </fieldset>
-  `));
+  `, "/admin.php"));
 }
 
 export function renderBbsAdmin(topics: BbsTopicSummary[], options: { page?: number; pageSize?: number; totalTopics?: number } = {}): string {
@@ -1633,7 +1638,7 @@ export function renderIconCatalog(): string {
         iconUploadStatus.textContent = res.ok ? "刪除完成" : data.error || "刪除失敗";
       });
     </script>
-  `));
+  `, "/icon_view.php"));
 }
 
 export function renderHome(rooms: RoomSummary[], announcement = DEFAULT_ANNOUNCEMENT, maintenanceMode = false): string {
@@ -1998,7 +2003,7 @@ export function renderHome(rooms: RoomSummary[], announcement = DEFAULT_ANNOUNCE
       }
       void refreshLeaderboard();
     </script>
-  `));
+  `, "/"));
 }
 
 export function renderPlayerProfile(playerId: string): string {
@@ -2168,7 +2173,7 @@ export function renderTripLookup(): string {
         }
       });
     </script>
-  `));
+  `, "/trips"));
 }
 
 export function renderTripDetail(tripId: string, summary: TripPublicSummary): string {
@@ -2218,7 +2223,7 @@ export function renderTripDetail(tripId: string, summary: TripPublicSummary): st
       </tr>
       ${playerRows}
     </table>
-  `));
+  `, "/trip.php"));
 }
 
 export function renderTripComments(tripId: string, scores: TripScoreSummary[] = [], options: { page?: number; pageSize?: number; totalScores?: number } = {}): string {
@@ -2251,7 +2256,7 @@ export function renderTripComments(tripId: string, scores: TripScoreSummary[] = 
       ${rows}
     </table>
     ${pagination}
-  `));
+  `, "/trip.php"));
 }
 
 export function renderTripRating(roomId: string, tripId: string): string {
@@ -2275,7 +2280,7 @@ export function renderTripRating(roomId: string, tripId: string): string {
         <p class="muted">此 Cloudflare 版本尚未保存 PHP <code>trip_score</code> 評分資料；本頁僅保留舊式入口與表單外觀。</p>
       </form>
     </fieldset>
-  `));
+  `, "/trip.php"));
 }
 
 export function renderTripRoomRecords(tripId: string, records: TripRoomRecordSummary[], options: { page?: number; pageSize?: number; totalRecords?: number; play?: number } = {}): string {
@@ -2318,7 +2323,7 @@ export function renderTripRoomRecords(tripId: string, records: TripRoomRecordSum
       ${recordRows}
     </table>
     ${pagination}
-  `));
+  `, "/trip.php"));
 }
 
 export function renderTripRegistration(): string {
@@ -2501,7 +2506,7 @@ export function renderTripRegistration(): string {
         }
       });
     </script>
-  `));
+  `, "/trip.php"));
 }
 
 function paginationLinks(totalItems: number | undefined, page: number | undefined, pageSize: number | undefined, basePath: string): string {
@@ -2616,7 +2621,7 @@ export function renderBbs(topics: BbsTopicSummary[], options: { digestOnly?: boo
         location.href = Number.isInteger(topicId) && topicId > 0 ? "/bbs.php?view=" + encodeURIComponent(String(topicId)) : "/bbs.php";
       });
     </script>
-  `));
+  `, options.digestOnly ? "/bbs.php?go=dige" : "/bbs.php"));
 }
 
 function bbsAuthorLabel(name: string, trip: boolean): string {
@@ -2867,7 +2872,7 @@ export function renderBbsTopic(topic: BbsTopicSummary, replies: BbsReplySummary[
       <legend><strong>主題管理</strong></legend>
       ${moderationPanel}
     </fieldset>
-  `));
+  `, "/bbs.php"));
 }
 
 export function renderRules(): string {
@@ -2912,7 +2917,7 @@ export function renderRules(): string {
         <tr><td><strong>　限時時間：</strong></td><td>啟用後 Durable Object alarm 會依日夜時間自動換日；非即時制會套用沉默時間推進，未行動者會先收到最後2分警告，逾時後暴斃。</td></tr>
       </table>
     </fieldset>
-  `));
+  `, "/rule.php"));
 }
 
 export function renderManual(): string {
@@ -2947,7 +2952,7 @@ export function renderManual(): string {
         <tr><td><strong>　版本：</strong></td><td><a href="/version.php">/version.php</a></td></tr>
       </table>
     </fieldset>
-  `));
+  `, "/manual"));
 }
 
 export function renderProtocol(): string {
@@ -3005,7 +3010,7 @@ export function renderProtocol(): string {
         <tr><td><strong>　文件：</strong></td><td><code>README.md#websocket-protocol</code></td></tr>
       </table>
     </fieldset>
-  `));
+  `, "/protocol"));
 }
 
 export function renderVersion(): string {
@@ -3043,7 +3048,7 @@ export function renderVersion(): string {
         <tr><td><strong>　自動測試：</strong></td><td>Vitest + TypeScript typecheck</td></tr>
       </table>
     </fieldset>
-  `));
+  `, "/version.php"));
 }
 
 export function renderScriptInfo(): string {
@@ -3095,7 +3100,7 @@ export function renderScriptInfo(): string {
         <tr><td><strong>　通訊協定：</strong></td><td><a href="/protocol">/protocol</a></td></tr>
       </table>
     </fieldset>
-  `));
+  `, "/script_info.php"));
 }
 
 export type RenderRoomOptions = {
