@@ -487,6 +487,9 @@ describe("render", () => {
     expect(html).toContain("claimTripButton");
     expect(html).toContain("excludeTripButton");
     expect(html).toContain("removeTripExclusionButton");
+    expect(html).toContain('action="/trip.php?go=post"');
+    expect(html).toContain('action="/trip.php?go=out"');
+    expect(html).toContain('name="aname"');
     expect(html).toContain("tripLookupButton");
     expect(html).toContain("/api/trips");
     expect(html).toContain("/api/trips/claim");

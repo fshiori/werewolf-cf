@@ -843,6 +843,8 @@ describe("worker routes", () => {
     expect(body).toContain("registerTripButton");
     expect(body).toContain("claimTripButton");
     expect(body).toContain("excludeTripButton");
+    expect(body).toContain('action="/trip.php?go=post"');
+    expect(body).toContain('action="/trip.php?go=out"');
     expect(body).toContain("Trip公開資料");
     expect(body).toContain("/api/trips/lookup?trip=");
   });
