@@ -2832,7 +2832,8 @@ export default {
         const autoReloadParam = url.searchParams.get("auto_reload");
         const viewModeParam = url.searchParams.get("view");
         const viewMode = viewModeParam === "spectator" || viewModeParam === "heaven" ? viewModeParam : url.pathname === "/game_view.php" ? "spectator" : "player";
-        return html(renderRoom(roomId, { autoReloadSeconds: autoReloadParam ? Number(autoReloadParam) : 0, viewMode }));
+        const pageMode = url.pathname === "/game_frame.php" ? "frame" : url.pathname === "/game_up.php" ? "up" : url.pathname === "/game_vote.php" ? "vote" : "full";
+        return html(renderRoom(roomId, { autoReloadSeconds: autoReloadParam ? Number(autoReloadParam) : 0, viewMode, pageMode }));
       } catch (error) {
         return json({ error: error instanceof Error ? error.message : "Invalid room" }, { status: 400 });
       }

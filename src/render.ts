@@ -46,6 +46,19 @@ function page(title: string, body: string, extraHead = ""): string {
     body.room-view-spectator .view-spectator-only,
     body.room-view-heaven .view-heaven-only { display: table-row; }
     body.room-view-heaven .panel th { background: #cccccc; }
+    .page-frame-only, .page-up-only, .page-vote-only { display: none; }
+    body.room-page-frame .page-frame-only,
+    body.room-page-up .page-up-only,
+    body.room-page-vote .page-vote-only { display: table-row; }
+    body.room-page-frame .room-aux-panel,
+    body.room-page-up .room-aux-panel,
+    body.room-page-vote .room-aux-panel { display: none; }
+    body.room-page-up .room-panel-actions,
+    body.room-page-up .room-panel-lastwords,
+    body.room-page-up .room-panel-chat { display: none; }
+    body.room-page-vote .room-panel-lastwords,
+    body.room-page-vote .room-panel-chat,
+    body.room-page-vote .room-panel-system { display: none; }
     table { border-collapse: collapse; }
     input, button, select {
       font: inherit;
@@ -3428,6 +3441,7 @@ export function renderScriptInfo(): string {
 export type RenderRoomOptions = {
   autoReloadSeconds?: number;
   viewMode?: "player" | "spectator" | "heaven";
+  pageMode?: "full" | "frame" | "up" | "vote";
 };
 
 function normalizeAutoReloadSeconds(value: number | undefined): 0 | 15 | 20 | 30 {
@@ -3442,6 +3456,10 @@ function normalizeAutoReloadSeconds(value: number | undefined): 0 | 15 | 20 | 30
 
 function normalizeRoomViewMode(value: string | undefined | null): "player" | "spectator" | "heaven" {
   return value === "spectator" || value === "heaven" ? value : "player";
+}
+
+function normalizeRoomPageMode(value: string | undefined | null): "full" | "frame" | "up" | "vote" {
+  return value === "frame" || value === "up" || value === "vote" ? value : "full";
 }
 
 function roomViewHref(roomPath: string, viewMode: "player" | "spectator" | "heaven", autoReloadSeconds: 0 | 15 | 20 | 30): string {
@@ -3468,12 +3486,14 @@ function legacyRoomHref(path: "/game_play.php" | "/game_view.php" | "/game_frame
 export function renderRoom(roomId: string, options: RenderRoomOptions = {}): string {
   const autoReloadSeconds = normalizeAutoReloadSeconds(options.autoReloadSeconds);
   const viewMode = normalizeRoomViewMode(options.viewMode);
+  const pageMode = normalizeRoomPageMode(options.pageMode);
   const roomPath = `/room/${escapeHtml(roomId)}`;
   const viewLabel = viewMode === "spectator" ? "旁觀視點" : viewMode === "heaven" ? "靈界視點" : "玩家視點";
+  const pageLabel = pageMode === "frame" ? "框架入口" : pageMode === "up" ? "上方更新" : pageMode === "vote" ? "投票入口" : "完整頁面";
   const autoReloadMeta = autoReloadSeconds > 0 ? `<meta http-equiv="refresh" content="${autoReloadSeconds}">` : "";
   return page(`Room ${roomId}`, `
-    <script>document.body.classList.add("room-phase-lobby", "room-view-${viewMode}");</script>
-    <table class="game-shell" data-room-id="${escapeHtml(roomId)}" data-room-view="${viewMode}">
+    <script>document.body.classList.add("room-phase-lobby", "room-view-${viewMode}", "room-page-${pageMode}");</script>
+    <table class="game-shell" data-room-id="${escapeHtml(roomId)}" data-room-view="${viewMode}" data-room-page="${pageMode}">
       <tr>
         <td>
           <table class="game-header">
@@ -3524,6 +3544,22 @@ export function renderRoom(roomId: string, options: RenderRoomOptions = {}): str
                 <a href="${legacyRoomHref("/login.php", roomId, autoReloadSeconds)}">login.php</a>
                 <a href="${legacyRoomHref("/user_manager.php", roomId, autoReloadSeconds)}">user_manager.php</a>
               </td>
+            </tr>
+            <tr>
+              <td>頁面</td>
+              <td><strong>${pageLabel}</strong> <small class="muted">PHP 版 frame/up/vote 入口的顯示模式</small></td>
+            </tr>
+            <tr class="page-frame-only">
+              <td>框架</td>
+              <td>保留主要遊戲畫面與即時更新，隱藏診斷性紀錄面板。</td>
+            </tr>
+            <tr class="page-up-only">
+              <td>上方</td>
+              <td>著重玩家列表與系統更新；發言、遺言與投票操作面板不顯示。</td>
+            </tr>
+            <tr class="page-vote-only">
+              <td>投票</td>
+              <td>著重能力發動與投票操作；發言、遺言、系統與診斷面板不顯示。</td>
             </tr>
             <tr class="view-spectator-only">
               <td>旁觀</td>
@@ -3618,7 +3654,7 @@ export function renderRoom(roomId: string, options: RenderRoomOptions = {}): str
           </table>
         </td>
       </tr>
-      <tr>
+      <tr class="room-panel-members">
         <td>
           <table class="panel">
             <tr><th>玩家列表</th></tr>
@@ -3626,7 +3662,7 @@ export function renderRoom(roomId: string, options: RenderRoomOptions = {}): str
           </table>
         </td>
       </tr>
-      <tr class="view-player-only">
+      <tr class="view-player-only room-panel-actions">
         <td>
           <table class="panel">
             <tr><th>能力發動 / 投票</th></tr>
@@ -3642,7 +3678,7 @@ export function renderRoom(roomId: string, options: RenderRoomOptions = {}): str
           </table>
         </td>
       </tr>
-      <tr>
+      <tr class="room-panel-lastwords">
         <td>
           <table class="panel">
             <tr><th>遺言</th></tr>
@@ -3650,7 +3686,7 @@ export function renderRoom(roomId: string, options: RenderRoomOptions = {}): str
           </table>
         </td>
       </tr>
-      <tr>
+      <tr class="room-panel-chat">
         <td>
           <table class="panel">
             <tr><th>發言</th></tr>
@@ -3737,7 +3773,7 @@ export function renderRoom(roomId: string, options: RenderRoomOptions = {}): str
           </table>
         </td>
       </tr>
-      <tr>
+      <tr class="room-panel-system">
         <td>
           <table class="panel">
             <tr><th>系統訊息</th></tr>
@@ -3745,7 +3781,7 @@ export function renderRoom(roomId: string, options: RenderRoomOptions = {}): str
           </table>
         </td>
       </tr>
-      <tr>
+      <tr class="room-aux-panel">
         <td>
           <table class="panel">
             <tr><th>最近對局</th></tr>
@@ -3753,7 +3789,7 @@ export function renderRoom(roomId: string, options: RenderRoomOptions = {}): str
           </table>
         </td>
       </tr>
-      <tr>
+      <tr class="room-aux-panel">
         <td>
           <table class="panel">
             <tr><th>個人紀錄</th></tr>
@@ -3761,7 +3797,7 @@ export function renderRoom(roomId: string, options: RenderRoomOptions = {}): str
           </table>
         </td>
       </tr>
-      <tr>
+      <tr class="room-aux-panel">
         <td>
           <table class="panel">
             <tr><th>事件</th></tr>
