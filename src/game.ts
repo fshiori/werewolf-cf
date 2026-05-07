@@ -722,6 +722,9 @@ export function castDayVote(state: GameState, voterId: string, targetId: string)
   }
   assertLivingPlayer(state, voterId);
   assertLivingPlayer(state, targetId);
+  if (state.votes?.[voterId]) {
+    throw new Error("Day vote is already used this round");
+  }
   if (voterId === targetId && !state.selfVote) {
     throw new Error("Self votes are not enabled in this room");
   }

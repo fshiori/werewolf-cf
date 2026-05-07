@@ -1062,6 +1062,26 @@ describe("game", () => {
     expect(castDayVote({ ...game, selfVote: true }, "player_1", "player_1").votes).toEqual({ player_1: "player_1" });
   });
 
+  it("rejects duplicate day votes until the round is reset", () => {
+    const game = activeState("day", [
+      { playerId: "player_1", nickname: "Alice", role: "villager", alive: true },
+      { playerId: "player_2", nickname: "Bob", role: "villager", alive: true },
+      { playerId: "player_3", nickname: "Wolf", role: "werewolf", alive: true },
+      { playerId: "player_4", nickname: "Carol", role: "villager", alive: true }
+    ]);
+    let voted = castDayVote(game, "player_1", "player_2");
+
+    expect(() => castDayVote(voted, "player_1", "player_3")).toThrow("Day vote is already used this round");
+
+    voted = {
+      ...voted,
+      votes: {},
+      revoteCount: 1
+    };
+
+    expect(castDayVote(voted, "player_1", "player_3").votes).toEqual({ player_1: "player_3" });
+  });
+
   it("stores last words only for living players during active phases", () => {
     const day = activeState("day", [
       { playerId: "player_1", nickname: "Alice", role: "villager", alive: true },

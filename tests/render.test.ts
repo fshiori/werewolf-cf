@@ -495,7 +495,9 @@ describe("render", () => {
     expect(ROOM_CLIENT_SCRIPT).toContain('"投票給 " + (targetTotals[targetId] || 0) + " 票 →"');
     expect(ROOM_CLIENT_SCRIPT).toContain("\" voted\"");
     expect(ROOM_CLIENT_SCRIPT).toContain("投票：");
-    expect(ROOM_CLIENT_SCRIPT).toContain("actorCanAct");
+    expect(ROOM_CLIENT_SCRIPT).toContain("const dayVoteDone = Boolean");
+    expect(ROOM_CLIENT_SCRIPT).toContain("const canUsePlayerAction =");
+    expect(ROOM_CLIENT_SCRIPT).toContain("!dayVoteDone");
     expect(ROOM_CLIENT_SCRIPT).toContain("function roleLabel(value)");
     expect(ROOM_CLIENT_SCRIPT).toContain("function roleIconPath(value)");
     expect(ROOM_CLIENT_SCRIPT).toContain("function referenceImage(path, alt)");

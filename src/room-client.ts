@@ -809,10 +809,6 @@ function renderGame(game) {
   const currentPlayerAlive = currentPlayer ? currentPlayer.alive : game.phase === "lobby";
   const currentPlayerDead = Boolean(currentPlayer && !currentPlayer.alive);
   const nightActionDone = Boolean(game.phase === "night" && game.ownNightActionTarget && game.ownNightActionTarget.targetPlayerId);
-  const actorCanAct =
-    currentPlayerAlive &&
-    !nightActionDone &&
-    (game.phase === "day" || canUseNightRoleAction(game, currentPlayer, currentPlayerAlive));
   const host = game.players.find((player) => player.playerId === game.hostId);
   const canManageLobby = game.phase === "lobby" && (game.hostId === currentPlayerId || isGm);
   document.querySelector("#host").textContent = host ? host.nickname : "未定";
@@ -857,6 +853,12 @@ function renderGame(game) {
   const votedPlayerIds = new Set(game.votedPlayerIds || []);
   const lobbyStartVotedPlayerIds = new Set(game.lobbyStartVotedPlayerIds || []);
   const lobbyKickVoteTargets = new Map((game.lobbyKickVoteTargets || []).map((target) => [target.targetPlayerId, target.votedPlayerIds || []]));
+  const dayVoteDone = Boolean(currentPlayer && game.phase === "day" && votedPlayerIds.has(currentPlayer.playerId));
+  const canUsePlayerAction =
+    currentPlayerAlive &&
+    !dayVoteDone &&
+    !nightActionDone &&
+    (game.phase === "day" || canUseNightRoleAction(game, currentPlayer, currentPlayerAlive));
   const voteSummary = {};
   Object.entries(voteTargets).forEach(([voterId, targetId]) => {
     const voter = game.players.find((candidate) => candidate.playerId === voterId);
@@ -934,7 +936,7 @@ function renderGame(game) {
     button.textContent = canManageLobby && player.playerId !== currentPlayerId ? "踢 " + player.nickname : canKickVoteLobby ? "踢票 " + player.nickname : (player.alive ? "" : "× ") + player.nickname;
     const catReviveTarget = game.phase === "night" && game.day > 1 && role === "cat" && !player.alive;
     button.disabled =
-      (!actorCanAct && !(canManageLobby && player.playerId !== currentPlayerId) && !canKickVoteLobby) ||
+      (!canUsePlayerAction && !(canManageLobby && player.playerId !== currentPlayerId) && !canKickVoteLobby) ||
       (game.phase === "night" && role === "cat" && !catReviveTarget) ||
       (!player.alive && !catReviveTarget) ||
       player.playerId === currentPlayerId ||
