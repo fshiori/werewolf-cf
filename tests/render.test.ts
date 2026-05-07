@@ -897,7 +897,8 @@ describe("render", () => {
     expect(html).toContain('<th colspan="12" class="column">選項</th>');
     expect(html).toContain("/assets/reference/img/old_log_bg.jpg");
     expect(html).toContain("/assets/reference/img/old_log_title.jpg");
-    expect(html).toContain('<a href="/index.php">←返回</a> <a href="/old_log.php?all=1">[全部顯示]</a>');
+    expect(html).toContain('<a href="/index.php">←返回</a> <a href="/old_log.php?all=1">[全部顯示]</a><br><br>');
+    expect(html).not.toContain('<p><a href="/index.php">←返回</a> <a href="/old_log.php?all=1">[全部顯示]</a></p>');
     expect(html).toContain('form name="old_log" action="/old_log.php" method="get"');
     expect(html).toContain('name="search"');
     expect(html).toContain("Finished 村");
