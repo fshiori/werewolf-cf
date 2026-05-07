@@ -1583,6 +1583,7 @@ describe("worker routes", () => {
       expect(body).toContain("Remote村");
       expect(body).toContain("遠端伺服器");
       expect(body).toContain("https://remote.example/room/remote_room");
+      expect(body).toContain('<a href="https://remote.example">服務中</a>');
       expect(body).toContain("聯合伺服器狀態");
       expect(body).toContain("服務中");
     } finally {
@@ -1609,6 +1610,7 @@ describe("worker routes", () => {
       expect(body).toContain("聯合伺服器狀態");
       expect(body).toContain("故障伺服器");
       expect(body).toContain("https://broken.example");
+      expect(body).toContain('<a href="https://broken.example">失聯中</a>');
       expect(body).toContain("連線失敗");
       expect(body).not.toContain("network down");
     } finally {

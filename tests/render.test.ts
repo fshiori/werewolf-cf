@@ -663,6 +663,8 @@ describe("render", () => {
     expect(html).toContain("Remote村");
     expect(html).toContain("/assets/reference/img/playing.gif");
     expect(html).toContain("聯合伺服器狀態");
+    expect(html).toContain('<a href="https://remote.example">服務中</a>');
+    expect(html).toContain('<a href="https://broken.example">失聯中</a>');
     expect(html).toContain("health-ok");
     expect(html).toContain("health-error");
     expect(html).toContain("故障伺服器");
