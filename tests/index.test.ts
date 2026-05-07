@@ -1859,6 +1859,8 @@ describe("worker routes", () => {
     const body = await response.text();
     expect(body).toContain("過去紀錄");
     expect(body).toContain("<title>汝等是人是狼？[過去紀錄]</title>");
+    expect(body).toContain('<img class="title-img" src="/assets/reference/img/old_log_title.jpg" alt="過去紀錄"><br>');
+    expect(body).not.toContain('<p><img class="title-img" src="/assets/reference/img/old_log_title.jpg" alt="過去紀錄"></p>');
     expect(body).toContain("room_finished");
     expect(body).toContain('<a href="/index.php">←返回</a> <a href="/old_log.php?all=1">[全部顯示]</a><br><br>');
     expect(body).not.toContain('<p><a href="/index.php">←返回</a> <a href="/old_log.php?all=1">[全部顯示]</a></p>');
