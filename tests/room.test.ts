@@ -27,6 +27,7 @@ type SentMessage = {
   channelRestrictions?: { wolf: boolean; common: boolean; lovers: boolean; fox: boolean };
   log?: string[];
   role?: string;
+  result?: string;
   wolves?: Array<{ playerId: string; nickname: string }>;
   lovers?: Array<{ playerId: string; nickname: string }>;
   roles?: Record<string, string>;
@@ -3970,6 +3971,56 @@ describe("RoomDurableObject", () => {
 
       expect(messages).toEqual([{ type: "error", message: testCase.message }]);
     }
+  });
+
+  it("sends each pending medium reading to living medium websocket players", async () => {
+    const game: GameState = {
+      roomId: "room_abc",
+      phase: "night",
+      day: 2,
+      players: [
+        { playerId: "player_wolf", nickname: "Wolf", role: "werewolf", alive: true },
+        { playerId: "player_medium", nickname: "Medium", role: "medium", alive: true },
+        { playerId: "player_target", nickname: "Target", role: "villager", alive: true },
+        { playerId: "player_other", nickname: "Other", role: "villager", alive: true }
+      ],
+      votes: {},
+      openVote: false,
+      commonTalkVisible: false,
+      deadRoleVisible: false,
+      wishRole: false,
+      dummyBoy: false,
+      dayMs: 180_000,
+      nightMs: 90_000,
+      selfVote: false,
+      voteStatus: false,
+      revoteCount: 0,
+      nightKills: {},
+      divinations: {},
+      guards: {},
+      catRevives: {},
+      lastWords: {},
+      mediumReadings: [
+        { day: 2, targetPlayerId: "player_big_wolf", targetNickname: "Big Wolf", result: "big_wolf" },
+        { day: 2, targetPlayerId: "player_child_fox", targetNickname: "Child Fox", result: "child_fox" }
+      ],
+      log: []
+    };
+    const room = roomObject(game);
+    const wolfMessages: SentMessage[] = [];
+    const mediumMessages: SentMessage[] = [];
+    const wolfSocket = fakeSocket(wolfMessages);
+    const mediumSocket = fakeSocket(mediumMessages);
+    connect(room, wolfSocket, "player_wolf", "Wolf");
+    connect(room, mediumSocket, "player_medium", "Medium");
+
+    await sendRaw(room, wolfSocket, JSON.stringify({ type: "night_kill", targetPlayerId: "player_other" }));
+
+    expect(mediumMessages.filter((message) => message.type === "medium_result")).toEqual([
+      { type: "medium_result", day: 2, targetPlayerId: "player_big_wolf", targetNickname: "Big Wolf", result: "big_wolf" },
+      { type: "medium_result", day: 2, targetPlayerId: "player_child_fox", targetNickname: "Child Fox", result: "child_fox" }
+    ]);
+    expect(wolfMessages.some((message) => message.type === "medium_result")).toBe(false);
   });
 
   it("rejects guard self-protection through the websocket handler", async () => {

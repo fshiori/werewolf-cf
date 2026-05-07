@@ -255,6 +255,7 @@ export interface GameState {
   lobbyStartVotes?: Record<string, boolean>;
   lobbyKickVotes?: Record<string, string[]>;
   mediumReading?: MediumReading;
+  mediumReadings?: MediumReading[];
   winner?: GameWinner;
   phaseEndsAt?: string;
   suddenDeathWarningAt?: string;

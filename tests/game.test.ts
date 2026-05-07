@@ -29,6 +29,7 @@ import {
   leaveLobbyPlayer,
   loversForPlayer,
   mediumReadingForPlayer,
+  mediumReadingsForPlayer,
   playerStatUpdates,
   publicPlayers,
   raiseObjection,
@@ -2346,6 +2347,66 @@ describe("game", () => {
         result: expected
       });
     }
+  });
+
+  it("keeps multiple day sudden-death medium readings for the next day", () => {
+    let game: GameState = {
+      ...createLobbyState("room_abc"),
+      day: 2,
+      phase: "day",
+      players: [
+        { playerId: "player_wolf", nickname: "Wolf", role: "werewolf", alive: true },
+        { playerId: "player_medium", nickname: "Medium", role: "medium", alive: true },
+        { playerId: "player_big_wolf", nickname: "Big Wolf", role: "big_wolf", alive: true },
+        { playerId: "player_child_fox", nickname: "Child Fox", role: "child_fox", alive: true },
+        { playerId: "player_villager_1", nickname: "Villager 1", role: "villager", alive: true },
+        { playerId: "player_villager_2", nickname: "Villager 2", role: "villager", alive: true },
+        { playerId: "player_villager_3", nickname: "Villager 3", role: "villager", alive: true }
+      ],
+      votes: {
+        player_wolf: "player_villager_3",
+        player_medium: "player_villager_3",
+        player_villager_1: "player_villager_3",
+        player_villager_2: "player_villager_3",
+        player_villager_3: "player_wolf"
+      },
+      phaseEndsAt: "2026-05-06T00:00:00.000Z",
+      suddenDeathWarningAt: "2026-05-06T00:00:00.000Z"
+    };
+
+    game = advancePhaseByAlarm(game, Date.parse("2026-05-06T00:02:01.000Z"));
+
+    expect(game.phase).toBe("day");
+    expect(game.players.find((player) => player.playerId === "player_big_wolf")?.alive).toBe(false);
+    expect(game.players.find((player) => player.playerId === "player_child_fox")?.alive).toBe(false);
+    expect(mediumReadingsForPlayer(game, "player_medium")).toEqual([]);
+
+    const voters = game.players.filter((player) => player.alive).map((player) => player.playerId);
+    for (const voterId of voters) {
+      game = castDayVote(game, voterId, voterId === "player_villager_3" ? "player_wolf" : "player_villager_3");
+    }
+    game = castNightKill(game, "player_wolf", "player_villager_2", 0);
+
+    expect(mediumReadingsForPlayer(game, "player_medium")).toEqual([
+      {
+        day: 2,
+        targetPlayerId: "player_big_wolf",
+        targetNickname: "Big Wolf",
+        result: "big_wolf"
+      },
+      {
+        day: 2,
+        targetPlayerId: "player_child_fox",
+        targetNickname: "Child Fox",
+        result: "child_fox"
+      },
+      {
+        day: 2,
+        targetPlayerId: "player_villager_3",
+        targetNickname: "Villager 3",
+        result: "human"
+      }
+    ]);
   });
 });
 

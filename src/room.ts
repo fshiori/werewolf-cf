@@ -28,7 +28,7 @@ import {
   foxesForPlayer,
   leaveLobbyPlayer,
   loversForPlayer,
-  mediumReadingForPlayer,
+  mediumReadingsForPlayer,
   playerStatUpdates,
   raiseObjection,
   requestRoomEnd,
@@ -887,11 +887,9 @@ export class RoomDurableObject {
   }
 
   private sendMediumResult(socket: WebSocket, gameState: GameState, playerId: string): void {
-    const reading = mediumReadingForPlayer(gameState, playerId);
-    if (!reading) {
-      return;
+    for (const reading of mediumReadingsForPlayer(gameState, playerId)) {
+      this.send(socket, buildMediumResultMessage(reading));
     }
-    this.send(socket, buildMediumResultMessage(reading));
   }
 
   private async syncRoomStatus(gameState: GameState): Promise<void> {
