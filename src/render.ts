@@ -2082,6 +2082,7 @@ export function renderTripDetail(tripId: string, summary: TripPublicSummary): st
     <center>
       <strong>Trip公開資料</strong><br>
       該Trip使用 ${summary.stats.gamesPlayed} 次，已知使用玩家如下(排除重複)<br>
+      <a href="/trip.php?go=room&id=${escapeHtml(tripId)}">參與紀錄</a>
       <a href="/trips">Trip查詢</a>
     </center>
     <table border="1" class="table1" bordercolor="#CCCCCC" align="center">
