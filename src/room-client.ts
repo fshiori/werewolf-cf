@@ -413,6 +413,7 @@ if (legacyVoteForm) {
     event.preventDefault();
     const selectedTarget = legacyVoteForm.querySelector('input[name="target_no"]:checked');
     if (!selectedTarget || !legacyVoteCommands[selectedTarget.value]) return;
+    syncLegacyVoteHiddenFields(legacyVoteCommands[selectedTarget.value], latestGame);
     sendCommand(legacyVoteCommands[selectedTarget.value]);
   });
 }
@@ -751,11 +752,32 @@ function legacyTargetCommand(game, currentPlayer, currentPlayerAlive, currentPla
   }
   return { disabled: true, label: player.nickname, command: undefined };
 }
+function legacySituationForCommand(command) {
+  if (!command) return "VOTE_KILL";
+  return {
+    start_vote: "GAMESTART",
+    kick_vote: "KICK_DO",
+    kick_player: "FKICK_DO",
+    vote: "VOTE_KILL",
+    night_kill: "WOLF_EAT",
+    divine: "MAGE_DO",
+    child_fox_divine: "FOSI_DO",
+    guard: "GUARD_DO",
+    cat_revive: "CAT_DO"
+  }[command.type] || "VOTE_KILL";
+}
+function syncLegacyVoteHiddenFields(command, game) {
+  const situation = document.querySelector('.legacy-vote-form input[name="situation"]');
+  const voteTimes = document.querySelector('.legacy-vote-form input[name="vote_times"]');
+  if (situation) situation.value = legacySituationForCommand(command);
+  if (voteTimes) voteTimes.value = String((game && typeof game.revoteCount === "number" ? game.revoteCount : 0) + 1);
+}
 function updateLegacyVoteTargetList(game, currentPlayer, currentPlayerAlive, currentPlayerId, canManageLobby, canUsePlayerAction) {
   const container = document.querySelector("#legacyVoteTargetList");
   if (!container) return;
   container.innerHTML = "";
   legacyVoteCommands = {};
+  syncLegacyVoteHiddenFields(undefined, game);
   if (!currentPlayer) {
     container.textContent = "請先住民登錄。";
     return;
@@ -786,12 +808,14 @@ function updateLegacyVoteTargetList(game, currentPlayer, currentPlayerAlive, cur
     if (!action.disabled && action.command) {
       legacyVoteCommands[player.playerId] = action.command;
     }
+    radio.addEventListener("change", () => syncLegacyVoteHiddenFields(action.command, game));
     const button = document.createElement("button");
     button.type = "button";
     button.textContent = action.label;
     button.disabled = action.disabled;
     button.addEventListener("click", () => {
       radio.checked = true;
+      syncLegacyVoteHiddenFields(action.command, game);
       if (action.command) sendCommand(action.command);
     });
     targetCell.append(player.nickname, document.createElement("br"), radio, " ", button);
