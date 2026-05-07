@@ -3449,6 +3449,15 @@ function roomReloadHref(roomPath: string, viewMode: "player" | "spectator" | "he
   return roomViewHref(roomPath, viewMode, autoReloadSeconds);
 }
 
+function legacyRoomHref(path: "/game_play.php" | "/game_view.php" | "/game_frame.php" | "/game_up.php" | "/game_vote.php" | "/login.php" | "/user_manager.php", roomId: string, autoReloadSeconds: 0 | 15 | 20 | 30, viewMode?: "spectator" | "heaven"): string {
+  const params = [
+    `room_no=${encodeURIComponent(roomId)}`,
+    autoReloadSeconds > 0 ? `auto_reload=${autoReloadSeconds}` : "",
+    viewMode ? `view=${viewMode}` : ""
+  ].filter(Boolean).join("&");
+  return `${path}?${escapeHtml(params)}`;
+}
+
 export function renderRoom(roomId: string, options: RenderRoomOptions = {}): string {
   const autoReloadSeconds = normalizeAutoReloadSeconds(options.autoReloadSeconds);
   const viewMode = normalizeRoomViewMode(options.viewMode);
@@ -3494,6 +3503,19 @@ export function renderRoom(roomId: string, options: RenderRoomOptions = {}): str
                 [<a href="${roomViewHref(roomPath, "spectator", autoReloadSeconds)}">旁觀</a>]
                 [<a href="${roomViewHref(roomPath, "heaven", autoReloadSeconds)}">靈界</a>]
                 <small class="muted">PHP 版 game_play / game_view / heaven 入口對應</small>
+              </td>
+            </tr>
+            <tr>
+              <td>PHP入口</td>
+              <td>
+                <a href="${legacyRoomHref("/game_play.php", roomId, autoReloadSeconds)}">game_play.php</a>
+                <a href="${legacyRoomHref("/game_view.php", roomId, autoReloadSeconds)}">game_view.php</a>
+                <a href="${legacyRoomHref("/game_view.php", roomId, autoReloadSeconds, "heaven")}">heaven</a>
+                <a href="${legacyRoomHref("/game_frame.php", roomId, autoReloadSeconds)}">game_frame.php</a>
+                <a href="${legacyRoomHref("/game_up.php", roomId, autoReloadSeconds)}">game_up.php</a>
+                <a href="${legacyRoomHref("/game_vote.php", roomId, autoReloadSeconds)}">game_vote.php</a>
+                <a href="${legacyRoomHref("/login.php", roomId, autoReloadSeconds)}">login.php</a>
+                <a href="${legacyRoomHref("/user_manager.php", roomId, autoReloadSeconds)}">user_manager.php</a>
               </td>
             </tr>
             <tr class="view-spectator-only">
