@@ -513,6 +513,7 @@ function formatEventPayload(payload: unknown): string {
     typeof value.text === "string" ? `內容:${value.text}` : "",
     typeof value.winner === "string" ? `勝利:${winnerLabel(value.winner)}` : "",
     typeof value.day === "number" ? `第${value.day}日` : "",
+    typeof value.revoteCount === "number" ? `投票回合:${value.revoteCount + 1}` : "",
     typeof value.players === "number" ? `${value.players}人` : "",
     votedPlayerIds.length ? `投票數:${votedPlayerIds.length}` : "",
     typeof value.required === "number" ? `必要:${value.required}` : "",

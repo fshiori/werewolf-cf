@@ -1531,6 +1531,7 @@ describe("render", () => {
     expect(html).toContain("投票紀錄");
     expect(html).toContain("第 2 日 再投票 1");
     expect(html).toContain("2 日目 ( 2 回目)");
+    expect(html).toContain("投票回合:2");
     expect(html).toContain("得票：Bob：2票　Alice：1票");
     expect(html).toContain("vote-table");
     expect(html).toContain('border="1" cellspacing="0" cellpadding="2" style="font-size:12pt;margin:6px 0 12px 18px;"');
