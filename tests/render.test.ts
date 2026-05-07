@@ -2429,6 +2429,43 @@ describe("render", () => {
     expect(html.indexOf("內容:second")).toBeLessThan(html.indexOf("內容:first"));
   });
 
+  it("reverses transcript vote tables with reverse log mode", () => {
+    const html = renderRoomTranscript(
+      "room_abc",
+      [],
+      [
+        {
+          id: 1,
+          roomId: "room_abc",
+          playerId: "player_a",
+          eventType: "day_vote",
+          payload: { visibility: "public", nickname: "Alice", targetPlayerId: "player_b", targetNickname: "Bob", phase: "day", day: 2, revoteCount: 0 },
+          createdAt: "2026-05-06 12:01:00"
+        },
+        {
+          id: 2,
+          roomId: "room_abc",
+          playerId: "player_c",
+          eventType: "day_vote",
+          payload: { visibility: "public", nickname: "Carol", targetPlayerId: "player_d", targetNickname: "Dave", phase: "day", day: 3, revoteCount: 0 },
+          createdAt: "2026-05-06 12:02:00"
+        },
+        {
+          id: 3,
+          roomId: "room_abc",
+          playerId: "player_e",
+          eventType: "day_vote",
+          payload: { visibility: "public", nickname: "Eve", targetPlayerId: "player_f", targetNickname: "Frank", phase: "day", day: 3, revoteCount: 0 },
+          createdAt: "2026-05-06 12:03:00"
+        }
+      ],
+      { reverseLog: true }
+    );
+
+    expect(html.indexOf("3 日目 ( 1 回目)")).toBeLessThan(html.indexOf("2 日目 ( 1 回目)"));
+    expect(html.indexOf("<strong>Eve</strong>")).toBeLessThan(html.indexOf("<strong>Carol</strong>"));
+  });
+
   it("preserves transcript viewer parameters across old-log display links", () => {
     const html = renderRoomTranscript("room_abc", [], [
       {
