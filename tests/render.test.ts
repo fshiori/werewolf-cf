@@ -1344,6 +1344,14 @@ describe("render", () => {
           eventType: "self_talk",
           payload: { visibility: "private", nickname: "Alice", text: "mutter", phase: "night", day: 2 },
           createdAt: "2026-05-06 12:06:00"
+        },
+        {
+          id: 9,
+          roomId: "room_abc",
+          playerId: "player_a",
+          eventType: "room_end_requested",
+          payload: { nickname: "Alice", phase: "day", day: 2 },
+          createdAt: "2026-05-06 12:07:00"
         }
       ]
     );
@@ -1389,10 +1397,13 @@ describe("render", () => {
     expect(html).toContain("自言自語");
     expect(html).toContain("Alice <small>的自言自語</small>");
     expect(html).toContain("GM → ???");
+    expect(html).toContain("要求廢村");
+    expect(html).toContain("發言:Alice");
     expect(html).toContain('class="transcript-row transcript-location-kill"');
     expect(html).toContain('class="transcript-row transcript-location-wolf"');
     expect(html).toContain('class="transcript-row transcript-location-gm-whisper"');
     expect(html).toContain('class="transcript-row transcript-location-self"');
+    expect(html).toContain('class="transcript-row transcript-location-system"');
     expect(html).toContain(".transcript-location-wolf td { background: #000030; color: #ffccff; }");
     expect(html).toContain(".transcript-location-self td { background: #000030; color: snow; }");
     expect(html).toContain(".transcript-location-kill td { background: #cc3300; color: snow; font-weight: bold; }");

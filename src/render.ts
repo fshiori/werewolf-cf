@@ -394,6 +394,7 @@ function eventTypeLabel(eventType: string): string {
     guard: "護衛",
     cat_revive: "貓又復活",
     objection: "提出反對",
+    room_end_requested: "要求廢村",
     lobby_start_vote: "開始投票",
     lobby_kick_vote: "踢人投票",
     player_left: "退出",
@@ -464,6 +465,7 @@ function transcriptLocation(event: RoomEventSummary): { className: string; label
     guard: { className: "transcript-location-guard", label: "護衛行動" },
     cat_revive: { className: "transcript-location-cat", label: "復活行動" },
     objection: { className: "transcript-location-system", label: "系統" },
+    room_end_requested: { className: "transcript-location-system", label: "系統" },
     lobby_start_vote: { className: "transcript-location-system", label: "等待室" },
     lobby_kick_vote: { className: "transcript-location-system", label: "等待室" },
     player_left: { className: "transcript-location-system", label: "系統" },
@@ -623,6 +625,7 @@ function legacyTranscriptHref(path: "/old_log.php" | "/game_log.php", roomId: st
 
 const transcriptSystemEventTypes = new Set([
   "objection",
+  "room_end_requested",
   "lobby_start_vote",
   "lobby_kick_vote",
   "player_left",
