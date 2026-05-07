@@ -1757,8 +1757,11 @@ describe("worker routes", () => {
       expect(body).toContain("[remote_room]");
       expect(body).toContain("Remote村");
       expect(body).toContain("遠端伺服器");
+      expect(body).toContain('<table border="0" cellpadding="0" cellspacing="0" style="width: 100%">');
+      expect(body).toContain('<tr><td colspan="5"><hr></td></tr>');
       expect(body).toContain("https://remote.example/room/remote_room");
       expect(body).toContain('<a href="https://remote.example">服務中</a>');
+      expect(body).toContain('<td colspan="4"><a href="https://remote.example">遠端伺服器 / https://remote.example</a></td>');
       expect(body).toContain("遠端伺服器 / https://remote.example");
       expect(body).toContain("聯合伺服器狀態");
       expect(body).toContain("服務中");

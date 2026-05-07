@@ -654,12 +654,17 @@ describe("render", () => {
     expect(html).toContain("聯合遊戲列表");
     expect(html).toContain("服務中");
     expect(html).toContain("本伺服器");
+    expect(html).toContain('<table border="0" cellpadding="0" cellspacing="0" style="width: 100%">');
+    expect(html).toContain('<tr><td colspan="5"><hr></td></tr>');
     expect(html).toContain("募集中");
     expect(html).toContain("/assets/reference/img/waiting.gif");
     expect(html).toContain("/login.php?room_no=room_abc");
     expect(html).toContain("[room_abc]");
     expect(html).toContain("Test村");
     expect(html).toContain("人數22");
+    expect(html).toContain('<td width="50">');
+    expect(html).toContain('<td width="100">');
+    expect(html).not.toContain("本伺服器 / 本伺服器");
   });
 
   it("renders remote federated room links", () => {
@@ -716,6 +721,7 @@ describe("render", () => {
     expect(html).toContain("聯合伺服器狀態");
     expect(html).toContain('<a href="https://remote.example">服務中</a>');
     expect(html).toContain("遠端伺服器 / https://remote.example");
+    expect(html).toContain('<td colspan="4"><a href="https://remote.example">遠端伺服器 / https://remote.example</a></td>');
     expect(html).toContain('<a href="https://broken.example">失聯中</a>');
     expect(html).toContain("故障伺服器 / https://broken.example");
     expect(html).toContain("health-ok");
