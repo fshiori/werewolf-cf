@@ -1064,8 +1064,8 @@ describe("RoomDurableObject", () => {
 
     await sendRaw(room, voterSocket, JSON.stringify({ type: "vote", targetPlayerId: "player_target" }));
 
-    expect(voterMessages).toContainEqual(expect.objectContaining({ type: "game_state", openVote: false, votes: { player_voter: "player_target" } }));
-    expect(otherMessages).toContainEqual(expect.objectContaining({ type: "game_state", openVote: false, votes: {} }));
+    expect(voterMessages).toContainEqual(expect.objectContaining({ type: "game_state", openVote: false, votes: { player_voter: "player_target" }, votedPlayerIds: ["player_voter"] }));
+    expect(otherMessages).toContainEqual(expect.objectContaining({ type: "game_state", openVote: false, votes: {}, votedPlayerIds: [] }));
   });
 
   it("sends night action targets only to the actor websocket", async () => {

@@ -170,14 +170,28 @@ function nightActionActorIds(state: GameState): string[] {
   return state.players.filter((player) => actorIds.has(player.playerId)).map((player) => player.playerId);
 }
 
-function votedPlayerIdsForState(state: GameState): string[] {
-  if (!state.voteStatus) {
-    return [];
-  }
+function viewerNightActionDone(state: GameState, viewerPlayerId: string): boolean {
+  return Boolean(
+    state.nightKills?.[viewerPlayerId] ||
+    state.divinations?.[viewerPlayerId] ||
+    state.guards?.[viewerPlayerId] ||
+    state.catRevives?.[viewerPlayerId]
+  );
+}
+
+function votedPlayerIdsForState(state: GameState, viewerPlayerId?: string): string[] {
   if (state.phase === "night") {
-    return nightActionActorIds(state);
+    const actorIds = state.voteStatus ? nightActionActorIds(state) : [];
+    if (viewerPlayerId && viewerNightActionDone(state, viewerPlayerId) && !actorIds.includes(viewerPlayerId)) {
+      return [...actorIds, viewerPlayerId];
+    }
+    return actorIds;
   }
-  return Object.keys(state.votes);
+  const voterIds = state.voteStatus ? Object.keys(state.votes) : [];
+  if (viewerPlayerId && state.votes[viewerPlayerId] && !voterIds.includes(viewerPlayerId)) {
+    return [...voterIds, viewerPlayerId];
+  }
+  return voterIds;
 }
 
 function votesForState(state: GameState, viewerPlayerId?: string): Record<string, string> {
@@ -224,7 +238,7 @@ export function buildGameStateMessage(state: GameState, viewerPlayerId?: string)
     openVote: state.openVote,
     voteStatus: state.voteStatus,
     votes: votesForState(state, viewerPlayerId),
-    votedPlayerIds: votedPlayerIdsForState(state),
+    votedPlayerIds: votedPlayerIdsForState(state, viewerPlayerId),
     ownNightActionTarget: ownNightActionTargetForState(state, viewerPlayerId),
     lobbyStartVotedPlayerIds: state.phase === "lobby" ? state.players.filter((player) => state.lobbyStartVotes?.[player.playerId]).map((player) => player.playerId) : undefined,
     lobbyKickVoteTargets:
