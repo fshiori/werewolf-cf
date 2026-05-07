@@ -2648,11 +2648,11 @@ export function renderBbs(topics: BbsTopicSummary[], options: { digestOnly?: boo
       <legend><strong>發表主題</strong></legend>
       <form name="bbs" method="post" action="/bbs.php?go=post" enctype="multipart/form-data" style="margin:10px 20px;">
         <strong>舊式發表：</strong>
-        暱稱 <input name="bname" maxlength="32" size="16">
-        密碼 <input name="bpass" type="password" maxlength="128" size="16">
-        標題 <input name="title" maxlength="50" size="24"><br>
+        暱稱 <input type="text" name="bname" maxlength="32" size="24">
+        密碼 <input type="password" name="bpass" maxlength="128" size="24">
+        標題 <input type="text" name="title" maxlength="50" size="24"><br>
         內容<br><textarea name="mess" rows="5" cols="64"></textarea><br>
-        <input name="submit" type="submit" value="發表">
+        <input id="submit" name="submit" type="submit" value="發表">
       </form>
       <table class="form-table">
         <tr><td><label><strong>　名稱：</strong></label></td><td><input id="bbsName" maxlength="32" size="24"></td></tr>
@@ -2751,11 +2751,11 @@ export function renderBbsTopic(topic: BbsTopicSummary, replies: BbsReplySummary[
     ? `<p class="muted">此主題已鎖定。</p>`
     : `<form name="bbs" method="post" action="/bbs.php?go=postre" enctype="multipart/form-data" style="margin:10px 20px;">
         <strong>舊式回覆：</strong>
-        暱稱 <input name="bname" maxlength="32" size="16">
-        密碼 <input name="bpass" type="password" maxlength="128" size="16"><br>
+        暱稱 <input type="text" name="bname" maxlength="32" size="24">
+        密碼 <input type="password" name="bpass" maxlength="128" size="24"><br>
         內容<br><textarea name="mess" rows="5" cols="64"></textarea>
         <input type="hidden" name="id" value="${escapeHtml(String(topic.id))}"><br>
-        <input name="submit" type="submit" value="回覆">
+        <input id="submit" name="submit" type="submit" value="回覆">
       </form>
       <table class="form-table">
         <tr><td><label><strong>　名稱：</strong></label></td><td><input id="bbsReplyName" maxlength="32" size="24"></td></tr>
