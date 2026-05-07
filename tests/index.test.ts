@@ -1313,6 +1313,48 @@ describe("worker routes", () => {
     );
   });
 
+  it("supports the legacy admin.php room end link", async () => {
+    const env = envWithRooms(["room_admin"], { room_admin_token: "secret" });
+    const response = await worker.fetch(
+      new Request("http://example.test/admin.php?go=del&id=room_admin&token=secret"),
+      env
+    );
+
+    expect(response.status).toBe(303);
+    expect(response.headers.get("Location")).toBe("/admin/rooms?token=secret&ended=room_admin");
+    const runs = (env as unknown as { runs: Array<{ query: string; values: unknown[] }> }).runs;
+    expect(runs).toContainEqual(
+      expect.objectContaining({
+        query: "UPDATE rooms SET status = 'ended' WHERE id = ?",
+        values: ["room_admin"]
+      })
+    );
+    expect(runs).toContainEqual(
+      expect.objectContaining({
+        query: "INSERT INTO room_events (room_id, event_type, payload_json) VALUES (?, 'admin_room_ended', ?)",
+        values: ["room_admin", JSON.stringify({ status: "ended" })]
+      })
+    );
+  });
+
+  it("supports the legacy game_play.php room end link", async () => {
+    const env = envWithRooms(["room_admin"], { room_admin_token: "secret" });
+    const response = await worker.fetch(
+      new Request("http://example.test/game_play.php?go=del&id=room_admin&room_no=room_admin&token=secret"),
+      env
+    );
+
+    expect(response.status).toBe(303);
+    expect(response.headers.get("Location")).toBe("/admin/rooms?token=secret&ended=room_admin");
+    const runs = (env as unknown as { runs: Array<{ query: string; values: unknown[] }> }).runs;
+    expect(runs).toContainEqual(
+      expect.objectContaining({
+        query: "UPDATE rooms SET status = 'ended' WHERE id = ?",
+        values: ["room_admin"]
+      })
+    );
+  });
+
   it("rejects room admin actions without the configured token", async () => {
     const response = await worker.fetch(
       new Request("http://example.test/api/admin/rooms/room_admin", {
