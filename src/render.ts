@@ -546,14 +546,55 @@ function roomStatusLabel(value: unknown): string {
   return typeof value === "string" ? value : "";
 }
 
+function legacySystemSentenceLabel(value: Record<string, unknown>): string | undefined {
+  const location = typeof value.location === "string" ? value.location : "";
+  const text = typeof value.text === "string" ? value.text : "";
+  if (!location.includes("system") || !text) {
+    return undefined;
+  }
+  const [code, target = ""] = text.split("\t");
+  if (code === "OBJECTION") {
+    return "表示抗議";
+  }
+  if (code === "ROOMEND") {
+    return "要求廢村";
+  }
+  if (code === "KICK_DO") {
+    return target ? `對 ${target} 投票踢出` : "投票踢出";
+  }
+  if (code === "FKICK_DO") {
+    return target ? `村長對 ${target} 強制踢出` : "村長強制踢出";
+  }
+  if (code === "VOTE_DO") {
+    return target ? `將 ${target} 投票處死` : "投票處死";
+  }
+  if (code === "WOLF_EAT") {
+    return target ? `人狼對 ${target} 鎖定為目標` : "人狼鎖定目標";
+  }
+  if (code === "MAGE_DO") {
+    return target ? `對 ${target} 進行占卜` : "進行占卜";
+  }
+  if (code === "FOSI_DO") {
+    return target ? `子狐對 ${target} 進行占卜` : "子狐進行占卜";
+  }
+  if (code === "CAT_DO") {
+    return target ? `貓又對 ${target} 進行復活` : "貓又進行復活";
+  }
+  if (code === "GUARD_DO") {
+    return target ? `對 ${target} 進行護衛` : "進行護衛";
+  }
+  return undefined;
+}
+
 function formatEventPayload(payload: unknown): string {
   const value = recordValue(payload);
   const votedPlayerIds = Array.isArray(value.votedPlayerIds) ? value.votedPlayerIds.filter((entry): entry is string => typeof entry === "string") : [];
+  const legacySystemSentence = legacySystemSentenceLabel(value);
   const fields = [
     typeof value.name === "string" ? `村名:${value.name}` : "",
     typeof value.comment === "string" && value.comment ? `說明:${value.comment}` : "",
     typeof value.nickname === "string" ? `發言:${value.nickname}` : "",
-    typeof value.text === "string" ? `內容:${value.text}` : "",
+    typeof value.text === "string" ? `內容:${legacySystemSentence ?? value.text}` : "",
     typeof value.winner === "string" ? `勝利:${winnerLabel(value.winner)}` : "",
     typeof value.day === "number" ? `第${value.day}日` : "",
     typeof value.revoteCount === "number" ? `投票回合:${value.revoteCount + 1}` : "",
