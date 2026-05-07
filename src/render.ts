@@ -455,6 +455,11 @@ function voteRoundLabel(value: Record<string, unknown>): string {
   return revoteCount > 0 ? `再投票 ${revoteCount}` : "第一回";
 }
 
+function voteRoundNumber(value: Record<string, unknown>): number {
+  const revoteCount = typeof value.revoteCount === "number" ? value.revoteCount : 0;
+  return revoteCount + 1;
+}
+
 function voteTargetLabel(event: RoomEventSummary): string {
   const value = recordValue(event.payload);
   return typeof value.targetNickname === "string" && value.targetNickname
@@ -507,19 +512,23 @@ function renderTranscriptVoteTables(events: RoomEventSummary[]): string {
       const targetTotal = targetTotals.get(target) ?? 0;
       const voterReceivedTotal = targetTotals.get(voter) ?? 0;
       return `<tr class="vote-ballot-row">
-        <td>${escapeHtml(voter)}</td>
+        <td align="left"><strong>${escapeHtml(voter)}</strong></td>
         <td>${voterReceivedTotal}票</td>
         <td>投票給 ${targetTotal} 票 →</td>
-        <td>${escapeHtml(target)}</td>
+        <td><strong> ${escapeHtml(target)} </strong></td>
         <td>${escapeHtml(event.createdAt)}</td>
       </tr>`;
     }).join("");
+    const phpRoundLabel = day ? `${day} 日目 ( ${voteRoundNumber(first)} 回目)` : `${voteRoundNumber(first)} 回目`;
     return `
       <tr class="vote-round-header"><td colspan="5">${escapeHtml(label)}</td></tr>
       <tr class="vote-total-row"><td colspan="5">得票：${renderVoteTargetTotals(groupEvents)}</td></tr>
       <tr><td colspan="5">
-        <table class="form-table vote-table" cellspacing="1" style="margin:6px 0 12px 18px;">
-          <thead><tr><td><strong>投票者</strong></td><td><strong>得票</strong></td><td><strong>投票</strong></td><td><strong>投票先</strong></td><td><strong>時間</strong></td></tr></thead>
+        <table class="form-table vote-table" border="1" cellspacing="0" cellpadding="2" style="font-size:12pt;margin:6px 0 12px 18px;">
+          <thead>
+            <tr><td colspan="5" align="center">${escapeHtml(phpRoundLabel)}</td></tr>
+            <tr><td><strong>投票者</strong></td><td><strong>得票</strong></td><td><strong>投票</strong></td><td><strong>投票先</strong></td><td><strong>時間</strong></td></tr>
+          </thead>
           <tbody>${rows}</tbody>
         </table>
       </td></tr>`;
