@@ -1642,6 +1642,10 @@ describe("render", () => {
     expect(html).toContain("/game_view.php?room_no=room_abc");
     expect(html).toContain("/old_log.php?log_mode=on&amp;room_no=room_abc");
     expect(html).toContain("/game_log.php?room_no=room_abc&amp;log_mode=on");
+    expect(html).toContain('class="transcript-table" border="0" cellspacing="0" cellpadding="2" style="margin:12px 20px 18px;"');
+    expect(html).toContain('<td class="transcript-time-cell"><strong>時間</strong></td><td class="transcript-type-cell"><strong>事件</strong></td><td class="transcript-speaker-cell"><strong>玩家</strong></td><td class="transcript-payload-cell"><strong>內容</strong></td>');
+    expect(html).toContain('class="transcript-row transcript-location-game"');
+    expect(html).toContain('<td class="transcript-speaker-cell"><span class="transcript-speaker-marker">◆</span>player_a</td>');
     expect(html).toContain("遊戲開始");
     expect(html).not.toContain(">game_started<");
     expect(html).toContain("player_a");

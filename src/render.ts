@@ -1463,11 +1463,11 @@ export function renderRoomRecords(roomId: string, records: GameRecordSummary[], 
 
 export function renderRoomEvents(roomId: string, events: RoomEventSummary[], options: { oldLogReturnHref?: string } = {}): string {
   const rows = events.length
-    ? events.map((event) => `<tr>
-        <td>${escapeHtml(event.createdAt)}</td>
-        <td>${escapeHtml(eventTypeLabel(event.eventType))}</td>
-        <td>${event.playerId ? escapeHtml(event.playerId) : `<span class="muted">系統</span>`}</td>
-        <td>${escapeHtml(formatEventPayload(event.payload))}</td>
+    ? events.map((event) => `<tr class="transcript-row ${transcriptLocation(event).className}">
+        <td class="transcript-time-cell">${escapeHtml(event.createdAt)}</td>
+        <td class="transcript-type-cell">${escapeHtml(eventTypeLabel(event.eventType))}</td>
+        <td class="transcript-speaker-cell"><span class="transcript-speaker-marker">◆</span>${event.playerId ? escapeHtml(event.playerId) : `<span class="muted">系統</span>`}</td>
+        <td class="transcript-payload-cell">${escapeHtml(formatEventPayload(event.payload))}</td>
       </tr>`).join("")
     : `<tr><td colspan="4" class="muted">尚無事件。</td></tr>`;
 
@@ -1481,8 +1481,8 @@ export function renderRoomEvents(roomId: string, events: RoomEventSummary[], opt
         <tr><td><strong>　村子：</strong></td><td><a href="/game_view.php?room_no=${encodeURIComponent(roomId)}">${escapeHtml(roomId)}</a></td></tr>
         <tr><td><strong>　紀錄：</strong></td><td><a href="/old_log.php?log_mode=on&amp;room_no=${encodeURIComponent(roomId)}">old_log.php</a> / <a href="/game_log.php?room_no=${encodeURIComponent(roomId)}&amp;log_mode=on">game_log.php</a></td></tr>
       </table>
-      <table class="form-table" style="margin:12px 20px 18px;">
-        <thead><tr><td><strong>時間</strong></td><td><strong>事件</strong></td><td><strong>玩家</strong></td><td><strong>內容</strong></td></tr></thead>
+      <table class="transcript-table" border="0" cellspacing="0" cellpadding="2" style="margin:12px 20px 18px;">
+        <thead><tr><td class="transcript-time-cell"><strong>時間</strong></td><td class="transcript-type-cell"><strong>事件</strong></td><td class="transcript-speaker-cell"><strong>玩家</strong></td><td class="transcript-payload-cell"><strong>內容</strong></td></tr></thead>
         <tbody>${rows}</tbody>
       </table>
     </fieldset>
