@@ -315,6 +315,10 @@ function recordValue(value: unknown): Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value) ? value as Record<string, unknown> : {};
 }
 
+function isRecordValue(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
 function roleLabel(value: unknown): string {
   const labels: Record<PlayerRole, string> = {
     villager: "村民",
@@ -405,6 +409,49 @@ function formatGameRecordHtml(record: GameRecordSummary): string {
   return `${referenceAssetImg(winnerIconPath(result.winner), `${winner}勝利`)}${escapeHtml(formatGameRecord(record))}`;
 }
 
+function playerFlagLabel(value: unknown): string {
+  if (value === "lover") {
+    return "戀人";
+  }
+  if (value === "authority") {
+    return "權力者";
+  }
+  if (value === "decider") {
+    return "決定者";
+  }
+  return typeof value === "string" ? value : "";
+}
+
+function sourceChannelLabel(value: unknown): string {
+  if (value === "wolf") {
+    return "人狼";
+  }
+  if (value === "fox") {
+    return "妖狐";
+  }
+  if (value === "common") {
+    return "共有";
+  }
+  if (value === "lovers") {
+    return "戀人";
+  }
+  return typeof value === "string" ? value : "";
+}
+
+function channelRestrictionsLabel(value: unknown): string {
+  const restrictions = recordValue(value);
+  const pairs: Array<[string, unknown]> = [
+    ["人狼", restrictions.wolf],
+    ["共有", restrictions.common],
+    ["戀人", restrictions.lovers],
+    ["妖狐", restrictions.fox]
+  ];
+  return pairs
+    .filter(([, enabled]) => typeof enabled === "boolean")
+    .map(([label, restricted]) => `${label}${restricted ? "關閉" : "開啟"}`)
+    .join("、");
+}
+
 function formatEventPayload(payload: unknown): string {
   const value = recordValue(payload);
   const fields = [
@@ -419,6 +466,11 @@ function formatEventPayload(payload: unknown): string {
     typeof value.targetNickname === "string" ? `對象名:${value.targetNickname}` : "",
     typeof value.remaining === "number" ? `剩餘:${value.remaining}` : "",
     typeof value.result === "string" ? `結果:${value.result}` : "",
+    typeof value.alive === "boolean" ? `生死:${value.alive ? "生存" : "死亡"}` : "",
+    typeof value.enabled === "boolean" ? `狀態:${value.enabled ? "開啟" : "關閉"}` : "",
+    typeof value.flag === "string" ? `旗標:${playerFlagLabel(value.flag)}` : "",
+    isRecordValue(value.restrictions) ? `頻道限制:${channelRestrictionsLabel(value.restrictions)}` : "",
+    typeof value.sourceChannel === "string" ? `來源頻道:${sourceChannelLabel(value.sourceChannel)}` : "",
     typeof value.phase === "string" ? `階段:${value.phase}` : "",
     typeof value.role === "string" ? `角色:${roleLabel(value.role)}` : ""
   ].filter(Boolean);

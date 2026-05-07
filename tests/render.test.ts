@@ -1930,6 +1930,61 @@ describe("render", () => {
     expect(html).toContain("common room");
   });
 
+  it("renders saved GM operation details in transcript payloads", () => {
+    const html = renderRoomTranscript("room_abc", [], [
+      {
+        id: 1,
+        roomId: "room_abc",
+        playerId: "player_gm",
+        eventType: "gm_set_alive",
+        payload: { targetPlayerId: "player_target", alive: false, phase: "night", day: 2 },
+        createdAt: "2026-05-06 12:01:00"
+      },
+      {
+        id: 2,
+        roomId: "room_abc",
+        playerId: "player_gm",
+        eventType: "gm_set_flag",
+        payload: { targetPlayerId: "player_target", flag: "lover", enabled: true, phase: "night", day: 2 },
+        createdAt: "2026-05-06 12:02:00"
+      },
+      {
+        id: 3,
+        roomId: "room_abc",
+        playerId: "player_gm",
+        eventType: "gm_set_common_voice",
+        payload: { enabled: false, phase: "night", day: 2 },
+        createdAt: "2026-05-06 12:03:00"
+      },
+      {
+        id: 4,
+        roomId: "room_abc",
+        playerId: "player_gm",
+        eventType: "gm_set_channel_restrictions",
+        payload: { restrictions: { wolf: true, common: false, lovers: true, fox: false }, phase: "night", day: 2 },
+        createdAt: "2026-05-06 12:04:00"
+      },
+      {
+        id: 5,
+        roomId: "room_abc",
+        playerId: "player_wolf",
+        eventType: "lovers_chat",
+        payload: { visibility: "private", nickname: "Wolf", text: "fallback", sourceChannel: "wolf", location: "night lovers", phase: "night", day: 2 },
+        createdAt: "2026-05-06 12:05:00"
+      }
+    ]);
+
+    expect(html).toContain("GM 生死調整");
+    expect(html).toContain("對象:player_target　生死:死亡");
+    expect(html).toContain("GM 旗標調整");
+    expect(html).toContain("狀態:開啟　旗標:戀人");
+    expect(html).toContain("GM 共有公開調整");
+    expect(html).toContain("狀態:關閉");
+    expect(html).toContain("GM 頻道限制調整");
+    expect(html).toContain("頻道限制:人狼關閉、共有開啟、戀人關閉、妖狐開啟");
+    expect(html).toContain("來源頻道:人狼");
+  });
+
   it("renders room transcript reverse log controls", () => {
     const html = renderRoomTranscript(
       "room_abc",
