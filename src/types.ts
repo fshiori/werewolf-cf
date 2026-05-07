@@ -116,6 +116,7 @@ export interface PublicGamePlayer {
 export interface PlayerStatUpdate {
   playerId: string;
   won: boolean;
+  draw?: boolean;
 }
 
 export interface PlayerStats {

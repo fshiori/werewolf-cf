@@ -359,6 +359,47 @@ describe("RoomDurableObject", () => {
     expect(villagerMessages).toContainEqual(expect.objectContaining({ type: "revealed_roles" }));
   });
 
+  it("counts draw games without adding player wins or losses", async () => {
+    const game: GameState = {
+      roomId: "room_abc",
+      phase: "ended",
+      day: 2,
+      players: [
+        { playerId: "player_villager", nickname: "Villager", role: "villager", alive: true },
+        { playerId: "player_wolf", nickname: "Wolf", role: "werewolf", alive: true }
+      ],
+      votes: {},
+      openVote: false,
+      commonTalkVisible: false,
+      deadRoleVisible: false,
+      wishRole: false,
+      dummyBoy: false,
+      dayMs: 180_000,
+      nightMs: 90_000,
+      selfVote: false,
+      voteStatus: false,
+      revoteCount: 0,
+      nightKills: {},
+      divinations: {},
+      guards: {},
+      catRevives: {},
+      lastWords: {},
+      winner: "draw",
+      log: ["平手。"]
+    };
+    const { room, batches } = observableRoomObject(game);
+
+    await (room as unknown as { syncRoomStatus(gameState: GameState): Promise<void> }).syncRoomStatus(game);
+
+    const finalizationBatch = batches[0] ?? [];
+    expect(finalizationBatch).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ query: expect.stringContaining("INSERT INTO player_stats"), binds: ["player_villager", 0, 0] }),
+        expect.objectContaining({ query: expect.stringContaining("INSERT INTO player_stats"), binds: ["player_wolf", 0, 0] })
+      ])
+    );
+  });
+
   it("reports malformed websocket JSON without closing the socket handler", async () => {
     const room = roomObject();
     const messages: SentMessage[] = [];
