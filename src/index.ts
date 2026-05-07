@@ -2193,7 +2193,12 @@ export default {
           return json({ error: error instanceof Error ? error.message : "Invalid room" }, { status: 400 });
         }
       }
-      return html(renderOldLogs((await listRooms(env)).filter((room) => room.status === "ended")));
+      const search = url.searchParams.get("search")?.trim() ?? "";
+      const endedRooms = (await listRooms(env)).filter((room) => room.status === "ended");
+      const filteredRooms = search
+        ? endedRooms.filter((room) => room.id.includes(search) || room.name.includes(search))
+        : endedRooms;
+      return html(renderOldLogs(filteredRooms, { search }));
     }
 
     if (request.method === "GET" && (url.pathname === "/trip" || url.pathname === "/trip.php")) {

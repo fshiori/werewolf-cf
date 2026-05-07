@@ -1599,6 +1599,28 @@ describe("worker routes", () => {
     expect(body).not.toContain("room_active");
   });
 
+  it("filters old log index with the reference search query", async () => {
+    const response = await worker.fetch(
+      new Request("http://example.test/old_log.php?search=alpha"),
+      envWithRooms(
+        ["room_alpha", "room_beta"],
+        { "room_status:room_alpha": "ended", "room_status:room_beta": "ended" },
+        {},
+        {},
+        {},
+        {},
+        { room_alpha: "First finished", room_beta: "Second finished" }
+      )
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.text();
+    expect(body).toContain("搜尋");
+    expect(body).toContain('value="alpha"');
+    expect(body).toContain("alpha 村");
+    expect(body).not.toContain("beta 村");
+  });
+
   it("renders federated list page with configured remote rooms", async () => {
     const originalFetch = globalThis.fetch;
     const requestedUrls: string[] = [];
