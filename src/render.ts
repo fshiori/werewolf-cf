@@ -2947,7 +2947,7 @@ export function renderRoom(roomId: string, options: RenderRoomOptions = {}): str
               <td>登錄</td>
               <td>
                 <a href="#nickname"><strong>[住民登錄]</strong></a>
-                　<a href="/trip">[身份登錄]</a>
+                　<a href="/trip.php">[身份登錄]</a>
                 　<a href="/trips">[Trip查詢]</a>
                 　<a href="/">[返回]</a>
               </td>
@@ -3001,7 +3001,7 @@ export function renderRoom(roomId: string, options: RenderRoomOptions = {}): str
                   <option value="user_icon/009.gif">009 紫色</option>
                   <option value="user_icon/010.gif">010 櫻色</option>
                 </select>
-                <small><a href="/icons">頭像一覽</a></small>
+                <small><a href="/icon_view.php">頭像一覽</a></small>
               </td>
             </tr>
           </table>
