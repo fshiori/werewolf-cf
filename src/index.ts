@@ -1790,6 +1790,28 @@ async function getRoomRecords(env: Env, roomIdParam: string): Promise<Response> 
   }
 }
 
+async function getRoomTranscriptPage(request: Request, env: Env, roomIdParam: string): Promise<Response> {
+  const url = new URL(request.url);
+  const roomId = validateRoomId(roomIdParam);
+  if (!(await roomExists(env, roomId))) {
+    return new Response("Room not found", { status: 404 });
+  }
+  const [records, events] = await Promise.all([listRoomRecords(env, roomId), listRoomEvents(env, roomId)]);
+  const viewerModeParam = url.searchParams.get("viewer");
+  const viewerPlayerIdParam = url.searchParams.get("viewer_player_id");
+  const viewerMode = viewerModeParam === "public" || viewerModeParam === "player" || viewerModeParam === "dead" || viewerModeParam === "gm" ? viewerModeParam : "legacy";
+  if (viewerMode === "player" && !viewerPlayerIdParam) {
+    throw new Error("Player transcript viewer requires viewer_player_id");
+  }
+  return html(renderRoomTranscript(roomId, records, events, {
+    heavenTalk: url.searchParams.get("heaven_talk") === "on",
+    heavenOnly: url.searchParams.get("heaven_only") === "on",
+    reverseLog: url.searchParams.get("reverse_log") === "on",
+    viewerMode,
+    viewerPlayerId: viewerPlayerIdParam ? validatePlayerId(viewerPlayerIdParam) : undefined
+  }));
+}
+
 function isPrivateRoomEvent(event: RoomEventSummary): boolean {
   return isRecord(event.payload) && event.payload.visibility === "private";
 }
@@ -2028,6 +2050,17 @@ export default {
     }
 
     if (request.method === "GET" && (url.pathname === "/logs" || url.pathname === "/old_log.php")) {
+      if (url.pathname === "/old_log.php" && url.searchParams.get("log_mode") === "on") {
+        try {
+          const roomId = url.searchParams.get("room_no");
+          if (!roomId) {
+            throw new Error("old_log.php requires room_no");
+          }
+          return await getRoomTranscriptPage(request, env, roomId);
+        } catch (error) {
+          return json({ error: error instanceof Error ? error.message : "Invalid room" }, { status: 400 });
+        }
+      }
       return html(renderOldLogs((await listRooms(env)).filter((room) => room.status === "ended")));
     }
 
@@ -2237,24 +2270,7 @@ export default {
         if (!roomTranscriptPageMatch && !legacyGameLogRoomId) {
           throw new Error("game_log.php requires room_no");
         }
-        const roomId = validateRoomId(roomTranscriptPageMatch ? roomTranscriptPageMatch[1] : legacyGameLogRoomId ?? "");
-        if (!(await roomExists(env, roomId))) {
-          return new Response("Room not found", { status: 404 });
-        }
-        const [records, events] = await Promise.all([listRoomRecords(env, roomId), listRoomEvents(env, roomId)]);
-        const viewerModeParam = url.searchParams.get("viewer");
-        const viewerPlayerIdParam = url.searchParams.get("viewer_player_id");
-        const viewerMode = viewerModeParam === "public" || viewerModeParam === "player" || viewerModeParam === "dead" || viewerModeParam === "gm" ? viewerModeParam : "legacy";
-        if (viewerMode === "player" && !viewerPlayerIdParam) {
-          throw new Error("Player transcript viewer requires viewer_player_id");
-        }
-        return html(renderRoomTranscript(roomId, records, events, {
-          heavenTalk: url.searchParams.get("heaven_talk") === "on",
-          heavenOnly: url.searchParams.get("heaven_only") === "on",
-          reverseLog: url.searchParams.get("reverse_log") === "on",
-          viewerMode,
-          viewerPlayerId: viewerPlayerIdParam ? validatePlayerId(viewerPlayerIdParam) : undefined
-        }));
+        return await getRoomTranscriptPage(request, env, roomTranscriptPageMatch ? roomTranscriptPageMatch[1] : legacyGameLogRoomId ?? "");
       } catch (error) {
         return json({ error: error instanceof Error ? error.message : "Invalid room" }, { status: 400 });
       }

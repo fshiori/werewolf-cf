@@ -1417,9 +1417,9 @@ describe("worker routes", () => {
     const body = await response.text();
     expect(body).toContain("過去紀錄");
     expect(body).toContain("room_finished");
-    expect(body).toContain("/room/room_finished/log?reverse_log=on");
-    expect(body).toContain("/room/room_finished/log?heaven_talk=on");
-    expect(body).toContain("/room/room_finished/log?heaven_only=on");
+    expect(body).toContain("/old_log.php?log_mode=on&amp;room_no=room_finished&amp;reverse_log=on");
+    expect(body).toContain("/old_log.php?log_mode=on&amp;room_no=room_finished&amp;heaven_talk=on");
+    expect(body).toContain("/old_log.php?log_mode=on&amp;room_no=room_finished&amp;heaven_only=on");
     expect(body).toContain("埋毒");
     expect(body).not.toContain("room_active");
   });
@@ -3021,6 +3021,39 @@ describe("worker routes", () => {
     const missingRoom = await worker.fetch(new Request("http://example.test/game_log.php"), env);
     expect(missingRoom.status).toBe(400);
     expect(await missingRoom.json()).toEqual({ error: "game_log.php requires room_no" });
+  });
+
+  it("renders legacy old_log.php transcript alias", async () => {
+    const env = envWithRooms(
+      ["room_log"],
+      { "room_status:room_log": "ended" },
+      {},
+      {},
+      {
+        room_log: [
+          {
+            id: 1,
+            room_id: "room_log",
+            player_id: "player_dead",
+            event_type: "dead_chat",
+            payload_json: '{"visibility":"private","nickname":"Dead","text":"heaven","phase":"night","day":2}',
+            created_at: "2026-05-06 12:02:00"
+          }
+        ]
+      }
+    );
+
+    const response = await worker.fetch(new Request("http://example.test/old_log.php?log_mode=on&room_no=room_log&heaven_talk=on&reverse_log=on"), env);
+
+    expect(response.status).toBe(200);
+    const body = await response.text();
+    expect(body).toContain("村子完整紀錄");
+    expect(body).toContain("heaven");
+    expect(body).toContain("逆&amp;靈");
+
+    const missingRoom = await worker.fetch(new Request("http://example.test/old_log.php?log_mode=on"), env);
+    expect(missingRoom.status).toBe(400);
+    expect(await missingRoom.json()).toEqual({ error: "old_log.php requires room_no" });
   });
 
   it("applies old-log heaven filters on room transcript page", async () => {
