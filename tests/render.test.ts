@@ -239,6 +239,7 @@ describe("render", () => {
     expect(html).toContain('data-room-page="full"');
     expect(html).toContain(".view-spectator-only, .view-heaven-only { display: none; }");
     expect(html).toContain("body.room-view-spectator .view-player-only");
+    expect(html).toContain("body.room-view-heaven .room-registration-row { display: none; }");
     expect(html).toContain("body.room-view-heaven .view-heaven-only { display: table-row; }");
     expect(html).toContain("進入房間");
     expect(html).toContain(".player-grid { width: 800px; max-width: 100%; border: 1px dotted #000000; border-spacing: 5px; border-collapse: separate; font-size: 10pt; }");
@@ -429,6 +430,7 @@ describe("render", () => {
     expect(spectator).toContain('data-room-view="spectator"');
     expect(spectator).toContain("旁觀視點");
     expect(spectator).toContain("只觀看公開資訊與玩家列表");
+    expect(spectator).toContain("body.room-view-spectator .room-registration-row");
     expect(spectator).toContain("body.room-view-spectator .room-chat-controls { display: none; }");
     expect(spectator).toContain('<tr><th>玩家列表</th></tr>');
     expect(spectator).not.toContain('<tr class="view-player-only">\n        <td>\n          <table class="panel">\n            <tr><th>玩家列表</th></tr>');
@@ -444,6 +446,7 @@ describe("render", () => {
     expect(heaven).toContain('data-room-view="heaven"');
     expect(heaven).toContain("靈界視點");
     expect(heaven).toContain("死亡後視點入口");
+    expect(heaven).toContain("body.room-view-heaven .room-registration-row");
     expect(heaven).toContain("body.room-view-heaven .room-live-chat-only { display: none; }");
     expect(heaven).toContain('<button id="sendDeadChat" disabled>靈界</button>');
     expect(heaven).toContain('<tr><th>玩家列表</th></tr>');
