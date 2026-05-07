@@ -826,7 +826,7 @@ async function registerLegacyTrip(request: Request, env: Env): Promise<Response>
     await insertRegisteredTrip(env, body.trip);
     return new Response(null, {
       status: 303,
-      headers: { Location: "/trip" }
+      headers: { Location: "/trip.php" }
     });
   } catch (error) {
     return json({ error: error instanceof Error ? error.message : "Failed to register Trip" }, { status: 400 });
@@ -839,7 +839,7 @@ async function excludeLegacyTrip(request: Request, env: Env): Promise<Response> 
     await insertTripExclusion(env, body.trip, body.reason);
     return new Response(null, {
       status: 303,
-      headers: { Location: "/trip" }
+      headers: { Location: "/trip.php" }
     });
   } catch (error) {
     return json({ error: error instanceof Error ? error.message : "Failed to exclude Trip" }, { status: 400 });
