@@ -1892,6 +1892,32 @@ describe("game", () => {
     expect(() => forceSetPlayerRole(day, "player_missing", "seer")).toThrow("Role control target not found");
   });
 
+  it("clears pending night actions involving a player when GM adjusts role", () => {
+    const night = {
+      ...activeState("night", [
+        { playerId: "player_wolf", nickname: "Wolf", role: "werewolf" as const, alive: true },
+        { playerId: "player_seer", nickname: "Seer", role: "seer" as const, alive: true },
+        { playerId: "player_guard", nickname: "Guard", role: "guard" as const, alive: true },
+        { playerId: "player_cat", nickname: "Cat", role: "cat" as const, alive: true },
+        { playerId: "player_target", nickname: "Target", role: "villager" as const, alive: true },
+        { playerId: "player_dead", nickname: "Dead", role: "villager" as const, alive: false },
+        { playerId: "player_other", nickname: "Other", role: "villager" as const, alive: true }
+      ]),
+      nightKills: { player_wolf: "player_target" },
+      divinations: { player_seer: "player_target" },
+      guards: { player_guard: "player_target" },
+      catRevives: { player_cat: "player_dead" }
+    };
+    const changedTarget = forceSetPlayerRole(night, "player_target", "werewolf");
+    const changedDead = forceSetPlayerRole(changedTarget, "player_dead", "seer");
+
+    expect(changedTarget.nightKills).toEqual({});
+    expect(changedTarget.divinations).toEqual({});
+    expect(changedTarget.guards).toEqual({});
+    expect(changedTarget.catRevives).toEqual({ player_cat: "player_dead" });
+    expect(changedDead.catRevives).toEqual({});
+  });
+
   it("lets GM adjust player flags during active games", () => {
     const day = startGame(lobby([["player_1", "Alice"], ["player_2", "Bob"], ["player_3", "Carol"], ["player_4", "Dave"]]), 0, () => 0);
     const authority = forceSetPlayerFlag(day, "player_2", "authority", true);
