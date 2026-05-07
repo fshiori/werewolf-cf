@@ -1334,6 +1334,10 @@ export function renderAdminRooms(rooms: RoomSummary[], statusFilter: AdminRoomSt
   const filterLink = (filter: AdminRoomStatusFilter, label: string): string => (
     filter === statusFilter ? `<strong>${escapeHtml(label)}</strong>` : `<a href="${filterHref(filter)}">${escapeHtml(label)}</a>`
   );
+  const legacyEndHref = (roomId: string): string => {
+    const query = `go=del&id=${encodeURIComponent(roomId)}${adminToken ? `&token=${encodeURIComponent(adminToken)}` : ""}`;
+    return `/admin.php?${escapeHtml(query)}`;
+  };
   const rows = rooms.length
     ? rooms.map((room) => `<tr>
         <td><a href="/room/${escapeHtml(room.id)}">${escapeHtml(room.id)}</a></td>
@@ -1344,7 +1348,7 @@ export function renderAdminRooms(rooms: RoomSummary[], statusFilter: AdminRoomSt
         <td title="${escapeHtml(optionSummary(room))}">${optionMarkers(room) || escapeHtml(optionSummary(room))}</td>
         <td>${escapeHtml(room.createdAt)}</td>
         <td><a href="/room/${escapeHtml(room.id)}/log">紀錄</a> / <a href="/room/${escapeHtml(room.id)}/events">事件</a></td>
-        <td>${room.status === "ended" ? `<span class="muted">已結束</span>` : `<button class="adminEndRoom" data-room-id="${escapeHtml(room.id)}">廢村</button>`}</td>
+        <td>${room.status === "ended" ? `<span class="muted">已結束</span>` : `<a href="${legacyEndHref(room.id)}">廢村</a> / <button class="adminEndRoom" data-room-id="${escapeHtml(room.id)}">API</button>`}</td>
       </tr>`).join("")
     : `<tr><td colspan="9" class="muted">目前沒有可廢除的村。</td></tr>`;
 
