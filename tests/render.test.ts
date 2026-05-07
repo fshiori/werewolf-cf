@@ -683,7 +683,8 @@ describe("render", () => {
     expect((html.match(/<a href="\/index.php">←返回<\/a>/g) ?? []).length).toBe(2);
     expect((html.match(/<a href="\/index.php">←返回<\/a><br>/g) ?? []).length).toBe(2);
     expect(html).not.toContain('<p><a href="/index.php">←返回</a></p>');
-    expect(html).toContain("/assets/reference/img/icon_view_title.jpg");
+    expect(html).toContain('<img class="title-img" src="/assets/reference/img/icon_view_title.jpg" alt="頭像一覽"><br>');
+    expect(html).not.toContain('<p><img class="title-img" src="/assets/reference/img/icon_view_title.jpg" alt="頭像一覽"></p>');
     expect(html).toContain("/assets/reference/img/icon_view_bg.jpg");
     expect(html).toContain('<a href="/icon_upload.php#upload" style="font-size:12pt;color:blue;">→頭像登錄</a>');
     expect(html).toContain("/assets/reference/user_icon/001.gif");
@@ -699,7 +700,8 @@ describe("render", () => {
     expect(html).toContain('data-icon-path="user_icon/001.gif"');
     expect(html).toContain('localStorage.setItem("werewolf_cf_default_icon", iconPath)');
     expect(html).toContain("上傳頭像");
-    expect(html).toContain("/assets/reference/img/icon_upload_title.jpg");
+    expect(html).toContain('<img class="title-img" src="/assets/reference/img/icon_upload_title.jpg" alt="上傳頭像"><br>');
+    expect(html).not.toContain('<p><img class="title-img" src="/assets/reference/img/icon_upload_title.jpg" alt="上傳頭像"></p>');
     expect(html).toContain("/assets/reference/img/icon_upload_bg.jpg");
     expect(html).toContain('<a href="/icon_view.php" style="font-size:12pt;color:blue;">→圖像一覽</a>');
     expect(html).toContain('id="upload"');
