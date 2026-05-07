@@ -53,6 +53,8 @@ describe("render", () => {
     expect(html).toContain('background-image: url("/assets/reference/img/top_bg.jpg")');
     expect(html).toContain('/assets/reference/img/top_title.jpg');
     expect(html).toContain('alt="汝等是人是狼？"');
+    expect(html).toContain("<noscript>");
+    expect(html).toContain("＜＜ 請啟用JavaScript ＞＞");
     expect(html).toContain("PHP4 + MYSQLスクリプト");
     expect(html).toContain("配布ホームページ");
     expect(html).toContain("天の欠片");

@@ -235,6 +235,13 @@ function shell(body: string, activeMenu?: string): string {
           <div class="subtitle">Werewolf Cloudflare Port</div>
         </td>
       </tr>
+      <noscript>
+        <tr>
+          <td colspan="2" align="center">
+            <span style="font-size:15pt;color:red;font-weight:bold">＜＜ 請啟用JavaScript ＞＞</span>
+          </td>
+        </tr>
+      </noscript>
       <tr>
         <td class="side">
           <table class="menu-box"><tr><th>選單</th></tr></table>
