@@ -2182,6 +2182,9 @@ export default {
       if (url.pathname === "/trip.php" && url.searchParams.get("go") === "room" && url.searchParams.get("id")) {
         return getLegacyTripRoomRecords(env, url.searchParams.get("id") ?? "");
       }
+      if (url.pathname === "/trip.php" && url.searchParams.get("go") === "icon") {
+        return html(renderIconCatalog());
+      }
       return html(renderTripRegistration());
     }
 
