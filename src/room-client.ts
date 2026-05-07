@@ -583,7 +583,7 @@ function updateVoteReminder(game, currentPlayer, currentPlayerAlive, votedPlayer
   if (!currentPlayer || !currentPlayerAlive || game.phase === "lobby" || game.phase === "ended" || isGm) return;
   const requiresVote =
     game.phase === "day" ||
-    canUseNightRoleAction(game, currentPlayer, currentPlayerAlive);
+    canUseRequiredNightRoleAction(game, currentPlayer, currentPlayerAlive);
   if (!requiresVote || votedPlayerIds.has(currentPlayer.playerId)) return;
   const message = game.phase === "night" && isWolfRole(role)
     ? "系統提醒：您目前還沒有投票，如果同側已經投票請忽略此訊息。"
@@ -796,6 +796,12 @@ function canUseNightRoleAction(game, currentPlayer, currentPlayerAlive) {
   if (role === "seer" || role === "child_fox" || role === "guard") return true;
   if (role === "cat") return hasCatReviveTarget(game, currentPlayer);
   return false;
+}
+function canUseRequiredNightRoleAction(game, currentPlayer, currentPlayerAlive) {
+  if (!currentPlayerAlive || game.phase !== "night") return false;
+  if (isWolfRole(role)) return true;
+  if (game.day === 0) return false;
+  return role === "seer" || role === "child_fox" || role === "guard";
 }
 function renderGame(game) {
   setRoomPhaseClass(game.phase);

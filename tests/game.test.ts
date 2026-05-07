@@ -1123,18 +1123,19 @@ describe("game", () => {
     expect(game.log).toContain("Alice 的遺言：It was the wolf");
   });
 
-  it("waits for living diviners and cats with revive targets before resolving night", () => {
+  it("treats cat revive as optional while preserving submitted revive actions", () => {
     let game = activeState("night", [
       { playerId: "player_1", nickname: "Wolf", role: "werewolf", alive: true },
       { playerId: "player_2", nickname: "Seer", role: "seer", alive: true },
       { playerId: "player_3", nickname: "Child Fox", role: "child_fox", alive: true },
       { playerId: "player_4", nickname: "Cat", role: "cat", alive: true },
       { playerId: "player_5", nickname: "Dead", role: "villager", alive: false },
-      { playerId: "player_6", nickname: "Villager", role: "villager", alive: true }
+      { playerId: "player_6", nickname: "Villager", role: "villager", alive: true },
+      { playerId: "player_7", nickname: "Spare", role: "villager", alive: true }
     ]);
     game = { ...game, day: 2 };
 
-    game = castNightKill(game, "player_1", "player_6", 0);
+    game = castCatRevive(game, "player_4", "player_5", 0, () => 0.95);
     expect(game.phase).toBe("night");
 
     const seer = castDivination(game, "player_2", "player_1");
@@ -1145,9 +1146,35 @@ describe("game", () => {
     game = childFox.state;
     expect(game.phase).toBe("night");
 
-    game = castCatRevive(game, "player_4", "player_5", 0, () => 0.95);
+    game = castNightKill(game, "player_1", "player_6", 0, () => 0.95);
     expect(game.phase).toBe("day");
     expect(game.players.find((player) => player.playerId === "player_5")?.alive).toBe(true);
+    expect(game.players.find((player) => player.playerId === "player_6")?.alive).toBe(false);
+  });
+
+  it("resolves night without waiting for cats to use optional revive", () => {
+    let game = activeState("night", [
+      { playerId: "player_1", nickname: "Wolf", role: "werewolf", alive: true },
+      { playerId: "player_2", nickname: "Seer", role: "seer", alive: true },
+      { playerId: "player_3", nickname: "Guard", role: "guard", alive: true },
+      { playerId: "player_4", nickname: "Cat", role: "cat", alive: true },
+      { playerId: "player_5", nickname: "Dead", role: "villager", alive: false },
+      { playerId: "player_6", nickname: "Target", role: "villager", alive: true },
+      { playerId: "player_7", nickname: "Spare", role: "villager", alive: true }
+    ]);
+    game = { ...game, day: 2 };
+
+    game = castGuard(game, "player_3", "player_2");
+    expect(game.phase).toBe("night");
+
+    game = castDivination(game, "player_2", "player_1").state;
+    expect(game.phase).toBe("night");
+
+    game = castNightKill(game, "player_1", "player_6", 0);
+
+    expect(game.phase).toBe("day");
+    expect(game.catRevives).toEqual({});
+    expect(game.players.find((player) => player.playerId === "player_5")?.alive).toBe(false);
     expect(game.players.find((player) => player.playerId === "player_6")?.alive).toBe(false);
   });
 
@@ -1293,6 +1320,35 @@ describe("game", () => {
     expect(next.suddenDeathWarningAt).toBeUndefined();
     expect(next.phaseEndsAt).toBe("2026-05-06T00:05:00.000Z");
     expect(next.log).toContain("Seer 突然暴斃死亡。");
+  });
+
+  it("does not sudden-death cats for skipping optional revive when a timed night expires", () => {
+    const players: GameState["players"] = [
+      { playerId: "player_1", nickname: "Wolf", role: "werewolf", alive: true },
+      { playerId: "player_2", nickname: "Seer", role: "seer", alive: true },
+      { playerId: "player_3", nickname: "Guard", role: "guard", alive: true },
+      { playerId: "player_4", nickname: "Cat", role: "cat", alive: true },
+      { playerId: "player_5", nickname: "Dead", role: "villager", alive: false },
+      { playerId: "player_6", nickname: "Target", role: "villager", alive: true },
+      { playerId: "player_7", nickname: "Spare", role: "villager", alive: true }
+    ];
+    const night = {
+      ...activeState("night", players),
+      day: 2,
+      phaseEndsAt: "2026-05-06T00:00:00.000Z",
+      nightKills: { player_1: "player_6" },
+      divinations: { player_2: "player_1" },
+      guards: { player_3: "player_2" }
+    };
+
+    const next = advancePhaseByAlarm(night, Date.parse("2026-05-06T00:01:30.000Z"));
+
+    expect(next.phase).toBe("day");
+    expect(next.suddenDeathWarningAt).toBeUndefined();
+    expect(next.players.find((player) => player.playerId === "player_4")?.alive).toBe(true);
+    expect(next.players.find((player) => player.playerId === "player_5")?.alive).toBe(false);
+    expect(next.players.find((player) => player.playerId === "player_6")?.alive).toBe(false);
+    expect(next.log).not.toContain("Cat 突然暴斃死亡。");
   });
 
   it("accelerates non-realtime conversation phases after silence", () => {

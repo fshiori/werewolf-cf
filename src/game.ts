@@ -1221,11 +1221,9 @@ function timedOutActorIds(state: GameState): GamePlayer[] {
 
   const divinationActorIds = new Set(Object.keys(state.divinations ?? {}));
   const guardActorIds = new Set(Object.keys(state.guards ?? {}));
-  const catReviveActorIds = new Set(Object.keys(state.catRevives ?? {}));
   const targets = [
     ...livingDiviners(state).filter((player) => !divinationActorIds.has(player.playerId)),
-    ...livingGuards(state).filter((player) => !guardActorIds.has(player.playerId)),
-    ...livingCatsWithReviveTargets(state).filter((player) => !catReviveActorIds.has(player.playerId))
+    ...livingGuards(state).filter((player) => !guardActorIds.has(player.playerId))
   ];
   if (Object.keys(state.nightKills ?? {}).length === 0) {
     targets.push(...livingWerewolves(state));
@@ -1419,17 +1417,6 @@ function livingDiviners(state: GameState): GamePlayer[] {
   return livingPlayers(state).filter((player) => player.role === "seer" || player.role === "child_fox");
 }
 
-function livingCatsWithReviveTargets(state: GameState): GamePlayer[] {
-  if (state.day <= 1) {
-    return [];
-  }
-  const deadPlayerIds = new Set(state.players.filter((player) => !player.alive).map((player) => player.playerId));
-  if (deadPlayerIds.size === 0) {
-    return [];
-  }
-  return livingPlayers(state).filter((player) => player.role === "cat" && Array.from(deadPlayerIds).some((deadId) => deadId !== player.playerId));
-}
-
 function pickCatRevival(state: GameState, players: GamePlayer[], random: () => number): GamePlayer | undefined {
   for (const [actorId, targetId] of Object.entries(state.catRevives ?? {})) {
     const actor = players.find((player) => player.playerId === actorId);
@@ -1445,8 +1432,7 @@ function areNightActionsComplete(state: GameState): boolean {
   return (
     haveWolfPackAction(state) &&
     haveAllActions(livingGuards(state), state.guards ?? {}) &&
-    haveAllActions(livingDiviners(state), state.divinations ?? {}) &&
-    haveAllActions(livingCatsWithReviveTargets(state), state.catRevives ?? {})
+    haveAllActions(livingDiviners(state), state.divinations ?? {})
   );
 }
 
