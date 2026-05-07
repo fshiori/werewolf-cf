@@ -871,6 +871,20 @@ describe("worker routes", () => {
     expect(body).toContain("/api/trips/lookup?trip=");
   });
 
+  it("supports legacy exact Trip search redirects", async () => {
+    const response = await worker.fetch(new Request("http://example.test/trip.php?go=search&sname=ab12CD"), envWithRooms([]));
+
+    expect(response.status).toBe(303);
+    expect(response.headers.get("Location")).toBe("/trip.php?go=trip&id=ab12CD");
+  });
+
+  it("renders Trip lookup for empty legacy Trip searches", async () => {
+    const response = await worker.fetch(new Request("http://example.test/trip.php?go=search"), envWithRooms([]));
+
+    expect(response.status).toBe(200);
+    expect(await response.text()).toContain("Trip查詢");
+  });
+
   it("returns public Trip lookup data without exposing Trip hashes", async () => {
     const tripHash = await registeredTripHash("ab12CD");
     const response = await worker.fetch(
