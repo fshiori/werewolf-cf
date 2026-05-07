@@ -1963,7 +1963,8 @@ describe("render", () => {
     expect(html).toContain("/admin.php?go=bbs");
     expect(html).toContain("/status");
     expect(html).toContain('action="/admin.php?go=in"');
-    expect(html).toContain('name="adpass"');
+    expect(html).toContain('name="apass"');
+    expect(html).not.toContain('name="adpass"');
     expect(html).toContain("各管理功能仍需輸入對應管理密碼");
   });
 

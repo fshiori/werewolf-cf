@@ -1287,7 +1287,7 @@ export function renderAdminIndex(): string {
       <legend><strong>舊式管理登入</strong></legend>
       <form action="/admin.php?go=in" method="post">
         <table class="form-table">
-          <tr><td><label><strong>　管理密碼：</strong></label></td><td><input name="adpass" type="password" maxlength="128" size="24"> <input type="submit" value="登入"></td></tr>
+          <tr><td><label><strong>　管理密碼：</strong></label></td><td><input name="apass" type="password" maxlength="128" size="24"> <input type="submit" value="登入"></td></tr>
           <tr><td></td><td class="muted">相容 reference 的 <code>admin.php?go=in</code>，登入後進入廢村管理。</td></tr>
         </table>
       </form>
