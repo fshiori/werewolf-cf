@@ -464,6 +464,8 @@ describe("render", () => {
     expect(frame).toContain("框架入口");
     expect(frame).toContain("保留主要遊戲畫面與即時更新，隱藏診斷性紀錄面板。");
     expect(frame).toContain('data-legacy-entry="game_frame.php"');
+    expect(frame).toContain('[<a href="/game_frame.php?room_no=room_abc">手動更新</a>]');
+    expect(frame).toContain('<a href="/game_frame.php?room_no=room_abc&amp;auto_reload=15">15秒</a>');
     expect(frame).toContain("game_frame.php frameset");
     expect(frame).toContain("body.room-page-frame .room-registration-row");
     expect(frame).toContain("<tr><td>rows</td><td colspan=\"2\">85,*</td></tr>");
@@ -478,6 +480,8 @@ describe("render", () => {
     expect(up).toContain("發言上框；保留發言、頻道按鈕與投票入口");
     expect(up).toContain("body.room-page-up .room-registration-row");
     expect(up).toContain('data-legacy-entry="game_up.php"');
+    expect(up).toContain('[<a href="/game_up.php?room_no=room_abc">手動更新</a>]');
+    expect(up).toContain('<a href="/game_up.php?room_no=room_abc&amp;auto_reload=15">15秒</a>');
     expect(up).toContain('form name="send"');
     expect(up).toContain("<tr><td>form name=\"send\"</td><td>target</td><td>bottom</td></tr>");
     expect(up).toContain('<tr><td>vote_link</td><td colspan="2"><a href="/game_vote.php?room_no=room_abc#game_top">game_vote.php#game_top</a></td></tr>');
@@ -490,6 +494,8 @@ describe("render", () => {
     expect(vote).toContain("著重能力發動與投票操作");
     expect(vote).toContain("body.room-page-vote .room-registration-row");
     expect(vote).toContain('data-legacy-entry="game_vote.php"');
+    expect(vote).toContain('[<a href="/game_vote.php?room_no=room_abc">手動更新</a>]');
+    expect(vote).toContain('<a href="/game_vote.php?room_no=room_abc&amp;auto_reload=15">15秒</a>');
     expect(vote).toContain("game_vote.php 投票 / 能力入口");
     expect(vote).toContain("<tr><td>command</td><td colspan=\"2\">vote</td></tr>");
     expect(vote).toContain('<tr><td>back</td><td colspan="2"><a href="/game_up.php?room_no=room_abc#game_top">←上一頁&amp;重新整理</a></td></tr>');

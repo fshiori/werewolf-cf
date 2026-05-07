@@ -3499,6 +3499,19 @@ function legacyRoomHref(path: "/game_play.php" | "/game_view.php" | "/game_frame
   return `${path}?${escapeHtml(params)}`;
 }
 
+function currentRoomReloadHref(roomPath: string, roomId: string, viewMode: "player" | "spectator" | "heaven", pageMode: "full" | "frame" | "up" | "vote", autoReloadSeconds: 0 | 15 | 20 | 30): string {
+  if (pageMode === "frame") {
+    return legacyRoomHref("/game_frame.php", roomId, autoReloadSeconds);
+  }
+  if (pageMode === "up") {
+    return legacyRoomHref("/game_up.php", roomId, autoReloadSeconds);
+  }
+  if (pageMode === "vote") {
+    return legacyRoomHref("/game_vote.php", roomId, autoReloadSeconds);
+  }
+  return roomReloadHref(roomPath, viewMode, autoReloadSeconds);
+}
+
 function legacyRoomEntryMap(roomId: string, autoReloadSeconds: 0 | 15 | 20 | 30, pageMode: "full" | "frame" | "up" | "vote"): string {
   const gamePlayHref = legacyRoomHref("/game_play.php", roomId, autoReloadSeconds);
   const gameUpHref = legacyRoomHref("/game_up.php", roomId, autoReloadSeconds);
@@ -3584,12 +3597,12 @@ export function renderRoom(roomId: string, options: RenderRoomOptions = {}): str
             <tr>
               <td>更新</td>
               <td>
-                [<a href="${roomReloadHref(roomPath, viewMode, 0)}">手動更新</a>]
+                [<a href="${currentRoomReloadHref(roomPath, roomId, viewMode, pageMode, 0)}">手動更新</a>]
                 [自動更新:
-                <a href="${roomReloadHref(roomPath, viewMode, 15)}">15秒</a>
-                <a href="${roomReloadHref(roomPath, viewMode, 20)}">20秒</a>
-                <a href="${roomReloadHref(roomPath, viewMode, 30)}">30秒</a>
-                <a href="${roomReloadHref(roomPath, viewMode, 0)}">停止</a>]
+                <a href="${currentRoomReloadHref(roomPath, roomId, viewMode, pageMode, 15)}">15秒</a>
+                <a href="${currentRoomReloadHref(roomPath, roomId, viewMode, pageMode, 20)}">20秒</a>
+                <a href="${currentRoomReloadHref(roomPath, roomId, viewMode, pageMode, 30)}">30秒</a>
+                <a href="${currentRoomReloadHref(roomPath, roomId, viewMode, pageMode, 0)}">停止</a>]
                 <small class="muted">目前：${autoReloadSeconds > 0 ? `${autoReloadSeconds}秒` : "手動"}</small>
               </td>
             </tr>
