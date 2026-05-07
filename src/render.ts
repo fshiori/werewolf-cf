@@ -286,6 +286,7 @@ function page(title: string, body: string, extraHead = ""): string {
     .transcript-location-guard td { background: #0099ff; color: snow; font-weight: bold; }
     .transcript-location-cat td { background: #006633; color: snow; font-weight: bold; }
     .location-badge { white-space: nowrap; font-size: 10pt; }
+    .transcript-speaker-marker { color: #666666; margin-right: 2px; }
     .muted { color: #666666; }
   </style>
 </head>
@@ -895,7 +896,7 @@ function renderTranscriptEventSections(events: RoomEventSummary[]): string {
       <td class="transcript-time-cell">${escapeHtml(event.createdAt)}</td>
       <td class="transcript-location-cell"><span class="location-badge">${escapeHtml(location.label)}</span></td>
       <td class="transcript-type-cell">${escapeHtml(eventTypeLabel(event.eventType))}</td>
-      <td class="transcript-speaker-cell">${eventSpeakerLabelHtml(event)}</td>
+      <td class="transcript-speaker-cell"><span class="transcript-speaker-marker">◆</span>${eventSpeakerLabelHtml(event)}</td>
       <td class="transcript-payload-cell">${escapeHtml(formatEventPayload(event.payload))}</td>
     </tr>`;
     }).join("")}

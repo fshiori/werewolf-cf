@@ -1784,6 +1784,7 @@ describe("render", () => {
     expect(html).toContain(".transcript-table { width: 100%; border-collapse: collapse; font-size: 12pt; }");
     expect(html).toContain(".transcript-time-cell { width: 9em; white-space: nowrap; }");
     expect(html).toContain(".transcript-payload-cell { overflow-wrap: anywhere; word-break: break-word; }");
+    expect(html).toContain(".transcript-speaker-marker { color: #666666; margin-right: 2px; }");
     expect(html).toContain(".transcript-day-heading td { background: #eeeeee; color: #000000; font-weight: bold; }");
     expect(html).toContain("襲擊");
     expect(html).toContain("位置");
@@ -1798,6 +1799,7 @@ describe("render", () => {
     expect(html).toContain('class="transcript-row transcript-location-kill"');
     expect(html).toContain('<td class="transcript-location-cell"><span class="location-badge">襲擊行動</span></td>');
     expect(html).toContain('<td class="transcript-type-cell">襲擊</td>');
+    expect(html).toContain('<td class="transcript-speaker-cell"><span class="transcript-speaker-marker">◆</span>Bob</td>');
     expect(html).toContain('<td class="transcript-payload-cell">發言:Bob　第2日　對象:player_a　對象名:Alice');
     expect(html).toContain('class="transcript-row transcript-location-wolf"');
     expect(html).toContain('class="transcript-row transcript-location-gm-whisper"');
