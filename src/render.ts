@@ -1648,14 +1648,14 @@ export function renderIconCatalog(activeMenu = "/icon_view.php"): string {
       <form method="post" action="/upload.php" enctype="multipart/form-data" style="margin:10px 20px;">
         <strong>舊式上傳：</strong>
         玩家ID <input name="player_id" maxlength="64" size="20">
-        圖片選擇 <input name="icon_file" type="file" accept="image/png,image/jpeg,image/gif,image/webp" size="28">
-        圖像名稱 <input name="icon_name" maxlength="20" size="20">
+        圖片選擇 <input name="icon_file" type="file" accept="image/png,image/jpeg,image/gif,image/webp" size="80" style="border-width:1px;border-color:black;border-style:solid;background-color:aliceblue;">
+        圖像名稱 <input name="icon_name" type="text" maxlength="20" size="20" style="border-width:1px;border-color:black;border-style:solid;background-color:aliceblue;">
         <br>
         <strong>圖像的顏色選擇</strong>
         <label><input type="radio" name="color">自行輸入顏色</label>
         <input name="color" maxlength="7" size="10" style="border-width:1px;border-color:black;border-style:solid;background-color:aliceblue;">(例：#6699cc)
         <table cellspacing="2" cellpadding="0" border="0" width="600" style="margin:6px 0;">${legacyColorRows}</table>
-        <input name="submit" type="submit" value="上傳">
+        <input name="submit" type="submit" value="登錄" style="border-width:1px;border-color:black;border-style:solid;">
       </form>
       <form method="post" action="/upload2.php" enctype="multipart/form-data" style="margin:10px 20px;">
         <strong>舊式刪除：</strong>
