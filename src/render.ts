@@ -1557,6 +1557,7 @@ export function renderIconCatalog(): string {
   return page("Icons", shell(`
     <fieldset style="background-image:url('/assets/reference/img/icon_view_bg.jpg'); background-repeat: repeat;">
       <legend><strong>頭像一覽</strong></legend>
+      <p><a href="/index.php">←返回</a></p>
       <p><img class="title-img" src="/assets/reference/img/icon_view_title.jpg" alt="頭像一覽"></p>
       <p><a href="/icon_upload.php#upload" style="font-size:12pt;color:blue;">→頭像登錄</a></p>
       <table class="form-table">
@@ -1570,6 +1571,7 @@ export function renderIconCatalog(): string {
     </fieldset>
     <fieldset id="upload" style="background-image:url('/assets/reference/img/icon_upload_bg.jpg'); background-repeat: repeat;">
       <legend><strong>上傳頭像</strong></legend>
+      <p><a href="/index.php">←返回</a></p>
       <p><img class="title-img" src="/assets/reference/img/icon_upload_title.jpg" alt="上傳頭像"></p>
       <p><a href="/icon_view.php" style="font-size:12pt;color:blue;">→圖像一覽</a></p>
       <p align="right">請勿上傳動態GIF，上傳後會以 Cloudflare R2 保存為玩家頭像。</p>
