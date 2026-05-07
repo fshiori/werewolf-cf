@@ -1337,13 +1337,33 @@ function getWinner(state: GameState): GameWinner | undefined {
   const wolves = livingWerewolves(state).length;
   const foxes = livingFoxes(state).length;
   const villagers = livingPlayers(state).filter((player) => !isWerewolfRole(player.role) && player.role !== "fox" && player.role !== "child_fox").length;
+  const loversWin = isLoversVictoryOnly(state);
   if (wolves === 0) {
-    return livingLovers(state).length >= 2 ? "lovers" : foxes > 0 ? "foxes" : "villagers";
+    return loversWin ? "lovers" : foxes > 0 ? "foxes" : "villagers";
   }
   if (wolves >= villagers) {
-    return livingLovers(state).length >= 2 ? "lovers" : foxes > 0 ? "foxes" : "werewolves";
+    return loversWin ? "lovers" : foxes > 0 ? "foxes" : "werewolves";
   }
   return undefined;
+}
+
+function isLoversVictoryOnly(state: GameState): boolean {
+  const living = livingPlayers(state);
+  const lovers = living.filter((player) => player.lover);
+  if (living.length > 4 || lovers.length !== 2) {
+    return false;
+  }
+  return mainFaction(lovers[0].role) !== mainFaction(lovers[1].role);
+}
+
+function mainFaction(role: GamePlayer["role"]): "werewolves" | "foxes" | "villagers" {
+  if (isWerewolfRole(role) || role === "madman") {
+    return "werewolves";
+  }
+  if (role === "fox" || role === "betrayer" || role === "child_fox") {
+    return "foxes";
+  }
+  return "villagers";
 }
 
 function livingPlayers(state: GameState): GamePlayer[] {
