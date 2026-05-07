@@ -412,6 +412,23 @@ function eventSpeakerLabel(event: RoomEventSummary): string {
   return event.playerId ?? "系統";
 }
 
+function eventSpeakerLabelHtml(event: RoomEventSummary): string {
+  const value = recordValue(event.payload);
+  const speaker = escapeHtml(eventSpeakerLabel(event));
+  if (event.eventType === "self_talk") {
+    return `${speaker} <small>的自言自語</small>`;
+  }
+  if (event.eventType === "gm_whisper") {
+    const target = typeof value.targetNickname === "string" && value.targetNickname
+      ? value.targetNickname
+      : typeof value.targetPlayerId === "string" && value.targetPlayerId
+        ? value.targetPlayerId
+        : "???";
+    return `${speaker} → ${escapeHtml(target)}`;
+  }
+  return speaker;
+}
+
 function transcriptLocation(event: RoomEventSummary): { className: string; label: string } {
   const value = recordValue(event.payload);
   const phase = value.phase === "night" ? "夜晚" : value.phase === "day" ? "白天" : "";
@@ -554,7 +571,7 @@ function renderTranscriptEventSections(events: RoomEventSummary[]): string {
       <td>${escapeHtml(event.createdAt)}</td>
       <td><span class="location-badge">${escapeHtml(location.label)}</span></td>
       <td>${escapeHtml(eventTypeLabel(event.eventType))}</td>
-      <td>${escapeHtml(eventSpeakerLabel(event))}</td>
+      <td>${eventSpeakerLabelHtml(event)}</td>
       <td>${escapeHtml(formatEventPayload(event.payload))}</td>
     </tr>`;
     }).join("")}

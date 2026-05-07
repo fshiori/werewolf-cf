@@ -1147,6 +1147,8 @@ describe("render", () => {
     expect(html).toContain("人狼密談");
     expect(html).toContain("GM密語");
     expect(html).toContain("自言自語");
+    expect(html).toContain("Alice <small>的自言自語</small>");
+    expect(html).toContain("GM → ???");
     expect(html).toContain('class="transcript-row transcript-location-kill"');
     expect(html).toContain('class="transcript-row transcript-location-wolf"');
     expect(html).toContain('class="transcript-row transcript-location-gm-whisper"');
@@ -1291,6 +1293,7 @@ describe("render", () => {
     expect(playerView).toContain("/room/room_abc/log?heaven_talk=on&amp;viewer=player&amp;viewer_player_id=player_wolf");
     expect(playerView).toContain("howl");
     expect(playerView).toContain("secret for wolf");
+    expect(playerView).toContain("GM → Wolf");
     expect(playerView).not.toContain("內容:heaven");
     expect(playerView).not.toContain("內容:mutter");
     expect(playerView).not.toContain("secret for seer");
