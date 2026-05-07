@@ -2187,6 +2187,40 @@ describe("render", () => {
     expect(childFoxView).not.toContain("fox imported");
   });
 
+  it("infers lovers transcript visibility from saved PHP role strings", () => {
+    const events = [
+      {
+        id: 1,
+        roomId: "room_abc",
+        playerId: "viewer_lover",
+        eventType: "public_chat",
+        payload: { nickname: "Viewer Lover", role: "human lovers", text: "hello", phase: "day", day: 2 },
+        createdAt: "2026-05-06 12:01:00"
+      },
+      {
+        id: 2,
+        roomId: "room_abc",
+        playerId: "other_lover",
+        eventType: "lovers_chat",
+        payload: { visibility: "private", nickname: "Other Lover", text: "lover imported", phase: "night", day: 2 },
+        createdAt: "2026-05-06 12:02:00"
+      },
+      {
+        id: 3,
+        roomId: "room_abc",
+        playerId: "other_wolf",
+        eventType: "wolf_chat",
+        payload: { visibility: "private", nickname: "Other Wolf", text: "pack imported", phase: "night", day: 2 },
+        createdAt: "2026-05-06 12:03:00"
+      }
+    ];
+
+    const loverView = renderRoomTranscript("room_abc", [], events, { viewerMode: "player", viewerPlayerId: "viewer_lover", heavenTalk: true });
+    expect(loverView).toContain("Viewer Lover (viewer_lover)");
+    expect(loverView).toContain("lover imported");
+    expect(loverView).not.toContain("pack imported");
+  });
+
   it("shows composite wolf or fox lover transcript rows to lover player views", () => {
     const records = [
       {
