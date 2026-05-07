@@ -2573,7 +2573,7 @@ export default {
     }
 
     if (request.method === "GET" && url.pathname === "/admin.php" && url.searchParams.get("go") === "out") {
-      return new Response(null, { status: 303, headers: { Location: "/admin.php" } });
+      return new Response(null, { status: 303, headers: { Location: "/index.php" } });
     }
 
     if (request.method === "GET" && (url.pathname === "/admin" || (url.pathname === "/admin.php" && !url.searchParams.has("go")))) {
