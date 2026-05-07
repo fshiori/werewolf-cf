@@ -952,7 +952,7 @@ export function wolvesForPlayer(state: GameState, playerId: string): RoomMember[
     return [];
   }
   return state.players
-    .filter((candidate) => isWerewolfRole(candidate.role))
+    .filter((candidate) => candidate.playerId !== playerId && isWerewolfRole(candidate.role))
     .map(({ playerId: wolfId, nickname }) => ({ playerId: wolfId, nickname }));
 }
 
@@ -962,7 +962,7 @@ export function commonsForPlayer(state: GameState, playerId: string): RoomMember
     return [];
   }
   return state.players
-    .filter((candidate) => candidate.role === "common")
+    .filter((candidate) => candidate.playerId !== playerId && candidate.role === "common")
     .map(({ playerId: commonId, nickname }) => ({ playerId: commonId, nickname }));
 }
 
@@ -972,7 +972,7 @@ export function loversForPlayer(state: GameState, playerId: string): RoomMember[
     return [];
   }
   return state.players
-    .filter((candidate) => candidate.lover)
+    .filter((candidate) => candidate.playerId !== playerId && candidate.lover)
     .map(({ playerId: loverId, nickname }) => ({ playerId: loverId, nickname }));
 }
 
@@ -982,7 +982,7 @@ export function foxesForPlayer(state: GameState, playerId: string): RoomMember[]
     return [];
   }
   return state.players
-    .filter((candidate) => candidate.role === "fox")
+    .filter((candidate) => candidate.playerId !== playerId && candidate.role === "fox")
     .map(({ playerId: foxId, nickname }) => ({ playerId: foxId, nickname }));
 }
 

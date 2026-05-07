@@ -1652,7 +1652,6 @@ describe("RoomDurableObject", () => {
         type: "role",
         role: "villager",
         lovers: [
-          { playerId: "player_target", nickname: "Target" },
           { playerId: "player_other", nickname: "Other" }
         ]
       })
@@ -1662,8 +1661,82 @@ describe("RoomDurableObject", () => {
         type: "role",
         role: "villager",
         lovers: [
-          { playerId: "player_target", nickname: "Target" },
-          { playerId: "player_other", nickname: "Other" }
+          { playerId: "player_target", nickname: "Target" }
+        ]
+      })
+    );
+  });
+
+  it("sends role partner lists without echoing the viewer", () => {
+    const game: GameState = {
+      roomId: "room_abc",
+      phase: "night",
+      day: 1,
+      players: [
+        { playerId: "player_wolf_a", nickname: "Wolf A", role: "werewolf", alive: true },
+        { playerId: "player_wolf_b", nickname: "Wolf B", role: "big_wolf", alive: true },
+        { playerId: "player_common_a", nickname: "Common A", role: "common", alive: true },
+        { playerId: "player_common_b", nickname: "Common B", role: "common", alive: true },
+        { playerId: "player_lover_a", nickname: "Lover A", role: "villager", alive: true, lover: true },
+        { playerId: "player_lover_b", nickname: "Lover B", role: "seer", alive: true, lover: true },
+        { playerId: "player_fox_a", nickname: "Fox A", role: "fox", alive: true },
+        { playerId: "player_fox_b", nickname: "Fox B", role: "fox", alive: true },
+        { playerId: "player_child_fox", nickname: "Child Fox", role: "child_fox", alive: true }
+      ],
+      votes: {},
+      openVote: false,
+      commonTalkVisible: false,
+      deadRoleVisible: false,
+      wishRole: false,
+      dummyBoy: false,
+      dayMs: 180_000,
+      nightMs: 90_000,
+      selfVote: false,
+      voteStatus: false,
+      revoteCount: 0,
+      nightKills: {},
+      divinations: {},
+      guards: {},
+      catRevives: {},
+      lastWords: {},
+      log: []
+    };
+    const room = roomObject(game);
+    const wolfMessages: SentMessage[] = [];
+    const commonMessages: SentMessage[] = [];
+    const loverMessages: SentMessage[] = [];
+    const foxMessages: SentMessage[] = [];
+    const childFoxMessages: SentMessage[] = [];
+    connect(room, fakeSocket(wolfMessages), "player_wolf_a", "Wolf A");
+    connect(room, fakeSocket(commonMessages), "player_common_a", "Common A");
+    connect(room, fakeSocket(loverMessages), "player_lover_a", "Lover A");
+    connect(room, fakeSocket(foxMessages), "player_fox_a", "Fox A");
+    connect(room, fakeSocket(childFoxMessages), "player_child_fox", "Child Fox");
+
+    (room as unknown as { sendRoles(gameState: GameState): void }).sendRoles(game);
+
+    expect(wolfMessages).toContainEqual(expect.objectContaining({
+      type: "role",
+      wolves: [{ playerId: "player_wolf_b", nickname: "Wolf B" }]
+    }));
+    expect(commonMessages).toContainEqual(expect.objectContaining({
+      type: "role",
+      commons: [{ playerId: "player_common_b", nickname: "Common B" }]
+    }));
+    expect(loverMessages).toContainEqual(expect.objectContaining({
+      type: "role",
+      lovers: [{ playerId: "player_lover_b", nickname: "Lover B" }]
+    }));
+    expect(foxMessages).toContainEqual(expect.objectContaining({
+      type: "role",
+      foxes: [{ playerId: "player_fox_b", nickname: "Fox B" }]
+    }));
+    expect(childFoxMessages).toContainEqual(
+      expect.objectContaining({
+        type: "role",
+        foxes: [
+          { playerId: "player_fox_a", nickname: "Fox A" },
+          { playerId: "player_fox_b", nickname: "Fox B" }
         ]
       })
     );
@@ -3045,7 +3118,7 @@ describe("RoomDurableObject", () => {
       expect.objectContaining({
         type: "role",
         role: "werewolf",
-        wolves: [{ playerId: "player_wolf", nickname: "Wolf" }]
+        wolves: []
       })
     ]);
     expect(villagerMessages).toEqual([
