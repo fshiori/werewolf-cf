@@ -2120,6 +2120,25 @@ export function renderTripRegistration(): string {
           <td><input id="excludeTrip" maxlength="32" size="12"> <input id="excludeTripReason" maxlength="120" size="28"> <button id="excludeTripButton">排除紀錄</button> <button id="removeTripExclusionButton">解除排除</button> <span id="excludeTripStatus" class="muted"></span></td>
         </tr>
       </table>
+      <form method="post" action="/trip.php?go=post" enctype="multipart/form-data" style="margin:10px 20px;">
+        <strong>舊式登錄：</strong>
+        TRIP <input name="name" maxlength="32" size="16">
+        密碼 <input name="password" type="password" maxlength="128" size="16">
+        <input name="submit" type="submit" value="送出">
+      </form>
+    </fieldset>
+    <fieldset>
+      <legend><strong>排除紀錄</strong></legend>
+      <form method="post" action="/trip.php?go=out" enctype="multipart/form-data" style="margin:10px 20px;">
+        <ul>
+          <li>請輸入登記之Trip，不是加密後的Trip。</li>
+          <li>排除紀錄請輸入過去紀錄之玩家暱稱。</li>
+        </ul>
+        TRIP <input name="name" maxlength="32" size="16">
+        密碼 <input name="password" type="password" maxlength="128" size="16">
+        暱稱 <input name="aname" maxlength="120" size="20">
+        <input name="submit" type="submit" value="送出">
+      </form>
     </fieldset>
     <fieldset>
       <legend><strong>Trip公開資料</strong></legend>
