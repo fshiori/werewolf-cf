@@ -635,8 +635,11 @@ describe("render", () => {
     expect(ROOM_CLIENT_SCRIPT).toContain('cat_revive: "CAT_DO"');
     expect(ROOM_CLIENT_SCRIPT).toContain("function syncLegacyVoteHiddenFields(command, game)");
     expect(ROOM_CLIENT_SCRIPT).toContain('document.querySelector(\'.legacy-vote-form input[name="situation"]\')');
+    expect(ROOM_CLIENT_SCRIPT).toContain('document.querySelector(\'.legacy-vote-form select[name="situation_selector"]\')');
     expect(ROOM_CLIENT_SCRIPT).toContain('document.querySelector(\'.legacy-vote-form input[name="vote_times"]\')');
-    expect(ROOM_CLIENT_SCRIPT).toContain('situation.value = legacySituationForCommand(command);');
+    expect(ROOM_CLIENT_SCRIPT).toContain("const situationValue = legacySituationForCommand(command);");
+    expect(ROOM_CLIENT_SCRIPT).toContain("situation.value = situationValue;");
+    expect(ROOM_CLIENT_SCRIPT).toContain("situationSelector.value = situationValue;");
     expect(ROOM_CLIENT_SCRIPT).toContain('voteTimes.value = String((game && typeof game.revoteCount === "number" ? game.revoteCount : 0) + 1);');
     expect(ROOM_CLIENT_SCRIPT).toContain("legacyTargetCommand(game, currentPlayer, currentPlayerAlive, currentPlayerId, canManageLobby, canUsePlayerAction, player)");
     expect(ROOM_CLIENT_SCRIPT).toContain("updateLegacyVoteTargetList(game, currentPlayer, currentPlayerAlive, currentPlayerId, canManageLobby, canUsePlayerAction);");
