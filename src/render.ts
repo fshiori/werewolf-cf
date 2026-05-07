@@ -833,9 +833,14 @@ export function renderOldLogs(rooms: RoomSummary[], options: { search?: string; 
       const winner = options.winners?.[room.id];
       const winnerMark = winner ? referenceAssetImg(winnerIconPath(winner), `${winnerLabel(winner)}勝利`) : "-";
       const optionMarks = [
+        room.options.wishRole ? optionMark("希望", "img/room_option_wish_role.gif") : "",
         room.options.realTime ? optionMark("限時", "img/room_option_real_time.gif") : "",
+        room.options.dummyBoy ? optionMark("替身", "img/room_option_dummy_boy.gif") : "",
+        room.options.customDummy ? optionMark("自訂替身", "img/room_option_dummy_boy.gif") : "",
         room.options.poison ? optionMark("埋毒", "img/room_option_poison.gif") : "",
         room.options.bigWolf ? optionMark("大狼", "img/room_option_wfbig.gif") : "",
+        room.options.decider ? optionMark("決定", "img/room_option_decide.gif") : "",
+        room.options.authority ? optionMark("權力", "img/room_option_authority.gif") : "",
         room.options.lovers ? optionMark("戀人", "img/room_option_lovers.gif") : "",
         room.options.betrayer ? optionMark("背德", "img/room_option_betr.gif") : "",
         room.options.childFox ? optionMark("子狐", "img/room_option_fosi.gif") : "",
