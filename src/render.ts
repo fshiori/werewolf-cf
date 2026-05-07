@@ -772,6 +772,10 @@ function federatedRoomValue(room: RoomSummary | FederatedRoomSummary): Federated
 }
 
 export function renderFederatedList(rooms: Array<RoomSummary | FederatedRoomSummary>, peers: FederatedServerStatus[] = []): string {
+  const peerSummaryRows = peers.map((peer) => `<tr>
+        <td>${peer.ok ? `<a href="${escapeHtml(peer.url)}">服務中</a>` : `<a href="${escapeHtml(peer.url)}">失聯中</a>`}</td>
+        <td colspan="5"><a href="${escapeHtml(peer.url)}">${escapeHtml(peer.url)}</a></td>
+      </tr>`).join("");
   const rows = rooms.length
     ? rooms.map((value) => {
       const room = federatedRoomValue(value);
@@ -804,6 +808,7 @@ export function renderFederatedList(rooms: Array<RoomSummary | FederatedRoomSumm
         <strong>
           <table style="width: 100%">
             <tr><td>服務中</td><td colspan="5"><a href="/">本伺服器 / Cloudflare Workers</a></td></tr>
+            ${peerSummaryRows}
             <tr><td colspan="6"><hr></td></tr>
             ${rows}
           </table>
