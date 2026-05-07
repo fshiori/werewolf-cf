@@ -2639,9 +2639,12 @@ export function renderBbs(topics: BbsTopicSummary[], options: { digestOnly?: boo
     : `<tr><td colspan="5" class="muted">${options.digestOnly ? "沒有精華" : "沒有主題"}</td></tr>`;
   const listTitle = options.digestOnly ? "精華主題列表" : "主題列表";
   const pagination = paginationLinks(options.totalTopics, options.page, options.pageSize, options.digestOnly ? "/bbs.php?go=dige" : "/bbs.php");
+  const topLinks = options.digestOnly
+    ? `<a href="/bbs.php?go=post">發表主題</a> <a href="/bbs.php">全部主題</a>`
+    : `<a href="/bbs.php?go=post">發表主題</a> <a href="/bbs.php?go=dige">精華區</a>`;
 
   return page("汝等是人是狼？ - Werewolf Cloudflare Port", shell(`
-    <p><a href="/bbs.php?go=post">發表主題</a> <a href="/bbs.php">全部主題</a> <a href="/bbs.php?go=dige">精華區</a></p>
+    ${topLinks}
     <fieldset>
       <legend><strong>${listTitle}</strong></legend>
       ${pagination}
@@ -2947,7 +2950,7 @@ export function renderBbsTopic(topic: BbsTopicSummary, replies: BbsReplySummary[
     </script>`;
 
   return page("汝等是人是狼？ - Werewolf Cloudflare Port", shell(`
-    <p><a href="/bbs.php?go=postre&amp;id=${escapeHtml(String(topic.id))}">回覆主題</a> <a href="/bbs.php">回列表</a></p>
+    <a href="/bbs.php?go=postre&amp;id=${escapeHtml(String(topic.id))}">回覆主題</a> <a href="/bbs.php">回列表</a>
     <fieldset>
       <legend><strong>文章列表</strong></legend>
       <div id="table5">
