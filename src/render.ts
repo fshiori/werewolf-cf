@@ -3162,7 +3162,8 @@ export function renderScriptInfo(): string {
   return page("汝等是人是狼？ Werewolf Cloudflare Port 系統特點", shell(`
     <fieldset style="background-image:url('/assets/reference/img/script_info_bg.jpg'); background-repeat:no-repeat; background-position:100% 100%; background-attachment:fixed;">
       <legend><strong>Script Info</strong></legend>
-      <p><img class="title-img" src="/assets/reference/img/script_info_title.jpg" alt="Script Info"></p>
+      <a href="/index.php">←返回</a><br>
+      <img class="title-img" src="/assets/reference/img/script_info_title.jpg" alt="Script Info"><br><br>
       <table border="0" style="margin-bottom:12px;">
         <tr><td bgcolor="#aaeeaa"><strong style="font-size:15pt;">＜加入遊戲的系統必備條件＞</strong></td></tr>
         <tr><td>為了加入遊戲您必須支援 JavaScript、Cookie，並讓電腦時鐘準時。建議畫面解析度 1024x768 以上。</td></tr>
