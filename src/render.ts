@@ -2640,7 +2640,7 @@ export function renderBbs(topics: BbsTopicSummary[], options: { digestOnly?: boo
   const listTitle = options.digestOnly ? "精華主題列表" : "主題列表";
   const pagination = paginationLinks(options.totalTopics, options.page, options.pageSize, options.digestOnly ? "/bbs.php?go=dige" : "/bbs.php");
 
-  return page("BBS", shell(`
+  return page("汝等是人是狼？ - Werewolf Cloudflare Port", shell(`
     <p><a href="/bbs.php?go=post">發表主題</a> <a href="/bbs.php">全部主題</a> <a href="/bbs.php?go=dige">精華區</a></p>
     <fieldset>
       <legend><strong>${listTitle}</strong></legend>
@@ -2946,7 +2946,7 @@ export function renderBbsTopic(topic: BbsTopicSummary, replies: BbsReplySummary[
       });
     </script>`;
 
-  return page("BBS Topic", shell(`
+  return page("汝等是人是狼？ - Werewolf Cloudflare Port", shell(`
     <p><a href="/bbs.php?go=postre&amp;id=${escapeHtml(String(topic.id))}">回覆主題</a> <a href="/bbs.php">回列表</a></p>
     <fieldset>
       <legend><strong>文章列表</strong></legend>

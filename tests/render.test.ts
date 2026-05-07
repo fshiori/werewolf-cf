@@ -998,6 +998,7 @@ describe("render", () => {
       }
     ]);
 
+    expect(html).toContain("<title>汝等是人是狼？ - Werewolf Cloudflare Port</title>");
     expect(html).toContain("主題列表");
     expect(html).toContain("發表主題");
     expect(html).toContain("/bbs.php?go=post");
@@ -1107,6 +1108,7 @@ describe("render", () => {
       ]
     );
 
+    expect(html).toContain("<title>汝等是人是狼？ - Werewolf Cloudflare Port</title>");
     expect(html).toContain('Topic <b>body</b><br /><font color="#cc0000">red</font><br /><a href="https://example.test/path" target="_blank">https://example.test/path</a><br />&lt;script&gt;');
     expect(html).toContain("文章列表");
     expect(html).toContain('<div id="table5">');
