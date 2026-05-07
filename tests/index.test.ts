@@ -1340,6 +1340,21 @@ describe("worker routes", () => {
     expect(await explicitSpectator.text()).toContain("/login.php?room_no=room_exists&amp;auto_reload=15&amp;view=spectator");
   });
 
+  it("supports the legacy game_play.php logout alias", async () => {
+    const env = envWithRooms(["room_exists"]);
+    const response = await worker.fetch(new Request("http://example.test/game_play.php?go=out&room_no=room_exists"), env);
+
+    expect(response.status).toBe(303);
+    expect(response.headers.get("Location")).toBe("/game_view.php?room_no=room_exists");
+
+    const missingRoomNo = await worker.fetch(new Request("http://example.test/game_play.php?go=out"), env);
+    expect(missingRoomNo.status).toBe(400);
+    expect(await missingRoomNo.json()).toEqual({ error: "game_play.php out requires room_no" });
+
+    const missingRoom = await worker.fetch(new Request("http://example.test/game_play.php?go=out&room_no=room_missing"), env);
+    expect(missingRoom.status).toBe(404);
+  });
+
   it("serves the external room client script", async () => {
     const response = await worker.fetch(new Request("http://example.test/assets/room-client.js"), envWithRooms([]));
 

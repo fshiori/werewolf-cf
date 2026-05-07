@@ -2877,6 +2877,20 @@ export default {
     if (request.method === "GET" && url.pathname === "/game_play.php" && url.searchParams.get("go") === "del") {
       return endRoomByLegacyAdminLink(request, env, url.searchParams.get("id") ?? legacyLiveRoomId ?? "", "/admin/rooms");
     }
+    if (request.method === "GET" && url.pathname === "/game_play.php" && url.searchParams.get("go") === "out") {
+      try {
+        if (!legacyLiveRoomId) {
+          throw new Error("game_play.php out requires room_no");
+        }
+        const roomId = validateRoomId(legacyLiveRoomId);
+        if (!(await roomExists(env, roomId))) {
+          return new Response("Room not found", { status: 404 });
+        }
+        return new Response(null, { status: 303, headers: { Location: `/game_view.php?room_no=${encodeURIComponent(roomId)}` } });
+      } catch (error) {
+        return json({ error: error instanceof Error ? error.message : "Invalid room" }, { status: 400 });
+      }
+    }
     if (request.method === "GET" && (roomMatch || isLegacyLiveRoomPage)) {
       try {
         if (!roomMatch && !legacyLiveRoomId) {
