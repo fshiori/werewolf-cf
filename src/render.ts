@@ -832,8 +832,10 @@ export function renderFederatedList(rooms: Array<RoomSummary | FederatedRoomSumm
   `));
 }
 
-export function renderOldLogs(rooms: RoomSummary[], options: { search?: string; winners?: Record<string, GameWinner> } = {}): string {
+export function renderOldLogs(rooms: RoomSummary[], options: { search?: string; winners?: Record<string, GameWinner>; page?: number; pageSize?: number; totalRooms?: number; showAll?: boolean } = {}): string {
   const searchValue = options.search ?? "";
+  const oldLogBasePath = searchValue ? `/old_log.php?search=${encodeURIComponent(searchValue)}` : "/old_log.php";
+  const pagination = options.showAll ? "" : paginationLinks(options.totalRooms, options.page, options.pageSize, oldLogBasePath);
   const rows = rooms.length
     ? rooms.map((room) => {
       const roomUrl = `/old_log.php?log_mode=on&room_no=${encodeURIComponent(room.id)}`;
@@ -893,11 +895,13 @@ export function renderOldLogs(rooms: RoomSummary[], options: { search?: string; 
           搜尋<input type="text" name="search" size="10" value="${escapeHtml(searchValue)}">
           <input id="submit" type="submit" value="送出">
         </form>
+        ${pagination}
       </div>
       <table class="form-table" border="1" cellspacing="1" bgcolor="#CCCCCC" style="margin:12px auto 18px;">
         <thead><tr><th class="column">村No</th><th class="column">村名</th><th class="column">結束時間</th><th class="column">人數</th><th class="column">勝</th><th colspan="12" class="column">選項</th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
+      ${pagination}
     </fieldset>
   `));
 }

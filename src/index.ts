@@ -1097,6 +1097,7 @@ function bbsTopicFromRow(topic: {
 
 const BBS_TOPIC_PAGE_SIZE = 15;
 const BBS_REPLY_PAGE_SIZE = 10;
+const OLD_LOG_PAGE_SIZE = 25;
 
 async function countBbsTopics(env: Env, digestOnly = false): Promise<number> {
   const row = await env.DB.prepare(`SELECT COUNT(*) AS count FROM bbs_topics${digestOnly ? " WHERE digest = 1" : ""}`)
@@ -2217,11 +2218,21 @@ export default {
         }
       }
       const search = url.searchParams.get("search")?.trim() ?? "";
+      const page = readPositivePage(url.searchParams.get("page"));
+      const showAll = url.searchParams.get("all") === "1";
       const endedRooms = (await listRooms(env)).filter((room) => room.status === "ended");
       const filteredRooms = search
         ? endedRooms.filter((room) => room.id.includes(search) || room.name.includes(search))
         : endedRooms;
-      return html(renderOldLogs(filteredRooms, { search, winners: await listLatestRoomWinners(env, filteredRooms.map((room) => room.id)) }));
+      const visibleRooms = showAll ? filteredRooms : filteredRooms.slice((page - 1) * OLD_LOG_PAGE_SIZE, page * OLD_LOG_PAGE_SIZE);
+      return html(renderOldLogs(visibleRooms, {
+        search,
+        winners: await listLatestRoomWinners(env, visibleRooms.map((room) => room.id)),
+        page,
+        pageSize: OLD_LOG_PAGE_SIZE,
+        totalRooms: filteredRooms.length,
+        showAll
+      }));
     }
 
     if (request.method === "GET" && (url.pathname === "/trip" || url.pathname === "/trip.php")) {
