@@ -169,12 +169,51 @@ async function refreshEvents() {
     data.events.slice(0, 8).forEach((event) => {
       const div = document.createElement("div");
       const player = event.playerId ? "　" + event.playerId : "";
-      div.textContent = event.createdAt + "　" + event.eventType + player;
+      div.textContent = event.createdAt + "　" + eventTypeLabel(event.eventType) + player;
       target.appendChild(div);
     });
   } catch {
     target.textContent = "事件讀取失敗。";
   }
+}
+function eventTypeLabel(eventType) {
+  return {
+    public_chat: "公開發言",
+    wolf_chat: "狼人密談",
+    fox_chat: "妖狐密談",
+    common_chat: "共有密談",
+    lovers_chat: "戀人密談",
+    dead_chat: "靈界發言",
+    self_talk: "自言自語",
+    gm_chat: "GM 發言",
+    gm_whisper: "GM 密語",
+    day_vote: "白天投票",
+    night_kill: "襲擊",
+    divination: "占卜",
+    child_fox_divination: "子狐占卜",
+    medium_result: "靈能結果",
+    guard: "護衛",
+    cat_revive: "貓又復活",
+    objection: "提出反對",
+    room_end_requested: "要求廢村",
+    lobby_start_vote: "開始投票",
+    lobby_kick_vote: "踢人投票",
+    player_left: "退出",
+    player_joined: "玩家登錄",
+    gm_joined: "GM 登錄",
+    game_started: "遊戲開始",
+    game_ended: "遊戲結束",
+    gm_advanced_phase: "GM 推進",
+    gm_ended_game: "GM 結束",
+    gm_set_alive: "GM 生死調整",
+    gm_set_role: "GM 角色調整",
+    gm_set_flag: "GM 旗標調整",
+    gm_set_common_voice: "GM 共有公開調整",
+    gm_set_channel_restrictions: "GM 頻道限制調整",
+    player_kicked: "踢出玩家",
+    admin_room_ended: "管理廢村",
+    room_created: "村子建立"
+  }[eventType] || eventType;
 }
 let latestGame;
 let role = "";
