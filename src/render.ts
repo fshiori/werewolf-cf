@@ -785,7 +785,7 @@ export function renderFederatedList(rooms: Array<RoomSummary | FederatedRoomSumm
 export function renderOldLogs(rooms: RoomSummary[]): string {
   const rows = rooms.length
     ? rooms.map((room) => {
-      const roomUrl = `/room/${escapeHtml(room.id)}/log`;
+      const roomUrl = `/old_log.php?log_mode=on&room_no=${encodeURIComponent(room.id)}`;
       const optionMarks = [
         room.options.realTime ? optionMark("限時", "img/room_option_real_time.gif") : "",
         room.options.poison ? optionMark("埋毒", "img/room_option_poison.gif") : "",
@@ -804,12 +804,12 @@ export function renderOldLogs(rooms: RoomSummary[]): string {
       return `<tr>
         <td align="right" class="row">${escapeHtml(room.id)}</td>
         <td align="right" class="row">
-          <a href="${roomUrl}">${escapeHtml(room.name)} 村</a>
-          <small>(<a href="${roomUrl}?reverse_log=on">逆</a>
-          <a href="${roomUrl}?heaven_talk=on">靈</a>
-          <a href="${roomUrl}?reverse_log=on&heaven_talk=on">逆&amp;靈</a>
-          <a href="${roomUrl}?heaven_only=on">逝</a>
-          <a href="${roomUrl}?reverse_log=on&heaven_only=on">逆&amp;逝</a>)</small>
+          <a href="${escapeHtml(roomUrl)}">${escapeHtml(room.name)} 村</a>
+          <small>(<a href="${escapeHtml(`${roomUrl}&reverse_log=on`)}">逆</a>
+          <a href="${escapeHtml(`${roomUrl}&heaven_talk=on`)}">靈</a>
+          <a href="${escapeHtml(`${roomUrl}&reverse_log=on&heaven_talk=on`)}">逆&amp;靈</a>
+          <a href="${escapeHtml(`${roomUrl}&heaven_only=on`)}">逝</a>
+          <a href="${escapeHtml(`${roomUrl}&reverse_log=on&heaven_only=on`)}">逆&amp;逝</a>)</small>
         </td>
         <td align="right" class="row"><small>${escapeHtml(room.createdAt)}</small></td>
         <td align="right" class="row">${maxPlayersMark(room.maxPlayers)}</td>
