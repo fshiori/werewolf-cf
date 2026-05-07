@@ -14,7 +14,8 @@ import {
   validateRoomId,
   validateRoomName,
   validateTrip,
-  validateTripExclusionReason
+  validateTripExclusionReason,
+  escapeHtml
 } from "./validation";
 
 export { RoomDurableObject };
@@ -25,8 +26,10 @@ function json(data: unknown, init: ResponseInit = {}): Response {
   return new Response(JSON.stringify(data), { ...init, headers });
 }
 
-function html(body: string): Response {
-  return new Response(body, { headers: { "content-type": "text/html; charset=utf-8" } });
+function html(body: string, init: ResponseInit = {}): Response {
+  const headers = new Headers(init.headers);
+  headers.set("content-type", "text/html; charset=utf-8");
+  return new Response(body, { ...init, headers });
 }
 
 function javascript(body: string): Response {
@@ -40,6 +43,23 @@ function javascript(body: string): Response {
 
 function text(body: string): Response {
   return new Response(body, { headers: { "content-type": "text/plain; charset=utf-8" } });
+}
+
+function legacyIconResult(title: string, message: string, backHref = "/icon_upload.php", extra = "", status = 200): Response {
+  return html(`<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <title>${escapeHtml(title)}</title>
+  <meta http-equiv="refresh" content="5; url=${escapeHtml(backHref)}">
+</head>
+<body bgcolor="aliceblue">
+  <br><br>
+  ${message}
+  ${extra}
+  <br>5秒後跳回<a href="${escapeHtml(backHref)}">頭像頁面</a>
+</body>
+</html>`, { status });
 }
 
 function legacyApiField(value: string): string {
@@ -2090,20 +2110,29 @@ async function createRoom(request: Request, env: Env): Promise<Response> {
   }
 }
 
-async function uploadAvatar(request: Request, env: Env): Promise<Response> {
+async function uploadAvatar(request: Request, env: Env, legacyResult = false): Promise<Response> {
   const form = await request.formData().catch(() => null);
   const playerIdValue = form?.get("playerId") ?? form?.get("player_id");
   const avatarValue = form?.get("avatar") ?? form?.get("icon_file");
   if (typeof playerIdValue !== "string" || !isFileLike(avatarValue)) {
+    if (legacyResult) {
+      return legacyIconResult("圖像上傳結果", "錯誤或有遺漏", "/icon_upload.php", "", 400);
+    }
     return json({ error: "Invalid avatar upload" }, { status: 400 });
   }
 
   try {
     const playerId = validatePlayerId(playerIdValue);
     if (!isAllowedAvatarContentType(avatarValue.type)) {
+      if (legacyResult) {
+        return legacyIconResult("圖像上傳結果", "不接受此類型", "/icon_upload.php", "", 400);
+      }
       return json({ error: "Avatar must be a PNG, JPEG, GIF, or WebP image" }, { status: 400 });
     }
     if (avatarValue.size > 512 * 1024) {
+      if (legacyResult) {
+        return legacyIconResult("圖像上傳結果", "圖片超過限制", "/icon_upload.php", "", 400);
+      }
       return json({ error: "Avatar is too large" }, { status: 400 });
     }
 
@@ -2111,13 +2140,24 @@ async function uploadAvatar(request: Request, env: Env): Promise<Response> {
     await env.ASSETS.put(key, avatarValue.stream(), {
       httpMetadata: { contentType: avatarValue.type }
     });
+    if (legacyResult) {
+      return legacyIconResult(
+        "圖像上傳結果",
+        "上傳完成<br>",
+        "/icon_view.php",
+        `<br><img src="/assets/avatar/${encodeURIComponent(playerId)}" alt=""><br>圖片上傳後會以 Cloudflare R2 保存為玩家頭像。<br>`
+      );
+    }
     return json({ key });
   } catch (error) {
+    if (legacyResult) {
+      return legacyIconResult("圖像上傳結果", escapeHtml(error instanceof Error ? error.message : "失敗"), "/icon_upload.php", "", 400);
+    }
     return json({ error: error instanceof Error ? error.message : "Failed to upload avatar" }, { status: 400 });
   }
 }
 
-async function removeAvatar(request: Request, env: Env): Promise<Response> {
+async function removeAvatar(request: Request, env: Env, legacyResult = false): Promise<Response> {
   const contentType = request.headers.get("content-type") ?? "";
   let playerIdValue: unknown;
   if (contentType.includes("multipart/form-data") || contentType.includes("application/x-www-form-urlencoded")) {
@@ -2128,14 +2168,23 @@ async function removeAvatar(request: Request, env: Env): Promise<Response> {
     playerIdValue = isRecord(body) ? body.playerId : undefined;
   }
   if (typeof playerIdValue !== "string") {
+    if (legacyResult) {
+      return legacyIconResult("アイコン削除失敗", "削除失敗：玩家ID有誤", "/icon_upload.php", "", 400);
+    }
     return json({ error: "Invalid avatar removal" }, { status: 400 });
   }
 
   try {
     const playerId = validatePlayerId(playerIdValue);
     await env.ASSETS.delete(avatarKey(playerId));
+    if (legacyResult) {
+      return legacyIconResult("アイコン削除完了", "削除完了：登錄ページに飛びます", "/icon_upload.php");
+    }
     return json({ removed: true });
   } catch (error) {
+    if (legacyResult) {
+      return legacyIconResult("アイコン削除失敗", escapeHtml(error instanceof Error ? error.message : "削除失敗"), "/icon_upload.php", "", 400);
+    }
     return json({ error: error instanceof Error ? error.message : "Failed to remove avatar" }, { status: 400 });
   }
 }
@@ -2612,12 +2661,20 @@ export default {
       return removeTripExclusion(request, env);
     }
 
-    if (request.method === "POST" && (url.pathname === "/api/assets/avatar" || url.pathname === "/upload.php")) {
+    if (request.method === "POST" && url.pathname === "/api/assets/avatar") {
       return uploadAvatar(request, env);
     }
 
-    if ((request.method === "DELETE" && url.pathname === "/api/assets/avatar") || (request.method === "POST" && url.pathname === "/upload2.php")) {
+    if (request.method === "POST" && url.pathname === "/upload.php") {
+      return uploadAvatar(request, env, true);
+    }
+
+    if (request.method === "DELETE" && url.pathname === "/api/assets/avatar") {
       return removeAvatar(request, env);
+    }
+
+    if (request.method === "POST" && url.pathname === "/upload2.php") {
+      return removeAvatar(request, env, true);
     }
 
     const avatarMatch = url.pathname.match(/^\/assets\/avatar\/([^/]+)$/);
