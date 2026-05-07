@@ -194,6 +194,12 @@ function page(title: string, body: string, extraHead = ""): string {
       font-family: "PMingLiU", "Noto Serif TC", serif;
     }
     #chatLog div, #gameLog div { border-top: 1px dashed silver; padding: 2px 4px; overflow-wrap: anywhere; word-break: break-word; }
+    #chatLog table { width: 100%; border-collapse: collapse; font-size: 12pt; font-family: "PMingLiU", "Noto Serif TC", serif; }
+    #chatLog td { border-bottom: silver 1px dashed; padding: 2px 4px; vertical-align: middle; overflow-wrap: anywhere; word-break: break-word; }
+    #chatLog .chat-speaker { width: 200px; }
+    #chatLog .chat-gap { width: 1px; padding: 0; }
+    #chatLog .chat-gm .chat-speaker, #chatLog .chat-gm .chat-message { color: red; }
+    #chatLog .chat-dead .chat-speaker, #chatLog .chat-dead .chat-message { background-color: #cccccc; color: black; }
     #gameLog { max-height: 140px; overflow: auto; background: #ffffff; }
     #gameLog table { width: 100%; border-collapse: collapse; font-size: 12pt; font-family: "PMingLiU", "Noto Serif TC", serif; }
     #gameLog td { border-top: silver 1px dashed; padding: 2px 4px; overflow-wrap: anywhere; word-break: break-word; }
