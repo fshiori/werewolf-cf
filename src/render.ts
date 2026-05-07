@@ -1747,7 +1747,7 @@ export function renderHome(rooms: RoomSummary[], announcement = DEFAULT_ANNOUNCE
       </div>`;
     }).join("");
 
-  return page("Werewolf CF", shell(`
+  return page("汝等是人是狼？ - Werewolf Cloudflare Port", shell(`
     <fieldset>
       <legend><strong>伺服器公告</strong></legend>
       <div style="line-height:135%;margin:12px 20px 18px;">
