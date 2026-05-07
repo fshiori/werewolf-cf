@@ -217,7 +217,7 @@ function page(title: string, body: string, extraHead = ""): string {
     .muted { color: #666666; }
   </style>
 </head>
-<body>${body}</body>
+<body bgcolor="white">${body}</body>
 </html>`;
 }
 
