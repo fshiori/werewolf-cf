@@ -2404,6 +2404,7 @@ export function renderTripRegistration(): string {
       <a href="/trip.php?go=post">身份登錄</a>
        <a href="/trip.php?go=edit2">修改紀錄</a>
        <a href="/trip.php?go=edit">修改Trip</a>
+       <a href="/trip.php?go=accadd">認領帳號</a>
        <a href="/trip.php?go=out">排除紀錄</a>
        <a href="/trip.php?go=icon">上傳頭像</a>
        <a href="/trips">Trip查詢</a>
@@ -2429,6 +2430,21 @@ export function renderTripRegistration(): string {
         TRIP <input type="text" name="name" maxlength="32" size="24" value="">
         密碼 <input type="password" name="password" maxlength="128" size="24" value="">
         <input id="submit" name="submit" type="submit" value="送出">
+      </form>
+    </fieldset>
+    <fieldset>
+      <legend><strong>認領帳號</strong></legend>
+      <form name="trip" method="post" action="/trip.php?go=accadd" enctype="multipart/form-data" style="margin:10px 20px;">
+        <ul>
+          <li>請輸入登記之Trip，不是加密後的Trip。</li>
+          <li>認領帳號與密碼為過去紀錄之帳號密碼，相同者將會加上Trip。</li>
+          <li>TRIP <input type="text" name="name" size="24" value=""></li>
+          <li>密碼 <input type="password" name="password" size="24" value=""></li>
+          <li>認領帳號 <input type="text" name="aname" size="24" value=""></li>
+          <li>認領密碼 <input type="password" name="apassword" size="24" value=""></li>
+          <li>此 Cloudflare 版本不保存過去紀錄村民註冊密碼；請使用上方認領身份按鈕綁定目前玩家。</li>
+        </ul>
+        <input id="tripClaimLegacySubmit" name="submit" type="submit" value="送出" disabled>
       </form>
     </fieldset>
     <fieldset>

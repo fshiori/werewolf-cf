@@ -794,11 +794,13 @@ describe("worker routes", () => {
     expect(runs[0].values[1]).toBe("Blocked nickname");
   });
 
-  it("returns legacy Trip edit compatibility result pages", async () => {
-    for (const [go, title] of [["edit", "修改Trip"], ["edit2", "修改紀錄"]] as const) {
+  it("returns legacy Trip unsupported password-model compatibility result pages", async () => {
+    for (const [go, title] of [["edit", "修改Trip"], ["edit2", "修改紀錄"], ["accadd", "認領帳號"]] as const) {
       const body = new FormData();
       body.set("name", "ab12CD");
       body.set("password", "secret");
+      body.set("aname", "Claimant");
+      body.set("apassword", "old-password");
 
       const response = await worker.fetch(
         new Request(`http://example.test/trip.php?go=${go}`, {
@@ -909,6 +911,7 @@ describe("worker routes", () => {
     expect(body).toContain("/trip.php?go=post");
     expect(body).toContain("/trip.php?go=edit2");
     expect(body).toContain("/trip.php?go=edit");
+    expect(body).toContain("/trip.php?go=accadd");
     expect(body).toContain("/trip.php?go=out");
     expect(body).toContain("/trip.php?go=icon");
     expect(body).toContain("registerTripButton");
@@ -922,9 +925,12 @@ describe("worker routes", () => {
     expect(body).toContain('id="submit" name="submit" type="submit" value="送出"');
     expect(body).toContain('form name="trip" method="post" action="/trip.php?go=edit"');
     expect(body).toContain('form name="trip" method="post" action="/trip.php?go=edit2"');
+    expect(body).toContain('form name="trip" method="post" action="/trip.php?go=accadd"');
     expect(body).toContain('type="text" name="nname" size="24" value=""');
     expect(body).toContain('type="text" name="lname" size="24" value=""');
     expect(body).toContain('type="password" name="lpassword" size="24" value=""');
+    expect(body).toContain('type="password" name="apassword" size="24" value=""');
+    expect(body).toContain('id="tripClaimLegacySubmit" name="submit" type="submit" value="送出" disabled');
     expect(body).toContain('name="lpassword"');
     expect(body).toContain("Trip公開資料");
     expect(body).toContain("/api/trips/lookup?trip=");

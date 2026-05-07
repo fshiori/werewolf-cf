@@ -2702,6 +2702,10 @@ export default {
       return legacyTripResult("修改紀錄", "此 Cloudflare 版本不保存過去紀錄村民註冊密碼；請使用認領身份流程綁定目前玩家。", "/trip.php?go=edit2", 501);
     }
 
+    if (request.method === "POST" && url.pathname === "/trip.php" && url.searchParams.get("go") === "accadd") {
+      return legacyTripResult("認領帳號", "此 Cloudflare 版本不保存過去紀錄村民註冊密碼；請使用認領身份流程綁定目前玩家。", "/trip.php?go=accadd", 501);
+    }
+
     if (request.method === "POST" && url.pathname === "/trip.php" && url.searchParams.get("go") === "sce") {
       const roomId = url.searchParams.get("room") ?? "";
       const tripId = url.searchParams.get("trip") ?? "";
