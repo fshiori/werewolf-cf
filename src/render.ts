@@ -670,6 +670,7 @@ function transcriptLocation(event: RoomEventSummary): { className: string; label
       "night common": { className: "transcript-location-common", label: "共有密談" },
       "night lovers": { className: "transcript-location-lovers", label: "戀人密談" },
       "night self_talk": { className: "transcript-location-self", label: "夜晚自言自語" },
+      "heaven": { className: "transcript-location-dead", label: "靈界" },
       "night dead": { className: "transcript-location-dead", label: "靈界" }
     };
     const location = locations[value.location];
@@ -895,7 +896,8 @@ const transcriptSystemEventTypes = new Set([
 ]);
 
 function isHeavenTranscriptEvent(event: RoomEventSummary): boolean {
-  return event.eventType === "dead_chat";
+  const value = recordValue(event.payload);
+  return event.eventType === "dead_chat" || (typeof value.location === "string" && value.location.includes("heaven"));
 }
 
 function isSystemTranscriptEvent(event: RoomEventSummary): boolean {

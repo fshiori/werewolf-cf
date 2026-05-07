@@ -2190,6 +2190,38 @@ describe("render", () => {
     expect(html).toContain("common room");
   });
 
+  it("treats saved PHP heaven talk locations as heaven transcript rows", () => {
+    const events = [
+      {
+        id: 1,
+        roomId: "room_abc",
+        playerId: "player_dead",
+        eventType: "public_chat",
+        payload: { visibility: "private", nickname: "Dead", text: "legacy heaven row", location: "heaven", phase: "night", day: 2 },
+        createdAt: "2026-05-06 12:01:00"
+      },
+      {
+        id: 2,
+        roomId: "room_abc",
+        playerId: "player_alive",
+        eventType: "public_chat",
+        payload: { nickname: "Alive", text: "ground row", location: "day public", phase: "day", day: 2 },
+        createdAt: "2026-05-06 12:02:00"
+      }
+    ];
+
+    const publicView = renderRoomTranscript("room_abc", [], events, { viewerMode: "public", heavenTalk: true });
+    expect(publicView).not.toContain("legacy heaven row");
+
+    const deadView = renderRoomTranscript("room_abc", [], events, { viewerMode: "dead", heavenTalk: true });
+    expect(deadView).toContain("legacy heaven row");
+    expect(deadView).toContain('class="transcript-row transcript-location-dead"');
+
+    const heavenOnly = renderRoomTranscript("room_abc", [], events, { viewerMode: "dead", heavenOnly: true });
+    expect(heavenOnly).toContain("legacy heaven row");
+    expect(heavenOnly).not.toContain("ground row");
+  });
+
   it("renders saved GM operation details in transcript payloads", () => {
     const html = renderRoomTranscript("room_abc", [], [
       {
