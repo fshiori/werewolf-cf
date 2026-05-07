@@ -637,6 +637,10 @@ describe("render", () => {
     expect(ROOM_CLIENT_SCRIPT).toContain("type: \"guard\"");
   });
 
+  it("keeps the external room client script parseable", () => {
+    expect(() => new Function(ROOM_CLIENT_SCRIPT)).not.toThrow();
+  });
+
   it("renders player profile page with stats and records fetches", () => {
     const html = renderPlayerProfile("player_abc");
 
