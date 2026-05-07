@@ -220,6 +220,8 @@ function page(title: string, body: string, extraHead = ""): string {
     #lastWordsLog .last-words-row { background-color: #eeeeff; color: black; }
     #lastWordsLog .last-words-name, #lastWordsLog .last-words-text { border-top: silver 1px dashed; padding: 2px 4px; }
     #lastWordsLog .last-words-name { width: 140px; }
+    body.room-view-spectator .room-chat-controls { display: none; }
+    body.room-view-heaven .room-live-chat-only { display: none; }
     #players button { margin: 2px 4px 2px 0; min-width: 7em; text-align: left; }
     .vote-table { border: 1px solid #999900; background: #ffffee; }
     .vote-table td { border: 1px solid #d0d080; padding: 2px 6px; }
@@ -3616,17 +3618,19 @@ export function renderRoom(roomId: string, options: RenderRoomOptions = {}): str
             <tr>
               <td>
                 <div id="chatLog"></div>
-                <input id="chatText" maxlength="500" size="72">
-                <button id="sendChat">送出</button>
-                <button id="sendWolfChat" disabled>狼頻</button>
-                <button id="sendFoxChat" disabled>狐頻</button>
-                <button id="sendCommonChat" disabled>共有頻</button>
-                <button id="sendLoversChat" disabled>戀頻</button>
-                <button id="sendDeadChat" disabled>靈界</button>
-                <button id="sendSelfTalk" disabled>自言</button>
-                <button id="sendObjection" class="objection-button" disabled>${referenceAssetImg("img/objection.gif", "提出反對")}(<span id="objectionRemaining">2</span>)</button>
-                <button id="sendRoomEndVote" disabled>廢</button>
-                <label><input id="soundNotify" type="checkbox"> 音效</label>
+                <div class="room-chat-controls">
+                  <input id="chatText" maxlength="500" size="72">
+                  <button id="sendChat" class="room-live-chat-only">送出</button>
+                  <button id="sendWolfChat" class="room-live-chat-only" disabled>狼頻</button>
+                  <button id="sendFoxChat" class="room-live-chat-only" disabled>狐頻</button>
+                  <button id="sendCommonChat" class="room-live-chat-only" disabled>共有頻</button>
+                  <button id="sendLoversChat" class="room-live-chat-only" disabled>戀頻</button>
+                  <button id="sendDeadChat" disabled>靈界</button>
+                  <button id="sendSelfTalk" class="room-live-chat-only" disabled>自言</button>
+                  <button id="sendObjection" class="objection-button room-live-chat-only" disabled>${referenceAssetImg("img/objection.gif", "提出反對")}(<span id="objectionRemaining">2</span>)</button>
+                  <button id="sendRoomEndVote" class="room-live-chat-only" disabled>廢</button>
+                  <label><input id="soundNotify" type="checkbox"> 音效</label>
+                </div>
                 <table id="gmControlPanel">
                   <tr><th colspan="2">GM行動 <span id="gmStatus">非GM</span></th></tr>
                   <tr class="gm-controls-only">
