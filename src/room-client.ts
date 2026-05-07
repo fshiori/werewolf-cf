@@ -510,6 +510,23 @@ function appendVoteObserverPanel(container, game, currentPlayer, currentPlayerDe
   });
   container.appendChild(table);
 }
+function updateVoteReminder(game, currentPlayer, currentPlayerAlive, votedPlayerIds) {
+  const reminder = document.querySelector("#voteReminder");
+  if (!reminder) return;
+  reminder.innerHTML = "";
+  if (!currentPlayer || !currentPlayerAlive || game.phase === "lobby" || game.phase === "ended" || isGm) return;
+  const requiresVote =
+    game.phase === "day" ||
+    (game.phase === "night" && (isWolfRole(role) || role === "seer" || role === "guard" || role === "child_fox" || role === "cat"));
+  if (!requiresVote || votedPlayerIds.has(currentPlayer.playerId)) return;
+  const message = game.phase === "night" && isWolfRole(role)
+    ? "系統提醒：您目前還沒有投票，如果同側已經投票請忽略此訊息。"
+    : "系統提醒：您目前還沒有投票。";
+  const warning = document.createElement("span");
+  warning.style.backgroundColor = "#FF0000";
+  warning.innerHTML = "<b>" + message + "</b>";
+  reminder.appendChild(warning);
+}
 function renderLastWordsPanel(game) {
   const lastWordsLog = document.querySelector("#lastWordsLog");
   if (!lastWordsLog) return;
@@ -600,6 +617,7 @@ function renderGame(game) {
     if (!voteSummary[targetId]) voteSummary[targetId] = [];
     voteSummary[targetId].push(voter.nickname);
   });
+  updateVoteReminder(game, currentPlayer, currentPlayerAlive, votedPlayerIds);
   appendVoteObserverPanel(players, game, currentPlayer, currentPlayerDead, voteSummary, votedPlayerIds);
   let row;
   game.players.forEach((player) => {
