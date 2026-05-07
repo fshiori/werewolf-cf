@@ -238,7 +238,7 @@ document.querySelector("#connect").addEventListener("click", () => {
       const lovers = msg.lovers && msg.lovers.length ? "（戀人：" + msg.lovers.map((lover) => lover.nickname).join(", ") + "）" : "";
       const foxes = msg.foxes && msg.foxes.length ? "（妖狐：" + msg.foxes.map((fox) => fox.nickname).join(", ") + "）" : "";
       const authority = msg.authority ? "（權力者）" : "";
-      document.querySelector("#role").textContent = roleLabel(msg.role) + wolves + commons + lovers + foxes + authority;
+      renderCurrentRole(msg.role, wolves + commons + lovers + foxes + authority);
       if (latestGame) renderGame(latestGame);
     } else if (msg.type === "error") {
       append("<span class='muted'>" + msg.message + "</span>");
@@ -455,6 +455,15 @@ function referenceImage(path, alt) {
   image.height = 16;
   image.className = "ref-icon";
   return image;
+}
+function renderCurrentRole(roleValue, detailText) {
+  const roleContainer = document.querySelector("#role");
+  roleContainer.innerHTML = "";
+  const iconPath = roleIconPath(roleValue);
+  if (iconPath) {
+    roleContainer.append(referenceImage(iconPath, roleLabel(roleValue)));
+  }
+  roleContainer.append(roleLabel(roleValue) + detailText);
 }
 function appendPlayerIcon(iconCell, player, initial) {
   if (!player.alive) {
