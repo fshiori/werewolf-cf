@@ -1765,6 +1765,35 @@ describe("render", () => {
     expect(heavenOnly).not.toContain("missing player id secret");
   });
 
+  it("renders join event labels and payload details in transcripts", () => {
+    const html = renderRoomTranscript("room_abc", [], [
+      {
+        id: 1,
+        roomId: "room_abc",
+        playerId: "player_a",
+        eventType: "player_joined",
+        payload: { trip: true, gm: false },
+        createdAt: "2026-05-06 12:01:00"
+      },
+      {
+        id: 2,
+        roomId: "room_abc",
+        playerId: "player_gm",
+        eventType: "gm_joined",
+        payload: { trip: false, gm: true },
+        createdAt: "2026-05-06 12:02:00"
+      }
+    ], { viewerMode: "public" });
+
+    expect(html).toContain("玩家登錄");
+    expect(html).toContain("GM 登錄");
+    expect(html).toContain("Trip:有　GM:否");
+    expect(html).toContain("Trip:無　GM:是");
+    expect(html).toContain('class="transcript-row transcript-location-system"');
+    expect(html).not.toContain(">player_joined<");
+    expect(html).not.toContain(">gm_joined<");
+  });
+
   it("shows player-view private channel rows the selected role could hear", () => {
     const records = [
       {
