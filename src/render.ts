@@ -106,6 +106,18 @@ function page(title: string, body: string, extraHead = ""): string {
     .bbs-topic-pinned { border-color: #cc6600; background: #ffffcc; color: #996600; }
     .bbs-topic-locked { border-color: #666666; background: #e6e6e6; color: #333333; }
     .bbs-topic-digest { border-color: #cc3300; background: #ffe6e6; color: #cc0000; }
+    .table1 { border-collapse: collapse; border: 1px solid #cccccc; }
+    .table2 {
+      text-align: right;
+      border-top: 1px solid #ffffff;
+      border-left: 1px solid #cccccc;
+      border-right: 1px solid #cccccc;
+      background-color: #ffffff;
+      font-size: 12px;
+    }
+    .table3 { border-top: 1px solid #cccccc; background-color: #cccccc; }
+    .table4 { background-color: #ffffff; font-size: 13px; }
+    #table5 { width: 650px; }
     .health-mark {
       display: inline-block;
       border: 1px solid #999999;
@@ -2443,12 +2455,12 @@ export function renderBbs(topics: BbsTopicSummary[], options: { digestOnly?: boo
       return `<tr>
         <td align="center"><a href="${topicPath}">${escapeHtml(String(topic.id))}</a></td>
         <td><a href="${latestReplyPath}" title="${escapeHtml(legacyTitle)}">${bbsStatusMarks(topic, true)}${escapeHtml(topic.title)}</a></td>
-        <td>${escapeHtml(topic.name)}${topic.trip ? "◆Trip" : ""}</td>
+        <td align="center">${escapeHtml(topic.name)}${topic.trip ? "◆Trip" : ""}</td>
         <td align="center">${escapeHtml(String(topic.replyCount))}</td>
-        <td>${escapeHtml(topic.updatedAt)}</td>
+        <td align="center">${escapeHtml(topic.updatedAt)}</td>
       </tr>`;
     }).join("")
-    : `<tr><td colspan="5" class="muted">${options.digestOnly ? "尚無精華主題。" : "尚無主題。"}</td></tr>`;
+    : `<tr><td colspan="5" class="muted">${options.digestOnly ? "沒有精華" : "沒有主題"}</td></tr>`;
   const listTitle = options.digestOnly ? "精華主題列表" : "主題列表";
   const pagination = paginationLinks(options.totalTopics, options.page, options.pageSize, options.digestOnly ? "/bbs.php?go=dige" : "/bbs.php");
 
@@ -2459,9 +2471,15 @@ export function renderBbs(topics: BbsTopicSummary[], options: { digestOnly?: boo
       ${pagination}
       <div style="line-height:135%;margin:20px 20px 30px;">
         <strong>
-          <table class="form-table" style="width:100%">
-            <thead><tr><td><strong>No.</strong></td><td><strong>標題</strong></td><td><strong>作者</strong></td><td><strong>回覆</strong></td><td><strong>更新</strong></td></tr></thead>
-            <tbody>${topicRows}</tbody>
+          <table border="1" class="table1" bordercolor="#CCCCCC" align="center">
+            <tr class="table3">
+              <td align="center" width="50"> No.</td>
+              <td width="320">標題</td>
+              <td align="center" width="170">作者</td>
+              <td align="center" width="40">回覆</td>
+              <td align="center" width="150">最後時間</td>
+            </tr>
+            ${topicRows}
           </table>
         </strong>
       </div>
