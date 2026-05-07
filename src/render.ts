@@ -69,6 +69,9 @@ function page(title: string, body: string, extraHead = ""): string {
     .legacy-entry-map { width: 100%; border: 1px solid silver; margin-top: 3px; }
     .legacy-entry-map th { background: #eeeeee; color: black; text-align: left; padding: 2px 4px; }
     .legacy-entry-map td { border-top: 1px dotted silver; padding: 2px 4px; }
+    .legacy-entry-map .table_votelist1 { border-top: #000000 1px dotted; border-left: #000000 1px dotted; border-bottom: #000000 1px dotted; width: 26px; text-align: center; }
+    .legacy-entry-map .table_votelist2 { font-size: 10pt; border-top: #000000 1px dotted; border-bottom: #000000 1px dotted; border-right: #000000 1px dotted; width: 150px; }
+    .legacy-entry-map input[type="radio"] { vertical-align: middle; }
     table { border-collapse: collapse; }
     input, button, select {
       font: inherit;
@@ -3546,9 +3549,15 @@ function legacyRoomEntryMap(roomId: string, autoReloadSeconds: 0 | 15 | 20 | 30,
     return `
                 <table class="legacy-entry-map" data-legacy-entry="game_vote.php">
                   <tr><th colspan="3">game_vote.php 投票 / 能力入口</th></tr>
-                  <tr><td>command</td><td colspan="2">vote</td></tr>
-                  <tr><td>target list</td><td colspan="2">由目前階段與角色權限即時產生</td></tr>
+                  <tr><td>form</td><td colspan="2">action="game_vote.php?...#game_top" method="POST"</td></tr>
+                  <tr><td>hidden</td><td>command</td><td>vote</td></tr>
+                  <tr><td>等待室</td><td>situation</td><td>GAMESTART / KICK_DO / FKICK_DO</td></tr>
+                  <tr><td>白天</td><td>situation</td><td>VOTE_KILL + vote_times</td></tr>
+                  <tr><td>夜晚</td><td>situation</td><td>WOLF_EAT / MAGE_DO / FOSI_DO / GUARD_DO / CAT_DO</td></tr>
+                  <tr><td>target list</td><td colspan="2">由目前階段、角色、生死與 Room Durable Object 權限即時產生</td></tr>
+                  <tr><td>sample</td><td class="table_votelist1">◆</td><td class="table_votelist2">玩家名<br><font color="#666666">◆</font><input type="radio" disabled></td></tr>
                   <tr><td>back</td><td colspan="2"><a href="${gameUpHref}#game_top">←上一頁&amp;重新整理</a></td></tr>
+                  <tr><td>submit</td><td colspan="2">投將該員'處刑'一票 / 咬下去 / 占卜對象 / 護衛對象 / 復活對象</td></tr>
                   <tr><td>action panel</td><td colspan="2">共用 WebSocket 指令，送至 Room Durable Object 驗證</td></tr>
                 </table>`;
   }

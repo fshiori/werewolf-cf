@@ -504,7 +504,13 @@ describe("render", () => {
     expect(vote).toContain('[<a href="/game_vote.php?room_no=room_abc">手動更新</a>]');
     expect(vote).toContain('<a href="/game_vote.php?room_no=room_abc&amp;auto_reload=15">15秒</a>');
     expect(vote).toContain("game_vote.php 投票 / 能力入口");
-    expect(vote).toContain("<tr><td>command</td><td colspan=\"2\">vote</td></tr>");
+    expect(vote).toContain('action="game_vote.php?...#game_top" method="POST"');
+    expect(vote).toContain("<tr><td>hidden</td><td>command</td><td>vote</td></tr>");
+    expect(vote).toContain("<tr><td>等待室</td><td>situation</td><td>GAMESTART / KICK_DO / FKICK_DO</td></tr>");
+    expect(vote).toContain("<tr><td>白天</td><td>situation</td><td>VOTE_KILL + vote_times</td></tr>");
+    expect(vote).toContain("<tr><td>夜晚</td><td>situation</td><td>WOLF_EAT / MAGE_DO / FOSI_DO / GUARD_DO / CAT_DO</td></tr>");
+    expect(vote).toContain('class="table_votelist1"');
+    expect(vote).toContain("投將該員'處刑'一票 / 咬下去 / 占卜對象 / 護衛對象 / 復活對象");
     expect(vote).toContain('<tr><td>back</td><td colspan="2"><a href="/game_up.php?room_no=room_abc#game_top">←上一頁&amp;重新整理</a></td></tr>');
     expect(vote).toContain('<tr class="view-player-only room-panel-actions">');
   });
