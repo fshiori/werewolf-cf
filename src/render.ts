@@ -3733,11 +3733,11 @@ function legacyVoteFormShell(roomId: string, autoReloadSeconds: 0 | 15 | 20 | 30
                     </tr>
                     <tr>
                       <td colspan="2" class="legacy-vote-submit">
-                        <input type="submit" value="投將該員'處刑'一票" disabled>
-                        <input type="submit" value="咬下去" disabled>
-                        <input type="submit" value="占卜對象" disabled>
-                        <input type="submit" value="護衛對象" disabled>
-                        <input type="submit" value="復活對象" disabled>
+                        <input type="submit" value="投將該員'處刑'一票">
+                        <input type="submit" value="咬下去">
+                        <input type="submit" value="占卜對象">
+                        <input type="submit" value="護衛對象">
+                        <input type="submit" value="復活對象">
                       </td>
                     </tr>
                   </table>
