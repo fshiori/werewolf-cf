@@ -359,6 +359,7 @@ describe("render", () => {
     expect(html).toContain('<a href="/game_play.php?go=out&amp;room_no=room_abc" target="_top">[登出]</a>');
     expect(html).toContain('form id="legacyUserRegisterForm" class="legacy-user-register-form" name="user" action="/user_manager.php?room_no=room_abc" method="POST" enctype="multipart/form-data" onsubmit="return false"');
     expect(html).toContain('<input type="hidden" name="command" value="regist">');
+    expect(html).toContain('<input type="hidden" name="room_no" value="room_abc">');
     expect(html).toContain('<input id="nickname" name="handle_name" form="legacyUserRegisterForm" maxlength="32" size="28">');
     expect(html).toContain('<input id="trip" name="tripn" form="legacyUserRegisterForm" maxlength="32" size="28">');
     expect(html).toContain('<select id="wishRole" name="role" form="legacyUserRegisterForm">');

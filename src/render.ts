@@ -3783,6 +3783,7 @@ export function renderRoom(roomId: string, options: RenderRoomOptions = {}): str
         <td>
           <form id="legacyUserRegisterForm" class="legacy-user-register-form" name="user" action="/user_manager.php?room_no=${encodeURIComponent(roomId)}" method="POST" enctype="multipart/form-data" onsubmit="return false">
             <input type="hidden" name="command" value="regist">
+            <input type="hidden" name="room_no" value="${escapeHtml(roomId)}">
             <input type="hidden" name="uname" value="">
             <input type="hidden" name="password" value="">
             <input type="hidden" name="sex" value="none">
