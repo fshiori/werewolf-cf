@@ -1378,6 +1378,25 @@ describe("render", () => {
     expect(html).toContain("死亡");
   });
 
+  it("renders draw winners in room records with reference victory assets", () => {
+    const html = renderRoomRecords("room_draw", [
+      {
+        id: 1,
+        roomId: "room_draw",
+        result: {
+          winner: "draw",
+          day: 4,
+          players: []
+        },
+        createdAt: "2026-05-06 12:00:00"
+      }
+    ]);
+
+    expect(html).toContain("平手勝利");
+    expect(html).toContain("/assets/reference/img/victory_role_draw.gif");
+    expect(html).not.toContain("未定勝利");
+  });
+
   it("renders room events as a normal HTML page", () => {
     const html = renderRoomEvents("room_abc", [
       {
@@ -2029,6 +2048,54 @@ describe("render", () => {
     expect(html).toContain("方式:居民投票");
     expect(html).toContain("踢出票:5");
     expect(html).toContain("開始票:8");
+  });
+
+  it("renders localized phase and draw labels in transcript payloads", () => {
+    const html = renderRoomTranscript(
+      "room_draw",
+      [
+        {
+          id: 1,
+          roomId: "room_draw",
+          result: { winner: "draw", day: 4, players: [] },
+          createdAt: "2026-05-06 12:00:00"
+        }
+      ],
+      [
+        {
+          id: 1,
+          roomId: "room_draw",
+          playerId: "player_gm",
+          eventType: "gm_advanced_phase",
+          payload: { phase: "day", day: 2 },
+          createdAt: "2026-05-06 12:01:00"
+        },
+        {
+          id: 2,
+          roomId: "room_draw",
+          playerId: "player_a",
+          eventType: "room_end_requested",
+          payload: { nickname: "Alice", phase: "ended", day: 4 },
+          createdAt: "2026-05-06 12:02:00"
+        },
+        {
+          id: 3,
+          roomId: "room_draw",
+          playerId: "player_gm",
+          eventType: "gm_ended_game",
+          payload: { winner: "draw", phase: "ended", day: 4 },
+          createdAt: "2026-05-06 12:03:00"
+        }
+      ]
+    );
+
+    expect(html).toContain("平手勝利");
+    expect(html).toContain("階段:白天");
+    expect(html).toContain("階段:已結束");
+    expect(html).toContain("勝利:平手");
+    expect(html).not.toContain("階段:day");
+    expect(html).not.toContain("階段:ended");
+    expect(html).not.toContain("勝利:未定");
   });
 
   it("renders role ability result labels in transcript payloads", () => {
