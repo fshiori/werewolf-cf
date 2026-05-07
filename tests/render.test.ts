@@ -1794,7 +1794,9 @@ describe("render", () => {
     expect(html).toContain("<title>汝等是人是狼？ Werewolf Cloudflare Port 說明</title>");
     expect(html).toContain("基本流程");
     expect(html).toContain("/assets/reference/img/rule_bg.jpg");
-    expect(html).toContain("/assets/reference/img/rule_title.jpg");
+    expect(html).toContain('<a href="/index.php">←返回</a><br>');
+    expect(html).toContain('<img class="title-img" src="/assets/reference/img/rule_title.jpg" alt="Rules">');
+    expect(html).not.toContain('<p><img class="title-img" src="/assets/reference/img/rule_title.jpg" alt="Rules"></p>');
     expect(html).toContain("＜參加遊戲時必須注意的事情＞");
     expect(html).toContain("＜「汝等是人是狼？」的基本規則＞");
     expect(html).toContain("白天");
