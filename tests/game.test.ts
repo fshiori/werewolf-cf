@@ -1844,7 +1844,7 @@ describe("game", () => {
 
   it("lets GM adjust player life state during active games", () => {
     const day = startGame(lobby([["player_1", "Alice"], ["player_2", "Bob"], ["player_3", "Carol"], ["player_4", "Dave"]]), 0, () => 0);
-    const voted = castDayVote(day, "player_1", "player_2");
+    const voted = castDayVote(castDayVote(day, "player_1", "player_2"), "player_3", "player_1");
     const killed = forceSetPlayerAlive(voted, "player_2", false);
     const revived = forceSetPlayerAlive(killed, "player_2", true);
 
@@ -1856,7 +1856,7 @@ describe("game", () => {
     expect(() => forceSetPlayerAlive(day, "player_missing", false)).toThrow("Life control target not found");
   });
 
-  it("clears pending actions involving a player when GM adjusts life state", () => {
+  it("clears all pending actions when GM kills a player and target actions when GM revives", () => {
     const night = {
       ...activeState("night", [
         { playerId: "player_wolf", nickname: "Wolf", role: "werewolf" as const, alive: true },
@@ -1878,7 +1878,7 @@ describe("game", () => {
     expect(killedTarget.nightKills).toEqual({});
     expect(killedTarget.divinations).toEqual({});
     expect(killedTarget.guards).toEqual({});
-    expect(killedTarget.catRevives).toEqual({ player_cat: "player_dead" });
+    expect(killedTarget.catRevives).toEqual({});
     expect(revivedDead.catRevives).toEqual({});
   });
 
