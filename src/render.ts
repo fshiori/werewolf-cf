@@ -1023,6 +1023,10 @@ function isCommonTranscriptRole(role: unknown): boolean {
   return text === "common" || text.startsWith("common ");
 }
 
+function isLoverTranscriptPlayer(player: Record<string, unknown>): boolean {
+  return player.lover === true || player.lovers === true || transcriptRoleText(player.role).includes("lovers");
+}
+
 function isCompositeLoversTranscriptEvent(event: RoomEventSummary): boolean {
   const value = recordValue(event.payload);
   if (value.lovers === true || value.lover === true || value.loversChannel === true) {
@@ -1037,13 +1041,13 @@ function isViewerChannelTranscriptEvent(event: RoomEventSummary, viewerPlayer?: 
   }
   switch (event.eventType) {
     case "wolf_chat":
-      return isWerewolfTranscriptRole(viewerPlayer.role) || (viewerPlayer.lover === true && isCompositeLoversTranscriptEvent(event));
+      return isWerewolfTranscriptRole(viewerPlayer.role) || (isLoverTranscriptPlayer(viewerPlayer) && isCompositeLoversTranscriptEvent(event));
     case "fox_chat":
-      return isFoxTranscriptRole(viewerPlayer.role) || (viewerPlayer.lover === true && isCompositeLoversTranscriptEvent(event));
+      return isFoxTranscriptRole(viewerPlayer.role) || (isLoverTranscriptPlayer(viewerPlayer) && isCompositeLoversTranscriptEvent(event));
     case "common_chat":
       return isCommonTranscriptRole(viewerPlayer.role);
     case "lovers_chat":
-      return viewerPlayer.lover === true;
+      return isLoverTranscriptPlayer(viewerPlayer);
     default:
       return false;
   }

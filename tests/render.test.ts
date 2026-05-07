@@ -2257,6 +2257,51 @@ describe("render", () => {
     expect(villagerView).not.toContain("common imported");
   });
 
+  it("uses saved record PHP lover role strings for player-view channel visibility", () => {
+    const records = [
+      {
+        id: 1,
+        roomId: "room_abc",
+        result: {
+          winner: "lovers",
+          day: 3,
+          players: [
+            { playerId: "viewer_lover", nickname: "Viewer Lover", role: "human lovers", alive: true },
+            { playerId: "plain_villager", nickname: "Plain Villager", role: "human", alive: true },
+            { playerId: "wolf_lover", nickname: "Wolf Lover", role: "wolf lovers", alive: true }
+          ]
+        },
+        createdAt: "2026-05-06 12:00:00"
+      }
+    ];
+    const events = [
+      {
+        id: 1,
+        roomId: "room_abc",
+        playerId: "wolf_lover",
+        eventType: "lovers_chat",
+        payload: { visibility: "private", nickname: "Wolf Lover", text: "record lover talk", phase: "night", day: 2 },
+        createdAt: "2026-05-06 12:01:00"
+      },
+      {
+        id: 2,
+        roomId: "room_abc",
+        playerId: "wolf_lover",
+        eventType: "wolf_chat",
+        payload: { visibility: "private", nickname: "Wolf Lover", text: "record composite lover talk", location: "night wolf lovers", phase: "night", day: 2 },
+        createdAt: "2026-05-06 12:02:00"
+      }
+    ];
+
+    const loverView = renderRoomTranscript("room_abc", records, events, { viewerMode: "player", viewerPlayerId: "viewer_lover", heavenTalk: true });
+    expect(loverView).toContain("record lover talk");
+    expect(loverView).toContain("record composite lover talk");
+
+    const villagerView = renderRoomTranscript("room_abc", records, events, { viewerMode: "player", viewerPlayerId: "plain_villager", heavenTalk: true });
+    expect(villagerView).not.toContain("record lover talk");
+    expect(villagerView).not.toContain("record composite lover talk");
+  });
+
   it("shows composite wolf or fox lover transcript rows to lover player views", () => {
     const records = [
       {
