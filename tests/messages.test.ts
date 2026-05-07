@@ -236,6 +236,8 @@ describe("messages", () => {
       hostId: undefined,
       revoteCount: 0,
       commonTalkVisible: false,
+      openVote: false,
+      voteStatus: false,
       objectionCounts: {},
       players: [
         { playerId: "player_1", nickname: "&lt;Wolf&gt;", alive: true },
@@ -268,11 +270,13 @@ describe("messages", () => {
     const statusOnly = { ...hidden, voteStatus: true };
     const visibleWithStatus = { ...visible, voteStatus: true };
 
-    expect(buildGameStateMessage(hidden)).toMatchObject({ type: "game_state", votes: {}, votedPlayerIds: [] });
-    expect(buildGameStateMessage(statusOnly)).toMatchObject({ type: "game_state", votes: {}, votedPlayerIds: ["player_1"] });
-    expect(buildGameStateMessage(visible)).toMatchObject({ type: "game_state", votes: { player_1: "player_2" }, votedPlayerIds: [] });
+    expect(buildGameStateMessage(hidden)).toMatchObject({ type: "game_state", openVote: false, voteStatus: false, votes: {}, votedPlayerIds: [] });
+    expect(buildGameStateMessage(statusOnly)).toMatchObject({ type: "game_state", openVote: false, voteStatus: true, votes: {}, votedPlayerIds: ["player_1"] });
+    expect(buildGameStateMessage(visible)).toMatchObject({ type: "game_state", openVote: true, voteStatus: false, votes: { player_1: "player_2" }, votedPlayerIds: [] });
     expect(buildGameStateMessage(visibleWithStatus)).toMatchObject({
       type: "game_state",
+      openVote: true,
+      voteStatus: true,
       votes: { player_1: "player_2" },
       votedPlayerIds: ["player_1"]
     });

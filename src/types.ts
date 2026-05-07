@@ -463,6 +463,8 @@ export type ServerMessage =
       commonTalkVisible: boolean;
       channelRestrictions: ChannelRestrictions;
       players: PublicGamePlayer[];
+      openVote: boolean;
+      voteStatus: boolean;
       votes: Record<string, string>;
       votedPlayerIds: string[];
       lobbyStartVotedPlayerIds?: string[];

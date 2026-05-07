@@ -191,6 +191,8 @@ export function buildGameStateMessage(state: GameState): ServerMessage {
     commonTalkVisible: state.commonTalkVisible,
     channelRestrictions: channelRestrictionsForState(state),
     players: publicPlayers(state.players).map((player) => ({ ...player, nickname: escapeHtml(player.nickname) })),
+    openVote: state.openVote,
+    voteStatus: state.voteStatus,
     votes: state.openVote ? state.votes : {},
     votedPlayerIds: votedPlayerIdsForState(state),
     lobbyStartVotedPlayerIds: state.phase === "lobby" ? state.players.filter((player) => state.lobbyStartVotes?.[player.playerId]).map((player) => player.playerId) : undefined,
