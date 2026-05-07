@@ -324,6 +324,7 @@ describe("render", () => {
     expect(html).toContain("玩家列表");
     expect(html).toContain('id="lobbyStartNotice"');
     expect(html).toContain("能力發動 / 投票");
+    expect(html).toContain('id="actionPrompt"');
     expect(html).toContain('id="voteReminder"');
     expect(html).toContain("尚無公開遺言。");
     expect(html).toContain("wishRole");
@@ -347,6 +348,11 @@ describe("render", () => {
     expect(ROOM_CLIENT_SCRIPT).toContain("系統提醒：您目前還沒有投票。");
     expect(ROOM_CLIENT_SCRIPT).toContain("系統提醒：您目前還沒有投票，如果同側已經投票請忽略此訊息。");
     expect(ROOM_CLIENT_SCRIPT).toContain('warning.style.backgroundColor = "#FF0000";');
+    expect(ROOM_CLIENT_SCRIPT).toContain("function updateActionPrompt(game, currentPlayer, currentPlayerAlive, votedPlayerIds)");
+    expect(ROOM_CLIENT_SCRIPT).toContain("請選擇咬人對象");
+    expect(ROOM_CLIENT_SCRIPT).toContain("請選擇要占卜的對象");
+    expect(ROOM_CLIENT_SCRIPT).toContain("請選擇護衛的人");
+    expect(ROOM_CLIENT_SCRIPT).toContain("請選擇投票處死的對象");
   });
 
   it("renders room page meta refresh for PHP-style auto reload", () => {

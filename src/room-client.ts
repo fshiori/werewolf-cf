@@ -527,6 +527,39 @@ function updateVoteReminder(game, currentPlayer, currentPlayerAlive, votedPlayer
   warning.innerHTML = "<b>" + message + "</b>";
   reminder.appendChild(warning);
 }
+function updateActionPrompt(game, currentPlayer, currentPlayerAlive, votedPlayerIds) {
+  const prompt = document.querySelector("#actionPrompt");
+  if (!prompt) return;
+  prompt.innerHTML = "";
+  if (!currentPlayer || !currentPlayerAlive || game.phase === "lobby" || game.phase === "ended") return;
+  if (votedPlayerIds.has(currentPlayer.playerId)) return;
+  let message = "";
+  let backgroundColor = "";
+  if (game.phase === "day") {
+    message = "　　　請選擇投票處死的對象　　　";
+    backgroundColor = "#999900";
+  } else if (game.phase === "night" && isWolfRole(role)) {
+    message = "　　　請選擇咬人對象　　　";
+    backgroundColor = "#CC0000";
+  } else if (game.phase === "night" && (role === "seer" || role === "child_fox")) {
+    message = "　　　請選擇要占卜的對象　　　";
+    backgroundColor = "#990099";
+  } else if (game.phase === "night" && role === "guard" && game.day !== 1) {
+    message = "　　　請選擇護衛的人　　　";
+    backgroundColor = "#0099FF";
+  } else if (game.phase === "night" && role === "cat" && game.day > 1) {
+    message = "　　　請選擇要復活的人　　　";
+    backgroundColor = "#006633";
+  }
+  if (!message) return;
+  const span = document.createElement("span");
+  span.style.fontSize = "14pt";
+  span.style.fontWeight = "bold";
+  span.style.backgroundColor = backgroundColor;
+  span.style.color = "snow";
+  span.textContent = message;
+  prompt.append(span, document.createElement("br"));
+}
 function renderLastWordsPanel(game) {
   const lastWordsLog = document.querySelector("#lastWordsLog");
   if (!lastWordsLog) return;
@@ -685,6 +718,7 @@ function renderGame(game) {
     voteSummary[targetId].push(voter.nickname);
   });
   updateVoteReminder(game, currentPlayer, currentPlayerAlive, votedPlayerIds);
+  updateActionPrompt(game, currentPlayer, currentPlayerAlive, votedPlayerIds);
   appendVoteObserverPanel(players, game, currentPlayer, currentPlayerDead, voteSummary, votedPlayerIds);
   let row;
   game.players.forEach((player) => {

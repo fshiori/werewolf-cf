@@ -3406,6 +3406,7 @@ export function renderRoom(roomId: string, options: RenderRoomOptions = {}): str
             <tr>
               <td>
                 <div>身分：<span id="role" class="muted">未分配</span></div>
+                <div id="actionPrompt"></div>
                 <div id="voteReminder"></div>
                 <div id="players" class="muted">等待狀態更新</div>
                 <div><input id="lastWordsText" maxlength="500" size="60"> <button id="setLastWords">遺言</button></div>
