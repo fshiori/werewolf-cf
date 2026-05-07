@@ -1802,6 +1802,46 @@ describe("render", () => {
     expect(gmView).toContain("mutter");
   });
 
+  it("preserves public vote tables while hiding non-open vote counts", () => {
+    const privateVotes = [
+      {
+        id: 1,
+        roomId: "room_abc",
+        playerId: "player_a",
+        eventType: "day_vote",
+        payload: { visibility: "private", nickname: "Alice", targetPlayerId: "player_b", targetNickname: "Bob", phase: "day", day: 2, revoteCount: 0 },
+        createdAt: "2026-05-06 12:01:00"
+      },
+      {
+        id: 2,
+        roomId: "room_abc",
+        playerId: "player_c",
+        eventType: "day_vote",
+        payload: { visibility: "private", nickname: "Carol", targetPlayerId: "player_b", targetNickname: "Bob", phase: "day", day: 2, revoteCount: 0 },
+        createdAt: "2026-05-06 12:02:00"
+      }
+    ];
+
+    const publicView = renderRoomTranscript("room_abc", [], privateVotes, { viewerMode: "public" });
+    expect(publicView).toContain("得票：非公開");
+    expect(publicView).toContain("投票給→");
+    expect(publicView).toContain("<strong> Bob </strong>");
+    expect(publicView).not.toContain("投票給 2 票 →");
+    expect(publicView).not.toContain("白天投票</td>");
+
+    const gmView = renderRoomTranscript("room_abc", [], privateVotes, { viewerMode: "gm" });
+    expect(gmView).toContain("得票：Bob：2票");
+    expect(gmView).toContain("投票給 2 票 →");
+
+    const openVotePublicView = renderRoomTranscript("room_abc", [], privateVotes.map((event) => ({
+      ...event,
+      payload: { ...(event.payload as Record<string, unknown>), visibility: "public" }
+    })), { viewerMode: "public" });
+    expect(openVotePublicView).toContain("得票：Bob：2票");
+    expect(openVotePublicView).toContain("投票給 2 票 →");
+    expect(openVotePublicView).toContain("白天投票</td>");
+  });
+
   it("does not treat private transcript rows without player ids as system-visible rows", () => {
     const events = [
       {
