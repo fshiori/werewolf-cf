@@ -22,6 +22,7 @@ type SentMessage = {
   phase?: string;
   day?: number;
   votes?: Record<string, string>;
+  ownNightActionTarget?: { action: string; targetPlayerId: string };
   commonTalkVisible?: boolean;
   channelRestrictions?: { wolf: boolean; common: boolean; lovers: boolean; fox: boolean };
   log?: string[];
@@ -868,6 +869,62 @@ describe("RoomDurableObject", () => {
 
     expect(voterMessages).toContainEqual(expect.objectContaining({ type: "game_state", openVote: false, votes: { player_voter: "player_target" } }));
     expect(otherMessages).toContainEqual(expect.objectContaining({ type: "game_state", openVote: false, votes: {} }));
+  });
+
+  it("sends night action targets only to the actor websocket", async () => {
+    const game: GameState = {
+      roomId: "room_abc",
+      phase: "night",
+      day: 1,
+      players: [
+        { playerId: "player_wolf", nickname: "Wolf", role: "werewolf", alive: true },
+        { playerId: "player_seer", nickname: "Seer", role: "seer", alive: true },
+        { playerId: "player_target", nickname: "Target", role: "villager", alive: true },
+        { playerId: "player_other", nickname: "Other", role: "villager", alive: true }
+      ],
+      votes: {},
+      openVote: false,
+      commonTalkVisible: false,
+      deadRoleVisible: false,
+      wishRole: false,
+      dummyBoy: false,
+      dayMs: 180_000,
+      nightMs: 90_000,
+      selfVote: false,
+      voteStatus: true,
+      revoteCount: 0,
+      nightKills: {},
+      divinations: {},
+      guards: {},
+      catRevives: {},
+      lastWords: {},
+      log: []
+    };
+    const room = roomObject(game);
+    const wolfMessages: SentMessage[] = [];
+    const otherMessages: SentMessage[] = [];
+    const wolfSocket = fakeSocket(wolfMessages);
+    const otherSocket = fakeSocket(otherMessages);
+    connect(room, wolfSocket, "player_wolf", "Wolf");
+    connect(room, otherSocket, "player_other", "Other");
+
+    await sendRaw(room, wolfSocket, JSON.stringify({ type: "night_kill", targetPlayerId: "player_target" }));
+
+    expect(wolfMessages).toContainEqual(
+      expect.objectContaining({
+        type: "game_state",
+        phase: "night",
+        ownNightActionTarget: { action: "night_kill", targetPlayerId: "player_target" },
+        votedPlayerIds: ["player_wolf"]
+      })
+    );
+    const otherGameState = otherMessages.find((message) => message.type === "game_state" && message.phase === "night");
+    expect(otherGameState).toMatchObject({
+      type: "game_state",
+      phase: "night",
+      votedPlayerIds: ["player_wolf"]
+    });
+    expect(otherGameState?.ownNightActionTarget).toBeUndefined();
   });
 
   it("allows existing players but rejects new players joining active games", async () => {

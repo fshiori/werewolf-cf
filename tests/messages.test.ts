@@ -313,7 +313,7 @@ describe("messages", () => {
     });
   });
 
-  it("shows submitted night action actors without exposing action targets", () => {
+  it("shows submitted night action actors and only exposes action targets to the actor", () => {
     const game = {
       ...createLobbyState("room_abc"),
       phase: "night" as const,
@@ -342,6 +342,36 @@ describe("messages", () => {
     expect(JSON.stringify(message)).not.toContain("target_seer");
     expect(JSON.stringify(message)).not.toContain("target_guard");
     expect(JSON.stringify(message)).not.toContain("target_cat");
+
+    expect(buildGameStateMessage(game, "player_wolf")).toMatchObject({
+      type: "game_state",
+      ownNightActionTarget: { action: "night_kill", targetPlayerId: "target_wolf" }
+    });
+    expect(buildGameStateMessage(game, "player_seer")).toMatchObject({
+      type: "game_state",
+      ownNightActionTarget: { action: "divine", targetPlayerId: "target_seer" }
+    });
+    expect(buildGameStateMessage(game, "player_guard")).toMatchObject({
+      type: "game_state",
+      ownNightActionTarget: { action: "guard", targetPlayerId: "target_guard" }
+    });
+    expect(buildGameStateMessage(game, "player_cat")).toMatchObject({
+      type: "game_state",
+      ownNightActionTarget: { action: "cat_revive", targetPlayerId: "target_cat" }
+    });
+    expect(buildGameStateMessage(game, "player_bystander")).toMatchObject({
+      type: "game_state",
+      ownNightActionTarget: undefined
+    });
+
+    const childFoxGame = {
+      ...game,
+      players: game.players.map((player) => (player.playerId === "player_seer" ? { ...player, role: "child_fox" as const } : player))
+    };
+    expect(buildGameStateMessage(childFoxGame, "player_seer")).toMatchObject({
+      type: "game_state",
+      ownNightActionTarget: { action: "child_fox_divine", targetPlayerId: "target_seer" }
+    });
   });
 
   it("builds revealed role maps for dead role visibility", () => {

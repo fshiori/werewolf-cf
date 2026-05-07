@@ -84,6 +84,7 @@ export type GameWinner = "villagers" | "werewolves" | "foxes" | "lovers";
 export type DivinationResult = "human" | "werewolf";
 export type ChildFoxDivinationResult = DivinationResult | "failed";
 export type MediumResult = "human" | "werewolf";
+export type NightActionType = "night_kill" | "divine" | "child_fox_divine" | "guard" | "cat_revive";
 
 export interface MediumReading {
   day: number;
@@ -487,6 +488,7 @@ export type ServerMessage =
       voteStatus: boolean;
       votes: Record<string, string>;
       votedPlayerIds: string[];
+      ownNightActionTarget?: { action: NightActionType; targetPlayerId: string };
       lobbyStartVotedPlayerIds?: string[];
       lobbyKickVoteTargets?: Array<{ targetPlayerId: string; votedPlayerIds: string[] }>;
       objectionCounts: Record<string, number>;
