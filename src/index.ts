@@ -2610,7 +2610,7 @@ export default {
     }
 
     if (request.method === "GET" && url.pathname === "/admin.php" && url.searchParams.get("go") === "del") {
-      return endRoomByLegacyAdminLink(request, env, url.searchParams.get("id") ?? "", "/admin.php?go=rooms");
+      return endRoomByLegacyAdminLink(request, env, url.searchParams.get("id") ?? "", "/admin.php");
     }
 
     if (request.method === "POST" && url.pathname === "/admin.php" && url.searchParams.get("go") === "in") {
@@ -2621,7 +2621,7 @@ export default {
       return new Response(null, { status: 303, headers: { Location: "/index.php", "Set-Cookie": "adpass=; Path=/; Max-Age=0; SameSite=Lax" } });
     }
 
-    if (request.method === "GET" && url.pathname === "/admin.php" && !url.searchParams.has("go") && readCookie(request, "adpass")) {
+    if (request.method === "GET" && url.pathname === "/admin.php" && !url.searchParams.has("go") && (url.searchParams.has("token") || readCookie(request, "adpass"))) {
       return renderAdminRoomsPage(request, env);
     }
 
