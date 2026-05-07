@@ -59,6 +59,9 @@ function page(title: string, body: string, extraHead = ""): string {
     body.room-page-vote .room-panel-lastwords,
     body.room-page-vote .room-panel-chat,
     body.room-page-vote .room-panel-system { display: none; }
+    .legacy-entry-map { width: 100%; border: 1px solid silver; margin-top: 3px; }
+    .legacy-entry-map th { background: #eeeeee; color: black; text-align: left; padding: 2px 4px; }
+    .legacy-entry-map td { border-top: 1px dotted silver; padding: 2px 4px; }
     table { border-collapse: collapse; }
     input, button, select {
       font: inherit;
@@ -3489,6 +3492,43 @@ function legacyRoomHref(path: "/game_play.php" | "/game_view.php" | "/game_frame
   return `${path}?${escapeHtml(params)}`;
 }
 
+function legacyRoomEntryMap(roomId: string, autoReloadSeconds: 0 | 15 | 20 | 30, pageMode: "full" | "frame" | "up" | "vote"): string {
+  const gamePlayHref = legacyRoomHref("/game_play.php", roomId, autoReloadSeconds);
+  const gameUpHref = legacyRoomHref("/game_up.php", roomId, autoReloadSeconds);
+  const gameVoteHref = legacyRoomHref("/game_vote.php", roomId, autoReloadSeconds);
+  if (pageMode === "frame") {
+    return `
+                <table class="legacy-entry-map" data-legacy-entry="game_frame.php">
+                  <tr><th colspan="3">game_frame.php frameset</th></tr>
+                  <tr><td>rows</td><td colspan="2">85,*</td></tr>
+                  <tr><td>frame name="up"</td><td>src</td><td><a href="${gameUpHref}#game_top">game_up.php#game_top</a></td></tr>
+                  <tr><td>frame name="bottom"</td><td>src</td><td><a href="${gamePlayHref}#game_top">game_play.php#game_top</a></td></tr>
+                  <tr><td>noframes</td><td colspan="2">瀏覽器不支援框架</td></tr>
+                </table>`;
+  }
+  if (pageMode === "up") {
+    return `
+                <table class="legacy-entry-map" data-legacy-entry="game_up.php">
+                  <tr><th colspan="3">game_up.php 發言上框</th></tr>
+                  <tr><td>form name="send"</td><td>target</td><td>bottom</td></tr>
+                  <tr><td>action</td><td colspan="2"><a href="${gamePlayHref}#game_top">game_play.php#game_top</a></td></tr>
+                  <tr><td>vote_link</td><td colspan="2"><a href="${gameVoteHref}#game_top">game_vote.php#game_top</a></td></tr>
+                  <tr><td>reload_middleframe</td><td colspan="2">parent.frames['middle'] 更新保留為 realtime 狀態同步</td></tr>
+                </table>`;
+  }
+  if (pageMode === "vote") {
+    return `
+                <table class="legacy-entry-map" data-legacy-entry="game_vote.php">
+                  <tr><th colspan="3">game_vote.php 投票 / 能力入口</th></tr>
+                  <tr><td>command</td><td colspan="2">vote</td></tr>
+                  <tr><td>target list</td><td colspan="2">由目前階段與角色權限即時產生</td></tr>
+                  <tr><td>back</td><td colspan="2"><a href="${gameUpHref}#game_top">←上一頁&amp;重新整理</a></td></tr>
+                  <tr><td>action panel</td><td colspan="2">共用 WebSocket 指令，送至 Room Durable Object 驗證</td></tr>
+                </table>`;
+  }
+  return "";
+}
+
 export function renderRoom(roomId: string, options: RenderRoomOptions = {}): string {
   const autoReloadSeconds = normalizeAutoReloadSeconds(options.autoReloadSeconds);
   const viewMode = normalizeRoomViewMode(options.viewMode);
@@ -3496,6 +3536,7 @@ export function renderRoom(roomId: string, options: RenderRoomOptions = {}): str
   const roomPath = `/room/${escapeHtml(roomId)}`;
   const viewLabel = viewMode === "spectator" ? "旁觀視點" : viewMode === "heaven" ? "靈界視點" : "玩家視點";
   const pageLabel = pageMode === "frame" ? "框架入口" : pageMode === "up" ? "上方更新" : pageMode === "vote" ? "投票入口" : "完整頁面";
+  const legacyEntryMap = legacyRoomEntryMap(roomId, autoReloadSeconds, pageMode);
   const autoReloadMeta = autoReloadSeconds > 0 ? `<meta http-equiv="refresh" content="${autoReloadSeconds}">` : "";
   return page(`Room ${roomId}`, `
     <script>document.body.classList.add("room-phase-lobby", "room-view-${viewMode}", "room-page-${pageMode}");</script>
@@ -3553,7 +3594,7 @@ export function renderRoom(roomId: string, options: RenderRoomOptions = {}): str
             </tr>
             <tr>
               <td>頁面</td>
-              <td><strong>${pageLabel}</strong> <small class="muted">PHP 版 frame/up/vote 入口的顯示模式</small></td>
+              <td><strong>${pageLabel}</strong> <small class="muted">PHP 版 frame/up/vote 入口的顯示模式</small>${legacyEntryMap}</td>
             </tr>
             <tr class="page-frame-only">
               <td>框架</td>
