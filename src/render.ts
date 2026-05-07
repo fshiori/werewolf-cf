@@ -264,6 +264,9 @@ function page(title: string, body: string, extraHead = ""): string {
     .vote-total-row td { background: #ffffcc; color: #666600; }
     .vote-ballot-row td { background: #ffffff; }
     .transcript-row td { border-top: 1px dashed silver; }
+    .transcript-table { width: 100%; border-collapse: collapse; font-size: 12pt; }
+    .transcript-table td { padding: 2px 4px; vertical-align: top; }
+    .transcript-day-heading td { background: #eeeeee; color: #000000; font-weight: bold; }
     .transcript-location-system td, .transcript-location-game td { background: #efefef; font-weight: bold; }
     .transcript-location-wolf td { background: #000030; color: #ffccff; }
     .transcript-location-wolf-lovers td { background: #000030; color: #ffccff; }
@@ -880,7 +883,7 @@ function renderTranscriptEventSections(events: RoomEventSummary[]): string {
   }
 
   return Array.from(groups.entries()).map(([label, groupEvents]) => `
-    <tr><td colspan="5"><strong>${escapeHtml(label)}</strong></td></tr>
+    <tr class="transcript-day-heading"><td colspan="5">${escapeHtml(label)}</td></tr>
     ${groupEvents.map((event) => {
       const location = transcriptLocation(event);
       return `<tr class="transcript-row ${location.className}">
@@ -1602,7 +1605,7 @@ export function renderRoomTranscript(roomId: string, records: GameRecordSummary[
     </fieldset>
     <fieldset>
       <legend><strong>事件履歷</strong></legend>
-      <table class="form-table" style="margin:12px 20px 18px;">
+      <table class="transcript-table" border="0" cellspacing="0" cellpadding="2" style="margin:12px 20px 18px;">
         <thead><tr><td><strong>時間</strong></td><td><strong>位置</strong></td><td><strong>種類</strong></td><td><strong>發言/行動</strong></td><td><strong>內容</strong></td></tr></thead>
         <tbody>${eventRows}</tbody>
       </table>
