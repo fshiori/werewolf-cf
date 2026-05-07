@@ -3454,10 +3454,13 @@ export function renderScriptInfo(): string {
   `, "/script_info.php"));
 }
 
+export type LegacyRoomPath = "/game_play.php" | "/game_view.php" | "/game_frame.php" | "/game_up.php" | "/game_vote.php" | "/login.php" | "/user_manager.php";
+
 export type RenderRoomOptions = {
   autoReloadSeconds?: number;
   viewMode?: "player" | "spectator" | "heaven";
   pageMode?: "full" | "frame" | "up" | "vote";
+  legacyPath?: LegacyRoomPath;
 };
 
 function normalizeAutoReloadSeconds(value: number | undefined): 0 | 15 | 20 | 30 {
@@ -3490,7 +3493,7 @@ function roomReloadHref(roomPath: string, viewMode: "player" | "spectator" | "he
   return roomViewHref(roomPath, viewMode, autoReloadSeconds);
 }
 
-function legacyRoomHref(path: "/game_play.php" | "/game_view.php" | "/game_frame.php" | "/game_up.php" | "/game_vote.php" | "/login.php" | "/user_manager.php", roomId: string, autoReloadSeconds: 0 | 15 | 20 | 30, viewMode?: "spectator" | "heaven"): string {
+function legacyRoomHref(path: LegacyRoomPath, roomId: string, autoReloadSeconds: 0 | 15 | 20 | 30, viewMode?: "spectator" | "heaven"): string {
   const params = [
     `room_no=${encodeURIComponent(roomId)}`,
     autoReloadSeconds > 0 ? `auto_reload=${autoReloadSeconds}` : "",
@@ -3499,7 +3502,7 @@ function legacyRoomHref(path: "/game_play.php" | "/game_view.php" | "/game_frame
   return `${path}?${escapeHtml(params)}`;
 }
 
-function currentRoomReloadHref(roomPath: string, roomId: string, viewMode: "player" | "spectator" | "heaven", pageMode: "full" | "frame" | "up" | "vote", autoReloadSeconds: 0 | 15 | 20 | 30): string {
+function currentRoomReloadHref(roomPath: string, roomId: string, viewMode: "player" | "spectator" | "heaven", pageMode: "full" | "frame" | "up" | "vote", autoReloadSeconds: 0 | 15 | 20 | 30, legacyPath?: LegacyRoomPath): string {
   if (pageMode === "frame") {
     return legacyRoomHref("/game_frame.php", roomId, autoReloadSeconds);
   }
@@ -3508,6 +3511,9 @@ function currentRoomReloadHref(roomPath: string, roomId: string, viewMode: "play
   }
   if (pageMode === "vote") {
     return legacyRoomHref("/game_vote.php", roomId, autoReloadSeconds);
+  }
+  if (legacyPath) {
+    return legacyRoomHref(legacyPath, roomId, autoReloadSeconds, viewMode === "heaven" ? "heaven" : undefined);
   }
   return roomReloadHref(roomPath, viewMode, autoReloadSeconds);
 }
@@ -3569,6 +3575,7 @@ export function renderRoom(roomId: string, options: RenderRoomOptions = {}): str
   const autoReloadSeconds = normalizeAutoReloadSeconds(options.autoReloadSeconds);
   const viewMode = normalizeRoomViewMode(options.viewMode);
   const pageMode = normalizeRoomPageMode(options.pageMode);
+  const legacyPath = options.legacyPath;
   const roomPath = `/room/${escapeHtml(roomId)}`;
   const viewLabel = viewMode === "spectator" ? "旁觀視點" : viewMode === "heaven" ? "靈界視點" : "玩家視點";
   const pageLabel = pageMode === "frame" ? "框架入口" : pageMode === "up" ? "上方更新" : pageMode === "vote" ? "投票入口" : "完整頁面";
@@ -3597,12 +3604,12 @@ export function renderRoom(roomId: string, options: RenderRoomOptions = {}): str
             <tr>
               <td>更新</td>
               <td>
-                [<a href="${currentRoomReloadHref(roomPath, roomId, viewMode, pageMode, 0)}">手動更新</a>]
+                [<a href="${currentRoomReloadHref(roomPath, roomId, viewMode, pageMode, 0, legacyPath)}">手動更新</a>]
                 [自動更新:
-                <a href="${currentRoomReloadHref(roomPath, roomId, viewMode, pageMode, 15)}">15秒</a>
-                <a href="${currentRoomReloadHref(roomPath, roomId, viewMode, pageMode, 20)}">20秒</a>
-                <a href="${currentRoomReloadHref(roomPath, roomId, viewMode, pageMode, 30)}">30秒</a>
-                <a href="${currentRoomReloadHref(roomPath, roomId, viewMode, pageMode, 0)}">停止</a>]
+                <a href="${currentRoomReloadHref(roomPath, roomId, viewMode, pageMode, 15, legacyPath)}">15秒</a>
+                <a href="${currentRoomReloadHref(roomPath, roomId, viewMode, pageMode, 20, legacyPath)}">20秒</a>
+                <a href="${currentRoomReloadHref(roomPath, roomId, viewMode, pageMode, 30, legacyPath)}">30秒</a>
+                <a href="${currentRoomReloadHref(roomPath, roomId, viewMode, pageMode, 0, legacyPath)}">停止</a>]
                 <small class="muted">目前：${autoReloadSeconds > 0 ? `${autoReloadSeconds}秒` : "手動"}</small>
               </td>
             </tr>
