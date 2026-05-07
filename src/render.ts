@@ -1182,9 +1182,9 @@ export function renderAdminIndex(): string {
     <fieldset>
       <legend><strong>管理選單</strong></legend>
       <table class="form-table">
-        <tr><td><strong>　廢村管理：</strong></td><td><a href="/admin/rooms">村子管理</a> - 檢視進行中/已結束村子，必要時以管理密碼廢村。</td></tr>
-        <tr><td><strong>　系統設定：</strong></td><td><a href="/admin/config">設定管理</a> - 更新首頁公告與維護模式。</td></tr>
-        <tr><td><strong>　討論管理：</strong></td><td><a href="/admin/bbs">討論管理</a> - 檢視主題並進入置頂、鎖定、精華設定。</td></tr>
+        <tr><td><strong>　廢村管理：</strong></td><td><a href="/admin.php?go=rooms">村子管理</a> - 檢視進行中/已結束村子，必要時以管理密碼廢村。</td></tr>
+        <tr><td><strong>　系統設定：</strong></td><td><a href="/admin.php?go=config">設定管理</a> - 更新首頁公告與維護模式。</td></tr>
+        <tr><td><strong>　討論管理：</strong></td><td><a href="/admin.php?go=bbs">討論管理</a> - 檢視主題並進入置頂、鎖定、精華設定。</td></tr>
         <tr><td><strong>　伺服器狀態：</strong></td><td><a href="/status">狀態檢查</a> - 檢查 D1、Durable Objects、R2、KV 綁定狀態。</td></tr>
       </table>
     </fieldset>
@@ -1208,7 +1208,7 @@ export function renderAdminIndex(): string {
 }
 
 export function renderBbsAdmin(topics: BbsTopicSummary[], options: { page?: number; pageSize?: number; totalTopics?: number } = {}): string {
-  const pagination = paginationLinks(options.totalTopics, options.page, options.pageSize, "/admin/bbs");
+  const pagination = paginationLinks(options.totalTopics, options.page, options.pageSize, "/admin.php?go=bbs");
   const rows = topics.length
     ? topics.map((topic) => {
       const topicPath = bbsTopicPath(topic.id);
@@ -1256,7 +1256,7 @@ export function renderAdminRoomsLogin(): string {
       document.querySelector("#roomAdminLogin").addEventListener("click", () => {
         const token = tokenInput.value;
         localStorage.setItem("werewolf_cf_room_admin_token", token);
-        location.href = "/admin/rooms?token=" + encodeURIComponent(token);
+        location.href = "/admin.php?go=rooms&token=" + encodeURIComponent(token);
       });
     </script>
   `));
@@ -1277,7 +1277,7 @@ export function renderAdminConfigLogin(): string {
       document.querySelector("#configAdminLogin").addEventListener("click", () => {
         const token = tokenInput.value;
         localStorage.setItem("werewolf_cf_config_admin_token", token);
-        location.href = "/admin/config?token=" + encodeURIComponent(token);
+        location.href = "/admin.php?go=config&token=" + encodeURIComponent(token);
       });
     </script>
   `));
@@ -1378,8 +1378,8 @@ export function renderAdminRooms(rooms: RoomSummary[], statusFilter: AdminRoomSt
     room.options.voteStatus ? optionMark("投票済", "img/conn_look.gif") : ""
   ].filter(Boolean).join(" ");
   const filterHref = (filter: AdminRoomStatusFilter): string => {
-    const query = `status=${encodeURIComponent(filter)}${adminToken ? `&token=${encodeURIComponent(adminToken)}` : ""}`;
-    return `/admin/rooms?${escapeHtml(query)}`;
+    const query = `go=rooms&status=${encodeURIComponent(filter)}${adminToken ? `&token=${encodeURIComponent(adminToken)}` : ""}`;
+    return `/admin.php?${escapeHtml(query)}`;
   };
   const filterLink = (filter: AdminRoomStatusFilter, label: string): string => (
     filter === statusFilter ? `<strong>${escapeHtml(label)}</strong>` : `<a href="${filterHref(filter)}">${escapeHtml(label)}</a>`

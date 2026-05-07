@@ -807,7 +807,7 @@ async function loginLegacyAdmin(request: Request): Promise<Response> {
   const token = readFormString(form, "adpass") ?? "";
   return new Response(null, {
     status: 303,
-    headers: { Location: `/admin/rooms?token=${encodeURIComponent(token)}` }
+    headers: { Location: `/admin.php?go=rooms&token=${encodeURIComponent(token)}` }
   });
 }
 
@@ -2318,7 +2318,7 @@ export default {
     }
 
     if (request.method === "GET" && url.pathname === "/admin.php" && url.searchParams.get("go") === "del") {
-      return endRoomByLegacyAdminLink(request, env, url.searchParams.get("id") ?? "", "/admin/rooms");
+      return endRoomByLegacyAdminLink(request, env, url.searchParams.get("id") ?? "", "/admin.php?go=rooms");
     }
 
     if (request.method === "POST" && url.pathname === "/admin.php" && url.searchParams.get("go") === "in") {
@@ -2329,11 +2329,11 @@ export default {
       return new Response(null, { status: 303, headers: { Location: "/admin.php" } });
     }
 
-    if (request.method === "GET" && (url.pathname === "/admin" || url.pathname === "/admin.php")) {
+    if (request.method === "GET" && (url.pathname === "/admin" || (url.pathname === "/admin.php" && !url.searchParams.has("go")))) {
       return html(renderAdminIndex());
     }
 
-    if (request.method === "GET" && url.pathname === "/admin/bbs") {
+    if (request.method === "GET" && (url.pathname === "/admin/bbs" || (url.pathname === "/admin.php" && url.searchParams.get("go") === "bbs"))) {
       const page = readPositivePage(url.searchParams.get("page"));
       return html(renderBbsAdmin(await listBbsTopics(env, false, BBS_TOPIC_PAGE_SIZE, (page - 1) * BBS_TOPIC_PAGE_SIZE), {
         page,
@@ -2342,7 +2342,7 @@ export default {
       }));
     }
 
-    if (request.method === "GET" && url.pathname === "/admin/rooms") {
+    if (request.method === "GET" && (url.pathname === "/admin/rooms" || (url.pathname === "/admin.php" && url.searchParams.get("go") === "rooms"))) {
       const authError = await requireRoomAdmin(request, env);
       if (authError) {
         return html(renderAdminRoomsLogin());
@@ -2354,7 +2354,7 @@ export default {
       return html(renderAdminRooms(rooms, statusFilter, url.searchParams.get("token") ?? ""));
     }
 
-    if (request.method === "GET" && url.pathname === "/admin/config") {
+    if (request.method === "GET" && (url.pathname === "/admin/config" || (url.pathname === "/admin.php" && url.searchParams.get("go") === "config"))) {
       const authError = await requireConfigAdmin(request, env);
       if (authError) {
         return html(renderAdminConfigLogin());
