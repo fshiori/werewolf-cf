@@ -685,6 +685,27 @@ describe("worker routes", () => {
     expect(String(runs[0].values[0])).toMatch(/^[0-9a-f]{64}$/);
   });
 
+  it("accepts legacy Trip registration form posts", async () => {
+    const env = envWithRooms([]);
+    const body = new FormData();
+    body.set("name", "ab12CD");
+    body.set("password", "secret");
+
+    const response = await worker.fetch(
+      new Request("http://example.test/trip.php?go=post", {
+        method: "POST",
+        body
+      }),
+      env
+    );
+    const runs = (env as unknown as { runs: Array<{ query: string; values: unknown[] }> }).runs;
+
+    expect(response.status).toBe(303);
+    expect(response.headers.get("Location")).toBe("/trip");
+    expect(runs[0].query).toContain("INSERT INTO registered_trips");
+    expect(String(runs[0].values[0])).toMatch(/^[0-9a-f]{64}$/);
+  });
+
   it("excludes Trip identities", async () => {
     const env = envWithRooms([]);
     const response = await worker.fetch(
@@ -702,6 +723,29 @@ describe("worker routes", () => {
     expect(runs[0].query).toContain("INSERT INTO excluded_trips");
     expect(String(runs[0].values[0])).toMatch(/^[0-9a-f]{64}$/);
     expect(runs[0].values[1]).toBe("blocked");
+  });
+
+  it("accepts legacy Trip exclusion form posts", async () => {
+    const env = envWithRooms([]);
+    const body = new FormData();
+    body.set("name", "ab12CD");
+    body.set("password", "secret");
+    body.set("aname", "Blocked nickname");
+
+    const response = await worker.fetch(
+      new Request("http://example.test/trip.php?go=out", {
+        method: "POST",
+        body
+      }),
+      env
+    );
+    const runs = (env as unknown as { runs: Array<{ query: string; values: unknown[] }> }).runs;
+
+    expect(response.status).toBe(303);
+    expect(response.headers.get("Location")).toBe("/trip");
+    expect(runs[0].query).toContain("INSERT INTO excluded_trips");
+    expect(String(runs[0].values[0])).toMatch(/^[0-9a-f]{64}$/);
+    expect(runs[0].values[1]).toBe("Blocked nickname");
   });
 
   it("removes Trip exclusions", async () => {
