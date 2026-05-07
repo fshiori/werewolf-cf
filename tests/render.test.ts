@@ -1598,6 +1598,7 @@ describe("render", () => {
     expect(html).toContain("Trip限定 / GM制");
     expect(html).toContain("/room/room_abc/log");
     expect(html).toContain("/room/room_abc/events");
+    expect(html).toContain("/admin.php?go=del&amp;id=room_abc&amp;token=secret%20token");
     expect(html).toContain("adminEndRoom");
     expect(html).toContain("/api/admin/rooms/");
     expect(html).toContain('"x-room-admin-token": roomAdminToken');

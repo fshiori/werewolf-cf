@@ -1259,6 +1259,7 @@ describe("worker routes", () => {
     expect(body).toContain("參照");
     expect(body).toContain("/room/room_admin/log");
     expect(body).toContain("/room/room_admin/events");
+    expect(body).toContain("/admin.php?go=del&amp;id=room_admin&amp;token=secret");
     expect(body).toContain("adminEndRoom");
     expect(body).toContain("/api/admin/rooms/");
   });
