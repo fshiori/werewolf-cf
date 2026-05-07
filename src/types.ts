@@ -466,6 +466,7 @@ export type ServerMessage =
       votes: Record<string, string>;
       votedPlayerIds: string[];
       lobbyStartVotedPlayerIds?: string[];
+      objectionCounts: Record<string, number>;
       winner?: GameWinner;
       phaseEndsAt?: string;
       suddenDeathWarningAt?: string;

@@ -3102,7 +3102,7 @@ export function renderRoom(roomId: string, options: RenderRoomOptions = {}): str
                 <button id="sendLoversChat" disabled>戀頻</button>
                 <button id="sendDeadChat" disabled>靈界</button>
                 <button id="sendSelfTalk" disabled>自言</button>
-                <button id="sendObjection" disabled>提出反對</button>
+                <button id="sendObjection" class="objection-button" disabled>${referenceAssetImg("img/objection.gif", "提出反對")}(<span id="objectionRemaining">2</span>)</button>
                 <label><input id="soundNotify" type="checkbox"> 音效</label>
                 <button id="sendGmChat" disabled>GM</button>
                 <select id="gmWhisperTarget"></select>

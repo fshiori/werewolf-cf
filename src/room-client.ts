@@ -12,6 +12,7 @@ document.querySelector("#soundNotify").checked = localStorage.getItem("werewolf_
 document.querySelector("#autoRefresh").checked = localStorage.getItem("werewolf_cf_auto_refresh") === "on";
 let ws;
 let autoRefreshTimer;
+const maxObjections = 2;
 function setRoomPhaseClass(phase) {
   document.body.classList.remove("room-phase-lobby", "room-phase-day", "room-phase-night", "room-phase-ended");
   document.body.classList.add("room-phase-" + phase);
@@ -559,7 +560,9 @@ function renderGame(game) {
   document.querySelector("#sendLoversChat").disabled = !(game.phase === "night" && isLover && currentPlayerAlive && !channelRestrictions.lovers);
   document.querySelector("#sendDeadChat").disabled = !(currentPlayerDead && game.phase !== "lobby" && game.phase !== "ended");
   document.querySelector("#sendSelfTalk").disabled = !(game.phase === "night" && currentPlayerAlive);
-  document.querySelector("#sendObjection").disabled = !(currentPlayerAlive && (game.phase === "lobby" || game.phase === "day"));
+  const objectionRemaining = currentPlayer ? Math.max(0, maxObjections - ((game.objectionCounts || {})[currentPlayerId] || 0)) : maxObjections;
+  document.querySelector("#objectionRemaining").textContent = String(objectionRemaining);
+  document.querySelector("#sendObjection").disabled = !(currentPlayerAlive && (game.phase === "lobby" || game.phase === "day") && objectionRemaining > 0);
   document.querySelector("#sendGmChat").disabled = !isGm;
   document.querySelector("#sendGmWhisper").disabled = !isGm || game.players.length === 0;
   document.querySelector("#gmAdvancePhase").disabled = !isGm || !(game.phase === "day" || game.phase === "night");

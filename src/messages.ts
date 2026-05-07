@@ -193,6 +193,9 @@ export function buildGameStateMessage(state: GameState): ServerMessage {
     votes: state.openVote ? state.votes : {},
     votedPlayerIds: votedPlayerIdsForState(state),
     lobbyStartVotedPlayerIds: state.phase === "lobby" ? state.players.filter((player) => state.lobbyStartVotes?.[player.playerId]).map((player) => player.playerId) : undefined,
+    objectionCounts: Object.fromEntries(
+      Object.entries(state.objectionCounts ?? {}).filter(([playerId]) => state.players.some((player) => player.playerId === playerId))
+    ),
     winner: state.winner,
     phaseEndsAt: state.phaseEndsAt,
     suddenDeathWarningAt: state.suddenDeathWarningAt,
