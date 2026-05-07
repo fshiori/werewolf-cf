@@ -1436,6 +1436,14 @@ describe("render", () => {
     expect(html).not.toContain("未定勝利");
   });
 
+  it("preserves old log return state on room records and events pages", () => {
+    const records = renderRoomRecords("room_abc", [], { oldLogReturnHref: "/old_log.php?search=Alpha%20%26%20Beta&page=2" });
+    expect(records).toContain('<a href="/old_log.php?search=Alpha%20%26%20Beta&amp;page=2">←返回</a>');
+
+    const events = renderRoomEvents("room_abc", [], { oldLogReturnHref: "/old_log.php?all=1" });
+    expect(events).toContain('<a href="/old_log.php?all=1">←返回</a>');
+  });
+
   it("renders room events as a normal HTML page", () => {
     const html = renderRoomEvents("room_abc", [
       {

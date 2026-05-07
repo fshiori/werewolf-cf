@@ -2643,7 +2643,7 @@ export default {
         if (!(await roomExists(env, roomId))) {
           return new Response("Room not found", { status: 404 });
         }
-        return html(renderRoomRecords(roomId, await listRoomRecords(env, roomId)));
+        return html(renderRoomRecords(roomId, await listRoomRecords(env, roomId), { oldLogReturnHref: oldLogReturnHref(url) }));
       } catch (error) {
         return json({ error: error instanceof Error ? error.message : "Invalid room" }, { status: 400 });
       }
@@ -2656,7 +2656,7 @@ export default {
         if (!(await roomExists(env, roomId))) {
           return new Response("Room not found", { status: 404 });
         }
-        return html(renderRoomEvents(roomId, await listRoomEvents(env, roomId, { fullHistory: true })));
+        return html(renderRoomEvents(roomId, await listRoomEvents(env, roomId, { fullHistory: true }), { oldLogReturnHref: oldLogReturnHref(url) }));
       } catch (error) {
         return json({ error: error instanceof Error ? error.message : "Invalid room" }, { status: 400 });
       }
