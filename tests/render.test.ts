@@ -15,8 +15,8 @@ describe("render", () => {
         options: {
           poison: true,
           bigWolf: true,
-          authority: true,
-          decider: true,
+          authority: false,
+          decider: false,
           lovers: true,
           betrayer: true,
           childFox: true,
@@ -595,8 +595,8 @@ describe("render", () => {
         options: {
           poison: false,
           bigWolf: false,
-          authority: false,
-          decider: false,
+          authority: true,
+          decider: true,
           lovers: false,
           betrayer: false,
           childFox: false,
@@ -706,8 +706,8 @@ describe("render", () => {
         options: {
           poison: true,
           bigWolf: false,
-          authority: false,
-          decider: false,
+          authority: true,
+          decider: true,
           lovers: false,
           betrayer: false,
           childFox: false,
@@ -717,9 +717,9 @@ describe("render", () => {
           openVote: true,
           commonTalkVisible: false,
           deadRoleVisible: false,
-          wishRole: false,
-          dummyBoy: false,
-          customDummy: false,
+          wishRole: true,
+          dummyBoy: true,
+          customDummy: true,
           dummyName: "替身君",
           dummyLastWords: "",
           realTime: true,
@@ -749,6 +749,10 @@ describe("render", () => {
     expect(html).toContain("heaven_only=on");
     expect(html).toContain("埋毒");
     expect(html).toContain("公開票");
+    expect(html).toContain("/assets/reference/img/room_option_wish_role.gif");
+    expect(html).toContain("/assets/reference/img/room_option_dummy_boy.gif");
+    expect(html).toContain("/assets/reference/img/room_option_decide.gif");
+    expect(html).toContain("/assets/reference/img/room_option_authority.gif");
     expect(html).toContain('<a href="/old_log.php">過去紀錄</a>');
   });
 
