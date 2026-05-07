@@ -360,6 +360,7 @@ describe("render", () => {
     expect(html).toContain("權力者");
     expect(html).toContain("玩家列表");
     expect(html).toContain('id="lobbyStartNotice"');
+    expect(html).toContain('id="voteObserverPanel"');
     expect(html).toContain("能力發動 / 投票");
     expect(html).toContain('id="actionPrompt"');
     expect(html).toContain('id="voteReminder"');
@@ -548,12 +549,15 @@ describe("render", () => {
     expect(ROOM_CLIENT_SCRIPT).toContain("const lobbyStartVotedPlayerIds = new Set(game.lobbyStartVotedPlayerIds || []);");
     expect(ROOM_CLIENT_SCRIPT).toContain('lobbyStartVotedPlayerIds.has(player.playerId) ? " start-voted" : ""');
     expect(ROOM_CLIENT_SCRIPT).toContain("踢出投票：");
-    expect(ROOM_CLIENT_SCRIPT).toContain("function appendVoteObserverPanel(container, game, currentPlayer, currentPlayerDead, voteSummary, votedPlayerIds)");
+    expect(ROOM_CLIENT_SCRIPT).toContain("function updateVoteObserverPanel(game, currentPlayer, currentPlayerDead, voteSummary, votedPlayerIds)");
+    expect(ROOM_CLIENT_SCRIPT).toContain('const container = document.querySelector("#voteObserverPanel");');
+    expect(ROOM_CLIENT_SCRIPT).toContain("container.innerHTML = \"\";");
     expect(ROOM_CLIENT_SCRIPT).toContain("旁觀視點");
     expect(ROOM_CLIENT_SCRIPT).toContain("靈界視點");
     expect(ROOM_CLIENT_SCRIPT).toContain("投票先非公開");
     expect(ROOM_CLIENT_SCRIPT).toContain("公開投票先");
     expect(ROOM_CLIENT_SCRIPT).toContain('if (!game.openVote || !Object.keys(voteSummary).length) return;');
+    expect(ROOM_CLIENT_SCRIPT).toContain("updateVoteObserverPanel(game, currentPlayer, currentPlayerDead, voteSummary, votedPlayerIds);");
     expect(ROOM_CLIENT_SCRIPT).toContain('table.className = "vote-table";');
     expect(ROOM_CLIENT_SCRIPT).toContain('headingCell.textContent = phaseLabel(game);');
     expect(ROOM_CLIENT_SCRIPT).toContain('"投票給 " + (targetTotals[targetId] || 0) + " 票 →"');
