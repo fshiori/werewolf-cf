@@ -1474,7 +1474,7 @@ export function renderAdminIndex(): string {
         <tr><td><strong>　廢村管理：</strong></td><td><a href="/admin.php?go=rooms">村子管理</a> - 檢視進行中/已結束村子，必要時以管理密碼廢村。</td></tr>
         <tr><td><strong>　系統設定：</strong></td><td><a href="/admin.php?go=config">設定管理</a> - 更新首頁公告與維護模式。</td></tr>
         <tr><td><strong>　討論管理：</strong></td><td><a href="/admin.php?go=bbs">討論管理</a> - 檢視主題並進入置頂、鎖定、精華設定。</td></tr>
-        <tr><td><strong>　伺服器狀態：</strong></td><td><a href="/admin.php?go=status">狀態檢查</a> - 檢查 D1、Durable Objects、R2、KV 綁定狀態。</td></tr>
+        <tr><td><strong>　伺服器狀態：</strong></td><td><a href="/admin.php?go=status">狀態檢查</a> <small>(<a href="/admin/status">modern</a>)</small> - 檢查 D1、Durable Objects、R2、KV 綁定狀態。</td></tr>
       </table>
     </fieldset>
     <fieldset>
