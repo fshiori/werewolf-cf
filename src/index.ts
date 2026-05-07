@@ -1197,19 +1197,46 @@ async function endRoomByAdmin(request: Request, env: Env, roomIdParam: string): 
     return authError;
   }
   try {
-    const roomId = validateRoomId(roomIdParam);
-    const exists = await env.DB.prepare("SELECT id FROM rooms WHERE id = ? LIMIT 1").bind(roomId).first<{ id: string }>();
-    if (!exists) {
-      return json({ error: "Room not found" }, { status: 404 });
-    }
-    await env.DB.prepare("UPDATE rooms SET status = 'ended' WHERE id = ?").bind(roomId).run();
-    await env.DB.prepare("INSERT INTO room_events (room_id, event_type, payload_json) VALUES (?, 'admin_room_ended', ?)").bind(
-      roomId,
-      JSON.stringify({ status: "ended" })
-    ).run();
+    const roomId = await markRoomEndedByAdmin(env, roomIdParam);
     return json({ roomId, status: "ended" });
   } catch (error) {
-    return json({ error: error instanceof Error ? error.message : "Failed to end room" }, { status: 400 });
+    return json({ error: error instanceof Error ? error.message : "Failed to end room" }, { status: errorStatus(error, 400) });
+  }
+}
+
+async function markRoomEndedByAdmin(env: Env, roomIdParam: string): Promise<string> {
+  const roomId = validateRoomId(roomIdParam);
+  const exists = await env.DB.prepare("SELECT id FROM rooms WHERE id = ? LIMIT 1").bind(roomId).first<{ id: string }>();
+  if (!exists) {
+    const error = new Error("Room not found") as Error & { status: number };
+    error.status = 404;
+    throw error;
+  }
+  await env.DB.prepare("UPDATE rooms SET status = 'ended' WHERE id = ?").bind(roomId).run();
+  await env.DB.prepare("INSERT INTO room_events (room_id, event_type, payload_json) VALUES (?, 'admin_room_ended', ?)").bind(
+    roomId,
+    JSON.stringify({ status: "ended" })
+  ).run();
+  return roomId;
+}
+
+async function endRoomByLegacyAdminLink(request: Request, env: Env, roomIdParam: string, redirectPath: string): Promise<Response> {
+  const authError = await requireRoomAdmin(request, env);
+  if (authError) {
+    return authError;
+  }
+  try {
+    const roomId = await markRoomEndedByAdmin(env, roomIdParam);
+    const url = new URL(request.url);
+    const token = url.searchParams.get("token");
+    const redirect = new URL(redirectPath, url.origin);
+    if (token) {
+      redirect.searchParams.set("token", token);
+    }
+    redirect.searchParams.set("ended", roomId);
+    return new Response(null, { status: 303, headers: { Location: `${redirect.pathname}${redirect.search}` } });
+  } catch (error) {
+    return json({ error: error instanceof Error ? error.message : "Failed to end room" }, { status: errorStatus(error, 400) });
   }
 }
 
@@ -2273,6 +2300,10 @@ export default {
       }
     }
 
+    if (request.method === "GET" && url.pathname === "/admin.php" && url.searchParams.get("go") === "del") {
+      return endRoomByLegacyAdminLink(request, env, url.searchParams.get("id") ?? "", "/admin/rooms");
+    }
+
     if (request.method === "GET" && (url.pathname === "/admin" || url.pathname === "/admin.php")) {
       return html(renderAdminIndex());
     }
@@ -2474,6 +2505,9 @@ export default {
       url.pathname === "/login.php" ||
       url.pathname === "/user_manager.php";
     const legacyLiveRoomId = isLegacyLiveRoomPage ? url.searchParams.get("room_no") : null;
+    if (request.method === "GET" && url.pathname === "/game_play.php" && url.searchParams.get("go") === "del") {
+      return endRoomByLegacyAdminLink(request, env, url.searchParams.get("id") ?? legacyLiveRoomId ?? "", "/admin/rooms");
+    }
     if (request.method === "GET" && (roomMatch || isLegacyLiveRoomPage)) {
       try {
         if (!roomMatch && !legacyLiveRoomId) {
