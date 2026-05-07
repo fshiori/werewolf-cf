@@ -1188,7 +1188,7 @@ export function renderBbsAdmin(topics: BbsTopicSummary[], options: { page?: numb
       <legend><strong>討論管理</strong></legend>
       <table class="form-table">
         <tr><td><strong>　認證：</strong></td><td>主題狀態更新仍需在主題頁輸入 BBS 管理密碼。</td></tr>
-        <tr><td><strong>　入口：</strong></td><td><a href="/bbs">全部主題</a>　<a href="/bbs?digest=1">精華主題</a></td></tr>
+        <tr><td><strong>　入口：</strong></td><td><a href="/bbs.php">全部主題</a>　<a href="/bbs.php?go=dige">精華主題</a></td></tr>
       </table>
       ${pagination}
       <table class="form-table" border="1" cellspacing="1" bgcolor="#CCCCCC" style="width:100%;margin:12px 0 18px;">
@@ -2297,7 +2297,7 @@ const BBS_REPLY_PAGE_SIZE = 10;
 function bbsTopicLatestReplyPath(topic: BbsTopicSummary): string {
   const topicPath = bbsTopicPath(topic.id);
   const lastPage = Math.max(1, Math.ceil(topic.replyCount / BBS_REPLY_PAGE_SIZE));
-  return lastPage > 1 ? `${topicPath}?page=${lastPage}` : topicPath;
+  return lastPage > 1 ? `${topicPath}&page=${lastPage}` : topicPath;
 }
 
 export function renderBbs(topics: BbsTopicSummary[], options: { digestOnly?: boolean; page?: number; pageSize?: number; totalTopics?: number } = {}): string {
@@ -2316,10 +2316,10 @@ export function renderBbs(topics: BbsTopicSummary[], options: { digestOnly?: boo
     }).join("")
     : `<tr><td colspan="5" class="muted">${options.digestOnly ? "尚無精華主題。" : "尚無主題。"}</td></tr>`;
   const listTitle = options.digestOnly ? "精華主題列表" : "主題列表";
-  const pagination = paginationLinks(options.totalTopics, options.page, options.pageSize, options.digestOnly ? "/bbs?digest=1" : "/bbs");
+  const pagination = paginationLinks(options.totalTopics, options.page, options.pageSize, options.digestOnly ? "/bbs.php?go=dige" : "/bbs.php");
 
   return page("BBS", shell(`
-    <p><a href="/bbs.php?go=post">發表主題</a> <a href="/bbs">全部主題</a> <a href="/bbs.php?go=dige">精華區</a></p>
+    <p><a href="/bbs.php?go=post">發表主題</a> <a href="/bbs.php">全部主題</a> <a href="/bbs.php?go=dige">精華區</a></p>
     <fieldset>
       <legend><strong>${listTitle}</strong></legend>
       ${pagination}
@@ -2379,7 +2379,7 @@ export function renderBbs(topics: BbsTopicSummary[], options: { digestOnly?: boo
           return;
         }
         const topicId = Number(data.topicId);
-        location.href = Number.isInteger(topicId) && topicId > 0 ? "/bbs/" + encodeURIComponent(String(topicId)) : "/bbs";
+        location.href = Number.isInteger(topicId) && topicId > 0 ? "/bbs.php?view=" + encodeURIComponent(String(topicId)) : "/bbs.php";
       });
     </script>
   `));
@@ -2390,7 +2390,7 @@ function bbsAuthorLabel(name: string, trip: boolean): string {
 }
 
 function bbsTopicPath(topicId: number | string): string {
-  return `/bbs/${escapeHtml(String(topicId))}`;
+  return `/bbs.php?view=${encodeURIComponent(String(topicId))}`;
 }
 
 function bbsStatusMarks(topic: Pick<BbsTopicSummary, "pinned" | "locked" | "digest">, bracketed = false): string {

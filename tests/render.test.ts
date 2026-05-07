@@ -751,7 +751,7 @@ describe("render", () => {
     expect(html).toContain("bbsPassword");
     expect(html).toContain("編輯/刪除用");
     expect(html).toContain('password: document.querySelector("#bbsPassword").value');
-    expect(html).toContain('"/bbs/" + encodeURIComponent(String(topicId))');
+    expect(html).toContain('"/bbs.php?view=" + encodeURIComponent(String(topicId))');
   });
 
   it("renders BBS digest list as a normal HTML page", () => {
@@ -779,9 +779,9 @@ describe("render", () => {
     const html = renderBbs(topics, { page: 2, pageSize: 15, totalTopics: 31 });
 
     expect(html).toContain("bbs-pagination");
-    expect(html).toContain('<a href="/bbs?page=1">[1]</a>');
+    expect(html).toContain('<a href="/bbs.php?page=1">[1]</a>');
     expect(html).toContain("<strong>[2]</strong>");
-    expect(html).toContain('<a href="/bbs?page=3">[3]</a>');
+    expect(html).toContain('<a href="/bbs.php?page=3">[3]</a>');
   });
 
   it("links BBS topic titles to the latest reply page", () => {
@@ -801,8 +801,8 @@ describe("render", () => {
       }
     ]);
 
-    expect(html).toContain('<a href="/bbs/1">1</a>');
-    expect(html).toContain('<a href="/bbs/1?page=2" title="Long topic">');
+    expect(html).toContain('<a href="/bbs.php?view=1">1</a>');
+    expect(html).toContain('<a href="/bbs.php?view=1&page=2" title="Long topic">');
   });
 
   it("renders BBS topic detail with replies", () => {
@@ -904,7 +904,7 @@ describe("render", () => {
     );
 
     expect(html).toContain("bbs-pagination");
-    expect(html).toContain('<a href="/bbs/1?page=1">[1]</a>');
+    expect(html).toContain('<a href="/bbs.php?view=1&page=1">[1]</a>');
     expect(html).toContain("<strong>[2]</strong>");
   });
 
@@ -957,7 +957,7 @@ describe("render", () => {
     expect(html).toContain("Alice◆Trip");
     expect(html).toContain("bbs-topic-pinned");
     expect(html).toContain("bbs-topic-digest");
-    expect(html).toContain("/bbs/1#bbsModerationForm");
+    expect(html).toContain("/bbs.php?view=1#bbsModerationForm");
     expect(html).toContain("BBS 管理密碼");
 
     const paginated = renderBbsAdmin(topics, { page: 2, pageSize: 15, totalTopics: 31 });

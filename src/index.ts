@@ -797,6 +797,11 @@ function readFormString(form: FormData, name: string): string | undefined {
   return typeof value === "string" ? value : undefined;
 }
 
+function legacyBbsTopicLocation(topicId: number | string, page?: number): string {
+  const base = `/bbs.php?view=${encodeURIComponent(String(topicId))}`;
+  return page && page > 1 ? `${base}&page=${encodeURIComponent(String(page))}` : base;
+}
+
 async function loginLegacyAdmin(request: Request): Promise<Response> {
   const form = await request.formData();
   const token = readFormString(form, "adpass") ?? "";
@@ -1358,7 +1363,7 @@ async function createLegacyBbsTopic(request: Request, env: Env): Promise<Respons
     const topicId = await insertBbsTopic(env, await readLegacyBbsForm(request));
     return new Response(null, {
       status: 303,
-      headers: { Location: topicId ? `/bbs/${topicId}` : "/bbs" }
+      headers: { Location: topicId ? legacyBbsTopicLocation(topicId) : "/bbs.php" }
     });
   } catch (error) {
     return json({ error: error instanceof Error ? error.message : "Failed to create BBS topic" }, { status: 400 });
@@ -1372,7 +1377,7 @@ async function createLegacyBbsReply(request: Request, env: Env): Promise<Respons
     const result = await insertBbsReply(env, String(topicId), body);
     return new Response(null, {
       status: 303,
-      headers: { Location: `/bbs/${topicId}?page=${result.page}` }
+      headers: { Location: legacyBbsTopicLocation(topicId, result.page) }
     });
   } catch (error) {
     return json({ error: error instanceof Error ? error.message : "Failed to create BBS reply" }, { status: errorStatus(error, 400) });
@@ -1472,7 +1477,7 @@ async function editLegacyBbsTopic(request: Request, env: Env, topicIdParam: stri
             .run();
           return new Response(null, {
             status: 303,
-            headers: { Location: `/bbs/${entryId}` }
+            headers: { Location: legacyBbsTopicLocation(entryId) }
           });
         } catch (error) {
           if (!reply) {
@@ -1490,7 +1495,7 @@ async function editLegacyBbsTopic(request: Request, env: Env, topicIdParam: stri
         .run();
       return new Response(null, {
         status: 303,
-        headers: { Location: `/bbs/${reply.topicId}` }
+        headers: { Location: legacyBbsTopicLocation(reply.topicId) }
       });
     }
     if (editis === "del") {
@@ -1505,7 +1510,7 @@ async function editLegacyBbsTopic(request: Request, env: Env, topicIdParam: stri
           ]);
           return new Response(null, {
             status: 303,
-            headers: { Location: "/bbs" }
+            headers: { Location: "/bbs.php" }
           });
         } catch (error) {
           if (!reply) {
@@ -1523,7 +1528,7 @@ async function editLegacyBbsTopic(request: Request, env: Env, topicIdParam: stri
       ]);
       return new Response(null, {
         status: 303,
-        headers: { Location: `/bbs/${reply.topicId}` }
+        headers: { Location: legacyBbsTopicLocation(reply.topicId) }
       });
     }
     if (["tolock", "nolock", "totop", "notop", "todige", "nodige"].includes(editis)) {
@@ -1535,7 +1540,7 @@ async function editLegacyBbsTopic(request: Request, env: Env, topicIdParam: stri
       await updateLegacyBbsTopicFlags(env, topic, editis);
       return new Response(null, {
         status: 303,
-        headers: { Location: `/bbs/${entryId}` }
+        headers: { Location: legacyBbsTopicLocation(entryId) }
       });
     }
     return json({ error: "Invalid BBS edit operation" }, { status: 400 });
