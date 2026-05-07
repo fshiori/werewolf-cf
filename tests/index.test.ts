@@ -929,6 +929,8 @@ describe("worker routes", () => {
     expect(body).toContain("player_a");
     expect(body).toContain("player_b");
     expect(body).toContain("正:3/負:4/場:7");
+    expect(body).toContain("/trip.php?go=room&id=ab12CD");
+    expect(body).toContain("參與紀錄");
     expect(body).not.toContain(tripHash);
   });
 
