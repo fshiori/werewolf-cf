@@ -853,6 +853,8 @@ describe("worker routes", () => {
     const body = await response.text();
     expect(body).toContain("身份登錄");
     expect(body).toContain("/trip.php?go=post");
+    expect(body).toContain("/trip.php?go=edit2");
+    expect(body).toContain("/trip.php?go=edit");
     expect(body).toContain("/trip.php?go=out");
     expect(body).toContain("/trip.php?go=icon");
     expect(body).toContain("registerTripButton");
@@ -860,6 +862,11 @@ describe("worker routes", () => {
     expect(body).toContain("excludeTripButton");
     expect(body).toContain('action="/trip.php?go=post"');
     expect(body).toContain('action="/trip.php?go=out"');
+    expect(body).toContain('action="/trip.php?go=edit"');
+    expect(body).toContain('action="/trip.php?go=edit2"');
+    expect(body).toContain('name="nname"');
+    expect(body).toContain('name="lname"');
+    expect(body).toContain('name="lpassword"');
     expect(body).toContain("Trip公開資料");
     expect(body).toContain("/api/trips/lookup?trip=");
   });
