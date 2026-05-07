@@ -1556,6 +1556,54 @@ describe("game", () => {
     expect(game.log.at(-1)).toBe("妖狐勝利。");
   });
 
+  it("does not let a lone child fox steal a wolf win in big-wolf child-fox rooms", () => {
+    let game = activeState("day", [
+      { playerId: "player_1", nickname: "Wolf", role: "werewolf", alive: true },
+      { playerId: "player_2", nickname: "Child Fox", role: "child_fox", alive: true },
+      { playerId: "player_3", nickname: "Villager", role: "villager", alive: true },
+      { playerId: "player_4", nickname: "Big Wolf", role: "big_wolf", alive: false },
+      { playerId: "player_5", nickname: "Fox", role: "fox", alive: false },
+      ...Array.from({ length: 15 }, (_, index) => ({
+        playerId: `player_dead_${index + 1}`,
+        nickname: `Dead ${index + 1}`,
+        role: "villager" as const,
+        alive: false
+      }))
+    ]);
+
+    game = castDayVote(game, "player_1", "player_3");
+    game = castDayVote(game, "player_2", "player_3");
+    game = castDayVote(game, "player_3", "player_1");
+
+    expect(game.phase).toBe("ended");
+    expect(game.winner).toBe("werewolves");
+    expect(game.log.at(-1)).toBe("狼人勝利。");
+  });
+
+  it("keeps fox win priority when a real fox and big wolf survive in big-wolf child-fox rooms", () => {
+    let game = activeState("day", [
+      { playerId: "player_1", nickname: "Big Wolf", role: "big_wolf", alive: true },
+      { playerId: "player_2", nickname: "Fox", role: "fox", alive: true },
+      { playerId: "player_3", nickname: "Child Fox", role: "child_fox", alive: true },
+      { playerId: "player_4", nickname: "Villager", role: "villager", alive: true },
+      ...Array.from({ length: 16 }, (_, index) => ({
+        playerId: `player_dead_${index + 1}`,
+        nickname: `Dead ${index + 1}`,
+        role: "villager" as const,
+        alive: false
+      }))
+    ]);
+
+    game = castDayVote(game, "player_1", "player_4");
+    game = castDayVote(game, "player_2", "player_4");
+    game = castDayVote(game, "player_3", "player_4");
+    game = castDayVote(game, "player_4", "player_1");
+
+    expect(game.phase).toBe("ended");
+    expect(game.winner).toBe("foxes");
+    expect(game.log.at(-1)).toBe("妖狐勝利。");
+  });
+
   it("counts a lone big wolf as a werewolf for normal win conditions", () => {
     const game = activeState("night", [
       { playerId: "player_1", nickname: "Big Wolf", role: "big_wolf", alive: true },
