@@ -1486,6 +1486,19 @@ describe("worker routes", () => {
     expect(body).toContain("&lt;Runtime notice&gt;");
   });
 
+  it("supports the modern admin status alias", async () => {
+    const response = await worker.fetch(
+      new Request("http://example.test/admin/status"),
+      envWithRooms([], { home_announcement: "<Runtime notice>" })
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.text();
+    expect(body).toContain("伺服器狀態");
+    expect(body).toContain("Binding 檢查");
+    expect(body).toContain("&lt;Runtime notice&gt;");
+  });
+
   it("renders admin navigation page", async () => {
     const response = await worker.fetch(
       new Request("http://example.test/admin"),
@@ -1499,6 +1512,7 @@ describe("worker routes", () => {
     expect(body).toContain("/admin.php?go=config");
     expect(body).toContain("/admin.php?go=bbs");
     expect(body).toContain("/admin.php?go=status");
+    expect(body).toContain("/admin/status");
     expect(body).toContain('action="/admin.php?go=in"');
     expect(body).toContain('name="apass"');
     expect(body).not.toContain('name="adpass"');

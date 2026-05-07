@@ -2564,7 +2564,11 @@ export default {
       return html(renderVersion());
     }
 
-    if (request.method === "GET" && (url.pathname === "/status" || (url.pathname === "/admin.php" && url.searchParams.get("go") === "status"))) {
+    if (request.method === "GET" && (
+      url.pathname === "/status" ||
+      url.pathname === "/admin/status" ||
+      (url.pathname === "/admin.php" && url.searchParams.get("go") === "status")
+    )) {
       try {
         const [health, config] = await Promise.all([readHealth(env), readRuntimeConfig(env)]);
         return html(renderStatus({ ...health, ...config }));
