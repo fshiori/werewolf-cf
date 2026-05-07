@@ -1641,6 +1641,31 @@ describe("worker routes", () => {
     expect(body).not.toContain("beta 村");
   });
 
+  it("paginates old log index like the reference", async () => {
+    const roomIds = Array.from({ length: 26 }, (_, index) => `room_${String(index + 1).padStart(2, "0")}`);
+    const response = await worker.fetch(
+      new Request("http://example.test/old_log.php?page=2"),
+      envWithRooms(roomIds, Object.fromEntries(roomIds.map((id) => [`room_status:${id}`, "ended"])))
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.text();
+    expect(body).toContain("bbs-pagination");
+    expect(body).toContain('<a href="/old_log.php?page=1">[1]</a>');
+    expect(body).toContain("<strong>[2]</strong>");
+    expect(body).toContain("room_26");
+    expect(body).not.toContain("room_25");
+
+    const allResponse = await worker.fetch(
+      new Request("http://example.test/old_log.php?all=1"),
+      envWithRooms(roomIds, Object.fromEntries(roomIds.map((id) => [`room_status:${id}`, "ended"])))
+    );
+    const allBody = await allResponse.text();
+    expect(allBody).toContain("room_01");
+    expect(allBody).toContain("room_26");
+    expect(allBody).not.toContain("bbs-pagination");
+  });
+
   it("renders federated list page with configured remote rooms", async () => {
     const originalFetch = globalThis.fetch;
     const requestedUrls: string[] = [];

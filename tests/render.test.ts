@@ -771,6 +771,15 @@ describe("render", () => {
     expect(html).toContain('<td colspan="17" class="muted">沒有遊戲紀錄</td>');
   });
 
+  it("renders old log pagination links with search terms", () => {
+    const html = renderOldLogs([], { search: "Alpha & Beta", page: 2, pageSize: 25, totalRooms: 51 });
+
+    expect(html).toContain("bbs-pagination");
+    expect(html).toContain('<a href="/old_log.php?search=Alpha%20%26%20Beta&page=1">[1]</a>');
+    expect(html).toContain("<strong>[2]</strong>");
+    expect(html).toContain('<a href="/old_log.php?search=Alpha%20%26%20Beta&page=3">[3]</a>');
+  });
+
   it("renders BBS as a normal HTML page", () => {
     const html = renderBbs([
       {
