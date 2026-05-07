@@ -897,6 +897,7 @@ describe("worker routes", () => {
 
     expect(response.status).toBe(200);
     const body = await response.text();
+    expect(body).toContain("<title>汝等是人是狼？ - Werewolf Cloudflare Port</title>");
     expect(body).toContain("Trip查詢");
     expect(body).toContain("Trip公開資料");
     expect(body).toContain("/api/trips/lookup?trip=");
@@ -907,6 +908,7 @@ describe("worker routes", () => {
 
     expect(response.status).toBe(200);
     const body = await response.text();
+    expect(body).toContain("<title>汝等是人是狼？ - Werewolf Cloudflare Port</title>");
     expect(body).toContain("身份登錄");
     expect(body).toContain("/trip.php?go=post");
     expect(body).toContain("/trip.php?go=edit2");
@@ -1037,6 +1039,7 @@ describe("worker routes", () => {
 
     expect(response.status).toBe(200);
     const body = await response.text();
+    expect(body).toContain("<title>汝等是人是狼？ - Werewolf Cloudflare Port</title>");
     expect(body).toContain("Trip公開資料");
     expect(body).toContain("ab12CD");
     expect(body).toContain("已登記");
@@ -1061,6 +1064,7 @@ describe("worker routes", () => {
 
     expect(response.status).toBe(200);
     const body = await response.text();
+    expect(body).toContain("<title>汝等是人是狼？ - Werewolf Cloudflare Port</title>");
     expect(body).toContain("評語");
     expect(body).toContain("村莊ID");
     expect(body).toContain("/old_log.php?log_mode=on&amp;room_no=room_b");
@@ -1074,6 +1078,7 @@ describe("worker routes", () => {
 
     expect(response.status).toBe(200);
     const body = await response.text();
+    expect(body).toContain("<title>汝等是人是狼？ - Werewolf Cloudflare Port</title>");
     expect(body).toContain("評分");
     expect(body).toContain('action="/trip.php?go=sce&amp;room=room_abc&amp;trip=ab12CD"');
     expect(body).toContain('name="sceis" value="1" disabled');
@@ -1145,6 +1150,7 @@ describe("worker routes", () => {
 
     expect(response.status).toBe(200);
     const body = await response.text();
+    expect(body).toContain("<title>汝等是人是狼？ - Werewolf Cloudflare Port</title>");
     expect(body).toContain("Trip參與紀錄");
     expect(body).toContain("/trip.php?go=room&id=ab12CD");
     expect(body).toContain("/trip.php?go=room&id=ab12CD&amp;play=8");
