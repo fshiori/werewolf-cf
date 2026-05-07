@@ -192,6 +192,31 @@ describe("game", () => {
     expect(() => castGuard(game, "player_2", "player_3")).toThrow("Guarding is only available at night");
   });
 
+  it("rejects guard self-protection like the reference night vote validation", () => {
+    const game = startGame(
+      lobby([
+        ["player_1", "Alice"],
+        ["player_2", "Bob"],
+        ["player_3", "Carol"],
+        ["player_4", "Dave"],
+        ["player_5", "Ellen"],
+        ["player_6", "Frank"],
+        ["player_7", "Grace"]
+      ]),
+      0,
+      () => 0
+    );
+    const night = {
+      ...game,
+      phase: "night" as const,
+      day: 1,
+      divinations: { player_2: "player_1" },
+      nightKills: { player_1: "player_2" }
+    };
+
+    expect(() => castGuard(night, "player_5", "player_5")).toThrow("Guards cannot protect themselves");
+  });
+
   it("uses the reference role deck in eight-player games", () => {
     const game = startGame(numberedLobby(8), 0, () => 0);
 
