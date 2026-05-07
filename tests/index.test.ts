@@ -1426,6 +1426,12 @@ describe("worker routes", () => {
       expect(body).toContain("/game_view.php?room_no=room_exists&amp;auto_reload=20&amp;view=heaven");
     }
 
+    const upResponse = await worker.fetch(new Request("http://example.test/game_up.php?room_no=room_exists&auto_reload=20"), env);
+    expect(upResponse.status).toBe(200);
+    const upBody = await upResponse.text();
+    expect(upBody).toContain('form class="legacy-send-form" name="send" action="/game_play.php?room_no=room_exists&amp;auto_reload=20&amp;frame=bottom#game_top" method="POST" target="bottom" onsubmit="return false"');
+    expect(upBody).toContain('<input id="chatText" name="sentence" maxlength="500" size="72">');
+
     const frameResponse = await worker.fetch(new Request("http://example.test/game_frame.php?room_no=room_exists&auto_reload=20"), env);
     expect(frameResponse.status).toBe(200);
     const frameBody = await frameResponse.text();

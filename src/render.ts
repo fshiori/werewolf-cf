@@ -3782,6 +3782,14 @@ function legacyVoteFormShell(roomId: string, autoReloadSeconds: 0 | 15 | 20 | 30
       </tr>`;
 }
 
+function legacySendFormStart(roomId: string, autoReloadSeconds: 0 | 15 | 20 | 30): string {
+  const actionHref = legacyRoomBottomFrameHref(roomId, autoReloadSeconds);
+  return `<form class="legacy-send-form" name="send" action="${actionHref}#game_top" method="POST" target="bottom" onsubmit="return false">
+                  <input type="hidden" name="command" value="talk">
+                  <input type="hidden" name="room_no" value="${escapeHtml(roomId)}">
+                  <input type="hidden" name="location" value="day">`;
+}
+
 function roomPageTitle(roomId: string, pageMode: "full" | "frame" | "up" | "vote" | "bottom", viewMode: "player" | "spectator" | "heaven"): string {
   if (pageMode === "frame") {
     return "汝等是人是狼？＜遊戲＞";
@@ -4051,19 +4059,21 @@ export function renderRoom(roomId: string, options: RenderRoomOptions = {}): str
             <tr>
               <td>
                 <div id="chatLog"></div>
-                <div class="room-chat-controls">
-                  <input id="chatText" maxlength="500" size="72">
-                  <button id="sendChat" class="room-live-chat-only">送出</button>
-                  <button id="sendWolfChat" class="room-live-chat-only" disabled>狼頻</button>
-                  <button id="sendFoxChat" class="room-live-chat-only" disabled>狐頻</button>
-                  <button id="sendCommonChat" class="room-live-chat-only" disabled>共有頻</button>
-                  <button id="sendLoversChat" class="room-live-chat-only" disabled>戀頻</button>
-                  <button id="sendDeadChat" disabled>靈界</button>
-                  <button id="sendSelfTalk" class="room-live-chat-only" disabled>自言</button>
-                  <button id="sendObjection" class="objection-button room-live-chat-only" disabled>${referenceAssetImg("img/objection.gif", "提出反對")}(<span id="objectionRemaining">2</span>)</button>
-                  <button id="sendRoomEndVote" class="room-live-chat-only" disabled>廢</button>
-                  <label><input id="soundNotify" type="checkbox"> 音效</label>
-                </div>
+                ${legacySendFormStart(roomId, autoReloadSeconds)}
+                  <div class="room-chat-controls">
+                    <input id="chatText" name="sentence" maxlength="500" size="72">
+                    <button id="sendChat" class="room-live-chat-only">送出</button>
+                    <button id="sendWolfChat" class="room-live-chat-only" disabled>狼頻</button>
+                    <button id="sendFoxChat" class="room-live-chat-only" disabled>狐頻</button>
+                    <button id="sendCommonChat" class="room-live-chat-only" disabled>共有頻</button>
+                    <button id="sendLoversChat" class="room-live-chat-only" disabled>戀頻</button>
+                    <button id="sendDeadChat" disabled>靈界</button>
+                    <button id="sendSelfTalk" class="room-live-chat-only" disabled>自言</button>
+                    <button id="sendObjection" class="objection-button room-live-chat-only" disabled>${referenceAssetImg("img/objection.gif", "提出反對")}(<span id="objectionRemaining">2</span>)</button>
+                    <button id="sendRoomEndVote" class="room-live-chat-only" disabled>廢</button>
+                    <label><input id="soundNotify" type="checkbox"> 音效</label>
+                  </div>
+                </form>
                 <table id="gmControlPanel">
                   <tr><th colspan="2">GM行動 <span id="gmStatus">非GM</span></th></tr>
                   <tr class="gm-controls-only">
