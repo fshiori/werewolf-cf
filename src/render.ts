@@ -3031,7 +3031,7 @@ export function renderRules(): string {
         <tr><td><strong>　${referenceAssetImg("img/role_human.gif", "村民")}村民：</strong></td><td>沒有夜晚能力，透過白天投票找出人狼。</td></tr>
         <tr><td><strong>　${referenceAssetImg("img/role_wolf.gif", "人狼")}${referenceAssetImg("img/role_heavywolf.gif", "大狼")}人狼 / 大狼：</strong></td><td>夜晚選擇襲擊目標；大狼在占卜時可能被判定為人。</td></tr>
         <tr><td><strong>　${referenceAssetImg("img/role_mage.gif", "占卜師")}占卜師：</strong></td><td>夜晚占卜一名玩家，結果為人或狼。</td></tr>
-        <tr><td><strong>　${referenceAssetImg("img/role_necromancer.gif", "靈能者")}靈能者：</strong></td><td>隔日得知前一天被處刑者是人或狼。</td></tr>
+        <tr><td><strong>　${referenceAssetImg("img/role_necromancer.gif", "靈能者")}靈能者：</strong></td><td>隔日得知前一天被處刑者是人、狼、大狼或子狐。</td></tr>
         <tr><td><strong>　${referenceAssetImg("img/role_mad.gif", "狂人")}狂人：</strong></td><td>隸屬村民計數，但勝利目標偏向人狼。</td></tr>
         <tr><td><strong>　${referenceAssetImg("img/role_guard.gif", "獵人")}獵人：</strong></td><td>夜晚護衛一名玩家，可阻止襲擊。</td></tr>
         <tr><td><strong>　${referenceAssetImg("img/role_common.gif", "共有者")}共有者：</strong></td><td>可在夜晚與其他共有者對話。</td></tr>

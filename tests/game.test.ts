@@ -2313,6 +2313,40 @@ describe("game", () => {
     });
     expect(mediumReadingForPlayer(game, "player_2")).toBeUndefined();
   });
+
+  it("preserves reference medium results for executed big wolves and child foxes", () => {
+    for (const [targetRole, expected] of [
+      ["big_wolf", "big_wolf"],
+      ["child_fox", "child_fox"]
+    ] as const) {
+      let game: GameState = {
+        ...createLobbyState("room_abc"),
+        day: 2,
+        players: [
+          { playerId: "player_wolf", nickname: "Wolf", role: "werewolf", alive: true },
+          { playerId: "player_medium", nickname: "Medium", role: "medium", alive: true },
+          { playerId: "player_target", nickname: "Target", role: targetRole, alive: true },
+          { playerId: "player_villager_1", nickname: "Villager 1", role: "villager", alive: true },
+          { playerId: "player_villager_2", nickname: "Villager 2", role: "villager", alive: true },
+          { playerId: "player_villager_3", nickname: "Villager 3", role: "villager", alive: true }
+        ],
+        phase: "day",
+        log: ["第 2 日白天開始。"]
+      };
+
+      for (const player of game.players) {
+        game = castDayVote(game, player.playerId, player.playerId === "player_target" ? "player_wolf" : "player_target");
+      }
+      game = castNightKill(game, "player_wolf", "player_villager_1", 0);
+
+      expect(mediumReadingForPlayer(game, "player_medium")).toEqual({
+        day: 2,
+        targetPlayerId: "player_target",
+        targetNickname: "Target",
+        result: expected
+      });
+    }
+  });
 });
 
 function sequence(...values: number[]): () => number {
