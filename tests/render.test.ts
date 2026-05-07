@@ -2221,6 +2221,42 @@ describe("render", () => {
     expect(loverView).not.toContain("pack imported");
   });
 
+  it("infers common transcript visibility from saved PHP role strings", () => {
+    const events = [
+      {
+        id: 1,
+        roomId: "room_abc",
+        playerId: "viewer_common",
+        eventType: "public_chat",
+        payload: { nickname: "Viewer Common", role: "common lovers", text: "hello", phase: "day", day: 2 },
+        createdAt: "2026-05-06 12:01:00"
+      },
+      {
+        id: 2,
+        roomId: "room_abc",
+        playerId: "other_common",
+        eventType: "common_chat",
+        payload: { visibility: "private", nickname: "Other Common", text: "common imported", phase: "night", day: 2 },
+        createdAt: "2026-05-06 12:02:00"
+      },
+      {
+        id: 3,
+        roomId: "room_abc",
+        playerId: "viewer_villager",
+        eventType: "public_chat",
+        payload: { nickname: "Viewer Villager", role: "human", text: "hi", phase: "day", day: 2 },
+        createdAt: "2026-05-06 12:03:00"
+      }
+    ];
+
+    const commonView = renderRoomTranscript("room_abc", [], events, { viewerMode: "player", viewerPlayerId: "viewer_common", heavenTalk: true });
+    expect(commonView).toContain("Viewer Common (viewer_common)");
+    expect(commonView).toContain("common imported");
+
+    const villagerView = renderRoomTranscript("room_abc", [], events, { viewerMode: "player", viewerPlayerId: "viewer_villager", heavenTalk: true });
+    expect(villagerView).not.toContain("common imported");
+  });
+
   it("shows composite wolf or fox lover transcript rows to lover player views", () => {
     const records = [
       {
