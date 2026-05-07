@@ -615,6 +615,10 @@ describe("render", () => {
     expect(html).toContain("removeTripExclusionButton");
     expect(html).toContain('form name="trip" method="post" action="/trip.php?go=post"');
     expect(html).toContain('form name="trip" method="post" action="/trip.php?go=out"');
+    expect(html).toContain('type="text" name="name" maxlength="32" size="24" value=""');
+    expect(html).toContain('type="password" name="password" maxlength="128" size="24" value=""');
+    expect(html).toContain('type="text" name="aname" maxlength="120" size="24" value=""');
+    expect(html).toContain('id="submit" name="submit" type="submit" value="送出"');
     expect(html).toContain('form name="trip" method="post" action="/trip.php?go=edit"');
     expect(html).toContain('form name="trip" method="post" action="/trip.php?go=edit2"');
     expect(html).toContain('name="nname"');

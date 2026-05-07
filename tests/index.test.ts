@@ -916,6 +916,10 @@ describe("worker routes", () => {
     expect(body).toContain("excludeTripButton");
     expect(body).toContain('form name="trip" method="post" action="/trip.php?go=post"');
     expect(body).toContain('form name="trip" method="post" action="/trip.php?go=out"');
+    expect(body).toContain('type="text" name="name" maxlength="32" size="24" value=""');
+    expect(body).toContain('type="password" name="password" maxlength="128" size="24" value=""');
+    expect(body).toContain('type="text" name="aname" maxlength="120" size="24" value=""');
+    expect(body).toContain('id="submit" name="submit" type="submit" value="送出"');
     expect(body).toContain('form name="trip" method="post" action="/trip.php?go=edit"');
     expect(body).toContain('form name="trip" method="post" action="/trip.php?go=edit2"');
     expect(body).toContain('name="nname"');
