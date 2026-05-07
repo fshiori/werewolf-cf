@@ -825,7 +825,8 @@ export function renderFederatedList(rooms: Array<RoomSummary | FederatedRoomSumm
   `));
 }
 
-export function renderOldLogs(rooms: RoomSummary[]): string {
+export function renderOldLogs(rooms: RoomSummary[], options: { search?: string } = {}): string {
+  const searchValue = options.search ?? "";
   const rows = rooms.length
     ? rooms.map((room) => {
       const roomUrl = `/old_log.php?log_mode=on&room_no=${encodeURIComponent(room.id)}`;
@@ -865,6 +866,12 @@ export function renderOldLogs(rooms: RoomSummary[]): string {
     <fieldset>
       <legend><strong>過去紀錄</strong></legend>
       <p><a href="/">←返回</a> <a href="/old_log.php?all=1">[全部顯示]</a></p>
+      <div align="center">
+        <form name="old_log" action="/old_log.php" method="get" enctype="multipart/form-data">
+          搜尋<input type="text" name="search" size="10" value="${escapeHtml(searchValue)}">
+          <input id="submit" type="submit" value="送出">
+        </form>
+      </div>
       <table class="form-table" border="1" cellspacing="1" bgcolor="#CCCCCC" style="margin:12px auto 18px;">
         <thead><tr><th class="column">村No</th><th class="column">村名</th><th class="column">結束時間</th><th class="column">人數</th><th class="column">選項</th></tr></thead>
         <tbody>${rows}</tbody>

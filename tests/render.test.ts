@@ -733,6 +733,8 @@ describe("render", () => {
 
     expect(html).toContain("過去紀錄");
     expect(html).toContain("村No");
+    expect(html).toContain('form name="old_log" action="/old_log.php" method="get"');
+    expect(html).toContain('name="search"');
     expect(html).toContain("Finished 村");
     expect(html).toContain("/old_log.php?all=1");
     expect(html).toContain("/old_log.php?log_mode=on&amp;room_no=room_finished");
@@ -744,6 +746,13 @@ describe("render", () => {
     expect(html).toContain("埋毒");
     expect(html).toContain("公開票");
     expect(html).toContain('<a href="/old_log.php">過去紀錄</a>');
+  });
+
+  it("preserves old log search terms in the reference search form", () => {
+    const html = renderOldLogs([], { search: "Alpha & Beta" });
+
+    expect(html).toContain("搜尋");
+    expect(html).toContain('value="Alpha &amp; Beta"');
   });
 
   it("renders BBS as a normal HTML page", () => {
