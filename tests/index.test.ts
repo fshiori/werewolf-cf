@@ -3321,6 +3321,8 @@ describe("worker routes", () => {
     expect(body).toContain("上傳頭像");
     expect(body).toContain("iconUploadButton");
     expect(body).toContain('action="/upload.php"');
+    expect(body).toContain('name="icon_name"');
+    expect(body).toContain('name="color" value="#6699cc"');
     expect(body).toContain('action="/upload2.php"');
     expect(body).toContain("/api/assets/avatar");
   });
