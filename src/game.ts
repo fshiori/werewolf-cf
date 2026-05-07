@@ -765,6 +765,9 @@ export function castDivination(
   if (state.phase !== "night") {
     throw new Error("Divination is only available at night");
   }
+  if (state.day === 0) {
+    throw new Error("Divination is not available on the first night");
+  }
   const actor = assertLivingPlayer(state, actorId);
   if (actor.role !== "seer") {
     throw new Error("Only seers can divine players");
@@ -808,6 +811,9 @@ export function castChildFoxDivination(
   if (state.phase !== "night") {
     throw new Error("Child fox divination is only available at night");
   }
+  if (state.day === 0) {
+    throw new Error("Child fox divination is not available on the first night");
+  }
   const actor = assertLivingPlayer(state, actorId);
   if (actor.role !== "child_fox") {
     throw new Error("Only child foxes can divine players");
@@ -833,6 +839,9 @@ export function castGuard(state: GameState, actorId: string, targetId: string, n
   if (state.phase !== "night") {
     throw new Error("Guarding is only available at night");
   }
+  if (state.day === 0) {
+    throw new Error("Guarding is not available on the first night");
+  }
   const actor = assertLivingPlayer(state, actorId);
   if (actor.role !== "guard") {
     throw new Error("Only guards can protect players");
@@ -857,7 +866,7 @@ export function castCatRevive(state: GameState, actorId: string, targetId: strin
   if (actor.role !== "cat") {
     throw new Error("Only cats can revive players");
   }
-  if (state.day === 1) {
+  if (state.day <= 1) {
     throw new Error("Cats cannot revive on the first night");
   }
   const catRevives = state.catRevives ?? {};

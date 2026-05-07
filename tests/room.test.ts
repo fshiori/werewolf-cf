@@ -3646,6 +3646,77 @@ describe("RoomDurableObject", () => {
     }
   });
 
+  it("rejects non-wolf night role actions on the dummy boy first night through the websocket handler", async () => {
+    const game: GameState = {
+      roomId: "room_abc",
+      phase: "night",
+      day: 0,
+      players: [
+        { playerId: "player_wolf", nickname: "Wolf", role: "werewolf", alive: true },
+        { playerId: "player_seer", nickname: "Seer", role: "seer", alive: true },
+        { playerId: "player_child_fox", nickname: "Child Fox", role: "child_fox", alive: true },
+        { playerId: "player_guard", nickname: "Guard", role: "guard", alive: true },
+        { playerId: "player_cat", nickname: "Cat", role: "cat", alive: true },
+        { playerId: "player_target", nickname: "Target", role: "villager", alive: true },
+        { playerId: "player_dead", nickname: "Dead", role: "villager", alive: false }
+      ],
+      votes: {},
+      openVote: false,
+      commonTalkVisible: false,
+      deadRoleVisible: false,
+      wishRole: false,
+      dummyBoy: true,
+      dayMs: 180_000,
+      nightMs: 90_000,
+      selfVote: false,
+      voteStatus: false,
+      revoteCount: 0,
+      nightKills: {},
+      divinations: {},
+      guards: {},
+      catRevives: {},
+      lastWords: {},
+      log: []
+    };
+    const cases = [
+      {
+        playerId: "player_seer",
+        nickname: "Seer",
+        command: { type: "divine", targetPlayerId: "player_target" },
+        message: "Divination is not available on the first night"
+      },
+      {
+        playerId: "player_child_fox",
+        nickname: "Child Fox",
+        command: { type: "child_fox_divine", targetPlayerId: "player_target" },
+        message: "Child fox divination is not available on the first night"
+      },
+      {
+        playerId: "player_guard",
+        nickname: "Guard",
+        command: { type: "guard", targetPlayerId: "player_target" },
+        message: "Guarding is not available on the first night"
+      },
+      {
+        playerId: "player_cat",
+        nickname: "Cat",
+        command: { type: "cat_revive", targetPlayerId: "player_dead" },
+        message: "Cats cannot revive on the first night"
+      }
+    ];
+
+    for (const testCase of cases) {
+      const room = roomObject(game);
+      const messages: SentMessage[] = [];
+      const socket = fakeSocket(messages);
+      connect(room, socket, testCase.playerId, testCase.nickname);
+
+      await sendRaw(room, socket, JSON.stringify(testCase.command));
+
+      expect(messages).toEqual([{ type: "error", message: testCase.message }]);
+    }
+  });
+
   it("rejects night action websocket commands outside the night phase", async () => {
     const game: GameState = {
       roomId: "room_abc",

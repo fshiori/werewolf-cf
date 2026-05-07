@@ -583,7 +583,7 @@ function updateVoteReminder(game, currentPlayer, currentPlayerAlive, votedPlayer
   if (!currentPlayer || !currentPlayerAlive || game.phase === "lobby" || game.phase === "ended" || isGm) return;
   const requiresVote =
     game.phase === "day" ||
-    (game.phase === "night" && (isWolfRole(role) || role === "seer" || role === "guard" || role === "child_fox" || role === "cat"));
+    canUseNightRoleAction(game, currentPlayer, currentPlayerAlive);
   if (!requiresVote || votedPlayerIds.has(currentPlayer.playerId)) return;
   const message = game.phase === "night" && isWolfRole(role)
     ? "系統提醒：您目前還沒有投票，如果同側已經投票請忽略此訊息。"
@@ -641,10 +641,10 @@ function updateActionPrompt(game, currentPlayer, currentPlayerAlive, votedPlayer
   } else if (game.phase === "night" && (role === "seer" || role === "child_fox")) {
     message = "　　　請選擇要占卜的對象　　　";
     backgroundColor = "#990099";
-  } else if (game.phase === "night" && role === "guard" && game.day !== 1) {
+  } else if (game.phase === "night" && role === "guard" && game.day !== 0) {
     message = "　　　請選擇護衛的人　　　";
     backgroundColor = "#0099FF";
-  } else if (game.phase === "night" && role === "cat" && game.day > 1) {
+  } else if (game.phase === "night" && role === "cat" && hasCatReviveTarget(game, currentPlayer)) {
     message = "　　　請選擇要復活的人　　　";
     backgroundColor = "#006633";
   }
@@ -782,6 +782,21 @@ function renderGameLogPanel(game) {
 function isWolfRole(value) {
   return value === "werewolf" || value === "big_wolf";
 }
+function hasCatReviveTarget(game, currentPlayer) {
+  return Boolean(
+    currentPlayer &&
+    game.day > 1 &&
+    game.players.some((player) => !player.alive && player.playerId !== currentPlayer.playerId)
+  );
+}
+function canUseNightRoleAction(game, currentPlayer, currentPlayerAlive) {
+  if (!currentPlayerAlive || game.phase !== "night") return false;
+  if (isWolfRole(role)) return true;
+  if (game.day === 0) return false;
+  if (role === "seer" || role === "child_fox" || role === "guard") return true;
+  if (role === "cat") return hasCatReviveTarget(game, currentPlayer);
+  return false;
+}
 function renderGame(game) {
   setRoomPhaseClass(game.phase);
   updateGmStatus();
@@ -797,7 +812,7 @@ function renderGame(game) {
   const actorCanAct =
     currentPlayerAlive &&
     !nightActionDone &&
-    (game.phase === "day" || (game.phase === "night" && (isWolfRole(role) || role === "seer" || role === "guard" || role === "child_fox" || role === "cat")));
+    (game.phase === "day" || canUseNightRoleAction(game, currentPlayer, currentPlayerAlive));
   const host = game.players.find((player) => player.playerId === game.hostId);
   const canManageLobby = game.phase === "lobby" && (game.hostId === currentPlayerId || isGm);
   document.querySelector("#host").textContent = host ? host.nickname : "未定";
