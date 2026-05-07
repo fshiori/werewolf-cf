@@ -371,6 +371,10 @@ describe("render", () => {
     expect(ROOM_CLIENT_SCRIPT).toContain("請選擇要占卜的對象");
     expect(ROOM_CLIENT_SCRIPT).toContain("請選擇護衛的人");
     expect(ROOM_CLIENT_SCRIPT).toContain("請選擇投票處死的對象");
+    expect(ROOM_CLIENT_SCRIPT).toContain("function canUseNightRoleAction(game, currentPlayer, currentPlayerAlive)");
+    expect(ROOM_CLIENT_SCRIPT).toContain("if (game.day === 0) return false;");
+    expect(ROOM_CLIENT_SCRIPT).toContain("function hasCatReviveTarget(game, currentPlayer)");
+    expect(ROOM_CLIENT_SCRIPT).toContain("role === \"cat\") return hasCatReviveTarget(game, currentPlayer)");
     expect(ROOM_CLIENT_SCRIPT).toContain("ownNightActionTarget");
     expect(ROOM_CLIENT_SCRIPT).toContain("已選擇");
     expect(ROOM_CLIENT_SCRIPT).toContain("const nightActionDone = Boolean");

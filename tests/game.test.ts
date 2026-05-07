@@ -885,6 +885,26 @@ describe("game", () => {
     expect(game.log).toContain("Custom Dummy 的遺言：Remember the dummy");
   });
 
+  it("rejects non-wolf night role actions on the dummy boy first night", () => {
+    const firstNight = {
+      ...activeState("night", [
+        { playerId: "player_wolf", nickname: "Wolf", role: "werewolf" as const, alive: true },
+        { playerId: "player_seer", nickname: "Seer", role: "seer" as const, alive: true },
+        { playerId: "player_child_fox", nickname: "Child Fox", role: "child_fox" as const, alive: true },
+        { playerId: "player_guard", nickname: "Guard", role: "guard" as const, alive: true },
+        { playerId: "player_cat", nickname: "Cat", role: "cat" as const, alive: true },
+        { playerId: "player_target", nickname: "Target", role: "villager" as const, alive: true },
+        { playerId: "player_dead", nickname: "Dead", role: "villager" as const, alive: false }
+      ]),
+      day: 0
+    };
+
+    expect(() => castDivination(firstNight, "player_seer", "player_target")).toThrow("Divination is not available on the first night");
+    expect(() => castChildFoxDivination(firstNight, "player_child_fox", "player_target")).toThrow("Child fox divination is not available on the first night");
+    expect(() => castGuard(firstNight, "player_guard", "player_target")).toThrow("Guarding is not available on the first night");
+    expect(() => castCatRevive(firstNight, "player_cat", "player_dead")).toThrow("Cats cannot revive on the first night");
+  });
+
   it("uses default phase timers when real time is disabled", () => {
     const game = startGame(
       lobby([
