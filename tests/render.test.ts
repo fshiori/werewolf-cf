@@ -1699,6 +1699,48 @@ describe("render", () => {
     expect(gmView).toContain("mutter");
   });
 
+  it("does not treat private transcript rows without player ids as system-visible rows", () => {
+    const events = [
+      {
+        id: 1,
+        roomId: "room_abc",
+        playerId: undefined,
+        eventType: "wolf_chat",
+        payload: { visibility: "private", nickname: "Wolf", text: "missing player id secret", phase: "night", day: 2 },
+        createdAt: "2026-05-06 12:01:00"
+      },
+      {
+        id: 2,
+        roomId: "room_abc",
+        playerId: undefined,
+        eventType: "game_started",
+        payload: { day: 1, players: 4 },
+        createdAt: "2026-05-06 12:02:00"
+      },
+      {
+        id: 3,
+        roomId: "room_abc",
+        playerId: undefined,
+        eventType: "public_chat",
+        payload: { nickname: "System", text: "public import row", phase: "day", day: 1 },
+        createdAt: "2026-05-06 12:03:00"
+      }
+    ];
+
+    const publicView = renderRoomTranscript("room_abc", [], events, { viewerMode: "public", heavenTalk: true });
+    expect(publicView).toContain("遊戲開始");
+    expect(publicView).toContain("public import row");
+    expect(publicView).not.toContain("missing player id secret");
+
+    const deadView = renderRoomTranscript("room_abc", [], events, { viewerMode: "dead", heavenTalk: true });
+    expect(deadView).toContain("遊戲開始");
+    expect(deadView).not.toContain("missing player id secret");
+
+    const heavenOnly = renderRoomTranscript("room_abc", [], events, { viewerMode: "public", heavenOnly: true });
+    expect(heavenOnly).toContain("遊戲開始");
+    expect(heavenOnly).not.toContain("missing player id secret");
+  });
+
   it("shows player-view private channel rows the selected role could hear", () => {
     const records = [
       {
