@@ -1047,7 +1047,7 @@ describe("render", () => {
         id: 1,
         name: "Alice",
         title: "Welcome",
-        message: "Topic body",
+        message: "Topic [b]body[/b]\n[color=#cc0000]red[/color]\n[url]https://example.test/path[/url]\n<script>",
         trip: true,
         replyCount: 1,
         pinned: false,
@@ -1061,14 +1061,14 @@ describe("render", () => {
           id: 1,
           topicId: 1,
           name: "Bob",
-          message: "Reply body",
+          message: "Reply [url]www.example.test[/url]\n[b]body[/b]",
           trip: false,
           createdAt: "2026-05-06 12:10:00"
         }
       ]
     );
 
-    expect(html).toContain("Topic body");
+    expect(html).toContain('Topic <b>body</b><br /><font color="#cc0000">red</font><br /><a href="https://example.test/path" target="_blank">https://example.test/path</a><br />&lt;script&gt;');
     expect(html).toContain("文章列表");
     expect(html).toContain('<div id="table5">');
     expect(html).toContain('<table border="1" class="table1" width="100%" align="center">');
@@ -1076,7 +1076,7 @@ describe("render", () => {
     expect(html).toContain('<td class="table2"><a href="/bbs.php?go=edit&amp;id=1">NO.1</a> &lt;..&gt; [2026-05-06 12:00:00]</td>');
     expect(html).toContain('<table class="table1" style="width: 600px" align="right">');
     expect(html).toContain("Bob");
-    expect(html).toContain("Reply body");
+    expect(html).toContain('Reply <a href="http://www.example.test" target="_blank">www.example.test</a><br /><b>body</b>');
     expect(html).toContain('<td class="table3">Bob</td>');
     expect(html).toContain('<td class="table2"><a href="/bbs.php?go=edit&amp;id=1">NO.1</a> &lt;..&gt; [2026-05-06 12:10:00]</td>');
     expect(html).toContain('action="/bbs.php?go=postre"');
