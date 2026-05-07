@@ -3390,7 +3390,7 @@ export function renderRoom(roomId: string, options: RenderRoomOptions = {}): str
         <td>
           <table class="panel">
             <tr><th>玩家列表</th></tr>
-            <tr><td><div id="members" class="muted">尚未連線</div><table id="playerGrid" class="player-grid"></table></td></tr>
+            <tr><td><div id="members" class="muted">尚未連線</div><div id="lobbyStartNotice"></div><table id="playerGrid" class="player-grid"></table></td></tr>
           </table>
         </td>
       </tr>

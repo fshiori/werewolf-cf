@@ -571,6 +571,29 @@ function updatePhaseWarning(game) {
   alert.textContent = game.phase === "day" ? "　快要日落了。請趕快投票　" : "　快要日出了。請趕快投票　";
   warning.append(alert, document.createElement("br"));
 }
+function updateLobbyStartNotice(game) {
+  const notice = document.querySelector("#lobbyStartNotice");
+  if (!notice) return;
+  notice.innerHTML = "";
+  if (game.phase !== "lobby") return;
+  const table = document.createElement("table");
+  table.border = "0";
+  table.cellPadding = "0";
+  table.cellSpacing = "5";
+  table.style.width = "100%";
+  const row = document.createElement("tr");
+  row.style.backgroundColor = "#009900";
+  row.style.color = "snow";
+  row.style.fontWeight = "bold";
+  const cell = document.createElement("td");
+  cell.vAlign = "middle";
+  cell.align = "center";
+  cell.style.width = "100%";
+  cell.innerHTML = "需要遊戲全體人員投'開始遊戲'才能開始遊戲<small>(完成投票的玩家其名單背景顏色會變粉紅)</small>";
+  row.appendChild(cell);
+  table.appendChild(row);
+  notice.appendChild(table);
+}
 function isWolfRole(value) {
   return value === "werewolf" || value === "big_wolf";
 }
@@ -578,6 +601,7 @@ function renderGame(game) {
   setRoomPhaseClass(game.phase);
   document.querySelector("#phase").innerHTML = phaseLabel(game);
   updatePhaseWarning(game);
+  updateLobbyStartNotice(game);
   document.querySelector("#winner").textContent = winnerLabel(game.winner);
   const currentPlayerId = localStorage.getItem(playerKey);
   const currentPlayer = game.players.find((player) => player.playerId === currentPlayerId);
