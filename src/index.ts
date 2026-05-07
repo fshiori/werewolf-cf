@@ -1383,7 +1383,7 @@ async function endRoomByLegacyAdminLink(request: Request, env: Env, roomIdParam:
   try {
     const roomId = await markRoomEndedByAdmin(env, roomIdParam);
     const url = new URL(request.url);
-    const token = url.searchParams.get("token");
+    const token = url.searchParams.get("token") ?? readCookie(request, "adpass");
     const redirect = new URL(redirectPath, url.origin);
     if (token) {
       redirect.searchParams.set("token", token);

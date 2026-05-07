@@ -1782,6 +1782,26 @@ describe("worker routes", () => {
     );
   });
 
+  it("preserves legacy admin cookie auth after room end links", async () => {
+    const env = envWithRooms(["room_admin"], { room_admin_token: "secret cookie" });
+    const response = await worker.fetch(
+      new Request("http://example.test/admin.php?go=del&id=room_admin", {
+        headers: { Cookie: "adpass=secret%20cookie" }
+      }),
+      env
+    );
+
+    expect(response.status).toBe(303);
+    expect(response.headers.get("Location")).toBe("/admin.php?go=rooms&token=secret+cookie&ended=room_admin");
+    const runs = (env as unknown as { runs: Array<{ query: string; values: unknown[] }> }).runs;
+    expect(runs).toContainEqual(
+      expect.objectContaining({
+        query: "UPDATE rooms SET status = 'ended' WHERE id = ?",
+        values: ["room_admin"]
+      })
+    );
+  });
+
   it("supports the legacy game_play.php room end link", async () => {
     const env = envWithRooms(["room_admin"], { room_admin_token: "secret" });
     const response = await worker.fetch(
