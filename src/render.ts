@@ -2299,7 +2299,7 @@ export function renderBbs(topics: BbsTopicSummary[], options: { digestOnly?: boo
   const pagination = paginationLinks(options.totalTopics, options.page, options.pageSize, options.digestOnly ? "/bbs?digest=1" : "/bbs");
 
   return page("BBS", shell(`
-    <p><a href="#bbsPostForm">發表主題</a> <a href="/bbs">全部主題</a> <a href="/bbs?digest=1">精華主題</a></p>
+    <p><a href="/bbs.php?go=post">發表主題</a> <a href="/bbs">全部主題</a> <a href="/bbs.php?go=dige">精華區</a></p>
     <fieldset>
       <legend><strong>${listTitle}</strong></legend>
       ${pagination}
@@ -2315,6 +2315,14 @@ export function renderBbs(topics: BbsTopicSummary[], options: { digestOnly?: boo
     </fieldset>
     <fieldset id="bbsPostForm">
       <legend><strong>發表主題</strong></legend>
+      <form method="post" action="/bbs.php?go=post" enctype="multipart/form-data" style="margin:10px 20px;">
+        <strong>舊式發表：</strong>
+        暱稱 <input name="bname" maxlength="32" size="16">
+        密碼 <input name="bpass" type="password" maxlength="128" size="16">
+        標題 <input name="title" maxlength="50" size="24"><br>
+        內容<br><textarea name="mess" rows="5" cols="64"></textarea><br>
+        <input name="submit" type="submit" value="發表">
+      </form>
       <table class="form-table">
         <tr><td><label><strong>　名稱：</strong></label></td><td><input id="bbsName" maxlength="32" size="24"></td></tr>
         <tr><td><label><strong>　Trip：</strong></label></td><td><input id="bbsTrip" maxlength="32" size="24"></td></tr>

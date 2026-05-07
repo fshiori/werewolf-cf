@@ -733,7 +733,11 @@ describe("render", () => {
 
     expect(html).toContain("主題列表");
     expect(html).toContain("發表主題");
-    expect(html).toContain("/bbs?digest=1");
+    expect(html).toContain("/bbs.php?go=post");
+    expect(html).toContain("/bbs.php?go=dige");
+    expect(html).toContain('action="/bbs.php?go=post"');
+    expect(html).toContain('name="bname"');
+    expect(html).toContain('name="mess"');
     expect(html).toContain("[置頂] Welcome (精華)");
     expect(html).toContain("bbs-topic-pinned");
     expect(html).toContain("bbs-topic-digest");
@@ -751,7 +755,7 @@ describe("render", () => {
 
     expect(html).toContain("精華主題列表");
     expect(html).toContain("尚無精華主題。");
-    expect(html).toContain("/bbs?digest=1");
+    expect(html).toContain("/bbs.php?go=dige");
   });
 
   it("renders BBS topic pagination links", () => {
