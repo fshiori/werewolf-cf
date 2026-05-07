@@ -21,6 +21,7 @@ type SentMessage = {
   sentAt?: string;
   phase?: string;
   day?: number;
+  votes?: Record<string, string>;
   commonTalkVisible?: boolean;
   channelRestrictions?: { wolf: boolean; common: boolean; lovers: boolean; fox: boolean };
   log?: string[];
@@ -825,6 +826,48 @@ describe("RoomDurableObject", () => {
         ]
       })
     );
+  });
+
+  it("sends hidden day vote targets only to the voter websocket", async () => {
+    const game: GameState = {
+      roomId: "room_abc",
+      phase: "day",
+      day: 1,
+      players: [
+        { playerId: "player_voter", nickname: "Voter", role: "villager", alive: true },
+        { playerId: "player_target", nickname: "Target", role: "werewolf", alive: true },
+        { playerId: "player_other", nickname: "Other", role: "villager", alive: true }
+      ],
+      votes: {},
+      openVote: false,
+      commonTalkVisible: false,
+      deadRoleVisible: false,
+      wishRole: false,
+      dummyBoy: false,
+      dayMs: 180_000,
+      nightMs: 90_000,
+      selfVote: false,
+      voteStatus: false,
+      revoteCount: 0,
+      nightKills: {},
+      divinations: {},
+      guards: {},
+      catRevives: {},
+      lastWords: {},
+      log: []
+    };
+    const room = roomObject(game);
+    const voterMessages: SentMessage[] = [];
+    const otherMessages: SentMessage[] = [];
+    const voterSocket = fakeSocket(voterMessages);
+    const otherSocket = fakeSocket(otherMessages);
+    connect(room, voterSocket, "player_voter", "Voter");
+    connect(room, otherSocket, "player_other", "Other");
+
+    await sendRaw(room, voterSocket, JSON.stringify({ type: "vote", targetPlayerId: "player_target" }));
+
+    expect(voterMessages).toContainEqual(expect.objectContaining({ type: "game_state", openVote: false, votes: { player_voter: "player_target" } }));
+    expect(otherMessages).toContainEqual(expect.objectContaining({ type: "game_state", openVote: false, votes: {} }));
   });
 
   it("allows existing players but rejects new players joining active games", async () => {
