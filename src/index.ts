@@ -77,6 +77,11 @@ function legacyIconResult(title: string, message: string, backHref = "/icon_uplo
 </html>`, { status });
 }
 
+function legacyIconRemovalResult(): Response {
+  return html(`<html><head><title>アイコン削除完了</title><meta http-equiv=refresh content="1;URL=icon_upload.php">
+</head><body>削除完了：登錄ページに飛びます畫面切換中<a href="icon_upload.php">按我繼續</a></body></html>`);
+}
+
 function legacyTripResult(title: string, message: string, backHref = "/trip.php", status = 200): Response {
   return html(`<!doctype html>
 <html lang="zh-Hant">
@@ -2257,7 +2262,7 @@ async function removeAvatar(request: Request, env: Env, legacyResult = false): P
     const playerId = validatePlayerId(playerIdValue);
     await env.ASSETS.delete(avatarKey(playerId));
     if (legacyResult) {
-      return legacyIconResult("アイコン削除完了", "削除完了：登錄ページに飛びます", "/icon_upload.php");
+      return legacyIconRemovalResult();
     }
     return json({ removed: true });
   } catch (error) {

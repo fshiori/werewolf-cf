@@ -4609,7 +4609,8 @@ describe("worker routes", () => {
     expect(removal.headers.get("content-type")).toContain("text/html");
     const removalBody = await removal.text();
     expect(removalBody).toContain("アイコン削除完了");
-    expect(removalBody).toContain("/icon_upload.php");
+    expect(removalBody).toContain('<meta http-equiv=refresh content="1;URL=icon_upload.php">');
+    expect(removalBody).toContain('削除完了：登錄ページに飛びます畫面切換中<a href="icon_upload.php">按我繼續</a>');
     expect(download.status).toBe(404);
   });
 
