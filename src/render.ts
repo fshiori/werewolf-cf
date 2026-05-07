@@ -2104,6 +2104,12 @@ export function renderTripRoomRecords(tripId: string, records: TripRoomRecordSum
 
 export function renderTripRegistration(): string {
   return page("Trip Registration", shell(`
+    <p>
+      <a href="/trip.php?go=post">身份登錄</a>
+       <a href="/trip.php?go=out">排除紀錄</a>
+       <a href="/trip.php?go=icon">上傳頭像</a>
+       <a href="/trips">Trip查詢</a>
+    </p>
     <fieldset>
       <legend><strong>身份登錄</strong></legend>
       <table class="form-table">

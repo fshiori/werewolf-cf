@@ -840,6 +840,9 @@ describe("worker routes", () => {
     expect(response.status).toBe(200);
     const body = await response.text();
     expect(body).toContain("身份登錄");
+    expect(body).toContain("/trip.php?go=post");
+    expect(body).toContain("/trip.php?go=out");
+    expect(body).toContain("/trip.php?go=icon");
     expect(body).toContain("registerTripButton");
     expect(body).toContain("claimTripButton");
     expect(body).toContain("excludeTripButton");

@@ -483,6 +483,9 @@ describe("render", () => {
 
     expect(html).toContain("身份登錄");
     expect(html).toContain("Trip公開資料");
+    expect(html).toContain("/trip.php?go=post");
+    expect(html).toContain("/trip.php?go=out");
+    expect(html).toContain("/trip.php?go=icon");
     expect(html).toContain("registerTripButton");
     expect(html).toContain("claimTripButton");
     expect(html).toContain("excludeTripButton");
