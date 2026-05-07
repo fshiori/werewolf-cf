@@ -2404,7 +2404,15 @@ export function renderBbsTopic(topic: BbsTopicSummary, replies: BbsReplySummary[
   const title = `${topic.pinned ? "[置頂] " : ""}${topic.locked ? "[鎖定] " : ""}${topic.title}${topic.digest ? " (精華)" : ""}`;
   const replyForm = topic.locked
     ? `<p class="muted">此主題已鎖定。</p>`
-    : `<table class="form-table">
+    : `<form method="post" action="/bbs.php?go=postre" enctype="multipart/form-data" style="margin:10px 20px;">
+        <strong>舊式回覆：</strong>
+        暱稱 <input name="bname" maxlength="32" size="16">
+        密碼 <input name="bpass" type="password" maxlength="128" size="16"><br>
+        內容<br><textarea name="mess" rows="5" cols="64"></textarea>
+        <input type="hidden" name="id" value="${escapeHtml(String(topic.id))}"><br>
+        <input name="submit" type="submit" value="回覆">
+      </form>
+      <table class="form-table">
         <tr><td><label><strong>　名稱：</strong></label></td><td><input id="bbsReplyName" maxlength="32" size="24"></td></tr>
         <tr><td><label><strong>　Trip：</strong></label></td><td><input id="bbsReplyTrip" maxlength="32" size="24"></td></tr>
         <tr><td><label><strong>　密碼：</strong></label></td><td><input id="bbsReplyPassword" type="password" maxlength="128" size="24"> <span class="muted">編輯/刪除用</span></td></tr>

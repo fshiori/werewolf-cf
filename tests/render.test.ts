@@ -832,6 +832,11 @@ describe("render", () => {
     expect(html).toContain("回覆列表");
     expect(html).toContain("Bob");
     expect(html).toContain("Reply body");
+    expect(html).toContain('action="/bbs.php?go=postre"');
+    expect(html).toContain('name="bname"');
+    expect(html).toContain('name="bpass"');
+    expect(html).toContain('name="mess"');
+    expect(html).toContain('type="hidden" name="id" value="1"');
     expect(html).toContain("/api/bbs/topics/1/replies");
     expect(html).toContain("bbsReplyPassword");
     expect(html).toContain('password: document.querySelector("#bbsReplyPassword").value');

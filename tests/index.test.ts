@@ -1861,6 +1861,8 @@ describe("worker routes", () => {
     expect(body).toContain("回覆列表");
     expect(body).toContain("Bob");
     expect(body).toContain("Reply body");
+    expect(body).toContain('action="/bbs.php?go=postre"');
+    expect(body).toContain('type="hidden" name="id" value="1"');
     expect(body).toContain("/api/bbs/topics/1/replies");
     expect(body).toContain("主題管理");
     expect(body).toContain("/api/bbs/topics/1/moderation");
