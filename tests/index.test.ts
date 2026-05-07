@@ -2062,8 +2062,8 @@ describe("worker routes", () => {
     const body = await response.text();
     expect(body).toContain("<title>汝等是人是狼？ - Werewolf Cloudflare Port</title>");
     expect(body).toContain("主題列表");
-    expect(body).toContain("/bbs.php?go=post");
-    expect(body).toContain("/bbs.php?go=dige");
+    expect(body).toContain('<a href="/bbs.php?go=post">發表主題</a> <a href="/bbs.php?go=dige">精華區</a>');
+    expect(body).not.toContain('<p><a href="/bbs.php?go=post">發表主題</a> <a href="/bbs.php">全部主題</a> <a href="/bbs.php?go=dige">精華區</a></p>');
     expect(body).toContain('<table border="1" class="table1" bordercolor="#CCCCCC" align="center">');
     expect(body).toContain('<td align="center" width="150">最後時間</td>');
     expect(body).toContain('form name="bbs" method="post" action="/bbs.php?go=post"');
@@ -2110,6 +2110,8 @@ describe("worker routes", () => {
     expect(response.status).toBe(200);
     const body = await response.text();
     expect(body).toContain("精華主題列表");
+    expect(body).toContain('<a href="/bbs.php?go=post">發表主題</a> <a href="/bbs.php">全部主題</a>');
+    expect(body).not.toContain('<a href="/bbs.php?go=dige">精華區</a>');
     expect(body).toContain("Digest (精華)");
     expect(body).not.toContain("Normal");
   });
@@ -2351,6 +2353,8 @@ describe("worker routes", () => {
     expect(body).toContain("/api/bbs/topics/1/replies");
     expect(body).toContain("主題管理");
     expect(body).toContain("/api/bbs/topics/1/moderation");
+    expect(body).toContain('<a href="/bbs.php?go=postre&amp;id=1">回覆主題</a> <a href="/bbs.php">回列表</a>');
+    expect(body).not.toContain('<p><a href="/bbs.php?go=postre&amp;id=1">回覆主題</a> <a href="/bbs.php">回列表</a></p>');
   });
 
   it("renders BBS topic detail from legacy reply entry query", async () => {

@@ -1013,8 +1013,8 @@ describe("render", () => {
     expect(html).toContain("<title>汝等是人是狼？ - Werewolf Cloudflare Port</title>");
     expect(html).toContain("主題列表");
     expect(html).toContain("發表主題");
-    expect(html).toContain("/bbs.php?go=post");
-    expect(html).toContain("/bbs.php?go=dige");
+    expect(html).toContain('<a href="/bbs.php?go=post">發表主題</a> <a href="/bbs.php?go=dige">精華區</a>');
+    expect(html).not.toContain('<p><a href="/bbs.php?go=post">發表主題</a> <a href="/bbs.php">全部主題</a> <a href="/bbs.php?go=dige">精華區</a></p>');
     expect(html).toContain(".table1 { border-collapse: collapse; border: 1px solid #cccccc; }");
     expect(html).toContain('<table border="1" class="table1" bordercolor="#CCCCCC" align="center">');
     expect(html).toContain('<tr class="table3">');
@@ -1047,7 +1047,8 @@ describe("render", () => {
     expect(html).toContain("精華主題列表");
     expect(html).toContain('<b><a href="/bbs.php?go=dige">精華文章</a></b>');
     expect(html).toContain("沒有精華");
-    expect(html).toContain("/bbs.php?go=dige");
+    expect(html).toContain('<a href="/bbs.php?go=post">發表主題</a> <a href="/bbs.php">全部主題</a>');
+    expect(html).not.toContain('<a href="/bbs.php?go=dige">精華區</a>');
   });
 
   it("renders BBS topic pagination links", () => {
@@ -1181,7 +1182,8 @@ describe("render", () => {
     expect(html).toContain('method: "DELETE"');
     expect(html).toContain("刪除此主題與所有回覆？");
     expect(html).toContain('location.href = "/bbs.php";');
-    expect(html).toContain('<p><a href="/bbs.php?go=postre&amp;id=1">回覆主題</a> <a href="/bbs.php">回列表</a></p>');
+    expect(html).toContain('<a href="/bbs.php?go=postre&amp;id=1">回覆主題</a> <a href="/bbs.php">回列表</a>');
+    expect(html).not.toContain('<p><a href="/bbs.php?go=postre&amp;id=1">回覆主題</a> <a href="/bbs.php">回列表</a></p>');
   });
 
   it("renders BBS reply pagination links", () => {
