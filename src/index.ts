@@ -797,6 +797,15 @@ function readFormString(form: FormData, name: string): string | undefined {
   return typeof value === "string" ? value : undefined;
 }
 
+async function loginLegacyAdmin(request: Request): Promise<Response> {
+  const form = await request.formData();
+  const token = readFormString(form, "adpass") ?? "";
+  return new Response(null, {
+    status: 303,
+    headers: { Location: `/admin/rooms?token=${encodeURIComponent(token)}` }
+  });
+}
+
 async function readLegacyTripForm(request: Request): Promise<Record<string, unknown>> {
   const form = await request.formData();
   return {
@@ -2305,6 +2314,14 @@ export default {
 
     if (request.method === "GET" && url.pathname === "/admin.php" && url.searchParams.get("go") === "del") {
       return endRoomByLegacyAdminLink(request, env, url.searchParams.get("id") ?? "", "/admin/rooms");
+    }
+
+    if (request.method === "POST" && url.pathname === "/admin.php" && url.searchParams.get("go") === "in") {
+      return loginLegacyAdmin(request);
+    }
+
+    if (request.method === "GET" && url.pathname === "/admin.php" && url.searchParams.get("go") === "out") {
+      return new Response(null, { status: 303, headers: { Location: "/admin.php" } });
     }
 
     if (request.method === "GET" && (url.pathname === "/admin" || url.pathname === "/admin.php")) {

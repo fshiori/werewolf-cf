@@ -65,7 +65,7 @@ Reference files inspected:
 - Room creation covers max users, comments, real-time timing, wish role, Trip-required, GM, dummy boy, last words, open vote, common voice, dead role visibility, self-vote, vote-status, and major optional roles; the room join selector and assignment path now support enabled optional-role wishes with PHP-style randomized conflict ordering. `docs/reference-wish-role-extraction.md` records the implemented ordering behavior and the intentional rejection of the PHP loose-comparison quirk.
 - Room page uses retro table panels for header, player list, actions/votes, public last words, chat, logs, records, and events.
 - Room page now loads client logic through `/assets/room-client.js` instead of embedding the whole WebSocket client in the HTML.
-- `/admin` now provides a reference-style management menu linking room administration, BBS topic management, runtime configuration, and status checks while leaving each admin write tool token-protected; `/admin/rooms` provides a KV-token-protected reference-style `廢村管理` list with active/ended/all filters, room comments, capacity, option context, log/event links, ended-room inspection, direct legacy `admin.php?go=del&id=:id` end links, and D1-backed room-ending action for active rooms; legacy `admin.php?go=del&id=:id` and `game_play.php?go=del&id=:id&room_no=:id` links reuse the same room-admin token and end-room mutation before redirecting back to room administration; `/admin/config` provides token-protected KV announcement and maintenance-mode controls.
+- `/admin` now provides a reference-style management menu linking room administration, BBS topic management, runtime configuration, and status checks while leaving each admin write tool token-protected; it also exposes a legacy `admin.php?go=in` form using the reference `adpass` field and redirects legacy logout `admin.php?go=out` back to the admin index. `/admin/rooms` provides a KV-token-protected reference-style `廢村管理` list with active/ended/all filters, room comments, capacity, option context, log/event links, ended-room inspection, direct legacy `admin.php?go=del&id=:id` end links, and D1-backed room-ending action for active rooms; legacy `admin.php?go=del&id=:id` and `game_play.php?go=del&id=:id&room_no=:id` links reuse the same room-admin token and end-room mutation before redirecting back to room administration; `/admin/config` provides token-protected KV announcement and maintenance-mode controls.
 
 ### Still missing or weak
 
@@ -108,7 +108,7 @@ Reference files inspected:
 1. Continue improving `/room/:roomId/log` toward PHP-compatible viewer-specific transcript masking; day/phase grouping, historical vote tables, private talk/action transcript persistence, self-talk, old-log heaven/reverse display modes, player-view selectors, and major per-location styling are now in place.
 2. Continue converting the remaining partial/missing rows in `docs/rule-parity-manifest.md` into focused tests and implementation slices.
 3. Run `docs/visual-parity-checklist.md` and attach screenshots once a browser is available in the environment.
-4. Continue reducing remaining legacy menu/page gaps; the admin index and room-admin end screen exist, but other PHP-era server management pages are still not fully mapped.
+4. Continue reducing remaining legacy menu/page gaps; the admin index, legacy admin login/logout compatibility, and room-admin end screen exist, but other PHP-era server management pages are still not fully mapped.
 
 ## Current Verification Gaps
 

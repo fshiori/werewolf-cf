@@ -1186,7 +1186,32 @@ describe("worker routes", () => {
     expect(body).toContain("/admin/rooms");
     expect(body).toContain("/admin/config");
     expect(body).toContain("/admin/bbs");
+    expect(body).toContain('action="/admin.php?go=in"');
+    expect(body).toContain('name="adpass"');
     expect(body).toContain("各管理功能仍需輸入對應管理密碼");
+  });
+
+  it("supports the legacy admin.php login form", async () => {
+    const response = await worker.fetch(
+      new Request("http://example.test/admin.php?go=in", {
+        method: "POST",
+        body: new URLSearchParams({ adpass: "secret token" })
+      }),
+      envWithRooms([])
+    );
+
+    expect(response.status).toBe(303);
+    expect(response.headers.get("Location")).toBe("/admin/rooms?token=secret%20token");
+  });
+
+  it("supports the legacy admin.php logout link", async () => {
+    const response = await worker.fetch(
+      new Request("http://example.test/admin.php?go=out"),
+      envWithRooms([])
+    );
+
+    expect(response.status).toBe(303);
+    expect(response.headers.get("Location")).toBe("/admin.php");
   });
 
   it("renders config admin login without a valid token", async () => {
