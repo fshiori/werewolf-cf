@@ -3286,11 +3286,14 @@ describe("render", () => {
   it("renders runtime config admin pages", () => {
     const login = renderAdminConfigLogin();
     expect(login).toContain("系統設定管理");
+    expect(login).toContain('<table class="form-table table1 admin-config-login-table" border="1" cellspacing="1" cellpadding="2" bgcolor="#CCCCCC" style="width:100%;margin:12px 0 18px;">');
     expect(login).toContain("configAdminToken");
     expect(login).toContain("werewolf_cf_config_admin_token");
 
     const html = renderAdminConfig({ homeAnnouncement: "<Notice>", maintenanceMode: true }, "secret token");
     expect(html).toContain("首頁公告");
+    expect(html).toContain('<table class="form-table table1 admin-config-table" border="1" cellspacing="1" cellpadding="2" bgcolor="#CCCCCC" style="width:100%;margin:12px 0 18px;">');
+    expect(html).toContain('<table class="form-table table1 admin-config-summary-table" border="1" cellspacing="1" cellpadding="2" bgcolor="#CCCCCC" style="width:100%;margin:12px 0 18px;">');
     expect(html).toContain("&lt;Notice&gt;");
     expect(html).toContain("configMaintenanceMode");
     expect(html).toContain("checked");
