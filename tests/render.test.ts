@@ -548,7 +548,17 @@ describe("render", () => {
   });
 
   it("renders legacy Trip comment surface", () => {
-    const html = renderTripComments("ab12CD");
+    const html = renderTripComments("ab12CD", [
+      {
+        id: 1,
+        roomId: "room_abc",
+        reviewerTrip: "ef34GH",
+        targetTrip: "ab12CD",
+        message: "Good player",
+        score: 1,
+        createdAt: "2026-05-06 12:00:00"
+      }
+    ]);
 
     expect(html).toContain("評語");
     expect(html).toContain("/trip.php?go=trip&id=ab12CD");
@@ -556,7 +566,10 @@ describe("render", () => {
     expect(html).toContain("村莊ID");
     expect(html).toContain("評論者");
     expect(html).toContain("評價");
-    expect(html).toContain("沒有資料");
+    expect(html).toContain("/old_log.php?log_mode=on&amp;room_no=room_abc");
+    expect(html).toContain("/trip.php?go=trip&id=ef34GH");
+    expect(html).toContain("正");
+    expect(html).toContain("Good player");
   });
 
   it("renders legacy Trip rating surface", () => {

@@ -54,6 +54,16 @@ type MockBbsReply = {
   created_at: string;
 };
 
+type MockTripScore = {
+  id: number;
+  reviewer_trip: string;
+  room_id: string;
+  target_trip: string;
+  message: string;
+  score: number;
+  created_at: string;
+};
+
 function envWithRooms(
   roomIds: string[],
   config: Record<string, string> = {},
@@ -70,7 +80,8 @@ function envWithRooms(
   excludedTripHashes: Set<string> = new Set(),
   playerRegisteredTripHashes: Record<string, string> = {},
   bbsTopics: MockBbsTopic[] = [],
-  bbsReplies: MockBbsReply[] = []
+  bbsReplies: MockBbsReply[] = [],
+  tripScores: MockTripScore[] = []
 ): Env {
   const assets = new Map<string, StoredAsset>();
   const batches: Array<Array<{ query: string; values: unknown[] }>> = [];
@@ -108,6 +119,9 @@ function envWithRooms(
                 }
                 if (query.includes("FROM excluded_trips")) {
                   return excludedTripHashes.has(String(values[0])) ? { trip_hash: values[0] } : null;
+                }
+                if (query.includes("COUNT(*) AS count") && query.includes("FROM trip_scores")) {
+                  return { count: tripScores.filter((score) => score.target_trip === String(values[0])).length };
                 }
                 if (query.includes("COUNT(*) AS count") && query.includes("FROM bbs_topics")) {
                   return { count: query.includes("WHERE digest = 1") ? bbsTopics.filter((topic) => topic.digest === 1).length : bbsTopics.length };
@@ -195,6 +209,23 @@ function envWithRooms(
                 }
                 if (query.includes("FROM room_events")) {
                   return { results: events[String(values[0])] ?? [] };
+                }
+                if (query.includes("FROM trip_scores") && query.includes("GROUP BY score")) {
+                  const rows = tripScores.filter((score) => score.target_trip === String(values[0]));
+                  return {
+                    results: [1, 2].map((scoreValue) => ({
+                      score: scoreValue,
+                      count: rows.filter((score) => score.score === scoreValue).length
+                    })).filter((row) => row.count > 0)
+                  };
+                }
+                if (query.includes("FROM trip_scores")) {
+                  const rows = tripScores
+                    .filter((score) => score.target_trip === String(values[0]))
+                    .sort((a, b) => b.id - a.id);
+                  const limit = typeof values[1] === "number" ? values[1] : rows.length;
+                  const offset = typeof values[2] === "number" ? values[2] : 0;
+                  return { results: rows.slice(offset, offset + limit) };
                 }
                 if (query.includes("FROM bbs_replies")) {
                   const rows = bbsReplies.filter((reply) => reply.topic_id === Number(values[0]));
@@ -909,7 +940,14 @@ describe("worker routes", () => {
         {
           player_a: tripHash,
           player_b: tripHash
-        }
+        },
+        [],
+        [],
+        [
+          { id: 1, reviewer_trip: "ef34GH", room_id: "room_a", target_trip: "ab12CD", message: "good", score: 1, created_at: "2026-05-06 12:00:00" },
+          { id: 2, reviewer_trip: "ij56KL", room_id: "room_b", target_trip: "ab12CD", message: "bad", score: 2, created_at: "2026-05-06 12:01:00" },
+          { id: 3, reviewer_trip: "mn78OP", room_id: "room_c", target_trip: "ab12CD", message: "great", score: 1, created_at: "2026-05-06 12:02:00" }
+        ]
       )
     );
 
@@ -920,6 +958,7 @@ describe("worker routes", () => {
         registered: true,
         excluded: false,
         players: ["player_a", "player_b"],
+        scores: { positive: 2, negative: 1 },
         stats: { gamesPlayed: 7, wins: 3, losses: 4 }
       }
     });
@@ -950,7 +989,13 @@ describe("worker routes", () => {
         {
           player_a: tripHash,
           player_b: tripHash
-        }
+        },
+        [],
+        [],
+        [
+          { id: 1, reviewer_trip: "ef34GH", room_id: "room_a", target_trip: "ab12CD", message: "good", score: 1, created_at: "2026-05-06 12:00:00" },
+          { id: 2, reviewer_trip: "ij56KL", room_id: "room_b", target_trip: "ab12CD", message: "bad", score: 2, created_at: "2026-05-06 12:01:00" }
+        ]
       )
     );
 
@@ -962,6 +1007,7 @@ describe("worker routes", () => {
     expect(body).toContain("player_a");
     expect(body).toContain("player_b");
     expect(body).toContain("正:3/負:4/場:7");
+    expect(body).toContain("(正:1/負:1)");
     expect(body).toContain("/trip.php?go=room&id=ab12CD");
     expect(body).toContain("/trip.php?go=smess&id=ab12CD");
     expect(body).toContain("參與紀錄");
@@ -969,13 +1015,22 @@ describe("worker routes", () => {
   });
 
   it("renders legacy Trip comment surface", async () => {
-    const response = await worker.fetch(new Request("http://example.test/trip.php?go=smess&id=ab12CD"), envWithRooms([]));
+    const response = await worker.fetch(
+      new Request("http://example.test/trip.php?go=smess&id=ab12CD"),
+      envWithRooms([], {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, new Set(), new Set(), {}, [], [], [
+        { id: 1, reviewer_trip: "ef34GH", room_id: "room_a", target_trip: "ab12CD", message: "good", score: 1, created_at: "2026-05-06 12:00:00" },
+        { id: 2, reviewer_trip: "ij56KL", room_id: "room_b", target_trip: "ab12CD", message: "bad", score: 2, created_at: "2026-05-06 12:01:00" }
+      ])
+    );
 
     expect(response.status).toBe(200);
     const body = await response.text();
     expect(body).toContain("評語");
     expect(body).toContain("村莊ID");
-    expect(body).toContain("沒有資料");
+    expect(body).toContain("/old_log.php?log_mode=on&amp;room_no=room_b");
+    expect(body).toContain("/trip.php?go=trip&id=ij56KL");
+    expect(body).toContain("負");
+    expect(body).toContain("bad");
   });
 
   it("renders legacy Trip rating surface", async () => {
