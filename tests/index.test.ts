@@ -4254,7 +4254,8 @@ describe("worker routes", () => {
           { id: 1, room_id: "room_a", result_json: "{\"winner\":\"villagers\"}", created_at: "2026-05-06 12:00:00" },
           { id: 2, room_id: "room_a", result_json: "{\"winner\":\"werewolves\"}", created_at: "2026-05-06 12:01:00" },
           { id: 3, room_id: "room_a", result_json: "{\"winner\":\"villagers\"}", created_at: "2026-05-06 12:02:00" },
-          { id: 4, room_id: "room_a", result_json: "{\"winner\":\"foxes\"}", created_at: "2026-05-06 12:03:00" }
+          { id: 4, room_id: "room_a", result_json: "{\"winner\":\"foxes\"}", created_at: "2026-05-06 12:03:00" },
+          { id: 5, room_id: "room_a", result_json: "{\"winner\":\"draw\"}", created_at: "2026-05-06 12:04:00" }
         ]
       })
     );
@@ -4262,10 +4263,11 @@ describe("worker routes", () => {
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({
       winRates: [
-        { winner: "villagers", label: "人勝", wins: 2, total: 4, rate: 50 },
-        { winner: "werewolves", label: "狼勝", wins: 1, total: 4, rate: 25 },
-        { winner: "foxes", label: "狐勝", wins: 1, total: 4, rate: 25 },
-        { winner: "lovers", label: "戀勝", wins: 0, total: 4, rate: 0 }
+        { winner: "villagers", label: "人勝", wins: 2, total: 5, rate: 40 },
+        { winner: "werewolves", label: "狼勝", wins: 1, total: 5, rate: 20 },
+        { winner: "foxes", label: "狐勝", wins: 1, total: 5, rate: 20 },
+        { winner: "lovers", label: "戀勝", wins: 0, total: 5, rate: 0 },
+        { winner: "draw", label: "平手", wins: 1, total: 5, rate: 20 }
       ]
     });
   });

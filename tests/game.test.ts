@@ -38,6 +38,7 @@ import {
   setLastWords,
   startGame,
   upsertLobbyPlayer,
+  MAX_REVOTES,
   wolvesForPlayer
 } from "../src/game";
 import type { GameState } from "../src/types";
@@ -1219,28 +1220,32 @@ describe("game", () => {
     expect(game.players.find((player) => player.playerId === "player_6")?.alive).toBe(false);
   });
 
-  it("runs one revote after a tied day vote before moving to night", () => {
+  it("keeps revoting tied day votes until the reference draw limit", () => {
     let game = startGame(lobby([["player_1", "Alice"], ["player_2", "Bob"], ["player_3", "Carol"], ["player_4", "Dave"]]), 0, () => 0);
 
+    for (let round = 1; round < MAX_REVOTES; round += 1) {
+      game = castDayVote(game, "player_1", "player_2");
+      game = castDayVote(game, "player_2", "player_1");
+      game = castDayVote(game, "player_3", "player_4");
+      game = castDayVote(game, "player_4", "player_3");
+
+      expect(game.phase).toBe("day");
+      expect(game.revoteCount).toBe(round);
+      expect(game.votes).toEqual({});
+      expect(game.log.at(-1)).toBe("投票結果平手，重新投票。");
+    }
+
     game = castDayVote(game, "player_1", "player_2");
     game = castDayVote(game, "player_2", "player_1");
     game = castDayVote(game, "player_3", "player_4");
     game = castDayVote(game, "player_4", "player_3");
 
-    expect(game.phase).toBe("day");
-    expect(game.revoteCount).toBe(1);
-    expect(game.votes).toEqual({});
-    expect(game.log.at(-1)).toBe("投票結果平手，重新投票。");
-
-    game = castDayVote(game, "player_1", "player_2");
-    game = castDayVote(game, "player_2", "player_1");
-    game = castDayVote(game, "player_3", "player_4");
-    game = castDayVote(game, "player_4", "player_3");
-
-    expect(game.phase).toBe("night");
+    expect(game.phase).toBe("ended");
+    expect(game.winner).toBe("draw");
     expect(game.revoteCount).toBe(0);
     expect(game.players.every((player) => player.alive)).toBe(true);
-    expect(game.log.at(-2)).toBe("白天沒有共識，無人被處決。");
+    expect(game.log.at(-2)).toBe("投票結果平手達到上限，遊戲和局。");
+    expect(game.log.at(-1)).toBe("平手。");
   });
 
   it("clears pending actions owned by players who die", () => {
