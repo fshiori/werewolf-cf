@@ -755,8 +755,10 @@ describe("render", () => {
     ], [], { backPageHref: "/index.php?room=1&from=list" });
 
     expect(html).toContain("聯合遊戲列表");
+    expect(html).toContain("<title>汝等是人是狼？ - Werewolf Cloudflare Port</title>");
     expect(html).toContain('<b><a href="/list.php">聯合列表</a></b>');
     expect(html).toContain('<a href="/index.php?room=1&amp;from=list">←返回</a>');
+    expect(html).toContain('<td class="main">\n    <a href="/index.php?room=1&amp;from=list">←返回</a>');
     expect(html).toContain("服務中");
     expect(html).toContain("本伺服器");
     expect(html).toContain('<table border="0" cellpadding="0" cellspacing="0" style="width: 100%">');
@@ -825,10 +827,9 @@ describe("render", () => {
     expect(html).toContain("/assets/reference/img/playing.gif");
     expect(html).toContain("聯合伺服器狀態");
     expect(html).toContain('<a href="https://remote.example">服務中</a>');
-    expect(html).toContain("遠端伺服器 / https://remote.example");
-    expect(html).toContain('<td colspan="4"><a href="https://remote.example">遠端伺服器 / https://remote.example</a></td>');
+    expect(html).toContain('<td colspan="4"><a href="https://remote.example">https://remote.example</a></td>');
     expect(html).toContain('<a href="https://broken.example">失聯中</a>');
-    expect(html).toContain("故障伺服器 / https://broken.example");
+    expect(html).toContain('<td colspan="4"><a href="https://broken.example">https://broken.example</a></td>');
     expect(html).toContain("health-ok");
     expect(html).toContain("health-error");
     expect(html).toContain("故障伺服器");

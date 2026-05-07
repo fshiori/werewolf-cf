@@ -1783,6 +1783,7 @@ describe("worker routes", () => {
     expect(response.status).toBe(200);
     const body = await response.text();
     expect(body).toContain("聯合遊戲列表");
+    expect(body).toContain("<title>汝等是人是狼？ - Werewolf Cloudflare Port</title>");
     expect(body).toContain("服務中");
     expect(body).toContain("本伺服器");
     expect(body).toContain('<a href="/index.php?from=list">←返回</a>');
@@ -1952,8 +1953,7 @@ describe("worker routes", () => {
       expect(body).toContain('<tr><td colspan="5"><hr></td></tr>');
       expect(body).toContain("https://remote.example/base/room/remote_room");
       expect(body).toContain('<a href="https://remote.example/base">服務中</a>');
-      expect(body).toContain('<td colspan="4"><a href="https://remote.example/base">遠端伺服器 / https://remote.example/base</a></td>');
-      expect(body).toContain("遠端伺服器 / https://remote.example/base");
+      expect(body).toContain('<td colspan="4"><a href="https://remote.example/base">https://remote.example/base</a></td>');
       expect(body).toContain("聯合伺服器狀態");
       expect(body).toContain("服務中");
     } finally {
@@ -1981,7 +1981,7 @@ describe("worker routes", () => {
       expect(body).toContain("故障伺服器");
       expect(body).toContain("https://broken.example/base");
       expect(body).toContain('<a href="https://broken.example/base">失聯中</a>');
-      expect(body).toContain("故障伺服器 / https://broken.example/base");
+      expect(body).toContain('<td colspan="4"><a href="https://broken.example/base">https://broken.example/base</a></td>');
       expect(body).toContain("連線失敗");
       expect(body).not.toContain("network down");
     } finally {
