@@ -1440,6 +1440,17 @@ export function renderIconCatalog(): string {
           <td><input id="iconUploadFile" type="file" accept="image/png,image/jpeg,image/gif,image/webp" size="28"> <button id="iconUploadButton">上傳</button> <button id="iconRemoveButton">刪頭像</button> <small class="muted">PNG/JPEG/GIF/WebP 512KiB以下</small></td>
         </tr>
       </table>
+      <form method="post" action="/upload.php" enctype="multipart/form-data" style="margin:10px 20px;">
+        <strong>舊式上傳：</strong>
+        玩家ID <input name="player_id" maxlength="64" size="20">
+        圖片選擇 <input name="icon_file" type="file" accept="image/png,image/jpeg,image/gif,image/webp" size="28">
+        <input name="submit" type="submit" value="上傳">
+      </form>
+      <form method="post" action="/upload2.php" enctype="multipart/form-data" style="margin:10px 20px;">
+        <strong>舊式刪除：</strong>
+        玩家ID <input name="player_id" maxlength="64" size="20">
+        <input name="submit" type="submit" value="刪除">
+      </form>
     </fieldset>
     <script>
       const iconUploadPlayerId = document.querySelector("#iconUploadPlayerId");

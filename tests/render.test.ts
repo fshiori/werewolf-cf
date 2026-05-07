@@ -553,6 +553,10 @@ describe("render", () => {
     expect(html).toContain("iconUploadFile");
     expect(html).toContain("iconUploadButton");
     expect(html).toContain("iconRemoveButton");
+    expect(html).toContain('action="/upload.php"');
+    expect(html).toContain('name="player_id"');
+    expect(html).toContain('name="icon_file"');
+    expect(html).toContain('action="/upload2.php"');
     expect(html).toContain("/api/assets/avatar");
     expect(html).toContain("頭像需小於 512KiB");
   });
