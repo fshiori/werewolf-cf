@@ -2070,7 +2070,7 @@ async function getRoomTranscriptPage(request: Request, env: Env, roomIdParam: st
   if (!(await roomExists(env, roomId))) {
     return new Response("Room not found", { status: 404 });
   }
-  const [records, events] = await Promise.all([listRoomRecords(env, roomId), listRoomEvents(env, roomId)]);
+  const [records, events] = await Promise.all([listRoomRecords(env, roomId), listRoomEvents(env, roomId, { fullHistory: true })]);
   const viewerModeParam = url.searchParams.get("viewer");
   const viewerPlayerIdParam = url.searchParams.get("viewer_player_id");
   const viewerMode = viewerModeParam === "public" || viewerModeParam === "player" || viewerModeParam === "dead" || viewerModeParam === "gm" ? viewerModeParam : "legacy";
@@ -2107,12 +2107,13 @@ function isPrivateRoomEvent(event: RoomEventSummary): boolean {
   return isRecord(event.payload) && event.payload.visibility === "private";
 }
 
-async function listRoomEvents(env: Env, roomId: string): Promise<RoomEventSummary[]> {
+async function listRoomEvents(env: Env, roomId: string, options: { fullHistory?: boolean } = {}): Promise<RoomEventSummary[]> {
+  const eventQuery = options.fullHistory
+    ? "SELECT id, room_id, player_id, event_type, payload_json, created_at FROM room_events WHERE room_id = ? ORDER BY created_at DESC"
+    : "SELECT id, room_id, player_id, event_type, payload_json, created_at FROM room_events WHERE room_id = ? ORDER BY created_at DESC LIMIT 50";
   const [status, result] = await Promise.all([
     getRoomStatusValue(env, roomId),
-    env.DB.prepare(
-      "SELECT id, room_id, player_id, event_type, payload_json, created_at FROM room_events WHERE room_id = ? ORDER BY created_at DESC LIMIT 50"
-    )
+    env.DB.prepare(eventQuery)
       .bind(roomId)
       .all<{ id: number; room_id: string; player_id: string | null; event_type: string; payload_json: string; created_at: string }>()
   ]);
@@ -2648,7 +2649,7 @@ export default {
         if (!(await roomExists(env, roomId))) {
           return new Response("Room not found", { status: 404 });
         }
-        return html(renderRoomEvents(roomId, await listRoomEvents(env, roomId)));
+        return html(renderRoomEvents(roomId, await listRoomEvents(env, roomId, { fullHistory: true })));
       } catch (error) {
         return json({ error: error instanceof Error ? error.message : "Invalid room" }, { status: 400 });
       }
