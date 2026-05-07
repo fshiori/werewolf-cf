@@ -2697,6 +2697,13 @@ export default {
       return legacyTripResult("修改紀錄", "此 Cloudflare 版本不保存過去紀錄村民註冊密碼；請使用認領身份流程綁定目前玩家。", "/trip.php?go=edit2", 501);
     }
 
+    if (request.method === "POST" && url.pathname === "/trip.php" && url.searchParams.get("go") === "sce") {
+      const roomId = url.searchParams.get("room") ?? "";
+      const tripId = url.searchParams.get("trip") ?? "";
+      const backHref = roomId && tripId ? `/trip.php?go=sce&room=${encodeURIComponent(roomId)}&trip=${encodeURIComponent(tripId)}` : "/trip.php";
+      return legacyTripResult("評分", "此 Cloudflare 版本尚未提供 PHP session 驗證的 Trip 評分寫入；評分表單僅作為相容顯示。", backHref, 501);
+    }
+
     if (request.method === "POST" && url.pathname === "/api/bbs/topics") {
       return createBbsTopic(request, env);
     }

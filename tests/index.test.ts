@@ -1069,6 +1069,26 @@ describe("worker routes", () => {
     expect(body).toContain("trip_score");
   });
 
+  it("returns the legacy Trip rating compatibility result page", async () => {
+    const body = new FormData();
+    body.set("sceis", "1");
+    body.set("mess", "good");
+
+    const response = await worker.fetch(
+      new Request("http://example.test/trip.php?go=sce&room=room_abc&trip=ab12CD", {
+        method: "POST",
+        body
+      }),
+      envWithRooms([])
+    );
+    const html = await response.text();
+
+    expect(response.status).toBe(501);
+    expect(html).toContain("<legend><strong>評分</strong></legend>");
+    expect(html).toContain("尚未提供 PHP session 驗證的 Trip 評分寫入");
+    expect(html).toContain("/trip.php?go=sce&amp;room=room_abc&amp;trip=ab12CD");
+  });
+
   it("renders legacy Trip room record pages without exposing Trip hashes", async () => {
     const tripHash = await registeredTripHash("ab12CD");
     const response = await worker.fetch(
