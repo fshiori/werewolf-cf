@@ -704,7 +704,7 @@ describe("worker routes", () => {
     const runs = (env as unknown as { runs: Array<{ query: string; values: unknown[] }> }).runs;
 
     expect(response.status).toBe(303);
-    expect(response.headers.get("Location")).toBe("/trip");
+    expect(response.headers.get("Location")).toBe("/trip.php");
     expect(runs[0].query).toContain("INSERT INTO registered_trips");
     expect(String(runs[0].values[0])).toMatch(/^[0-9a-f]{64}$/);
   });
@@ -745,7 +745,7 @@ describe("worker routes", () => {
     const runs = (env as unknown as { runs: Array<{ query: string; values: unknown[] }> }).runs;
 
     expect(response.status).toBe(303);
-    expect(response.headers.get("Location")).toBe("/trip");
+    expect(response.headers.get("Location")).toBe("/trip.php");
     expect(runs[0].query).toContain("INSERT INTO excluded_trips");
     expect(String(runs[0].values[0])).toMatch(/^[0-9a-f]{64}$/);
     expect(runs[0].values[1]).toBe("Blocked nickname");
