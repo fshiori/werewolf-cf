@@ -1551,17 +1551,58 @@ export function renderIconCatalog(): string {
     "#000033", "#333300", "#666600", "#999900", "#cccc00", "#ffff00",
     "#000066", "#333366", "#666633", "#999933", "#cccc33", "#ffff33",
     "#000099", "#333399", "#666699", "#999966", "#cccc66", "#ffff66",
+    "#0000cc", "#3333cc", "#6666cc", "#9999cc", "#cccc99", "#ffff99",
+    "#0000ff", "#3333ff", "#6666ff", "#9999ff", "#ccccff", "#ffffcc",
     "#003300", "#336633", "#669966", "#99cc99", "#ccffcc", "#ff00ff",
     "#006600", "#339933", "#66cc66", "#99ff99", "#cc00cc", "#ff33ff",
     "#009900", "#33cc33", "#66ff66", "#990099", "#cc33cc", "#ff66ff",
     "#00cc00", "#33ff33", "#660066", "#993399", "#cc66cc", "#ff99ff",
     "#00ff00", "#330033", "#663366", "#996699", "#cc99cc", "#ffccff",
+    "#00ff33", "#330066", "#663399", "#9966cc", "#cc99ff", "#ffcc00",
+    "#00ff66", "#330099", "#6633cc", "#9966ff", "#cc9900", "#ffcc33",
+    "#00ff99", "#3300cc", "#6633ff", "#996600", "#cc9933", "#ffcc66",
+    "#00ffcc", "#3300ff", "#663300", "#996633", "#cc9966", "#ffcc99",
     "#00ffff", "#330000", "#663333", "#996666", "#cc9999", "#ffcccc",
-    "#003366", "#336699", "#6699cc", "#996600", "#cc9933", "#ffcc66"
+    "#00cccc", "#33ffff", "#660000", "#993333", "#cc6666", "#ff9999",
+    "#009999", "#33cccc", "#66ffff", "#990000", "#cc3333", "#ff6666",
+    "#006666", "#339999", "#66cccc", "#99ffff", "#cc0000", "#ff3333",
+    "#003333", "#336666", "#669999", "#99cccc", "#ccffff", "#ff0000",
+    "#003366", "#336699", "#6699cc", "#99ccff", "#ccff00", "#ff0033",
+    "#003399", "#3366cc", "#6699ff", "#99cc00", "#ccff33", "#ff0066",
+    "#0033cc", "#3366ff", "#669900", "#99cc33", "#ccff66", "#ff0099",
+    "#0033ff", "#336600", "#669933", "#99cc66", "#ccff99", "#ff00cc",
+    "#0066ff", "#339900", "#66cc33", "#99ff66", "#cc0099", "#ff33cc",
+    "#0099ff", "#33cc00", "#66ff33", "#990066", "#cc3399", "#ff66cc",
+    "#00ccff", "#33ff00", "#660033", "#993366", "#cc6699", "#ff99cc",
+    "#00cc33", "#33ff66", "#660099", "#9933cc", "#cc66ff", "#ff9900",
+    "#00cc66", "#33ff99", "#6600cc", "#9933ff", "#cc6600", "#ff9933",
+    "#00cc99", "#33ffcc", "#6600ff", "#993300", "#cc6633", "#ff9966",
+    "#009933", "#33cc66", "#66ff99", "#9900cc", "#cc33ff", "#ff6600",
+    "#006633", "#339966", "#66cc99", "#99ffcc", "#cc00ff", "#ff3300",
+    "#009966", "#33cc99", "#66ffcc", "#9900ff", "#cc3300", "#ff6633",
+    "#0099cc", "#33ccff", "#66ff00", "#990033", "#cc3366", "#ff6699",
+    "#0066cc", "#3399ff", "#66cc00", "#99ff33", "#cc0066", "#ff3399",
+    "#006699", "#3399cc", "#66ccff", "#99ff00", "#cc0033", "#ff3366"
   ];
+  const legacyIconLightColors = new Set([
+    "#cccccc", "#ffffff", "#cccc00", "#ffff00", "#cccc33", "#ffff33",
+    "#cccc66", "#ffff66", "#cccc99", "#ffff99", "#ccccff", "#ffffcc",
+    "#99cc99", "#ccffcc", "#66cc66", "#99ff99", "#33cc33", "#66ff66",
+    "#00cc00", "#33ff33", "#00ff00", "#ffccff", "#00ff33", "#ffcc00",
+    "#00ff66", "#ffcc33", "#00ff99", "#ffcc66", "#00ffcc", "#ffcc99",
+    "#00ffff", "#ffcccc", "#00cccc", "#33ffff", "#009999", "#33cccc",
+    "#66ffff", "#339999", "#66cccc", "#99ffff", "#669999", "#99cccc",
+    "#ccffff", "#6699cc", "#99ccff", "#ccff00", "#6699ff", "#99cc00",
+    "#ccff33", "#669900", "#99cc33", "#ccff66", "#669933", "#99cc66",
+    "#ccff99", "#66cc33", "#99ff66", "#33cc00", "#66ff33", "#00ccff",
+    "#33ff00", "#00cc33", "#33ff66", "#00cc66", "#33ff99", "#00cc99",
+    "#33ffcc", "#33cc66", "#66ff99", "#66cc99", "#99ffcc", "#33cc99",
+    "#66ffcc", "#33ccff", "#66ff00", "#66cc00", "#99ff33", "#66ccff",
+    "#99ff00"
+  ]);
   const legacyColorRows = Array.from({ length: Math.ceil(legacyIconColors.length / 6) }, (_, rowIndex) => {
     const cells = legacyIconColors.slice(rowIndex * 6, rowIndex * 6 + 6).map((color) => {
-      const darkText = ["#cccccc", "#ffffff", "#cccc00", "#ffff00", "#cccc33", "#ffff33", "#cccc66", "#ffff66", "#99cc99", "#ccffcc", "#66cc66", "#99ff99", "#33cc33", "#66ff66", "#00cc00", "#33ff33", "#00ff00", "#ffccff", "#00ffff", "#ffcccc", "#6699cc", "#ffcc66"].includes(color);
+      const darkText = legacyIconLightColors.has(color);
       return `<td align="middle" bgcolor="${escapeHtml(color)}"><input type="radio" name="color" value="${escapeHtml(color)}">${darkText ? escapeHtml(color) : `<font color="#ffffff">${escapeHtml(color)}</font>`}</td>`;
     }).join("");
     return `<tr>${cells}</tr>`;

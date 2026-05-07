@@ -697,6 +697,8 @@ describe("render", () => {
     expect(html).toContain("圖像的顏色選擇");
     expect(html).toContain('name="color" value="#000000"');
     expect(html).toContain('name="color" value="#6699cc"');
+    expect(html).toContain('name="color" value="#ff3366"');
+    expect((html.match(/name="color" value="#[0-9a-f]{6}"/g) ?? []).length).toBe(216);
     expect(html).toContain('name="color_custom"');
     expect(html).toContain("(例：#6699cc)");
     expect(html).toContain('action="/upload2.php"');
