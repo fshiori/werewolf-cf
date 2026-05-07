@@ -1456,6 +1456,7 @@ describe("worker routes", () => {
     expect(body).toContain("聯合遊戲列表");
     expect(body).toContain("服務中");
     expect(body).toContain("本伺服器");
+    expect(body).toContain("/login.php?room_no=room_list");
     expect(body).toContain("[room_list]");
     expect(body).toContain("list村");
     expect(body).toContain("Friendly");

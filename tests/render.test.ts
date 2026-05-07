@@ -604,6 +604,7 @@ describe("render", () => {
     expect(html).toContain("本伺服器");
     expect(html).toContain("募集中");
     expect(html).toContain("/assets/reference/img/waiting.gif");
+    expect(html).toContain("/login.php?room_no=room_abc");
     expect(html).toContain("[room_abc]");
     expect(html).toContain("Test村");
     expect(html).toContain("人數22");
