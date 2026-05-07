@@ -2689,6 +2689,29 @@ describe("render", () => {
     expect(html).toContain("/game_log.php?room_no=room_abc&amp;log_mode=on&amp;viewer=player&amp;viewer_player_id=player_target");
   });
 
+  it("can render legacy transcript player-view forms for PHP aliases", () => {
+    const html = renderRoomTranscript("room_abc", [], [
+      {
+        id: 1,
+        roomId: "room_abc",
+        playerId: "player_wolf",
+        eventType: "wolf_chat",
+        payload: { visibility: "private", nickname: "Wolf", text: "howl", phase: "night", day: 2 },
+        createdAt: "2026-05-06 12:00:00"
+      }
+    ], {
+      playerViewFormAction: "/old_log.php",
+      playerViewHiddenInputs: { log_mode: "on", room_no: "room_abc" },
+      reverseLog: true,
+      heavenTalk: true
+    });
+
+    expect(html).toContain('<form method="get" action="/old_log.php"');
+    expect(html).toContain('<input type="hidden" name="log_mode" value="on">');
+    expect(html).toContain('<input type="hidden" name="room_no" value="room_abc">');
+    expect(html).toContain('<input type="hidden" name="viewer" value="player">');
+  });
+
   it("renders implemented rules page", () => {
     const html = renderRules();
 
