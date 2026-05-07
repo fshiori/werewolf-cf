@@ -2448,7 +2448,22 @@ export function renderBbsTopic(topic: BbsTopicSummary, replies: BbsReplySummary[
           location.href = Number.isInteger(replyPage) && replyPage > 1 ? "${topicPath}?page=" + encodeURIComponent(String(replyPage)) : "${topicPath}";
         });
       </script>`;
-  const moderationPanel = `<table class="form-table">
+  const moderationPanel = `<form method="post" action="/bbs.php?go=edit&amp;id=${escapeHtml(String(topic.id))}" enctype="multipart/form-data" style="margin:10px 20px;">
+      您對文章編號${escapeHtml(String(topic.id))}進行管理，請選擇項目<br>
+      <select name="editis">
+        <option value="del">刪除</option>
+        <option value="edit" selected>編輯</option>
+        <option value="tolock">鎖定</option>
+        <option value="totop">置頂</option>
+        <option value="nolock">解鎖定</option>
+        <option value="notop">解置頂</option>
+        <option value="todige">加精華</option>
+        <option value="nodige">解精華</option>
+      </select>
+      密碼 <input type="password" name="password" maxlength="128" size="24"><br>
+      <input name="submit" type="submit" value="送出">
+    </form>
+    <table class="form-table">
       <tr><td><label><strong>　管理密碼：</strong></label></td><td><input id="bbsAdminToken" type="password" maxlength="128" size="32"></td></tr>
       <tr><td><strong>　項目：</strong></td><td>
         <label><input id="bbsModeratePinned" type="checkbox"${topic.pinned ? " checked" : ""}> 置頂</label>

@@ -1919,6 +1919,8 @@ describe("worker routes", () => {
     const body = await response.text();
     expect(body).toContain("Welcome");
     expect(body).toContain("bbsModerationForm");
+    expect(body).toContain('action="/bbs.php?go=edit&amp;id=1"');
+    expect(body).toContain('name="editis"');
     expect(body).toContain("bbsTopicEditButton");
     expect(body).toContain("/api/bbs/topics/1/content");
   });

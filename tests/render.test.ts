@@ -854,6 +854,12 @@ describe("render", () => {
     expect(html).toContain("狀態");
     expect(html).toContain('<span class="bbs-status-mark">一般</span>');
     expect(html).toContain("主題管理");
+    expect(html).toContain('action="/bbs.php?go=edit&amp;id=1"');
+    expect(html).toContain('name="editis"');
+    expect(html).toContain('<option value="del">刪除</option>');
+    expect(html).toContain('<option value="edit" selected>編輯</option>');
+    expect(html).toContain('<option value="todige">加精華</option>');
+    expect(html).toContain('name="password"');
     expect(html).toContain("bbsAdminToken");
     expect(html).toContain("werewolf_cf_bbs_admin_token");
     expect(html).toContain("/api/bbs/topics/1/moderation");
