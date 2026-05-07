@@ -2094,6 +2094,40 @@ describe("render", () => {
     expect(seerView).toContain("可聽見的同陣營密談");
   });
 
+  it("does not show fox talk to child fox player views", () => {
+    const records = [
+      {
+        id: 1,
+        roomId: "room_abc",
+        result: {
+          winner: "foxes",
+          day: 3,
+          players: [
+            { playerId: "player_fox", nickname: "Fox", role: "fox", alive: true },
+            { playerId: "player_child_fox", nickname: "Child Fox", role: "child_fox", alive: true }
+          ]
+        },
+        createdAt: "2026-05-06 12:00:00"
+      }
+    ];
+    const events = [
+      {
+        id: 1,
+        roomId: "room_abc",
+        playerId: "player_fox",
+        eventType: "fox_chat",
+        payload: { visibility: "private", nickname: "Fox", text: "fox private talk", phase: "night", day: 2 },
+        createdAt: "2026-05-06 12:01:00"
+      }
+    ];
+
+    const foxView = renderRoomTranscript("room_abc", records, events, { viewerMode: "player", viewerPlayerId: "player_fox", heavenTalk: true });
+    expect(foxView).toContain("fox private talk");
+
+    const childFoxView = renderRoomTranscript("room_abc", records, events, { viewerMode: "player", viewerPlayerId: "player_child_fox", heavenTalk: true });
+    expect(childFoxView).not.toContain("fox private talk");
+  });
+
   it("infers player-view channel visibility from event payload roles when records are missing", () => {
     const events = [
       {
@@ -2126,6 +2160,31 @@ describe("render", () => {
     expect(wolfView).toContain("Viewer Wolf (viewer_wolf)");
     expect(wolfView).toContain("pack imported");
     expect(wolfView).not.toContain("fox imported");
+  });
+
+  it("does not infer fox talk visibility from saved child-fox PHP roles", () => {
+    const events = [
+      {
+        id: 1,
+        roomId: "room_abc",
+        playerId: "viewer_child_fox",
+        eventType: "public_chat",
+        payload: { nickname: "Viewer Child Fox", role: "fosi", text: "hello", phase: "day", day: 2 },
+        createdAt: "2026-05-06 12:01:00"
+      },
+      {
+        id: 2,
+        roomId: "room_abc",
+        playerId: "other_fox",
+        eventType: "fox_chat",
+        payload: { visibility: "private", nickname: "Other Fox", text: "fox imported", phase: "night", day: 2 },
+        createdAt: "2026-05-06 12:02:00"
+      }
+    ];
+
+    const childFoxView = renderRoomTranscript("room_abc", [], events, { viewerMode: "player", viewerPlayerId: "viewer_child_fox", heavenTalk: true });
+    expect(childFoxView).toContain("Viewer Child Fox (viewer_child_fox)");
+    expect(childFoxView).not.toContain("fox imported");
   });
 
   it("shows composite wolf or fox lover transcript rows to lover player views", () => {

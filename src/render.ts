@@ -1014,7 +1014,7 @@ function isWerewolfTranscriptRole(role: unknown): boolean {
 
 function isFoxTranscriptRole(role: unknown): boolean {
   const text = transcriptRoleText(role);
-  return role === "fox" || role === "child_fox" || text === "fosi" || text.startsWith("fox") || text.startsWith("fosi ");
+  return text === "fox" || text.startsWith("fox ");
 }
 
 function isCompositeLoversTranscriptEvent(event: RoomEventSummary): boolean {
