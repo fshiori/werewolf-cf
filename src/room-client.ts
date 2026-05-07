@@ -37,6 +37,31 @@ function append(line) {
   div.innerHTML = line;
   document.querySelector("#chatLog").appendChild(div);
 }
+function appendChatLine(channelLabel, markerColor, nickname, text, rowClass) {
+  const table = document.createElement("table");
+  table.border = "0";
+  table.cellPadding = "0";
+  table.cellSpacing = "0";
+  const row = document.createElement("tr");
+  if (rowClass) row.className = rowClass;
+  const speakerCell = document.createElement("td");
+  speakerCell.className = "chat-speaker";
+  const marker = document.createElement("font");
+  marker.color = markerColor || "#666666";
+  marker.textContent = "◆";
+  const label = channelLabel ? document.createElement("small") : undefined;
+  if (label) label.textContent = channelLabel;
+  speakerCell.append(marker, nickname || "");
+  if (label) speakerCell.append(" ", label);
+  const gapCell = document.createElement("td");
+  gapCell.className = "chat-gap";
+  const messageCell = document.createElement("td");
+  messageCell.className = "chat-message";
+  messageCell.textContent = text || "";
+  row.append(speakerCell, gapCell, messageCell);
+  table.appendChild(row);
+  document.querySelector("#chatLog").appendChild(table);
+}
 function playNotifySound() {
   if (!document.querySelector("#soundNotify").checked) return;
   try {
@@ -180,25 +205,25 @@ document.querySelector("#connect").addEventListener("click", () => {
       document.querySelector("#members").textContent = msg.members.map((m) => m.gm ? m.nickname + " [GM]" : m.nickname).join(", ");
       if (latestGame) renderGame(latestGame);
     } else if (msg.type === "chat") {
-      append("<b>" + msg.nickname + "</b>: " + msg.text);
+      appendChatLine("", "#666666", msg.nickname, msg.text, "");
     } else if (msg.type === "gm_chat") {
-      append("<font color='#008800'>[GM]</font> <b>" + msg.nickname + "</b>: " + msg.text);
+      appendChatLine("(GM)", "red", msg.nickname, msg.text, "chat-gm");
     } else if (msg.type === "gm_whisper") {
       const currentPlayerId = localStorage.getItem(playerKey);
-      const label = currentPlayerId === msg.targetPlayerId ? "[GM私語]" : "[GM私語→" + msg.targetNickname + "]";
-      append("<font color='#008800'>" + label + "</font> <b>" + msg.nickname + "</b>: " + msg.text);
+      const label = currentPlayerId === msg.targetPlayerId ? "(GM私語)" : "(GM私語→" + msg.targetNickname + ")";
+      appendChatLine(label, "red", msg.nickname, msg.text, "chat-gm");
     } else if (msg.type === "wolf_chat") {
-      append("<font color='#cc0000'>[狼頻]</font> <b>" + msg.nickname + "</b>: " + msg.text);
+      appendChatLine("(人狼)", "#cc0000", msg.nickname, msg.text, "chat-wolf");
     } else if (msg.type === "fox_chat") {
-      append("<font color='#990099'>[狐頻]</font> <b>" + msg.nickname + "</b>: " + msg.text);
+      appendChatLine("(妖狐)", "#990099", msg.nickname, msg.text, "chat-fox");
     } else if (msg.type === "common_chat") {
-      append("<font color='#996633'>[共有頻]</font> <b>" + msg.nickname + "</b>: " + msg.text);
+      appendChatLine("(共有者)", "#996633", msg.nickname, msg.text, "chat-common");
     } else if (msg.type === "lovers_chat") {
-      append("<font color='#ff6699'>[戀頻]</font> <b>" + msg.nickname + "</b>: " + msg.text);
+      appendChatLine("(戀人)", "#ff6699", msg.nickname, msg.text, "chat-lovers");
     } else if (msg.type === "dead_chat") {
-      append("<font color='#666666'>[靈界]</font> <b>" + msg.nickname + "</b>: " + msg.text);
+      appendChatLine("(天國)", "#666666", msg.nickname, msg.text, "chat-dead");
     } else if (msg.type === "self_talk") {
-      append("<font color='#666666'>[自言自語]</font> <b>" + msg.nickname + "</b>: " + msg.text);
+      appendChatLine("的自言自語", "#666666", msg.nickname, msg.text, "chat-self");
     } else if (msg.type === "objection") {
       playNotifySound();
       append("<font color='#cc0000'>[異議あり]</font> <b>" + msg.nickname + "</b> 提出反對。（剩餘 " + msg.remaining + "）");

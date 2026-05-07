@@ -246,6 +246,9 @@ describe("render", () => {
     expect(html).toContain(".player-card.start-voted { background: #ff50ff; }");
     expect(html).toContain(".player-name { padding-left: 5px; max-width: 96px; overflow-wrap: anywhere; word-break: break-word; }");
     expect(html).toContain("#chatLog div, #gameLog div { border-top: 1px dashed silver; padding: 2px 4px; overflow-wrap: anywhere; word-break: break-word; }");
+    expect(html).toContain('#chatLog .chat-speaker { width: 200px; }');
+    expect(html).toContain('#chatLog .chat-gm .chat-speaker, #chatLog .chat-gm .chat-message { color: red; }');
+    expect(html).toContain('#chatLog .chat-dead .chat-speaker, #chatLog .chat-dead .chat-message { background-color: #cccccc; color: black; }');
     expect(html).toContain("#gameLog .game-log-system td { background-color: #efefef; color: black; font-weight: bold; }");
     expect(html).toContain("#gameLog .game-log-vote td { background-color: #999900; color: snow; font-weight: bold; }");
     expect(html).toContain("#gameLog .game-log-danger td { background-color: red; color: snow; font-weight: bold; }");
@@ -416,6 +419,10 @@ describe("render", () => {
     expect(ROOM_CLIENT_SCRIPT).toContain('tripLink.title = "Trip查詢";');
     expect(ROOM_CLIENT_SCRIPT).toContain("gm_chat");
     expect(ROOM_CLIENT_SCRIPT).toContain("gm_whisper");
+    expect(ROOM_CLIENT_SCRIPT).toContain("function appendChatLine(channelLabel, markerColor, nickname, text, rowClass)");
+    expect(ROOM_CLIENT_SCRIPT).toContain('messageCell.textContent = text || "";');
+    expect(ROOM_CLIENT_SCRIPT).toContain('appendChatLine("(人狼)", "#cc0000", msg.nickname, msg.text, "chat-wolf");');
+    expect(ROOM_CLIENT_SCRIPT).toContain('appendChatLine("(天國)", "#666666", msg.nickname, msg.text, "chat-dead");');
     expect(ROOM_CLIENT_SCRIPT).toContain("gm_advance_phase");
     expect(ROOM_CLIENT_SCRIPT).toContain("gm_end_game");
     expect(ROOM_CLIENT_SCRIPT).toContain("gm_set_alive");
@@ -530,7 +537,7 @@ describe("render", () => {
     expect(ROOM_CLIENT_SCRIPT).toContain('nameCell.textContent = line.slice(0, separatorIndex) + " 的遺言";');
     expect(ROOM_CLIENT_SCRIPT).toContain("self_talk");
     expect(ROOM_CLIENT_SCRIPT).toContain("#sendSelfTalk");
-    expect(ROOM_CLIENT_SCRIPT).toContain("[自言自語]");
+    expect(ROOM_CLIENT_SCRIPT).toContain("的自言自語");
     expect(ROOM_CLIENT_SCRIPT).toContain("revealed_roles");
     expect(ROOM_CLIENT_SCRIPT).toContain("set_last_words");
     expect(ROOM_CLIENT_SCRIPT).toContain("last_words_ack");
