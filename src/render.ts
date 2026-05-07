@@ -825,9 +825,9 @@ export function renderFederatedList(
 ): string {
   const peerSummaryRows = peers.map((peer) => `<tr>
         <td>${peer.ok ? `<a href="${escapeHtml(peer.url)}">服務中</a>` : `<a href="${escapeHtml(peer.url)}">失聯中</a>`}</td>
-        <td colspan="4"><a href="${escapeHtml(peer.url)}">${escapeHtml(peer.name)} / ${escapeHtml(peer.url)}</a></td>
+        <td colspan="4"><a href="${escapeHtml(peer.url)}">${escapeHtml(peer.url)}</a></td>
       </tr>`).join("");
-  const backLink = options.backPageHref ? `<p><a href="${escapeHtml(options.backPageHref)}">←返回</a></p>` : "";
+  const backLink = options.backPageHref ? `<a href="${escapeHtml(options.backPageHref)}">←返回</a>` : "";
   const rows = rooms.length
     ? rooms.map((value) => {
       const room = federatedRoomValue(value);
@@ -852,10 +852,10 @@ export function renderFederatedList(
       </tr>`).join("")
     : `<tr><td colspan="4" class="muted">尚未設定聯合伺服器。</td></tr>`;
 
-  return page("Federated List", shell(`
+  return page("汝等是人是狼？ - Werewolf Cloudflare Port", shell(`
+    ${backLink}
     <fieldset>
       <legend><strong>聯合遊戲列表</strong></legend>
-      ${backLink}
       <div style="line-height:135%;margin:20px 20px 30px;">
         <strong>
           <table border="0" cellpadding="0" cellspacing="0" style="width: 100%">
