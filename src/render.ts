@@ -43,6 +43,8 @@ function page(title: string, body: string, extraHead = ""): string {
     .view-spectator-only, .view-heaven-only { display: none; }
     body.room-view-spectator .view-player-only,
     body.room-view-heaven .view-player-only { display: none; }
+    body.room-view-spectator .room-registration-row,
+    body.room-view-heaven .room-registration-row { display: none; }
     body.room-view-spectator .view-spectator-only,
     body.room-view-heaven .view-heaven-only { display: table-row; }
     body.room-view-heaven .panel th { background: #cccccc; }
