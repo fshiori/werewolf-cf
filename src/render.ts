@@ -3771,6 +3771,28 @@ function roomPageTitle(roomId: string, pageMode: "full" | "frame" | "up" | "vote
   return `Room ${roomId}`;
 }
 
+export function renderLegacyGameFrame(roomId: string, options: Pick<RenderRoomOptions, "autoReloadSeconds"> = {}): string {
+  const autoReloadSeconds = normalizeAutoReloadSeconds(options.autoReloadSeconds);
+  const gameUpHref = legacyRoomHref("/game_up.php", roomId, autoReloadSeconds);
+  const gamePlayHref = legacyRoomHref("/game_play.php", roomId, autoReloadSeconds);
+  return `<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <title>汝等是人是狼？＜遊戲＞</title>
+</head>
+<frameset rows="85,*" border="0" frameborder="0" framespacing="0" data-legacy-entry="game_frame.php">
+  <frame name="up" src="${gameUpHref}#game_top" scrolling="no" noresize>
+  <frame name="bottom" src="${gamePlayHref}#game_top">
+  <noframes>
+    <body>
+      瀏覽器不支援框架。<a href="${gamePlayHref}#game_top">game_play.php#game_top</a>
+    </body>
+  </noframes>
+</frameset>
+</html>`;
+}
+
 export function renderRoom(roomId: string, options: RenderRoomOptions = {}): string {
   const autoReloadSeconds = normalizeAutoReloadSeconds(options.autoReloadSeconds);
   const viewMode = normalizeRoomViewMode(options.viewMode);

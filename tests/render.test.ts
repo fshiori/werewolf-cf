@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { renderAdminConfig, renderAdminConfigLogin, renderAdminIndex, renderAdminRooms, renderAdminRoomsLogin, renderBbs, renderBbsAdmin, renderBbsTopic, renderFederatedList, renderHome, renderIconCatalog, renderLeaderboard, renderManual, renderOldLogs, renderPlayerProfile, renderProtocol, renderRoom, renderRoomEvents, renderRoomRecords, renderRoomTranscript, renderRules, renderScriptInfo, renderStatus, renderTripComments, renderTripLookup, renderTripRating, renderTripRegistration, renderTripRoomRecords, renderVersion, renderWinRateAnalysis } from "../src/render";
+import { renderAdminConfig, renderAdminConfigLogin, renderAdminIndex, renderAdminRooms, renderAdminRoomsLogin, renderBbs, renderBbsAdmin, renderBbsTopic, renderFederatedList, renderHome, renderIconCatalog, renderLeaderboard, renderLegacyGameFrame, renderManual, renderOldLogs, renderPlayerProfile, renderProtocol, renderRoom, renderRoomEvents, renderRoomRecords, renderRoomTranscript, renderRules, renderScriptInfo, renderStatus, renderTripComments, renderTripLookup, renderTripRating, renderTripRegistration, renderTripRoomRecords, renderVersion, renderWinRateAnalysis } from "../src/render";
 import { ROOM_CLIENT_SCRIPT } from "../src/room-client";
 
 describe("render", () => {
@@ -544,6 +544,16 @@ describe("render", () => {
     expect(vote).toContain("投將該員'處刑'一票 / 咬下去 / 占卜對象 / 護衛對象 / 復活對象");
     expect(vote).toContain('<tr><td>back</td><td colspan="2"><a href="/game_up.php?room_no=room_abc#game_top">←上一頁&amp;重新整理</a></td></tr>');
     expect(vote).toContain('<tr class="view-player-only room-panel-actions">');
+  });
+
+  it("renders game_frame.php as a legacy frameset shell", () => {
+    const html = renderLegacyGameFrame("room_abc", { autoReloadSeconds: 20 });
+    expect(html).toContain("<title>汝等是人是狼？＜遊戲＞</title>");
+    expect(html).toContain('<frameset rows="85,*" border="0" frameborder="0" framespacing="0" data-legacy-entry="game_frame.php">');
+    expect(html).toContain('<frame name="up" src="/game_up.php?room_no=room_abc&amp;auto_reload=20#game_top" scrolling="no" noresize>');
+    expect(html).toContain('<frame name="bottom" src="/game_play.php?room_no=room_abc&amp;auto_reload=20#game_top">');
+    expect(html).toContain('<a href="/game_play.php?room_no=room_abc&amp;auto_reload=20#game_top">game_play.php#game_top</a>');
+    expect(html).not.toContain('data-room-page="frame"');
   });
 
   it("serves room client behavior from a separate script artifact", () => {
