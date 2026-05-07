@@ -1036,14 +1036,25 @@ export function forceSetPlayerAlive(state: GameState, targetPlayerId: string, al
     throw new Error("Life control target not found");
   }
   const players = state.players.map((player) => (player.playerId === targetPlayerId ? { ...player, alive } : player));
+  const nextActions = alive
+    ? {
+        votes: Object.fromEntries(Object.entries(state.votes ?? {}).filter(([voterId, votedId]) => voterId !== targetPlayerId && votedId !== targetPlayerId)),
+        nightKills: removePlayerActionReferences(state.nightKills ?? {}, targetPlayerId),
+        divinations: removePlayerActionReferences(state.divinations ?? {}, targetPlayerId),
+        guards: removePlayerActionReferences(state.guards ?? {}, targetPlayerId),
+        catRevives: removePlayerActionReferences(state.catRevives ?? {}, targetPlayerId)
+      }
+    : {
+        votes: {},
+        nightKills: {},
+        divinations: {},
+        guards: {},
+        catRevives: {}
+      };
   return clearActionsForDeadPlayers({
     ...state,
     players,
-    votes: Object.fromEntries(Object.entries(state.votes ?? {}).filter(([voterId, votedId]) => voterId !== targetPlayerId && votedId !== targetPlayerId)),
-    nightKills: removePlayerActionReferences(state.nightKills ?? {}, targetPlayerId),
-    divinations: removePlayerActionReferences(state.divinations ?? {}, targetPlayerId),
-    guards: removePlayerActionReferences(state.guards ?? {}, targetPlayerId),
-    catRevives: removePlayerActionReferences(state.catRevives ?? {}, targetPlayerId),
+    ...nextActions,
     log: [...state.log, `GM 將 ${target.nickname} 調整為${alive ? "生存" : "死亡"}。`]
   });
 }

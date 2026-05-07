@@ -1553,7 +1553,7 @@ describe("RoomDurableObject", () => {
     }
   });
 
-  it("clears pending night actions involving a player after GM alive changes through the websocket handler", async () => {
+  it("clears all pending night actions after GM kills a player through the websocket handler", async () => {
     const game: GameState = {
       roomId: "room_abc",
       phase: "night",
@@ -1598,7 +1598,7 @@ describe("RoomDurableObject", () => {
 
     for (const messages of [gmMessages, targetMessages]) {
       const state = messages.find((message) => message.type === "game_state");
-      expect(state).toEqual(expect.objectContaining({ type: "game_state", phase: "night", votedPlayerIds: ["player_cat"] }));
+      expect(state).toEqual(expect.objectContaining({ type: "game_state", phase: "night", votedPlayerIds: [] }));
     }
   });
 
