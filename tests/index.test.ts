@@ -2126,9 +2126,13 @@ describe("worker routes", () => {
     expect(response.status).toBe(200);
     const body = await response.text();
     expect(body).toContain("Topic body");
-    expect(body).toContain("回覆列表");
+    expect(body).toContain("文章列表");
+    expect(body).toContain('<div id="table5">');
+    expect(body).toContain('<table border="1" class="table1" width="100%" align="center">');
+    expect(body).toContain('<td class="table2"><a href="/bbs.php?go=edit&amp;id=1">NO.1</a> &lt;..&gt; [2026-05-06 12:00:00]</td>');
     expect(body).toContain("Bob");
     expect(body).toContain("Reply body");
+    expect(body).toContain('<table class="table1" style="width: 600px" align="right">');
     expect(body).toContain('action="/bbs.php?go=postre"');
     expect(body).toContain('type="hidden" name="id" value="1"');
     expect(body).toContain("/api/bbs/topics/1/replies");
