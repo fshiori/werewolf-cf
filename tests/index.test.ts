@@ -1858,6 +1858,8 @@ describe("worker routes", () => {
     expect(body).toContain("主題列表");
     expect(body).toContain("/bbs.php?go=post");
     expect(body).toContain("/bbs.php?go=dige");
+    expect(body).toContain('<table border="1" class="table1" bordercolor="#CCCCCC" align="center">');
+    expect(body).toContain('<td align="center" width="150">最後時間</td>');
     expect(body).toContain('action="/bbs.php?go=post"');
     expect(body).toContain("[置頂] Welcome (精華)");
     expect(body).toContain("Alice◆Trip");

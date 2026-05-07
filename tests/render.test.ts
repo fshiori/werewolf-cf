@@ -885,6 +885,14 @@ describe("render", () => {
     expect(html).toContain("發表主題");
     expect(html).toContain("/bbs.php?go=post");
     expect(html).toContain("/bbs.php?go=dige");
+    expect(html).toContain(".table1 { border-collapse: collapse; border: 1px solid #cccccc; }");
+    expect(html).toContain('<table border="1" class="table1" bordercolor="#CCCCCC" align="center">');
+    expect(html).toContain('<tr class="table3">');
+    expect(html).toContain('<td align="center" width="50"> No.</td>');
+    expect(html).toContain('<td width="320">標題</td>');
+    expect(html).toContain('<td align="center" width="170">作者</td>');
+    expect(html).toContain('<td align="center" width="40">回覆</td>');
+    expect(html).toContain('<td align="center" width="150">最後時間</td>');
     expect(html).toContain('action="/bbs.php?go=post"');
     expect(html).toContain('name="bname"');
     expect(html).toContain('name="mess"');
@@ -904,7 +912,7 @@ describe("render", () => {
     const html = renderBbs([], { digestOnly: true });
 
     expect(html).toContain("精華主題列表");
-    expect(html).toContain("尚無精華主題。");
+    expect(html).toContain("沒有精華");
     expect(html).toContain("/bbs.php?go=dige");
   });
 
