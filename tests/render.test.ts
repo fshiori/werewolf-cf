@@ -3200,6 +3200,7 @@ describe("render", () => {
   it("renders room admin pages", () => {
     const login = renderAdminRoomsLogin();
     expect(login).toContain("廢村管理");
+    expect(login).toContain('<table class="form-table table1 admin-room-login-table" border="1" cellspacing="1" cellpadding="2" bgcolor="#CCCCCC" style="width:100%;margin:12px 0 18px;">');
     expect(login).toContain("roomAdminToken");
     expect(login).toContain("werewolf_cf_room_admin_token");
 

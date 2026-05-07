@@ -1725,7 +1725,7 @@ export function renderAdminRoomsLogin(): string {
   return page("Room Admin", shell(`
     <fieldset>
       <legend><strong>廢村管理</strong></legend>
-      <table class="form-table">
+      <table class="form-table table1 admin-room-login-table" border="1" cellspacing="1" cellpadding="2" bgcolor="#CCCCCC" style="width:100%;margin:12px 0 18px;">
         <tr><td><label><strong>　管理密碼：</strong></label></td><td><input id="roomAdminToken" type="password" maxlength="128" size="24"> <button id="roomAdminLogin">登入</button></td></tr>
         <tr><td></td><td class="muted">輸入後會開啟管理清單。</td></tr>
       </table>
