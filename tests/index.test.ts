@@ -1392,8 +1392,8 @@ describe("worker routes", () => {
       ["/lang/jpn/script_info.php", "Script Info"],
       ["/stats.php", "勝率分析"],
       ["/trip.php", "身份登錄"],
-      ["/version.php", "Version"],
-      ["/lang/cht/version.htm", "Version"],
+      ["/version.php", "汝等是人是狼？[版本紀錄]"],
+      ["/lang/cht/version.htm", "汝等是人是狼？[版本紀錄]"],
       ["/admin.php", "管理選單"],
       ["/game_log.php?room_no=room_finished", "村子完整紀錄"]
     ] as const;

@@ -3120,7 +3120,7 @@ export function renderProtocol(): string {
 }
 
 export function renderVersion(): string {
-  return page("Version", shell(`
+  return page("汝等是人是狼？[版本紀錄]", shell(`
     <fieldset>
       <legend><strong>版本資訊</strong></legend>
       <table class="form-table">
