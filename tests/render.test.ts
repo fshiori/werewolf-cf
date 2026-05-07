@@ -1131,9 +1131,11 @@ describe("render", () => {
     expect(html).toContain(".vote-table { border: 1px solid #999900; background: #ffffee; }");
     expect(html).toContain("投票者");
     expect(html).toContain("投票先");
+    expect(html).toContain("<strong>投票</strong>");
     expect(html).toContain("<strong>得票</strong>");
-    expect(html).toContain("<td>Bob</td>\n        <td>2票</td>");
-    expect(html).toContain("<td>Alice</td>\n        <td>1票</td>");
+    expect(html).toContain("<td>Alice</td>\n        <td>1票</td>\n        <td>投票給 2 票 →</td>\n        <td>Bob</td>");
+    expect(html).toContain("<td>Carol</td>\n        <td>0票</td>\n        <td>投票給 2 票 →</td>\n        <td>Bob</td>");
+    expect(html).toContain("<td>Dave</td>\n        <td>0票</td>\n        <td>投票給 1 票 →</td>\n        <td>Alice</td>");
     expect(html).toContain("第 2 日 夜晚");
     expect(html).toContain("襲擊");
     expect(html).toContain("位置");
