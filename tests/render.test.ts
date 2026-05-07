@@ -320,6 +320,7 @@ describe("render", () => {
     expect(html).toContain(".role-werewolf");
     expect(html).toContain("權力者");
     expect(html).toContain("玩家列表");
+    expect(html).toContain('id="lobbyStartNotice"');
     expect(html).toContain("能力發動 / 投票");
     expect(html).toContain('id="voteReminder"');
     expect(html).toContain("尚無公開遺言。");
@@ -428,6 +429,9 @@ describe("render", () => {
     expect(ROOM_CLIENT_SCRIPT).toContain('alert.style.backgroundColor = "#CC3300";');
     expect(ROOM_CLIENT_SCRIPT).toContain("快要日落了。請趕快投票");
     expect(ROOM_CLIENT_SCRIPT).toContain("快要日出了。請趕快投票");
+    expect(ROOM_CLIENT_SCRIPT).toContain("function updateLobbyStartNotice(game)");
+    expect(ROOM_CLIENT_SCRIPT).toContain("需要遊戲全體人員投'開始遊戲'才能開始遊戲");
+    expect(ROOM_CLIENT_SCRIPT).toContain("完成投票的玩家其名單背景顏色會變粉紅");
     expect(ROOM_CLIENT_SCRIPT).toContain("currentPlayerAlive");
     expect(ROOM_CLIENT_SCRIPT).toContain("currentPlayerDead");
     expect(ROOM_CLIENT_SCRIPT).toContain("voteSummary");
