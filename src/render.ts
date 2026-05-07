@@ -1099,6 +1099,9 @@ export function renderRoomTranscript(roomId: string, records: GameRecordSummary[
   const playerLinks = playerCandidates.length
     ? playerCandidates.map((player) => `<a href="${roomTranscriptHref(roomId, { ...displayParams, viewer: "player", viewer_player_id: player.playerId })}">${escapeHtml(player.label)}</a>`).join("　")
     : `<span class="muted">尚無可選玩家。</span>`;
+  const legacyPlayerLinks = playerCandidates.length
+    ? playerCandidates.map((player) => `<span>${escapeHtml(player.label)}：<a href="${legacyTranscriptHref("/old_log.php", roomId, { ...displayParams, viewer: "player", viewer_player_id: player.playerId })}">old_log.php</a> / <a href="${legacyTranscriptHref("/game_log.php", roomId, { ...displayParams, viewer: "player", viewer_player_id: player.playerId })}">game_log.php</a></span>`).join("<br>")
+    : `<span class="muted">尚無可選玩家。</span>`;
 
   return page(`Room ${roomId} Log`, shell(`
     <fieldset>
@@ -1121,6 +1124,7 @@ export function renderRoomTranscript(roomId: string, records: GameRecordSummary[
             <button type="submit"${playerCandidates.length ? "" : " disabled"}>表示</button>
           </form>
           <div style="margin-top:4px;">${playerLinks}</div>
+          <div style="margin-top:4px;">${legacyPlayerLinks}</div>
         </td></tr>
       </table>
     </fieldset>
