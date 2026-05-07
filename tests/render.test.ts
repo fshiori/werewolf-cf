@@ -1831,10 +1831,10 @@ describe("render", () => {
     expect(publicView).not.toContain("內容:mutter");
 
     const playerView = renderRoomTranscript("room_abc", [], events, { viewerMode: "player", viewerPlayerId: "player_wolf", heavenTalk: true });
-    expect(playerView).toContain("玩家 player_wolf");
+    expect(playerView).toContain("玩家 Wolf (player_wolf)");
     expect(playerView).toContain("玩家視點");
     expect(playerView).toContain("可見範圍");
-    expect(playerView).toContain("顯示 player_wolf 的私人發言/行動、可聽見的同陣營密談與指向該玩家的GM密語");
+    expect(playerView).toContain("顯示 Wolf (player_wolf) 的私人發言/行動、可聽見的同陣營密談與指向該玩家的GM密語");
     expect(playerView).toContain('<option value="player_wolf" selected>Wolf (player_wolf)</option>');
     expect(playerView).toContain("/room/room_abc/log?heaven_talk=on&amp;viewer=player&amp;viewer_player_id=player_wolf");
     expect(playerView).toContain("howl");
