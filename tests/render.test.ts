@@ -507,6 +507,9 @@ describe("render", () => {
 
     expect(html).toContain("Trip查詢");
     expect(html).toContain("Trip公開資料");
+    expect(html).toContain('form name="trip" action="/trip.php" method="get"');
+    expect(html).toContain('name="sname" size="9"');
+    expect(html).toContain('name="go" type="submit" value="search"');
     expect(html).toContain("tripLookupButton");
     expect(html).toContain("/api/trips/lookup?trip=");
     expect(html).toContain("werewolf_cf_trip");

@@ -913,7 +913,9 @@ describe("worker routes", () => {
     const response = await worker.fetch(new Request("http://example.test/trip.php?go=search"), envWithRooms([]));
 
     expect(response.status).toBe(200);
-    expect(await response.text()).toContain("Trip查詢");
+    const body = await response.text();
+    expect(body).toContain("Trip查詢");
+    expect(body).toContain('form name="trip" action="/trip.php" method="get"');
   });
 
   it("returns public Trip lookup data without exposing Trip hashes", async () => {

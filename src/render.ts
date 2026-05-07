@@ -2130,6 +2130,10 @@ export function renderTripLookup(): string {
   return page("Trip Lookup", shell(`
     <fieldset>
       <legend><strong>Trip查詢</strong></legend>
+      <form name="trip" action="/trip.php" method="get" enctype="multipart/form-data" style="margin:10px 20px;">
+        搜尋Trip <input type="text" name="sname" size="9" value="">
+        <input id="submit" name="go" type="submit" value="search">
+      </form>
       <table class="form-table">
         <tr>
           <td><label><strong>　Trip：</strong></label></td>
