@@ -2240,6 +2240,30 @@ export function renderTripComments(tripId: string): string {
   `));
 }
 
+export function renderTripRating(roomId: string, tripId: string): string {
+  return page("Trip Rating", shell(`
+    <center>
+      <strong>評分</strong><br>
+      <a href="/trip.php?go=trip&id=${escapeHtml(tripId)}">Trip公開資料</a>
+      <a href="/trip.php?go=smess&id=${escapeHtml(tripId)}">評語詳細</a>
+      <a href="/old_log.php?log_mode=on&amp;room_no=${escapeHtml(roomId)}">過去紀錄</a>
+    </center>
+    <fieldset>
+      <legend><strong>評分</strong></legend>
+      <form name="trip" action="/trip.php?go=sce&amp;room=${escapeHtml(roomId)}&amp;trip=${escapeHtml(tripId)}" method="post" enctype="multipart/form-data" style="margin:10px 20px;">
+        <ul>
+          <li>請選擇正評價或負評價，一旦送出將不可恢復。</li>
+          <li>正評 <input type="radio" name="sceis" value="1" disabled></li>
+          <li>負評 <input type="radio" name="sceis" value="2" disabled></li>
+          <li>意見 <input type="text" name="mess" size="30" value="" disabled></li>
+          <li><input id="submit" name="submit" type="submit" value="送出" disabled></li>
+        </ul>
+        <p class="muted">此 Cloudflare 版本尚未保存 PHP <code>trip_score</code> 評分資料；本頁僅保留舊式入口與表單外觀。</p>
+      </form>
+    </fieldset>
+  `));
+}
+
 export function renderTripRoomRecords(tripId: string, records: TripRoomRecordSummary[], options: { page?: number; pageSize?: number; totalRecords?: number; play?: number } = {}): string {
   const roomBasePath = `/trip.php?go=room&id=${encodeURIComponent(tripId)}${options.play ? `&play=${String(options.play)}` : ""}`;
   const pagination = paginationLinks(options.totalRecords, options.page, options.pageSize, roomBasePath);

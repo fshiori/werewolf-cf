@@ -978,6 +978,17 @@ describe("worker routes", () => {
     expect(body).toContain("沒有資料");
   });
 
+  it("renders legacy Trip rating surface", async () => {
+    const response = await worker.fetch(new Request("http://example.test/trip.php?go=sce&room=room_abc&trip=ab12CD"), envWithRooms([]));
+
+    expect(response.status).toBe(200);
+    const body = await response.text();
+    expect(body).toContain("評分");
+    expect(body).toContain('action="/trip.php?go=sce&amp;room=room_abc&amp;trip=ab12CD"');
+    expect(body).toContain('name="sceis" value="1" disabled');
+    expect(body).toContain("trip_score");
+  });
+
   it("renders legacy Trip room record pages without exposing Trip hashes", async () => {
     const tripHash = await registeredTripHash("ab12CD");
     const response = await worker.fetch(

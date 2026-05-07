@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { renderAdminConfig, renderAdminConfigLogin, renderAdminIndex, renderAdminRooms, renderAdminRoomsLogin, renderBbs, renderBbsAdmin, renderBbsTopic, renderFederatedList, renderHome, renderIconCatalog, renderLeaderboard, renderManual, renderOldLogs, renderPlayerProfile, renderProtocol, renderRoom, renderRoomEvents, renderRoomRecords, renderRoomTranscript, renderRules, renderScriptInfo, renderStatus, renderTripComments, renderTripLookup, renderTripRegistration, renderTripRoomRecords, renderVersion, renderWinRateAnalysis } from "../src/render";
+import { renderAdminConfig, renderAdminConfigLogin, renderAdminIndex, renderAdminRooms, renderAdminRoomsLogin, renderBbs, renderBbsAdmin, renderBbsTopic, renderFederatedList, renderHome, renderIconCatalog, renderLeaderboard, renderManual, renderOldLogs, renderPlayerProfile, renderProtocol, renderRoom, renderRoomEvents, renderRoomRecords, renderRoomTranscript, renderRules, renderScriptInfo, renderStatus, renderTripComments, renderTripLookup, renderTripRating, renderTripRegistration, renderTripRoomRecords, renderVersion, renderWinRateAnalysis } from "../src/render";
 import { ROOM_CLIENT_SCRIPT } from "../src/room-client";
 
 describe("render", () => {
@@ -546,6 +546,19 @@ describe("render", () => {
     expect(html).toContain("評論者");
     expect(html).toContain("評價");
     expect(html).toContain("沒有資料");
+  });
+
+  it("renders legacy Trip rating surface", () => {
+    const html = renderTripRating("room_abc", "ab12CD");
+
+    expect(html).toContain("評分");
+    expect(html).toContain("/trip.php?go=trip&id=ab12CD");
+    expect(html).toContain("/trip.php?go=smess&id=ab12CD");
+    expect(html).toContain("/old_log.php?log_mode=on&amp;room_no=room_abc");
+    expect(html).toContain('action="/trip.php?go=sce&amp;room=room_abc&amp;trip=ab12CD"');
+    expect(html).toContain('name="sceis" value="1" disabled');
+    expect(html).toContain('name="mess" size="30" value="" disabled');
+    expect(html).toContain("trip_score");
   });
 
   it("renders dedicated Trip registration page", () => {
