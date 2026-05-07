@@ -1432,8 +1432,16 @@ describe("worker routes", () => {
     expect(frameBody).toContain("<title>汝等是人是狼？＜遊戲＞</title>");
     expect(frameBody).toContain('<frameset rows="85,*" border="0" frameborder="0" framespacing="0" data-legacy-entry="game_frame.php">');
     expect(frameBody).toContain('<frame name="up" src="/game_up.php?room_no=room_exists&amp;auto_reload=20#game_top" scrolling="no" noresize>');
-    expect(frameBody).toContain('<frame name="bottom" src="/game_play.php?room_no=room_exists&amp;auto_reload=20#game_top">');
+    expect(frameBody).toContain('<frame name="bottom" src="/game_play.php?room_no=room_exists&amp;auto_reload=20&amp;frame=bottom#game_top">');
     expect(frameBody).not.toContain('data-room-page="frame"');
+
+    const bottomResponse = await worker.fetch(new Request("http://example.test/game_play.php?room_no=room_exists&frame=bottom&auto_reload=20"), env);
+    expect(bottomResponse.status).toBe(200);
+    const bottomBody = await bottomResponse.text();
+    expect(bottomBody).toContain('data-room-page="bottom"');
+    expect(bottomBody).toContain("下方遊戲");
+    expect(bottomBody).toContain("game_play.php 下框");
+    expect(bottomBody).toContain('<a href="/game_play.php?room_no=room_exists&amp;auto_reload=15&amp;frame=bottom">15秒</a>');
 
     const missingRoomNo = await worker.fetch(new Request("http://example.test/game_view.php"), env);
     expect(missingRoomNo.status).toBe(400);

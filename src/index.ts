@@ -3026,7 +3026,7 @@ export default {
         }
         const viewModeParam = url.searchParams.get("view");
         const viewMode = viewModeParam === "spectator" || viewModeParam === "heaven" ? viewModeParam : url.pathname === "/game_view.php" ? "spectator" : "player";
-        const pageMode = url.pathname === "/game_frame.php" ? "frame" : url.pathname === "/game_up.php" ? "up" : url.pathname === "/game_vote.php" ? "vote" : "full";
+        const pageMode = url.pathname === "/game_frame.php" ? "frame" : url.pathname === "/game_up.php" ? "up" : url.pathname === "/game_vote.php" ? "vote" : url.pathname === "/game_play.php" && url.searchParams.get("frame") === "bottom" ? "bottom" : "full";
         return html(renderRoom(roomId, {
           autoReloadSeconds: autoReloadParam ? Number(autoReloadParam) : 0,
           viewMode,
