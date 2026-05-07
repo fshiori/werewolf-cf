@@ -1430,6 +1430,7 @@ describe("worker routes", () => {
     expect(upResponse.status).toBe(200);
     const upBody = await upResponse.text();
     expect(upBody).toContain('form class="legacy-send-form" name="send" action="/game_play.php?room_no=room_exists&amp;auto_reload=20&amp;frame=bottom#game_top" method="POST" target="bottom" onsubmit="return false"');
+    expect(upBody).toContain('<span class="page-up-inline-only legacy-up-vote-link">[<a href="/game_vote.php?room_no=room_exists&amp;auto_reload=20#game_top" target="bottom">投票/能力</a>]</span>');
     expect(upBody).toContain('<input id="chatText" name="sentence" maxlength="500" size="72">');
 
     const frameResponse = await worker.fetch(new Request("http://example.test/game_frame.php?room_no=room_exists&auto_reload=20"), env);

@@ -65,7 +65,11 @@ function page(title: string, body: string, extraHead = ""): string {
     body.room-page-up .room-panel-actions,
     body.room-page-up .room-panel-lastwords,
     body.room-page-up .room-panel-system { display: none; }
+    body.room-page-up .game-header { display: none; }
+    body.room-page-up .game-shell { width: 100%; margin: 0; }
     body.room-page-up #chatLog { display: none; }
+    .page-up-inline-only { display: none; }
+    body.room-page-up .page-up-inline-only { display: inline; }
     body.room-page-vote .room-panel-lastwords,
     body.room-page-vote .room-panel-chat,
     body.room-page-vote .room-panel-system { display: none; }
@@ -3793,10 +3797,12 @@ function legacyVoteFormShell(roomId: string, autoReloadSeconds: 0 | 15 | 20 | 30
 
 function legacySendFormStart(roomId: string, autoReloadSeconds: 0 | 15 | 20 | 30): string {
   const actionHref = legacyRoomBottomFrameHref(roomId, autoReloadSeconds);
+  const voteHref = legacyRoomHref("/game_vote.php", roomId, autoReloadSeconds);
   return `<form class="legacy-send-form" name="send" action="${actionHref}#game_top" method="POST" target="bottom" onsubmit="return false">
                   <input type="hidden" name="command" value="talk">
                   <input type="hidden" name="room_no" value="${escapeHtml(roomId)}">
-                  <input type="hidden" name="location" value="day">`;
+                  <input type="hidden" name="location" value="day">
+                  <span class="page-up-inline-only legacy-up-vote-link">[<a href="${voteHref}#game_top" target="bottom">投票/能力</a>]</span>`;
 }
 
 function roomPageTitle(roomId: string, pageMode: "full" | "frame" | "up" | "vote" | "bottom", viewMode: "player" | "spectator" | "heaven"): string {
