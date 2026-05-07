@@ -1887,7 +1887,7 @@ export function renderAdminRooms(rooms: RoomSummary[], statusFilter: AdminRoomSt
       <legend><strong>廢村管理</strong></legend>
       <p class="muted">請選擇要廢除的村。注意！一旦選擇將無法復原。</p>
       <p>表示：${filterLink("active", "進行中")}　${filterLink("ended", "已結束")}　${filterLink("all", "全部")}</p>
-      <table class="form-table" style="margin:12px 20px 18px;width:100%">
+      <table class="form-table table1 admin-room-table" border="1" cellspacing="1" cellpadding="2" bgcolor="#CCCCCC" style="margin:12px 20px 18px;width:100%">
         <thead><tr><td><strong>村ID</strong></td><td><strong>村名</strong></td><td><strong>說明</strong></td><td><strong>人數</strong></td><td><strong>狀態</strong></td><td><strong>選項</strong></td><td><strong>建立時間</strong></td><td><strong>參照</strong></td><td><strong>操作</strong></td></tr></thead>
         <tbody>${rows}</tbody>
       </table>
