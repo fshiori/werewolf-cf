@@ -3781,6 +3781,12 @@ export function renderRoom(roomId: string, options: RenderRoomOptions = {}): str
     <table class="game-shell" data-room-id="${escapeHtml(roomId)}" data-room-view="${viewMode}" data-room-page="${pageMode}">
       <tr>
         <td>
+          <form id="legacyUserRegisterForm" class="legacy-user-register-form" name="user" action="/user_manager.php?room_no=${encodeURIComponent(roomId)}" method="POST" enctype="multipart/form-data" onsubmit="return false">
+            <input type="hidden" name="command" value="regist">
+            <input type="hidden" name="uname" value="">
+            <input type="hidden" name="password" value="">
+            <input type="hidden" name="sex" value="none">
+          </form>
           <table class="game-header">
             <tr><th colspan="2">[${escapeHtml(roomId)}] 汝等是人是狼？</th></tr>
             <tr>
@@ -3875,16 +3881,16 @@ export function renderRoom(roomId: string, options: RenderRoomOptions = {}): str
             </tr>
             <tr class="view-player-only room-registration-row">
               <td><img class="title-img" src="/assets/reference/img/user_regist_handle_name.gif" alt="玩家暱稱">玩家暱稱</td>
-              <td><input id="nickname" maxlength="32" size="28"> <button id="connect">進入房間</button> <button id="startVote" disabled>投開始一票</button> <button id="startGame">開始遊戲</button> <button id="leaveRoom" disabled>退出</button></td>
+              <td><input id="nickname" name="handle_name" form="legacyUserRegisterForm" maxlength="32" size="28"> <button id="connect" name="submit" value="登錄" type="button" form="legacyUserRegisterForm">進入房間</button> <button id="startVote" type="button" disabled>投開始一票</button> <button id="startGame" type="button">開始遊戲</button> <button id="leaveRoom" type="button" disabled>退出</button></td>
             </tr>
             <tr class="view-player-only room-registration-row">
               <td><img class="title-img" src="/assets/reference/img/user_regist_handle_trip.gif" alt="Trip">Trip</td>
-              <td><input id="trip" maxlength="32" size="28"></td>
+              <td><input id="trip" name="tripn" form="legacyUserRegisterForm" maxlength="32" size="28"></td>
             </tr>
             <tr class="view-player-only room-registration-row">
               <td><img class="title-img" src="/assets/reference/img/user_regist_role.gif" alt="希望角色">希望角色</td>
               <td>
-                <select id="wishRole">
+                <select id="wishRole" name="role" form="legacyUserRegisterForm">
                   <option value="none" selected>無</option>
                   <option value="villager">村民</option>
                   <option value="werewolf">人狼</option>
@@ -3921,7 +3927,7 @@ export function renderRoom(roomId: string, options: RenderRoomOptions = {}): str
             <tr class="view-player-only room-registration-row">
               <td>預設頭像</td>
               <td>
-                <select id="defaultIcon">
+                <select id="defaultIcon" name="icon_no" form="legacyUserRegisterForm">
                   <option value="">名稱首字</option>
                   <option value="user_icon/001.gif">001 明灰</option>
                   <option value="user_icon/002.gif">002 暗灰</option>

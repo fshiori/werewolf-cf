@@ -357,6 +357,12 @@ describe("render", () => {
     expect(html).toContain('<a href="/login.php?room_no=room_abc">login.php</a>');
     expect(html).toContain('<a href="/user_manager.php?room_no=room_abc">user_manager.php</a>');
     expect(html).toContain('<a href="/game_play.php?go=out&amp;room_no=room_abc" target="_top">[登出]</a>');
+    expect(html).toContain('form id="legacyUserRegisterForm" class="legacy-user-register-form" name="user" action="/user_manager.php?room_no=room_abc" method="POST" enctype="multipart/form-data" onsubmit="return false"');
+    expect(html).toContain('<input type="hidden" name="command" value="regist">');
+    expect(html).toContain('<input id="nickname" name="handle_name" form="legacyUserRegisterForm" maxlength="32" size="28">');
+    expect(html).toContain('<input id="trip" name="tripn" form="legacyUserRegisterForm" maxlength="32" size="28">');
+    expect(html).toContain('<select id="wishRole" name="role" form="legacyUserRegisterForm">');
+    expect(html).toContain('<select id="defaultIcon" name="icon_no" form="legacyUserRegisterForm">');
     expect(html).toContain("/events");
     expect(html).toContain("事件履歷");
     expect(html).toContain("/room/room_abc/log");
