@@ -518,8 +518,8 @@ describe("render", () => {
     expect(vote).toContain('<option value="CAT_DO">CAT_DO</option>');
     expect(vote).toContain('<div id="legacyVoteTargetList">等待狀態更新</div>');
     expect(vote).toContain('<input type="radio" name="target_no" value="" disabled>');
-    expect(vote).toContain('<input type="submit" value="投將該員\'處刑\'一票" disabled>');
-    expect(vote).toContain('<input type="submit" value="咬下去" disabled>');
+    expect(vote).toContain('<input type="submit" value="投將該員\'處刑\'一票">');
+    expect(vote).toContain('<input type="submit" value="咬下去">');
     expect(vote).toContain('class="table_votelist1"');
     expect(vote).toContain("投將該員'處刑'一票 / 咬下去 / 占卜對象 / 護衛對象 / 復活對象");
     expect(vote).toContain('<tr><td>back</td><td colspan="2"><a href="/game_up.php?room_no=room_abc#game_top">←上一頁&amp;重新整理</a></td></tr>');
@@ -620,9 +620,16 @@ describe("render", () => {
     expect(ROOM_CLIENT_SCRIPT).toContain("updateVoteObserverPanel(game, currentPlayer, currentPlayerDead, voteSummary, votedPlayerIds);");
     expect(ROOM_CLIENT_SCRIPT).toContain("function updateLegacyVoteTargetList(game, currentPlayer, currentPlayerAlive, currentPlayerId, canManageLobby, canUsePlayerAction)");
     expect(ROOM_CLIENT_SCRIPT).toContain('document.querySelector("#legacyVoteTargetList")');
+    expect(ROOM_CLIENT_SCRIPT).toContain("let legacyVoteCommands = {};");
+    expect(ROOM_CLIENT_SCRIPT).toContain('const legacyVoteForm = document.querySelector(".legacy-vote-form");');
+    expect(ROOM_CLIENT_SCRIPT).toContain('legacyVoteForm.addEventListener("submit", (event) => {');
+    expect(ROOM_CLIENT_SCRIPT).toContain('const selectedTarget = legacyVoteForm.querySelector(\'input[name="target_no"]:checked\');');
+    expect(ROOM_CLIENT_SCRIPT).toContain("sendCommand(legacyVoteCommands[selectedTarget.value]);");
     expect(ROOM_CLIENT_SCRIPT).toContain("legacyTargetCommand(game, currentPlayer, currentPlayerAlive, currentPlayerId, canManageLobby, canUsePlayerAction, player)");
     expect(ROOM_CLIENT_SCRIPT).toContain("updateLegacyVoteTargetList(game, currentPlayer, currentPlayerAlive, currentPlayerId, canManageLobby, canUsePlayerAction);");
     expect(ROOM_CLIENT_SCRIPT).toContain('radio.name = "target_no";');
+    expect(ROOM_CLIENT_SCRIPT).toContain("legacyVoteCommands[player.playerId] = action.command;");
+    expect(ROOM_CLIENT_SCRIPT).toContain("radio.checked = true;");
     expect(ROOM_CLIENT_SCRIPT).toContain('button.addEventListener("click", () => {');
     expect(ROOM_CLIENT_SCRIPT).toContain('table.className = "vote-table";');
     expect(ROOM_CLIENT_SCRIPT).toContain('headingCell.textContent = phaseLabel(game);');

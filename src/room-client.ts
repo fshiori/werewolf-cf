@@ -222,6 +222,7 @@ let role = "";
 let isLover = false;
 let isGm = false;
 let revealedRoles = {};
+let legacyVoteCommands = {};
 refreshAuxiliaryPanels();
 configureAutoRefresh();
 document.querySelector("#manualRefresh").addEventListener("click", refreshAuxiliaryPanels);
@@ -406,6 +407,15 @@ document.querySelector("#startVote").addEventListener("click", () => {
 document.querySelector("#leaveRoom").addEventListener("click", () => {
   sendCommand({ type: "leave_room" });
 });
+const legacyVoteForm = document.querySelector(".legacy-vote-form");
+if (legacyVoteForm) {
+  legacyVoteForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const selectedTarget = legacyVoteForm.querySelector('input[name="target_no"]:checked');
+    if (!selectedTarget || !legacyVoteCommands[selectedTarget.value]) return;
+    sendCommand(legacyVoteCommands[selectedTarget.value]);
+  });
+}
 document.querySelector("#gmAdvancePhase").addEventListener("click", () => {
   sendCommand({ type: "gm_advance_phase" });
 });
@@ -745,6 +755,7 @@ function updateLegacyVoteTargetList(game, currentPlayer, currentPlayerAlive, cur
   const container = document.querySelector("#legacyVoteTargetList");
   if (!container) return;
   container.innerHTML = "";
+  legacyVoteCommands = {};
   if (!currentPlayer) {
     container.textContent = "請先住民登錄。";
     return;
@@ -772,11 +783,15 @@ function updateLegacyVoteTargetList(game, currentPlayer, currentPlayerAlive, cur
     radio.name = "target_no";
     radio.value = player.playerId;
     radio.disabled = action.disabled;
+    if (!action.disabled && action.command) {
+      legacyVoteCommands[player.playerId] = action.command;
+    }
     const button = document.createElement("button");
     button.type = "button";
     button.textContent = action.label;
     button.disabled = action.disabled;
     button.addEventListener("click", () => {
+      radio.checked = true;
       if (action.command) sendCommand(action.command);
     });
     targetCell.append(player.nickname, document.createElement("br"), radio, " ", button);
