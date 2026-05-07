@@ -525,6 +525,11 @@ describe("render", () => {
     expect(up).toContain('[<a href="/game_up.php?room_no=room_abc">手動更新</a>]');
     expect(up).toContain('<a href="/game_up.php?room_no=room_abc&amp;auto_reload=15">15秒</a>');
     expect(up).toContain('form name="send"');
+    expect(up).toContain('form class="legacy-send-form" name="send" action="/game_play.php?room_no=room_abc&amp;frame=bottom#game_top" method="POST" target="bottom" onsubmit="return false"');
+    expect(up).toContain('<input type="hidden" name="command" value="talk">');
+    expect(up).toContain('<input type="hidden" name="room_no" value="room_abc">');
+    expect(up).toContain('<input type="hidden" name="location" value="day">');
+    expect(up).toContain('<input id="chatText" name="sentence" maxlength="500" size="72">');
     expect(up).toContain("<tr><td>form name=\"send\"</td><td>target</td><td>bottom</td></tr>");
     expect(up).toContain('<tr><td>vote_link</td><td colspan="2"><a href="/game_vote.php?room_no=room_abc#game_top">game_vote.php#game_top</a></td></tr>');
     expect(up).toContain('<tr class="room-panel-chat">');
