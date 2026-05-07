@@ -2015,6 +2015,8 @@ describe("render", () => {
 
     expect(html).toContain("占卜行動");
     expect(html).toContain("子狐占卜");
+    expect(html).toContain("靈能結果");
+    expect(html).not.toContain(">medium_result<");
     expect(html).toContain("結果:狼");
     expect(html).toContain("結果:失敗");
     expect(html).toContain("結果:大狼");
