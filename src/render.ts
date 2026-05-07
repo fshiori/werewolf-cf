@@ -694,7 +694,7 @@ function isHeavenTranscriptEvent(event: RoomEventSummary): boolean {
 }
 
 function isSystemTranscriptEvent(event: RoomEventSummary): boolean {
-  return !event.playerId || transcriptSystemEventTypes.has(event.eventType);
+  return transcriptSystemEventTypes.has(event.eventType) || (!event.playerId && !isPrivateTranscriptEvent(event));
 }
 
 function isPrivateTranscriptEvent(event: RoomEventSummary): boolean {
