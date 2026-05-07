@@ -866,6 +866,7 @@ export function renderOldLogs(rooms: RoomSummary[], options: { search?: string }
     <fieldset>
       <legend><strong>過去紀錄</strong></legend>
       <p><a href="/">←返回</a> <a href="/old_log.php?all=1">[全部顯示]</a></p>
+      <p><img class="title-img" src="/assets/reference/img/old_log_title.jpg" alt="過去紀錄"></p>
       <div align="center">
         <form name="old_log" action="/old_log.php" method="get" enctype="multipart/form-data">
           搜尋<input type="text" name="search" size="10" value="${escapeHtml(searchValue)}">
