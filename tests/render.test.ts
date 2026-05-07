@@ -874,6 +874,7 @@ describe("render", () => {
     ], { winners: { room_finished: "villagers" } });
 
     expect(html).toContain("過去紀錄");
+    expect(html).toContain("<title>汝等是人是狼？[過去紀錄]</title>");
     expect(html).toContain('<b><a href="/old_log.php">過去紀錄</a></b>');
     expect(html).toContain("村No");
     expect(html).toContain('<th colspan="12" class="column">選項</th>');

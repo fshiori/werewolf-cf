@@ -1850,6 +1850,7 @@ describe("worker routes", () => {
     expect(response.status).toBe(200);
     const body = await response.text();
     expect(body).toContain("過去紀錄");
+    expect(body).toContain("<title>汝等是人是狼？[過去紀錄]</title>");
     expect(body).toContain("room_finished");
     expect(body).toContain('<a href="/index.php">←返回</a> <a href="/old_log.php?all=1">[全部顯示]</a>');
     expect(body).toContain("/old_log.php?log_mode=on&amp;room_no=room_finished&amp;reverse_log=on");
