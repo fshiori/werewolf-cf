@@ -240,7 +240,9 @@ describe("render", () => {
     expect(html).toContain("body.room-view-spectator .view-player-only");
     expect(html).toContain("body.room-view-heaven .view-heaven-only { display: table-row; }");
     expect(html).toContain("進入房間");
+    expect(html).toContain(".player-grid { width: 800px; max-width: 100%; border: 1px dotted #000000; border-spacing: 5px; border-collapse: separate; font-size: 10pt; }");
     expect(html).toContain(".player-card { width: 148px; border: 1px solid #b0b0b0; background: #fafafa; table-layout: fixed; }");
+    expect(html).toContain(".player-card > table { width: 100%; border-collapse: collapse; table-layout: fixed; }");
     expect(html).toContain(".player-card.start-voted { background: #ff50ff; }");
     expect(html).toContain(".player-name { padding-left: 5px; max-width: 96px; overflow-wrap: anywhere; word-break: break-word; }");
     expect(html).toContain("#chatLog div, #gameLog div { border-top: 1px dashed silver; padding: 2px 4px; overflow-wrap: anywhere; word-break: break-word; }");
