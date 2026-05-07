@@ -236,8 +236,8 @@ function page(title: string, body: string, extraHead = ""): string {
     body.room-view-spectator .room-chat-controls { display: none; }
     body.room-view-heaven .room-live-chat-only { display: none; }
     #players button { margin: 2px 4px 2px 0; min-width: 7em; text-align: left; }
-    .vote-table { border: 1px solid #999900; background: #ffffee; }
-    .vote-table td { border: 1px solid #d0d080; padding: 2px 6px; }
+    .vote-table { border-collapse: collapse; background: transparent; }
+    .vote-table td { padding: 2px; }
     .vote-round-header td { background: #999900; color: snow; font-weight: bold; }
     .vote-total-row td { background: #ffffcc; color: #666600; }
     .vote-ballot-row td { background: #ffffff; }
@@ -770,19 +770,15 @@ function renderTranscriptVoteTables(events: RoomEventSummary[]): string {
         <td>${voterReceivedTotal}票</td>
         <td>投票給 ${targetTotal} 票 →</td>
         <td><strong> ${escapeHtml(target)} </strong></td>
-        <td>${escapeHtml(event.createdAt)}</td>
       </tr>`;
     }).join("");
     const phpRoundLabel = day ? `${day} 日目 ( ${voteRoundNumber(first)} 回目)` : `${voteRoundNumber(first)} 回目`;
     return `
-      <tr class="vote-round-header"><td colspan="5">${escapeHtml(label)}</td></tr>
-      <tr class="vote-total-row"><td colspan="5">得票：${renderVoteTargetTotals(groupEvents)}</td></tr>
-      <tr><td colspan="5">
-        <table class="form-table vote-table" border="1" cellspacing="0" cellpadding="2" style="font-size:12pt;margin:6px 0 12px 18px;">
-          <thead>
-            <tr><td colspan="5" align="center">${escapeHtml(phpRoundLabel)}</td></tr>
-            <tr><td><strong>投票者</strong></td><td><strong>得票</strong></td><td><strong>投票</strong></td><td><strong>投票先</strong></td><td><strong>時間</strong></td></tr>
-          </thead>
+      <tr class="vote-round-header"><td colspan="4">${escapeHtml(label)}</td></tr>
+      <tr class="vote-total-row"><td colspan="4">得票：${renderVoteTargetTotals(groupEvents)}</td></tr>
+      <tr><td colspan="4">
+        <table class="vote-table" border="1" cellspacing="0" cellpadding="2" style="font-size:12pt;">
+          <thead><tr><td colspan="4" align="center">${escapeHtml(phpRoundLabel)}</td></tr></thead>
           <tbody>${rows}</tbody>
         </table>
       </td></tr>`;
