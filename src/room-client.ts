@@ -793,8 +793,10 @@ function renderGame(game) {
   const currentPlayer = game.players.find((player) => player.playerId === currentPlayerId);
   const currentPlayerAlive = currentPlayer ? currentPlayer.alive : game.phase === "lobby";
   const currentPlayerDead = Boolean(currentPlayer && !currentPlayer.alive);
+  const nightActionDone = Boolean(game.phase === "night" && game.ownNightActionTarget && game.ownNightActionTarget.targetPlayerId);
   const actorCanAct =
     currentPlayerAlive &&
+    !nightActionDone &&
     (game.phase === "day" || (game.phase === "night" && (isWolfRole(role) || role === "seer" || role === "guard" || role === "child_fox" || role === "cat")));
   const host = game.players.find((player) => player.playerId === game.hostId);
   const canManageLobby = game.phase === "lobby" && (game.hostId === currentPlayerId || isGm);
