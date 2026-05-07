@@ -1320,7 +1320,8 @@ describe("worker routes", () => {
       if (title) {
         expect(body).toContain(`<title>${title}</title>`);
       }
-      expect(body).toContain(`<a href="/${path.slice(1).split("?")[0]}?room_no=room_exists&amp;auto_reload=15">15秒</a>`);
+      const expectedReloadView = viewMode === "player" ? "" : `&amp;view=${viewMode}`;
+      expect(body).toContain(`<a href="/${path.slice(1).split("?")[0]}?room_no=room_exists&amp;auto_reload=15${expectedReloadView}">15秒</a>`);
       if (pageMode !== "full") {
         expect(body).toContain(`data-legacy-entry="${path.slice(1).split("?")[0]}"`);
       }
@@ -1334,6 +1335,9 @@ describe("worker routes", () => {
     const missingRoomNo = await worker.fetch(new Request("http://example.test/game_view.php"), env);
     expect(missingRoomNo.status).toBe(400);
     expect(await missingRoomNo.json()).toEqual({ error: "game_view.php requires room_no" });
+
+    const explicitSpectator = await worker.fetch(new Request("http://example.test/login.php?room_no=room_exists&view=spectator&auto_reload=20"), env);
+    expect(await explicitSpectator.text()).toContain("/login.php?room_no=room_exists&amp;auto_reload=15&amp;view=spectator");
   });
 
   it("serves the external room client script", async () => {
