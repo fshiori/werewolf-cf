@@ -1478,6 +1478,7 @@ export function renderIconCatalog(): string {
     <fieldset style="background-image:url('/assets/reference/img/icon_view_bg.jpg'); background-repeat: repeat;">
       <legend><strong>頭像一覽</strong></legend>
       <p><img class="title-img" src="/assets/reference/img/icon_view_title.jpg" alt="頭像一覽"></p>
+      <p><a href="/icon_upload.php#upload" style="font-size:12pt;color:blue;">→頭像登錄</a></p>
       <table class="form-table">
         <tr><td><strong>　來源：</strong></td><td>Reference default icons copied to R2 under <code>reference/user_icon/</code>.</td></tr>
         <tr><td><strong>　尺寸：</strong></td><td>32 x 32</td></tr>
@@ -1491,6 +1492,7 @@ export function renderIconCatalog(): string {
     <fieldset id="upload" style="background-image:url('/assets/reference/img/icon_upload_bg.jpg'); background-repeat: repeat;">
       <legend><strong>上傳頭像</strong></legend>
       <p><img class="title-img" src="/assets/reference/img/icon_upload_title.jpg" alt="上傳頭像"></p>
+      <p><a href="/icon_view.php" style="font-size:12pt;color:blue;">→圖像一覽</a></p>
       <table class="form-table">
         <tr>
           <td><label><strong>　玩家ID：</strong></label></td>

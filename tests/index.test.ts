@@ -3127,7 +3127,9 @@ describe("worker routes", () => {
     const body = await response.text();
     expect(body).toContain("頭像一覽");
     expect(body).toContain("/assets/reference/img/icon_view_title.jpg");
+    expect(body).toContain("/icon_upload.php#upload");
     expect(body).toContain("/assets/reference/img/icon_upload_title.jpg");
+    expect(body).toContain("/icon_view.php");
     expect(body).toContain("/assets/reference/user_icon/001.gif");
     expect(body).toContain("32 x 32");
     expect(body).toContain("iconPickButton");
