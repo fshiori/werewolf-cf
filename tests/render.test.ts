@@ -423,6 +423,10 @@ describe("render", () => {
 
     expect(html).toContain('<meta http-equiv="refresh" content="20">');
     expect(html).toContain("目前：20秒");
+
+    const legacy = renderRoom("room_abc", { legacyPath: "/game_play.php" });
+    expect(legacy).toContain('[<a href="/game_play.php?room_no=room_abc">手動更新</a>]');
+    expect(legacy).toContain('<a href="/game_play.php?room_no=room_abc&amp;auto_reload=15">15秒</a>');
   });
 
   it("renders room spectator and heaven view links", () => {
