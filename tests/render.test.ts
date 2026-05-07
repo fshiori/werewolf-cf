@@ -364,6 +364,8 @@ describe("render", () => {
     expect(ROOM_CLIENT_SCRIPT).toContain("請選擇要占卜的對象");
     expect(ROOM_CLIENT_SCRIPT).toContain("請選擇護衛的人");
     expect(ROOM_CLIENT_SCRIPT).toContain("請選擇投票處死的對象");
+    expect(ROOM_CLIENT_SCRIPT).toContain("投票重新開始");
+    expect(ROOM_CLIENT_SCRIPT).toContain('game.phase === "day" && game.revoteCount > 0');
     expect(ROOM_CLIENT_SCRIPT).toContain("お前はもう死んでいる・・・");
   });
 
