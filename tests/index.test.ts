@@ -1501,7 +1501,7 @@ describe("worker routes", () => {
     );
 
     expect(response.status).toBe(303);
-    expect(response.headers.get("Location")).toBe("/admin.php");
+    expect(response.headers.get("Location")).toBe("/index.php");
   });
 
   it("renders config admin login without a valid token", async () => {
