@@ -2047,6 +2047,7 @@ describe("worker routes", () => {
 
     expect(response.status).toBe(200);
     const body = await response.text();
+    expect(body).toContain("<title>汝等是人是狼？ - Werewolf Cloudflare Port</title>");
     expect(body).toContain("主題列表");
     expect(body).toContain("/bbs.php?go=post");
     expect(body).toContain("/bbs.php?go=dige");
@@ -2320,6 +2321,7 @@ describe("worker routes", () => {
 
     expect(response.status).toBe(200);
     const body = await response.text();
+    expect(body).toContain("<title>汝等是人是狼？ - Werewolf Cloudflare Port</title>");
     expect(body).toContain('Topic <b>body</b><br /><font color="blue">blue</font>');
     expect(body).toContain("文章列表");
     expect(body).toContain('<div id="table5">');
