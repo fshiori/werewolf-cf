@@ -2095,6 +2095,30 @@ async function getRoomRecords(env: Env, roomIdParam: string): Promise<Response> 
   }
 }
 
+function roomTranscriptKnownPlayerIds(records: GameRecordSummary[], events: RoomEventSummary[]): Set<string> {
+  const playerIds = new Set<string>();
+  for (const record of records) {
+    for (const player of readRecordPlayers(record.result)) {
+      playerIds.add(player.playerId);
+    }
+  }
+  for (const event of events) {
+    if (event.playerId) {
+      playerIds.add(event.playerId);
+    }
+    if (!isRecord(event.payload)) {
+      continue;
+    }
+    for (const key of ["playerId", "actorPlayerId", "targetPlayerId"]) {
+      const value = event.payload[key];
+      if (typeof value === "string" && value) {
+        playerIds.add(value);
+      }
+    }
+  }
+  return playerIds;
+}
+
 async function getRoomTranscriptPage(request: Request, env: Env, roomIdParam: string): Promise<Response> {
   const url = new URL(request.url);
   const roomId = validateRoomId(roomIdParam);
@@ -2108,12 +2132,16 @@ async function getRoomTranscriptPage(request: Request, env: Env, roomIdParam: st
   if (viewerMode === "player" && !viewerPlayerIdParam) {
     throw new Error("Player transcript viewer requires viewer_player_id");
   }
+  const viewerPlayerId = viewerPlayerIdParam ? validatePlayerId(viewerPlayerIdParam) : undefined;
+  if (viewerMode === "player" && viewerPlayerId && !roomTranscriptKnownPlayerIds(records, events).has(viewerPlayerId)) {
+    throw new Error("Player transcript viewer is not part of this room history");
+  }
   return html(renderRoomTranscript(roomId, records, events, {
     heavenTalk: url.searchParams.get("heaven_talk") === "on",
     heavenOnly: url.searchParams.get("heaven_only") === "on",
     reverseLog: url.searchParams.get("reverse_log") === "on",
     viewerMode,
-    viewerPlayerId: viewerPlayerIdParam ? validatePlayerId(viewerPlayerIdParam) : undefined,
+    viewerPlayerId,
     oldLogReturnHref: oldLogReturnHref(url),
     playerViewFormAction: url.pathname === "/old_log.php" || url.pathname === "/game_log.php" ? url.pathname : undefined,
     playerViewHiddenInputs: url.pathname === "/old_log.php" || url.pathname === "/game_log.php"

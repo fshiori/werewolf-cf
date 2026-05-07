@@ -4035,6 +4035,14 @@ describe("worker routes", () => {
             event_type: "self_talk",
             payload_json: '{"visibility":"private","nickname":"Seer","text":"mutter","phase":"night","day":2}',
             created_at: "2026-05-06 12:03:00"
+          },
+          {
+            id: 4,
+            room_id: "room_log",
+            player_id: "player_wolf",
+            event_type: "day_vote",
+            payload_json: '{"visibility":"private","nickname":"Wolf","targetPlayerId":"player_target","targetNickname":"Target","phase":"day","day":2}',
+            created_at: "2026-05-06 12:04:00"
           }
         ]
       }
@@ -4056,12 +4064,23 @@ describe("worker routes", () => {
     expect(playerBody).toContain("howl");
     expect(playerBody).not.toContain("mutter");
 
+    const targetPlayerView = await worker.fetch(new Request("http://example.test/room/room_log/log?viewer=player&viewer_player_id=player_target&heaven_talk=on"), env);
+    const targetPlayerBody = await targetPlayerView.text();
+    expect(targetPlayerView.status).toBe(200);
+    expect(targetPlayerBody).toContain("玩家 Target (player_target)");
+    expect(targetPlayerBody).toContain('<option value="player_target" selected>Target (player_target)</option>');
+    expect(targetPlayerBody).not.toContain("howl");
+
     const missingPlayerView = await worker.fetch(new Request("http://example.test/room/room_log/log?viewer=player"), env);
     expect(missingPlayerView.status).toBe(400);
     expect(await missingPlayerView.json()).toEqual({ error: "Player transcript viewer requires viewer_player_id" });
 
     const invalidPlayerView = await worker.fetch(new Request("http://example.test/room/room_log/log?viewer=player&viewer_player_id=bad"), env);
     expect(invalidPlayerView.status).toBe(400);
+
+    const unknownPlayerView = await worker.fetch(new Request("http://example.test/room/room_log/log?viewer=player&viewer_player_id=player_unknown"), env);
+    expect(unknownPlayerView.status).toBe(400);
+    expect(await unknownPlayerView.json()).toEqual({ error: "Player transcript viewer is not part of this room history" });
   });
 
   it("shows teammate private channel rows in player transcript view", async () => {
