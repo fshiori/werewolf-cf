@@ -376,6 +376,9 @@ function winnerLabel(value: unknown): string {
   if (value === "lovers") {
     return "戀人";
   }
+  if (value === "draw") {
+    return "平手";
+  }
   return "未定";
 }
 
@@ -484,6 +487,22 @@ function kickMethodLabel(value: unknown): string {
   return typeof value === "string" ? value : "";
 }
 
+function phaseValueLabel(value: unknown): string {
+  if (value === "lobby") {
+    return "等待中";
+  }
+  if (value === "day") {
+    return "白天";
+  }
+  if (value === "night") {
+    return "夜晚";
+  }
+  if (value === "ended") {
+    return "已結束";
+  }
+  return typeof value === "string" ? value : "";
+}
+
 function formatEventPayload(payload: unknown): string {
   const value = recordValue(payload);
   const votedPlayerIds = Array.isArray(value.votedPlayerIds) ? value.votedPlayerIds.filter((entry): entry is string => typeof entry === "string") : [];
@@ -510,7 +529,7 @@ function formatEventPayload(payload: unknown): string {
     typeof value.flag === "string" ? `旗標:${playerFlagLabel(value.flag)}` : "",
     isRecordValue(value.restrictions) ? `頻道限制:${channelRestrictionsLabel(value.restrictions)}` : "",
     typeof value.sourceChannel === "string" ? `來源頻道:${sourceChannelLabel(value.sourceChannel)}` : "",
-    typeof value.phase === "string" ? `階段:${value.phase}` : "",
+    typeof value.phase === "string" ? `階段:${phaseValueLabel(value.phase)}` : "",
     typeof value.role === "string" ? `角色:${roleLabel(value.role)}` : ""
   ].filter(Boolean);
   return fields.length ? fields.join("　") : "";
