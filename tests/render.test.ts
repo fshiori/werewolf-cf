@@ -1880,11 +1880,54 @@ describe("render", () => {
     const loverView = renderRoomTranscript("room_abc", records, events, { viewerMode: "player", viewerPlayerId: "player_lover", heavenTalk: true });
     expect(loverView).toContain("wolf lover message");
     expect(loverView).toContain("fox lover message");
+    expect(loverView).toContain("人狼/戀人密談");
+    expect(loverView).toContain("妖狐/戀人密談");
+    expect(loverView).toContain('class="transcript-row transcript-location-wolf-lovers"');
+    expect(loverView).toContain('class="transcript-row transcript-location-fox-lovers"');
     expect(loverView).not.toContain("pack only message");
 
     const villagerView = renderRoomTranscript("room_abc", records, events, { viewerMode: "player", viewerPlayerId: "player_villager", heavenTalk: true });
     expect(villagerView).not.toContain("wolf lover message");
     expect(villagerView).not.toContain("fox lover message");
+  });
+
+  it("uses saved PHP talk locations for transcript labels", () => {
+    const html = renderRoomTranscript("room_abc", [], [
+      {
+        id: 1,
+        roomId: "room_abc",
+        playerId: "player_common",
+        eventType: "self_talk",
+        payload: { visibility: "private", nickname: "Common", text: "blocked common fallback", location: "night self_talk", phase: "night", day: 2 },
+        createdAt: "2026-05-06 12:01:00"
+      },
+      {
+        id: 2,
+        roomId: "room_abc",
+        playerId: "player_lover",
+        eventType: "lovers_chat",
+        payload: { visibility: "private", nickname: "Lover", text: "fallback lovers", location: "night lovers", phase: "night", day: 2 },
+        createdAt: "2026-05-06 12:02:00"
+      },
+      {
+        id: 3,
+        roomId: "room_abc",
+        playerId: "player_common",
+        eventType: "common_chat",
+        payload: { visibility: "private", nickname: "Common", text: "common room", location: "night common", phase: "night", day: 2 },
+        createdAt: "2026-05-06 12:03:00"
+      }
+    ]);
+
+    expect(html).toContain("夜晚自言自語");
+    expect(html).toContain("戀人密談");
+    expect(html).toContain("共有密談");
+    expect(html).toContain('class="transcript-row transcript-location-self"');
+    expect(html).toContain('class="transcript-row transcript-location-lovers"');
+    expect(html).toContain('class="transcript-row transcript-location-common"');
+    expect(html).toContain("blocked common fallback");
+    expect(html).toContain("fallback lovers");
+    expect(html).toContain("common room");
   });
 
   it("renders room transcript reverse log controls", () => {
