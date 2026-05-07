@@ -287,6 +287,10 @@ describe("render", () => {
     expect(html).toContain("共有頻");
     expect(html).toContain("戀頻");
     expect(html).toContain("靈界");
+    expect(html).toContain('id="gmControlPanel"');
+    expect(html).toContain("GM行動");
+    expect(html).toContain('id="gmStatus"');
+    expect(html).toContain("非GM");
     expect(html).toContain("GM私語");
     expect(html).toContain("gmWhisperTarget");
     expect(html).toContain("GM換日");
@@ -419,6 +423,8 @@ describe("render", () => {
     expect(ROOM_CLIENT_SCRIPT).toContain('tripLink.title = "Trip查詢";');
     expect(ROOM_CLIENT_SCRIPT).toContain("gm_chat");
     expect(ROOM_CLIENT_SCRIPT).toContain("gm_whisper");
+    expect(ROOM_CLIENT_SCRIPT).toContain("function updateGmStatus()");
+    expect(ROOM_CLIENT_SCRIPT).toContain('status.textContent = isGm ? "GM行動中" : "非GM";');
     expect(ROOM_CLIENT_SCRIPT).toContain("function appendChatLine(channelLabel, markerColor, nickname, text, rowClass)");
     expect(ROOM_CLIENT_SCRIPT).toContain('messageCell.textContent = text || "";');
     expect(ROOM_CLIENT_SCRIPT).toContain('appendChatLine("(人狼)", "#cc0000", msg.nickname, msg.text, "chat-wolf");');

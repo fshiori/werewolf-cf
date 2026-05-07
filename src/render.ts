@@ -200,6 +200,10 @@ function page(title: string, body: string, extraHead = ""): string {
     #chatLog .chat-gap { width: 1px; padding: 0; }
     #chatLog .chat-gm .chat-speaker, #chatLog .chat-gm .chat-message { color: red; }
     #chatLog .chat-dead .chat-speaker, #chatLog .chat-dead .chat-message { background-color: #cccccc; color: black; }
+    #gmControlPanel { margin-top: 4px; border: 1px dotted #999999; background: #f7f7f7; }
+    #gmControlPanel th { background: #ddddff; color: #000000; text-align: left; font-size: 10pt; padding: 2px 4px; }
+    #gmControlPanel td { padding: 2px 4px; font-size: 10pt; }
+    #gmStatus { color: #cc0000; font-weight: bold; }
     #gameLog { max-height: 140px; overflow: auto; background: #ffffff; }
     #gameLog table { width: 100%; border-collapse: collapse; font-size: 12pt; font-family: "PMingLiU", "Noto Serif TC", serif; }
     #gameLog td { border-top: silver 1px dashed; padding: 2px 4px; overflow-wrap: anywhere; word-break: break-word; }
@@ -3454,49 +3458,68 @@ export function renderRoom(roomId: string, options: RenderRoomOptions = {}): str
                 <button id="sendObjection" class="objection-button" disabled>${referenceAssetImg("img/objection.gif", "提出反對")}(<span id="objectionRemaining">2</span>)</button>
                 <button id="sendRoomEndVote" disabled>廢</button>
                 <label><input id="soundNotify" type="checkbox"> 音效</label>
-                <button id="sendGmChat" disabled>GM</button>
-                <select id="gmWhisperTarget"></select>
-                <button id="sendGmWhisper" disabled>GM私語</button>
-                <button id="gmAdvancePhase" disabled>GM換日</button>
-                <select id="gmWinner">
-                  <option value="villagers">村民</option>
-                  <option value="werewolves">人狼</option>
-                  <option value="foxes">妖狐</option>
-                  <option value="lovers">戀人</option>
-                </select>
-                <button id="gmEndGame" disabled>GM裁定</button>
-                <button id="gmKillPlayer" disabled>GM死亡</button>
-                <button id="gmRevivePlayer" disabled>GM復活</button>
-                <select id="gmRole">
-                  <option value="villager">村民</option>
-                  <option value="werewolf">人狼</option>
-                  <option value="big_wolf">大狼</option>
-                  <option value="seer">占卜師</option>
-                  <option value="medium">靈能者</option>
-                  <option value="madman">狂人</option>
-                  <option value="guard">獵人</option>
-                  <option value="common">共有者</option>
-                  <option value="fox">妖狐</option>
-                  <option value="poison">埋毒者</option>
-                  <option value="betrayer">背德者</option>
-                  <option value="child_fox">子狐</option>
-                  <option value="cat">貓又</option>
-                </select>
-                <button id="gmSetRole" disabled>GM改職</button>
-                <select id="gmFlag">
-                  <option value="authority">權力者</option>
-                  <option value="decider">決定者</option>
-                  <option value="lover">戀人</option>
-                </select>
-                <button id="gmEnableFlag" disabled>GM標記</button>
-                <button id="gmDisableFlag" disabled>GM解除</button>
-                <button id="gmEnableCommonVoice" disabled>共有公開</button>
-                <button id="gmDisableCommonVoice" disabled>共有非公開</button>
-                <label><input id="gmRestrictWolf" type="checkbox"> 關狼頻</label>
-                <label><input id="gmRestrictCommon" type="checkbox"> 關共有</label>
-                <label><input id="gmRestrictLovers" type="checkbox"> 關戀頻</label>
-                <label><input id="gmRestrictFox" type="checkbox"> 關狐頻</label>
-                <button id="gmSetChannelRestrictions" disabled>GM頻道</button>
+                <table id="gmControlPanel">
+                  <tr><th colspan="2">GM行動 <span id="gmStatus">非GM</span></th></tr>
+                  <tr>
+                    <td>發言</td>
+                    <td><button id="sendGmChat" disabled>GM</button> <select id="gmWhisperTarget"></select> <button id="sendGmWhisper" disabled>GM私語</button></td>
+                  </tr>
+                  <tr>
+                    <td>流程</td>
+                    <td>
+                      <button id="gmAdvancePhase" disabled>GM換日</button>
+                      <select id="gmWinner">
+                        <option value="villagers">村民</option>
+                        <option value="werewolves">人狼</option>
+                        <option value="foxes">妖狐</option>
+                        <option value="lovers">戀人</option>
+                      </select>
+                      <button id="gmEndGame" disabled>GM裁定</button>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>玩家</td>
+                    <td>
+                      <button id="gmKillPlayer" disabled>GM死亡</button>
+                      <button id="gmRevivePlayer" disabled>GM復活</button>
+                      <select id="gmRole">
+                        <option value="villager">村民</option>
+                        <option value="werewolf">人狼</option>
+                        <option value="big_wolf">大狼</option>
+                        <option value="seer">占卜師</option>
+                        <option value="medium">靈能者</option>
+                        <option value="madman">狂人</option>
+                        <option value="guard">獵人</option>
+                        <option value="common">共有者</option>
+                        <option value="fox">妖狐</option>
+                        <option value="poison">埋毒者</option>
+                        <option value="betrayer">背德者</option>
+                        <option value="child_fox">子狐</option>
+                        <option value="cat">貓又</option>
+                      </select>
+                      <button id="gmSetRole" disabled>GM改職</button>
+                      <select id="gmFlag">
+                        <option value="authority">權力者</option>
+                        <option value="decider">決定者</option>
+                        <option value="lover">戀人</option>
+                      </select>
+                      <button id="gmEnableFlag" disabled>GM標記</button>
+                      <button id="gmDisableFlag" disabled>GM解除</button>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>頻道</td>
+                    <td>
+                      <button id="gmEnableCommonVoice" disabled>共有公開</button>
+                      <button id="gmDisableCommonVoice" disabled>共有非公開</button>
+                      <label><input id="gmRestrictWolf" type="checkbox"> 關狼頻</label>
+                      <label><input id="gmRestrictCommon" type="checkbox"> 關共有</label>
+                      <label><input id="gmRestrictLovers" type="checkbox"> 關戀頻</label>
+                      <label><input id="gmRestrictFox" type="checkbox"> 關狐頻</label>
+                      <button id="gmSetChannelRestrictions" disabled>GM頻道</button>
+                    </td>
+                  </tr>
+                </table>
               </td>
             </tr>
           </table>
