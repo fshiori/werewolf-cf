@@ -2476,7 +2476,8 @@ export default {
     }
 
     if (request.method === "GET" && (url.pathname === "/icons" || url.pathname === "/icon_view.php" || url.pathname === "/icon_upload.php" || url.pathname === "/upload.php" || url.pathname === "/upload2.php")) {
-      return html(renderIconCatalog());
+      const activeMenu = url.pathname === "/icon_upload.php" || url.pathname === "/upload.php" || url.pathname === "/upload2.php" ? "/icon_upload.php" : "/icon_view.php";
+      return html(renderIconCatalog(activeMenu));
     }
 
     if (request.method === "GET" && url.pathname === "/api/config") {

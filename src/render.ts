@@ -1533,7 +1533,7 @@ export function renderAdminRooms(rooms: RoomSummary[], statusFilter: AdminRoomSt
   `));
 }
 
-export function renderIconCatalog(): string {
+export function renderIconCatalog(activeMenu = "/icon_view.php"): string {
   const icons = [
     { file: "001.gif", name: "明灰", color: "#DDDDDD" },
     { file: "002.gif", name: "暗灰", color: "#999999" },
@@ -1706,7 +1706,7 @@ export function renderIconCatalog(): string {
         iconUploadStatus.textContent = res.ok ? "刪除完成" : data.error || "刪除失敗";
       });
     </script>
-  `, "/icon_view.php"));
+  `, activeMenu));
 }
 
 export function renderHome(rooms: RoomSummary[], announcement = DEFAULT_ANNOUNCEMENT, maintenanceMode = false): string {
