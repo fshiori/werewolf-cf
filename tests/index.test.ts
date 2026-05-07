@@ -3315,6 +3315,8 @@ describe("worker routes", () => {
     expect(body).toContain("/assets/reference/img/icon_upload_title.jpg");
     expect(body).toContain("/icon_view.php");
     expect(body).toContain("/assets/reference/user_icon/001.gif");
+    expect(body).toContain('<table border="0" style="font-size:12pt;margin:12px auto 18px;">');
+    expect(body).toContain('border="2" style="border-color:#DDDDDD;"');
     expect(body).toContain("32 x 32");
     expect(body).toContain("iconPickButton");
     expect(body).toContain("werewolf_cf_default_icon");
