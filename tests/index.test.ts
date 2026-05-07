@@ -1192,6 +1192,8 @@ describe("worker routes", () => {
     expect(response.status).toBe(200);
     const body = await response.text();
     expect(body).toContain("基本流程");
+    expect(body).toContain("/assets/reference/img/rule_title.jpg");
+    expect(body).toContain("＜參加遊戲時必須注意的事情＞");
     expect(body).toContain("村子選項");
   });
 

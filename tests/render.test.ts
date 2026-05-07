@@ -1655,6 +1655,10 @@ describe("render", () => {
     const html = renderRules();
 
     expect(html).toContain("基本流程");
+    expect(html).toContain("/assets/reference/img/rule_bg.jpg");
+    expect(html).toContain("/assets/reference/img/rule_title.jpg");
+    expect(html).toContain("＜參加遊戲時必須注意的事情＞");
+    expect(html).toContain("＜「汝等是人是狼？」的基本規則＞");
     expect(html).toContain("白天");
     expect(html).toContain("夜晚");
     expect(html).toContain("角色");
