@@ -1820,6 +1820,7 @@ describe("render", () => {
   it("renders version page with current implementation status", () => {
     const html = renderVersion();
 
+    expect(html).toContain("<title>汝等是人是狼？[版本紀錄]</title>");
     expect(html).toContain("版本資訊");
     expect(html).toContain("0.1.0");
     expect(html).toContain("Cloudflare Workers / TypeScript");
