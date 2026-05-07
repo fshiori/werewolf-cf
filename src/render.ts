@@ -3563,6 +3563,7 @@ export function renderRoom(roomId: string, options: RenderRoomOptions = {}): str
   const autoReloadMeta = autoReloadSeconds > 0 ? `<meta http-equiv="refresh" content="${autoReloadSeconds}">` : "";
   return page(roomPageTitle(roomId, pageMode, viewMode), `
     <script>document.body.classList.add("room-phase-lobby", "room-view-${viewMode}", "room-page-${pageMode}");</script>
+    <a id="game_top" name="game_top"></a>
     <table class="game-shell" data-room-id="${escapeHtml(roomId)}" data-room-view="${viewMode}" data-room-page="${pageMode}">
       <tr>
         <td>

@@ -236,6 +236,7 @@ describe("render", () => {
     expect(html).toContain("room-phase-lobby");
     expect(html).toContain("room-phase-night");
     expect(html).toContain('document.body.classList.add("room-phase-lobby", "room-view-player", "room-page-full");');
+    expect(html).toContain('<a id="game_top" name="game_top"></a>');
     expect(html).toContain('data-room-page="full"');
     expect(html).toContain(".view-spectator-only, .view-heaven-only { display: none; }");
     expect(html).toContain("body.room-view-spectator .view-player-only");

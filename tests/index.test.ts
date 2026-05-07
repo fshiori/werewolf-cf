@@ -1312,6 +1312,7 @@ describe("worker routes", () => {
       expect(response.status).toBe(200);
       const body = await response.text();
       expect(body).toContain("[room_exists]");
+      expect(body).toContain('<a id="game_top" name="game_top"></a>');
       expect(body).toContain(`data-room-view="${viewMode}"`);
       expect(body).toContain(`data-room-page="${pageMode}"`);
       expect(body).toContain(label);
