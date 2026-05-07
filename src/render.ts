@@ -830,6 +830,10 @@ function legacyTranscriptHref(path: "/old_log.php" | "/game_log.php", roomId: st
   return `${path}?${escapeHtml(query)}`;
 }
 
+function legacyTranscriptPairLinks(roomId: string, params: Record<string, string | undefined>): string {
+  return `<a href="${legacyTranscriptHref("/old_log.php", roomId, params)}">old_log.php</a> / <a href="${legacyTranscriptHref("/game_log.php", roomId, params)}">game_log.php</a>`;
+}
+
 const transcriptSystemEventTypes = new Set([
   "objection",
   "room_end_requested",
@@ -1378,8 +1382,13 @@ export function renderRoomTranscript(roomId: string, records: GameRecordSummary[
     ? playerCandidates.map((player) => `<a href="${roomTranscriptHref(roomId, { ...displayParams, viewer: "player", viewer_player_id: player.playerId })}">${escapeHtml(player.label)}</a>`).join("　")
     : `<span class="muted">尚無可選玩家。</span>`;
   const legacyPlayerLinks = playerCandidates.length
-    ? playerCandidates.map((player) => `<span>${escapeHtml(player.label)}：<a href="${legacyTranscriptHref("/old_log.php", roomId, { ...displayParams, viewer: "player", viewer_player_id: player.playerId })}">old_log.php</a> / <a href="${legacyTranscriptHref("/game_log.php", roomId, { ...displayParams, viewer: "player", viewer_player_id: player.playerId })}">game_log.php</a></span>`).join("<br>")
+    ? playerCandidates.map((player) => `<span>${escapeHtml(player.label)}：${legacyTranscriptPairLinks(roomId, { ...displayParams, viewer: "player", viewer_player_id: player.playerId })}</span>`).join("<br>")
     : `<span class="muted">尚無可選玩家。</span>`;
+  const legacyViewerLinks = [
+    `<span>旁觀：${legacyTranscriptPairLinks(roomId, { ...displayParams, viewer: "public" })}</span>`,
+    `<span>靈界：${legacyTranscriptPairLinks(roomId, { ...displayParams, viewer: "dead", heaven_talk: "on", heaven_only: undefined })}</span>`,
+    `<span>GM：${legacyTranscriptPairLinks(roomId, { ...displayParams, viewer: "gm", heaven_talk: "on", heaven_only: undefined })}</span>`
+  ].join("<br>");
 
   return page(`Room ${roomId} Log`, shell(`
     <fieldset>
@@ -1391,6 +1400,7 @@ export function renderRoomTranscript(roomId: string, records: GameRecordSummary[
         <tr><td><strong>　PHP：</strong></td><td><a href="${legacyTranscriptHref("/old_log.php", roomId, currentTranscriptParams)}">old_log.php</a>　<a href="${legacyTranscriptHref("/game_log.php", roomId, currentTranscriptParams)}">game_log.php</a></td></tr>
         <tr><td><strong>　表示：</strong></td><td>${escapeHtml(modeLabel)}　<a href="${roomTranscriptHref(roomId, viewerParams)}">通常</a>　<a href="${roomTranscriptHref(roomId, { ...viewerParams, heaven_talk: "on" })}">靈</a>　<a href="${roomTranscriptHref(roomId, { ...viewerParams, heaven_only: "on" })}">逝</a>　<a href="${roomTranscriptHref(roomId, { ...viewerParams, reverse_log: "on" })}">逆</a>　<a href="${roomTranscriptHref(roomId, { ...viewerParams, reverse_log: "on", heaven_talk: "on" })}">逆&amp;靈</a>　<a href="${roomTranscriptHref(roomId, { ...viewerParams, reverse_log: "on", heaven_only: "on" })}">逆&amp;逝</a></td></tr>
         <tr><td><strong>　視點：</strong></td><td>${escapeHtml(viewerLabel)}　<a href="${roomTranscriptHref(roomId, { ...displayParams, viewer: "public" })}">旁觀</a>　<a href="${roomTranscriptHref(roomId, { ...displayParams, viewer: "dead", heaven_talk: "on", heaven_only: undefined })}">靈界</a>　<a href="${roomTranscriptHref(roomId, { ...displayParams, viewer: "gm", heaven_talk: "on", heaven_only: undefined })}">GM</a></td></tr>
+        <tr><td><strong>　PHP視點：</strong></td><td>${legacyViewerLinks}</td></tr>
         <tr><td><strong>　可見範圍：</strong></td><td><span class="muted">${escapeHtml(viewerScopeLabel)}</span></td></tr>
         <tr><td><strong>　玩家視點：</strong></td><td>
           <form method="get" action="/room/${escapeHtml(roomId)}/log" style="margin:0;">

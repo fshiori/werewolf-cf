@@ -2300,6 +2300,10 @@ describe("render", () => {
     expect(html).toContain("/room/room_abc/log?viewer=player&amp;viewer_player_id=player_wolf&amp;reverse_log=on&amp;heaven_talk=on");
     expect(html).toContain("/room/room_abc/log?reverse_log=on&amp;heaven_talk=on&amp;viewer=public");
     expect(html).toContain("/room/room_abc/log?reverse_log=on&amp;heaven_talk=on&amp;viewer=gm");
+    expect(html).toContain("PHP視點");
+    expect(html).toContain("旁觀：<a href=\"/old_log.php?log_mode=on&amp;room_no=room_abc&amp;reverse_log=on&amp;heaven_talk=on&amp;viewer=public\">old_log.php</a> / <a href=\"/game_log.php?room_no=room_abc&amp;log_mode=on&amp;reverse_log=on&amp;heaven_talk=on&amp;viewer=public\">game_log.php</a>");
+    expect(html).toContain("靈界：<a href=\"/old_log.php?log_mode=on&amp;room_no=room_abc&amp;reverse_log=on&amp;heaven_talk=on&amp;viewer=dead\">old_log.php</a> / <a href=\"/game_log.php?room_no=room_abc&amp;log_mode=on&amp;reverse_log=on&amp;heaven_talk=on&amp;viewer=dead\">game_log.php</a>");
+    expect(html).toContain("GM：<a href=\"/old_log.php?log_mode=on&amp;room_no=room_abc&amp;reverse_log=on&amp;heaven_talk=on&amp;viewer=gm\">old_log.php</a> / <a href=\"/game_log.php?room_no=room_abc&amp;log_mode=on&amp;reverse_log=on&amp;heaven_talk=on&amp;viewer=gm\">game_log.php</a>");
     expect(html).toContain("/old_log.php?log_mode=on&amp;room_no=room_abc&amp;reverse_log=on&amp;heaven_talk=on&amp;viewer=player&amp;viewer_player_id=player_wolf");
     expect(html).toContain("/game_log.php?room_no=room_abc&amp;log_mode=on&amp;reverse_log=on&amp;heaven_talk=on&amp;viewer=player&amp;viewer_player_id=player_wolf");
     expect(html).toContain("Wolf (player_wolf)：<a href=\"/old_log.php?log_mode=on&amp;room_no=room_abc&amp;reverse_log=on&amp;heaven_talk=on&amp;viewer=player&amp;viewer_player_id=player_wolf\">old_log.php</a> / <a href=\"/game_log.php?room_no=room_abc&amp;log_mode=on&amp;reverse_log=on&amp;heaven_talk=on&amp;viewer=player&amp;viewer_player_id=player_wolf\">game_log.php</a>");
