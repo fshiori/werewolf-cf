@@ -2377,6 +2377,8 @@ describe("worker routes", () => {
     expect(body).toContain("bbsModerationForm");
     expect(body).toContain('form name="bbs" method="post" action="/bbs.php?go=edit&amp;id=1"');
     expect(body).toContain('name="editis"');
+    expect(body).toContain('type="password" name="password" maxlength="128" size="24" value=""');
+    expect(body).toContain('id="submit" name="submit" type="submit" value="送出"');
     expect(body).toContain("bbsTopicEditButton");
     expect(body).toContain("/api/bbs/topics/1/content");
   });

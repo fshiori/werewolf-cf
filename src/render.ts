@@ -2805,8 +2805,8 @@ export function renderBbsTopic(topic: BbsTopicSummary, replies: BbsReplySummary[
         <option value="todige">加精華</option>
         <option value="nodige">解精華</option>
       </select>
-      密碼 <input type="password" name="password" maxlength="128" size="24"><br>
-      <input name="submit" type="submit" value="送出">
+      密碼 <input type="password" name="password" maxlength="128" size="24" value=""><br>
+      <input id="submit" name="submit" type="submit" value="送出">
     </form>
     <table class="form-table">
       <tr><td><label><strong>　管理密碼：</strong></label></td><td><input id="bbsAdminToken" type="password" maxlength="128" size="32"></td></tr>
