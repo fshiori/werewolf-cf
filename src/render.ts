@@ -735,7 +735,12 @@ function renderVoteTargetTotals(events: RoomEventSummary[]): string {
     .join("　");
 }
 
-function renderTranscriptVoteTables(events: RoomEventSummary[]): string {
+function isPublicVoteEvent(event: RoomEventSummary): boolean {
+  const value = recordValue(event.payload);
+  return value.visibility === "public";
+}
+
+function renderTranscriptVoteTables(events: RoomEventSummary[], options: { showTargetCounts?: boolean } = {}): string {
   const voteEvents = events.filter((event) => event.eventType === "day_vote");
   if (voteEvents.length === 0) {
     return `<tr><td colspan="5" class="muted">尚無投票紀錄。</td></tr>`;
@@ -759,23 +764,25 @@ function renderTranscriptVoteTables(events: RoomEventSummary[]): string {
       const target = voteTargetLabel(event);
       targetTotals.set(target, (targetTotals.get(target) ?? 0) + 1);
     }
+    const showGroupTargetCounts = options.showTargetCounts === true || groupEvents.some((event) => isPublicVoteEvent(event));
     const rows = [...groupEvents].sort((left, right) => left.createdAt.localeCompare(right.createdAt)).map((event) => {
       const value = recordValue(event.payload);
       const voter = typeof value.nickname === "string" && value.nickname ? value.nickname : event.playerId ?? "不明";
       const target = voteTargetLabel(event);
       const targetTotal = targetTotals.get(target) ?? 0;
       const voterReceivedTotal = targetTotals.get(voter) ?? 0;
+      const showTargetCount = options.showTargetCounts === true || isPublicVoteEvent(event);
       return `<tr class="vote-ballot-row">
         <td align="left"><strong>${escapeHtml(voter)}</strong></td>
         <td>${voterReceivedTotal}票</td>
-        <td>投票給 ${targetTotal} 票 →</td>
+        <td>${showTargetCount ? `投票給 ${targetTotal} 票 →` : "投票給→"}</td>
         <td><strong> ${escapeHtml(target)} </strong></td>
       </tr>`;
     }).join("");
     const phpRoundLabel = day ? `${day} 日目 ( ${voteRoundNumber(first)} 回目)` : `${voteRoundNumber(first)} 回目`;
     return `
       <tr class="vote-round-header"><td colspan="4">${escapeHtml(label)}</td></tr>
-      <tr class="vote-total-row"><td colspan="4">得票：${renderVoteTargetTotals(groupEvents)}</td></tr>
+      <tr class="vote-total-row"><td colspan="4">得票：${showGroupTargetCounts ? renderVoteTargetTotals(groupEvents) : "非公開"}</td></tr>
       <tr><td colspan="4">
         <table class="vote-table" border="1" cellspacing="0" cellpadding="2" style="font-size:12pt;">
           <thead><tr><td colspan="4" align="center">${escapeHtml(phpRoundLabel)}</td></tr></thead>
@@ -1335,6 +1342,10 @@ export function renderRoomEvents(roomId: string, events: RoomEventSummary[], opt
 
 export function renderRoomTranscript(roomId: string, records: GameRecordSummary[], events: RoomEventSummary[], options: RoomTranscriptViewOptions = {}): string {
   const visibleEvents = filterTranscriptEvents(events, records, options);
+  const viewerMode = options.viewerMode ?? "legacy";
+  const voteEvents = viewerMode === "public"
+    ? filterTranscriptEvents(events, records, { ...options, viewerMode: "legacy" })
+    : visibleEvents;
   const recordSections = records.length
     ? records.map((record) => {
       const players = readRecordPlayers(record);
@@ -1359,8 +1370,7 @@ export function renderRoomTranscript(roomId: string, records: GameRecordSummary[
     : `<tr><td colspan="4" class="muted">尚無對局結果。</td></tr>`;
 
   const eventRows = renderTranscriptEventSections(visibleEvents);
-  const voteRows = renderTranscriptVoteTables(visibleEvents);
-  const viewerMode = options.viewerMode ?? "legacy";
+  const voteRows = renderTranscriptVoteTables(voteEvents, { showTargetCounts: viewerMode !== "public" });
   const modeLabel = options.heavenOnly ? "逝者靈界" : options.heavenTalk ? "含靈界" : "通常";
   const viewerLabel = {
     legacy: "結束後全紀錄",
