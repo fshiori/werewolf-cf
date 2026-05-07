@@ -1826,6 +1826,14 @@ describe("game", () => {
       { playerId: "player_5", won: true },
       { playerId: "player_6", won: true }
     ]);
+    expect(playerStatUpdates({ ...ended, winner: "draw" })).toEqual([
+      { playerId: "player_1", won: false, draw: true },
+      { playerId: "player_2", won: false, draw: true },
+      { playerId: "player_3", won: false, draw: true },
+      { playerId: "player_4", won: false, draw: true },
+      { playerId: "player_5", won: false, draw: true },
+      { playerId: "player_6", won: false, draw: true }
+    ]);
   });
 
   it("requires at least three players to start", () => {

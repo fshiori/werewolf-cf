@@ -998,6 +998,9 @@ export function playerStatUpdates(state: GameState): PlayerStatUpdate[] {
   if (state.phase !== "ended" || !state.winner) {
     return [];
   }
+  if (state.winner === "draw") {
+    return state.players.map((player) => ({ playerId: player.playerId, won: false, draw: true }));
+  }
   return state.players.map((player) => ({
     playerId: player.playerId,
     won:
