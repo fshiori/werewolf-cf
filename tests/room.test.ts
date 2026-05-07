@@ -2857,6 +2857,38 @@ describe("RoomDurableObject", () => {
         playerId: "player_dead",
         nickname: "Dead",
         message: "Living player is required"
+      },
+      {
+        game: {
+          roomId: "room_abc",
+          phase: "day",
+          day: 1,
+          players: [
+            { playerId: "player_voter", nickname: "Voter", role: "villager", alive: true },
+            { playerId: "player_target", nickname: "Target", role: "werewolf", alive: true },
+            { playerId: "player_other", nickname: "Other", role: "villager", alive: true }
+          ],
+          votes: { player_voter: "player_other" },
+          openVote: false,
+          commonTalkVisible: false,
+          deadRoleVisible: false,
+          wishRole: false,
+          dummyBoy: false,
+          dayMs: 180_000,
+          nightMs: 90_000,
+          selfVote: false,
+          voteStatus: false,
+          revoteCount: 0,
+          nightKills: {},
+          divinations: {},
+          guards: {},
+          catRevives: {},
+          lastWords: {},
+          log: []
+        },
+        playerId: "player_voter",
+        nickname: "Voter",
+        message: "Day vote is already used this round"
       }
     ];
 
