@@ -1018,6 +1018,11 @@ function isFoxTranscriptRole(role: unknown): boolean {
   return text === "fox" || text.startsWith("fox ");
 }
 
+function isCommonTranscriptRole(role: unknown): boolean {
+  const text = transcriptRoleText(role);
+  return text === "common" || text.startsWith("common ");
+}
+
 function isCompositeLoversTranscriptEvent(event: RoomEventSummary): boolean {
   const value = recordValue(event.payload);
   if (value.lovers === true || value.lover === true || value.loversChannel === true) {
@@ -1036,7 +1041,7 @@ function isViewerChannelTranscriptEvent(event: RoomEventSummary, viewerPlayer?: 
     case "fox_chat":
       return isFoxTranscriptRole(viewerPlayer.role) || (viewerPlayer.lover === true && isCompositeLoversTranscriptEvent(event));
     case "common_chat":
-      return viewerPlayer.role === "common";
+      return isCommonTranscriptRole(viewerPlayer.role);
     case "lovers_chat":
       return viewerPlayer.lover === true;
     default:
