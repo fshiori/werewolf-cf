@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { renderAdminConfig, renderAdminConfigLogin, renderAdminIndex, renderAdminRooms, renderAdminRoomsLogin, renderBbs, renderBbsAdmin, renderBbsTopic, renderFederatedList, renderHome, renderIconCatalog, renderLeaderboard, renderManual, renderOldLogs, renderPlayerProfile, renderProtocol, renderRoom, renderRoomEvents, renderRoomRecords, renderRoomTranscript, renderRules, renderScriptInfo, renderStatus, renderTripLookup, renderTripRegistration, renderVersion, renderWinRateAnalysis } from "../src/render";
+import { renderAdminConfig, renderAdminConfigLogin, renderAdminIndex, renderAdminRooms, renderAdminRoomsLogin, renderBbs, renderBbsAdmin, renderBbsTopic, renderFederatedList, renderHome, renderIconCatalog, renderLeaderboard, renderManual, renderOldLogs, renderPlayerProfile, renderProtocol, renderRoom, renderRoomEvents, renderRoomRecords, renderRoomTranscript, renderRules, renderScriptInfo, renderStatus, renderTripLookup, renderTripRegistration, renderTripRoomRecords, renderVersion, renderWinRateAnalysis } from "../src/render";
 import { ROOM_CLIENT_SCRIPT } from "../src/room-client";
 
 describe("render", () => {
@@ -485,6 +485,17 @@ describe("render", () => {
     expect(html).toContain("function tripStateMark(label, state)");
     expect(html).toContain("health-mark");
     expect(html).toContain("encodeURIComponent(playerId)");
+  });
+
+  it("renders legacy Trip room-record capacity filter links", () => {
+    const html = renderTripRoomRecords("ab12CD", []);
+
+    expect(html).toContain("Trip參與紀錄");
+    expect(html).toContain("/trip.php?go=room&id=ab12CD");
+    expect(html).toContain("/trip.php?go=room&id=ab12CD&amp;play=8");
+    expect(html).toContain("/trip.php?go=room&id=ab12CD&amp;play=16");
+    expect(html).toContain("/trip.php?go=room&id=ab12CD&amp;play=22");
+    expect(html).toContain("/trip.php?go=room&id=ab12CD&amp;play=30");
   });
 
   it("renders dedicated Trip registration page", () => {

@@ -980,6 +980,11 @@ describe("worker routes", () => {
     expect(response.status).toBe(200);
     const body = await response.text();
     expect(body).toContain("Trip參與紀錄");
+    expect(body).toContain("/trip.php?go=room&id=ab12CD");
+    expect(body).toContain("/trip.php?go=room&id=ab12CD&amp;play=8");
+    expect(body).toContain("/trip.php?go=room&id=ab12CD&amp;play=16");
+    expect(body).toContain("/trip.php?go=room&id=ab12CD&amp;play=22");
+    expect(body).toContain("/trip.php?go=room&id=ab12CD&amp;play=30");
     expect(body).toContain("room_new");
     expect(body).toContain("room_old");
     expect(body).toContain("/old_log.php?log_mode=on&amp;room_no=room_new");
