@@ -681,6 +681,8 @@ describe("render", () => {
     expect(html).toContain("<title>用戶圖像一覽</title>");
     expect(html).toContain("頭像一覽");
     expect((html.match(/<a href="\/index.php">←返回<\/a>/g) ?? []).length).toBe(2);
+    expect((html.match(/<a href="\/index.php">←返回<\/a><br>/g) ?? []).length).toBe(2);
+    expect(html).not.toContain('<p><a href="/index.php">←返回</a></p>');
     expect(html).toContain("/assets/reference/img/icon_view_title.jpg");
     expect(html).toContain("/assets/reference/img/icon_view_bg.jpg");
     expect(html).toContain('<a href="/icon_upload.php#upload" style="font-size:12pt;color:blue;">→頭像登錄</a>');

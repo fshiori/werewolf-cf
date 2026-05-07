@@ -3519,6 +3519,8 @@ describe("worker routes", () => {
     const body = await response.text();
     expect(body).toContain("<title>用戶圖像一覽</title>");
     expect(body).toContain("頭像一覽");
+    expect(body).toContain('<a href="/index.php">←返回</a><br>');
+    expect(body).not.toContain('<p><a href="/index.php">←返回</a></p>');
     expect(body).toContain("/assets/reference/img/icon_view_title.jpg");
     expect(body).toContain("/icon_upload.php#upload");
     expect(body).toContain("/assets/reference/img/icon_upload_title.jpg");
