@@ -961,7 +961,13 @@ function isPrivateTranscriptEvent(event: RoomEventSummary): boolean {
 }
 
 function isViewerOwnedTranscriptEvent(event: RoomEventSummary, viewerPlayerId?: string): boolean {
-  return Boolean(viewerPlayerId && event.playerId === viewerPlayerId);
+  if (!viewerPlayerId) {
+    return false;
+  }
+  const value = recordValue(event.payload);
+  return event.playerId === viewerPlayerId ||
+    value.playerId === viewerPlayerId ||
+    value.actorPlayerId === viewerPlayerId;
 }
 
 function isViewerAddressedTranscriptEvent(event: RoomEventSummary, viewerPlayerId?: string): boolean {
@@ -1317,6 +1323,13 @@ function transcriptPlayerCandidates(records: GameRecordSummary[], events: RoomEv
     if (event.playerId && !players.has(event.playerId)) {
       const nickname = typeof value.nickname === "string" && value.nickname ? value.nickname : "";
       players.set(event.playerId, nickname ? `${nickname} (${event.playerId})` : event.playerId);
+    }
+    for (const actorKey of ["playerId", "actorPlayerId"]) {
+      const playerId = value[actorKey];
+      if (typeof playerId === "string" && playerId && !players.has(playerId)) {
+        const nickname = typeof value.nickname === "string" && value.nickname ? value.nickname : "";
+        players.set(playerId, nickname ? `${nickname} (${playerId})` : playerId);
+      }
     }
     if (typeof value.targetPlayerId === "string" && value.targetPlayerId && !players.has(value.targetPlayerId)) {
       const targetNickname = typeof value.targetNickname === "string" && value.targetNickname ? value.targetNickname : "";
