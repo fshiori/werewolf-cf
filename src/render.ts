@@ -195,6 +195,12 @@ function page(title: string, body: string, extraHead = ""): string {
     }
     #chatLog div, #gameLog div { border-top: 1px dashed silver; padding: 2px 4px; overflow-wrap: anywhere; word-break: break-word; }
     #gameLog { max-height: 140px; overflow: auto; background: #ffffff; }
+    #gameLog table { width: 100%; border-collapse: collapse; font-size: 12pt; font-family: "PMingLiU", "Noto Serif TC", serif; }
+    #gameLog td { border-top: silver 1px dashed; padding: 2px 4px; overflow-wrap: anywhere; word-break: break-word; }
+    #gameLog .game-log-system td { background-color: #efefef; color: black; font-weight: bold; }
+    #gameLog .game-log-vote td { background-color: #999900; color: snow; font-weight: bold; }
+    #gameLog .game-log-danger td { background-color: red; color: snow; font-weight: bold; }
+    #gameLog .game-log-death td { background-color: #cc3300; color: snow; font-weight: bold; }
     #lastWordsLog { max-height: 120px; overflow: auto; background: #ffffff; }
     #lastWordsLog div { border-top: 1px dotted silver; padding: 2px 4px; overflow-wrap: anywhere; word-break: break-word; }
     #lastWordsLog table { width: 100%; border-collapse: collapse; }
