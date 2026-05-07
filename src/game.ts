@@ -1059,6 +1059,10 @@ export function forceSetPlayerRole(state: GameState, targetPlayerId: string, rol
   return clearActionsForDeadPlayers({
     ...state,
     players: state.players.map((player) => (player.playerId === targetPlayerId ? { ...player, role } : player)),
+    nightKills: removePlayerActionReferences(state.nightKills ?? {}, targetPlayerId),
+    divinations: removePlayerActionReferences(state.divinations ?? {}, targetPlayerId),
+    guards: removePlayerActionReferences(state.guards ?? {}, targetPlayerId),
+    catRevives: removePlayerActionReferences(state.catRevives ?? {}, targetPlayerId),
     log: [...state.log, `GM 將 ${target.nickname} 的角色調整為 ${role}。`]
   });
 }

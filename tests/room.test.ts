@@ -1455,6 +1455,56 @@ describe("RoomDurableObject", () => {
     expect(otherMessages).toContainEqual(expect.objectContaining({ type: "role", role: "villager" }));
   });
 
+  it("clears pending night actions involving a player after GM role changes through the websocket handler", async () => {
+    const game: GameState = {
+      roomId: "room_abc",
+      phase: "night",
+      day: 2,
+      players: [
+        { playerId: "player_gm", nickname: "GM", role: "villager", alive: true },
+        { playerId: "player_wolf", nickname: "Wolf", role: "werewolf", alive: true },
+        { playerId: "player_seer", nickname: "Seer", role: "seer", alive: true },
+        { playerId: "player_guard", nickname: "Guard", role: "guard", alive: true },
+        { playerId: "player_cat", nickname: "Cat", role: "cat", alive: true },
+        { playerId: "player_target", nickname: "Target", role: "villager", alive: true },
+        { playerId: "player_dead", nickname: "Dead", role: "villager", alive: false },
+        { playerId: "player_other", nickname: "Other", role: "villager", alive: true }
+      ],
+      votes: {},
+      openVote: false,
+      commonTalkVisible: false,
+      deadRoleVisible: false,
+      wishRole: false,
+      dummyBoy: false,
+      dayMs: 180_000,
+      nightMs: 90_000,
+      selfVote: false,
+      voteStatus: true,
+      revoteCount: 0,
+      nightKills: { player_wolf: "player_target" },
+      divinations: { player_seer: "player_target" },
+      guards: { player_guard: "player_target" },
+      catRevives: { player_cat: "player_dead" },
+      lastWords: {},
+      log: []
+    };
+    const room = roomObject(game);
+    const gmMessages: SentMessage[] = [];
+    const targetMessages: SentMessage[] = [];
+    const gmSocket = fakeSocket(gmMessages);
+    const targetSocket = fakeSocket(targetMessages);
+    connect(room, gmSocket, "player_gm", "GM", true);
+    connect(room, targetSocket, "player_target", "Target");
+
+    await sendRaw(room, gmSocket, JSON.stringify({ type: "gm_set_role", targetPlayerId: "player_target", role: "werewolf" }));
+
+    for (const messages of [gmMessages, targetMessages]) {
+      const state = messages.find((message) => message.type === "game_state");
+      expect(state).toEqual(expect.objectContaining({ type: "game_state", phase: "night", votedPlayerIds: ["player_cat"] }));
+    }
+    expect(targetMessages).toContainEqual(expect.objectContaining({ type: "role", role: "werewolf" }));
+  });
+
   it("updates public life state after GM alive changes through the websocket handler", async () => {
     const game: GameState = {
       roomId: "room_abc",
