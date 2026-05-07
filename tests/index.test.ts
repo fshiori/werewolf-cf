@@ -1547,6 +1547,7 @@ describe("worker routes", () => {
 
     expect(response.status).toBe(303);
     expect(response.headers.get("Location")).toBe("/admin.php?go=rooms&token=secret%20token");
+    expect(response.headers.get("Set-Cookie")).toContain("adpass=secret%20token");
   });
 
   it("keeps accepting the older adpass admin login field", async () => {
@@ -1560,6 +1561,7 @@ describe("worker routes", () => {
 
     expect(response.status).toBe(303);
     expect(response.headers.get("Location")).toBe("/admin.php?go=rooms&token=fallback%20token");
+    expect(response.headers.get("Set-Cookie")).toContain("adpass=fallback%20token");
   });
 
   it("supports the legacy admin.php logout link", async () => {
@@ -1570,6 +1572,7 @@ describe("worker routes", () => {
 
     expect(response.status).toBe(303);
     expect(response.headers.get("Location")).toBe("/index.php");
+    expect(response.headers.get("Set-Cookie")).toContain("Max-Age=0");
   });
 
   it("renders config admin login without a valid token", async () => {
@@ -1668,6 +1671,20 @@ describe("worker routes", () => {
     expect(body).toContain("/admin.php?go=del&amp;id=room_admin&amp;token=secret");
     expect(body).toContain("/game_view.php?room_no=room_admin");
     expect(body).toContain("/game_log.php?room_no=room_admin&amp;log_mode=on");
+  });
+
+  it("accepts the legacy admin adpass cookie for room administration", async () => {
+    const response = await worker.fetch(
+      new Request("http://example.test/admin.php?go=rooms", {
+        headers: { Cookie: "adpass=secret%20cookie" }
+      }),
+      envWithRooms(["room_admin"], { room_admin_token: "secret cookie" })
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.text();
+    expect(body).toContain("room_admin");
+    expect(body).toContain("/admin.php?go=del&amp;id=room_admin&amp;token=secret%20cookie");
   });
 
   it("renders active rooms on the room admin page with a valid token", async () => {
