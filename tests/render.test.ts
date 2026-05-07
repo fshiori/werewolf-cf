@@ -546,6 +546,7 @@ describe("render", () => {
     expect(html).toContain("頭像一覽");
     expect(html).toContain("/assets/reference/img/icon_view_title.jpg");
     expect(html).toContain("/assets/reference/img/icon_view_bg.jpg");
+    expect(html).toContain('<a href="/icon_upload.php#upload" style="font-size:12pt;color:blue;">→頭像登錄</a>');
     expect(html).toContain("/assets/reference/user_icon/001.gif");
     expect(html).toContain("/assets/reference/user_icon/010.gif");
     expect(html).toContain("#DDDDDD");
@@ -558,6 +559,7 @@ describe("render", () => {
     expect(html).toContain("上傳頭像");
     expect(html).toContain("/assets/reference/img/icon_upload_title.jpg");
     expect(html).toContain("/assets/reference/img/icon_upload_bg.jpg");
+    expect(html).toContain('<a href="/icon_view.php" style="font-size:12pt;color:blue;">→圖像一覽</a>');
     expect(html).toContain('id="upload"');
     expect(html).toContain("iconUploadFile");
     expect(html).toContain("iconUploadButton");
