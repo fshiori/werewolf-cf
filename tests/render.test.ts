@@ -426,6 +426,7 @@ describe("render", () => {
 
   it("renders room spectator and heaven view links", () => {
     const spectator = renderRoom("room_abc", { viewMode: "spectator", autoReloadSeconds: 20 });
+    expect(spectator).toContain("<title>汝等是人是狼？[觀戰]</title>");
     expect(spectator).toContain('document.body.classList.add("room-phase-lobby", "room-view-spectator", "room-page-full");');
     expect(spectator).toContain('data-room-view="spectator"');
     expect(spectator).toContain("旁觀視點");

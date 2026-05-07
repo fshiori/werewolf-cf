@@ -1298,7 +1298,7 @@ describe("worker routes", () => {
   it("renders PHP-style live room page aliases", async () => {
     const env = envWithRooms(["room_exists"]);
     const cases = [
-      ["/game_view.php?room_no=room_exists&auto_reload=20", "spectator", "旁觀視點", "full", "完整頁面"],
+      ["/game_view.php?room_no=room_exists&auto_reload=20", "spectator", "旁觀視點", "full", "完整頁面", "汝等是人是狼？[觀戰]"],
       ["/game_play.php?room_no=room_exists&auto_reload=20", "player", "玩家視點", "full", "完整頁面"],
       ["/game_frame.php?room_no=room_exists&auto_reload=20", "player", "玩家視點", "frame", "框架入口", "汝等是人是狼？＜遊戲＞"],
       ["/game_up.php?room_no=room_exists&auto_reload=20", "player", "玩家視點", "up", "上方更新", "汝等是人是狼？＜發言＞"],
