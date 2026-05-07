@@ -728,15 +728,23 @@ async function registerTrip(request: Request, env: Env): Promise<Response> {
   }
 
   try {
-    const trip = validateTrip(body.trip);
-    const tripHash = await registeredTripHash(trip);
-    await env.DB.prepare("INSERT INTO registered_trips (trip_hash) VALUES (?) ON CONFLICT(trip_hash) DO NOTHING")
-      .bind(tripHash)
-      .run();
+    await insertRegisteredTrip(env, body.trip);
     return json({ registered: true });
   } catch (error) {
     return json({ error: error instanceof Error ? error.message : "Failed to register Trip" }, { status: 400 });
   }
+}
+
+async function insertRegisteredTrip(env: Env, value: unknown): Promise<string> {
+  if (typeof value !== "string") {
+    throw new Error("Invalid Trip");
+  }
+  const trip = validateTrip(value);
+  const tripHash = await registeredTripHash(trip);
+  await env.DB.prepare("INSERT INTO registered_trips (trip_hash) VALUES (?) ON CONFLICT(trip_hash) DO NOTHING")
+    .bind(tripHash)
+    .run();
+  return tripHash;
 }
 
 async function excludeTrip(request: Request, env: Env): Promise<Response> {
@@ -746,16 +754,24 @@ async function excludeTrip(request: Request, env: Env): Promise<Response> {
   }
 
   try {
-    const trip = validateTrip(body.trip);
-    const reason = validateTripExclusionReason(typeof body.reason === "string" ? body.reason : "");
-    const tripHash = await registeredTripHash(trip);
-    await env.DB.prepare("INSERT INTO excluded_trips (trip_hash, reason) VALUES (?, ?) ON CONFLICT(trip_hash) DO UPDATE SET reason = excluded.reason")
-      .bind(tripHash, reason)
-      .run();
+    await insertTripExclusion(env, body.trip, body.reason);
     return json({ excluded: true });
   } catch (error) {
     return json({ error: error instanceof Error ? error.message : "Failed to exclude Trip" }, { status: 400 });
   }
+}
+
+async function insertTripExclusion(env: Env, tripValue: unknown, reasonValue: unknown): Promise<string> {
+  if (typeof tripValue !== "string") {
+    throw new Error("Invalid Trip");
+  }
+  const trip = validateTrip(tripValue);
+  const reason = validateTripExclusionReason(typeof reasonValue === "string" ? reasonValue : "");
+  const tripHash = await registeredTripHash(trip);
+  await env.DB.prepare("INSERT INTO excluded_trips (trip_hash, reason) VALUES (?, ?) ON CONFLICT(trip_hash) DO UPDATE SET reason = excluded.reason")
+    .bind(tripHash, reason)
+    .run();
+  return tripHash;
 }
 
 async function removeTripExclusion(request: Request, env: Env): Promise<Response> {
@@ -773,6 +789,46 @@ async function removeTripExclusion(request: Request, env: Env): Promise<Response
     return json({ excluded: false });
   } catch (error) {
     return json({ error: error instanceof Error ? error.message : "Failed to remove Trip exclusion" }, { status: 400 });
+  }
+}
+
+function readFormString(form: FormData, name: string): string | undefined {
+  const value = form.get(name);
+  return typeof value === "string" ? value : undefined;
+}
+
+async function readLegacyTripForm(request: Request): Promise<Record<string, unknown>> {
+  const form = await request.formData();
+  return {
+    trip: readFormString(form, "name") ?? readFormString(form, "trip"),
+    password: readFormString(form, "password"),
+    reason: readFormString(form, "aname") ?? readFormString(form, "reason")
+  };
+}
+
+async function registerLegacyTrip(request: Request, env: Env): Promise<Response> {
+  try {
+    const body = await readLegacyTripForm(request);
+    await insertRegisteredTrip(env, body.trip);
+    return new Response(null, {
+      status: 303,
+      headers: { Location: "/trip" }
+    });
+  } catch (error) {
+    return json({ error: error instanceof Error ? error.message : "Failed to register Trip" }, { status: 400 });
+  }
+}
+
+async function excludeLegacyTrip(request: Request, env: Env): Promise<Response> {
+  try {
+    const body = await readLegacyTripForm(request);
+    await insertTripExclusion(env, body.trip, body.reason);
+    return new Response(null, {
+      status: 303,
+      headers: { Location: "/trip" }
+    });
+  } catch (error) {
+    return json({ error: error instanceof Error ? error.message : "Failed to exclude Trip" }, { status: 400 });
   }
 }
 
@@ -1147,11 +1203,6 @@ async function insertBbsReply(env: Env, topicIdParam: string, body: Record<strin
   ]);
   const replyCount = topic.replyCount + 1;
   return { replyCount, page: Math.max(1, Math.ceil(replyCount / BBS_REPLY_PAGE_SIZE)) };
-}
-
-function readFormString(form: FormData, name: string): string | undefined {
-  const value = form.get(name);
-  return typeof value === "string" ? value : undefined;
 }
 
 async function readLegacyBbsForm(request: Request): Promise<Record<string, unknown>> {
@@ -2163,6 +2214,14 @@ export default {
 
     if (request.method === "POST" && url.pathname === "/api/trips") {
       return registerTrip(request, env);
+    }
+
+    if (request.method === "POST" && url.pathname === "/trip.php" && url.searchParams.get("go") === "post") {
+      return registerLegacyTrip(request, env);
+    }
+
+    if (request.method === "POST" && url.pathname === "/trip.php" && url.searchParams.get("go") === "out") {
+      return excludeLegacyTrip(request, env);
     }
 
     if (request.method === "POST" && url.pathname === "/api/bbs/topics") {
