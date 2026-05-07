@@ -62,6 +62,11 @@ function appendChatLine(channelLabel, markerColor, nickname, text, rowClass) {
   table.appendChild(row);
   document.querySelector("#chatLog").appendChild(table);
 }
+function updateGmStatus() {
+  const status = document.querySelector("#gmStatus");
+  if (!status) return;
+  status.textContent = isGm ? "GM行動中" : "非GM";
+}
 function playNotifySound() {
   if (!document.querySelector("#soundNotify").checked) return;
   try {
@@ -199,9 +204,11 @@ document.querySelector("#connect").addEventListener("click", () => {
     const msg = JSON.parse(event.data);
     if (msg.type === "joined") {
       isGm = msg.members.some((m) => m.playerId === localStorage.getItem(playerKey) && m.gm);
+      updateGmStatus();
       if (latestGame) renderGame(latestGame);
     } else if (msg.type === "presence") {
       isGm = msg.members.some((m) => m.playerId === localStorage.getItem(playerKey) && m.gm);
+      updateGmStatus();
       document.querySelector("#members").textContent = msg.members.map((m) => m.gm ? m.nickname + " [GM]" : m.nickname).join(", ");
       if (latestGame) renderGame(latestGame);
     } else if (msg.type === "chat") {
@@ -759,6 +766,7 @@ function isWolfRole(value) {
 }
 function renderGame(game) {
   setRoomPhaseClass(game.phase);
+  updateGmStatus();
   document.querySelector("#phase").innerHTML = phaseLabel(game);
   updatePhaseWarning(game);
   updateLobbyStartNotice(game);
