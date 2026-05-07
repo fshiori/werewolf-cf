@@ -2702,6 +2702,7 @@ describe("render", () => {
     ], {
       playerViewFormAction: "/old_log.php",
       playerViewHiddenInputs: { log_mode: "on", room_no: "room_abc" },
+      legacyTranscriptPath: "/old_log.php",
       reverseLog: true,
       heavenTalk: true
     });
@@ -2710,6 +2711,8 @@ describe("render", () => {
     expect(html).toContain('<input type="hidden" name="log_mode" value="on">');
     expect(html).toContain('<input type="hidden" name="room_no" value="room_abc">');
     expect(html).toContain('<input type="hidden" name="viewer" value="player">');
+    expect(html).toContain('<a href="/old_log.php?log_mode=on&amp;room_no=room_abc">通常</a>');
+    expect(html).toContain('<a href="/old_log.php?log_mode=on&amp;room_no=room_abc&amp;reverse_log=on&amp;heaven_talk=on&amp;viewer=gm">GM</a>');
   });
 
   it("renders implemented rules page", () => {
