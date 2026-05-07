@@ -233,6 +233,16 @@ describe("render", () => {
     expect(html).toContain("/assets/reference/img/user_regist_handle_trip.gif");
     expect(html).toContain("/assets/reference/img/user_regist_role.gif");
     expect(html).toContain("/assets/reference/img/user_regist_icon.gif");
+    expect(html).toContain("/assets/reference/img/user_regist_role_none.gif");
+    expect(html).toContain("/assets/reference/img/user_regist_role_human.gif");
+    expect(html).toContain("/assets/reference/img/user_regist_role_wolf.gif");
+    expect(html).toContain("/assets/reference/img/user_regist_role_mage.gif");
+    expect(html).toContain("/assets/reference/img/user_regist_role_necromancer.gif");
+    expect(html).toContain("/assets/reference/img/user_regist_role_mad.gif");
+    expect(html).toContain("/assets/reference/img/user_regist_role_guard.gif");
+    expect(html).toContain("/assets/reference/img/user_regist_role_common.gif");
+    expect(html).toContain("/assets/reference/img/user_regist_role_fox.gif");
+    expect(html).toContain("/assets/reference/img/user_regist_role_betr.gif");
     expect(html).toContain("user_icon/001.gif");
     expect(html).toContain("頭像一覽");
     expect(html).toContain("image/png,image/jpeg,image/gif,image/webp");
