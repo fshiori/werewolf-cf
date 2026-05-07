@@ -603,6 +603,8 @@ describe("render", () => {
     expect(ROOM_CLIENT_SCRIPT).toContain("靈界視點");
     expect(ROOM_CLIENT_SCRIPT).toContain("投票先非公開");
     expect(ROOM_CLIENT_SCRIPT).toContain("公開投票先");
+    expect(ROOM_CLIENT_SCRIPT).toContain('game.phase === "night"');
+    expect(ROOM_CLIENT_SCRIPT).toContain('"已行動 " + votedPlayerIds.size + "。"');
     expect(ROOM_CLIENT_SCRIPT).toContain('if (!game.openVote || !Object.keys(voteSummary).length) return;');
     expect(ROOM_CLIENT_SCRIPT).toContain("updateVoteObserverPanel(game, currentPlayer, currentPlayerDead, voteSummary, votedPlayerIds);");
     expect(ROOM_CLIENT_SCRIPT).toContain('table.className = "vote-table";');
