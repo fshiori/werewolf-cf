@@ -1,4 +1,4 @@
-import { renderAdminConfig, renderAdminConfigLogin, renderAdminIndex, renderAdminRooms, renderAdminRoomsLogin, renderBbs, renderBbsAdmin, renderBbsTopic, renderFederatedList, renderHome, renderIconCatalog, renderLeaderboard, renderManual, renderOldLogs, renderPlayerProfile, renderProtocol, renderRoom, renderRoomEvents, renderRoomRecords, renderRoomTranscript, renderRules, renderScriptInfo, renderStatus, renderTripComments, renderTripDetail, renderTripRegistration, renderTripLookup, renderTripRoomRecords, renderVersion, renderWinRateAnalysis } from "./render";
+import { renderAdminConfig, renderAdminConfigLogin, renderAdminIndex, renderAdminRooms, renderAdminRoomsLogin, renderBbs, renderBbsAdmin, renderBbsTopic, renderFederatedList, renderHome, renderIconCatalog, renderLeaderboard, renderManual, renderOldLogs, renderPlayerProfile, renderProtocol, renderRoom, renderRoomEvents, renderRoomRecords, renderRoomTranscript, renderRules, renderScriptInfo, renderStatus, renderTripComments, renderTripDetail, renderTripRating, renderTripRegistration, renderTripLookup, renderTripRoomRecords, renderVersion, renderWinRateAnalysis } from "./render";
 import { RoomDurableObject } from "./room";
 import { ROOM_CLIENT_SCRIPT } from "./room-client";
 import { DEFAULT_DAY_MINUTES, DEFAULT_NIGHT_MINUTES } from "./game";
@@ -2274,6 +2274,13 @@ export default {
           return html(renderTripComments(validateTrip(url.searchParams.get("id") ?? "")));
         } catch (error) {
           return json({ error: error instanceof Error ? error.message : "Invalid Trip" }, { status: 400 });
+        }
+      }
+      if (url.pathname === "/trip.php" && url.searchParams.get("go") === "sce" && url.searchParams.get("room") && url.searchParams.get("trip")) {
+        try {
+          return html(renderTripRating(validateRoomId(url.searchParams.get("room") ?? ""), validateTrip(url.searchParams.get("trip") ?? "")));
+        } catch (error) {
+          return json({ error: error instanceof Error ? error.message : "Invalid Trip rating request" }, { status: 400 });
         }
       }
       if (url.pathname === "/trip.php" && url.searchParams.get("go") === "search") {
