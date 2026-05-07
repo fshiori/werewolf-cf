@@ -846,7 +846,7 @@ describe("render", () => {
     expect(html).toContain("bbsReplyPassword");
     expect(html).toContain('password: document.querySelector("#bbsReplyPassword").value');
     expect(html).toContain("replyPage");
-    expect(html).toContain('?page=" + encodeURIComponent(String(replyPage))');
+    expect(html).toContain('&page=" + encodeURIComponent(String(replyPage))');
     expect(html).toContain("bbsReplyDeleteButton");
     expect(html).toContain("bbsReplyEditButton");
     expect(html).toContain("bbsReplyEditMessage");
@@ -883,6 +883,8 @@ describe("render", () => {
     expect(html).toContain("bbsDeleteButton");
     expect(html).toContain('method: "DELETE"');
     expect(html).toContain("刪除此主題與所有回覆？");
+    expect(html).toContain('location.href = "/bbs.php";');
+    expect(html).toContain('<p><a href="/bbs.php">全部主題</a> <a href="#bbsReplyForm">回覆主題</a></p>');
   });
 
   it("renders BBS reply pagination links", () => {
