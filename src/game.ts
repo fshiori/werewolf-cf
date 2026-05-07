@@ -1342,9 +1342,21 @@ function getWinner(state: GameState): GameWinner | undefined {
     return loversWin ? "lovers" : foxes > 0 ? "foxes" : "villagers";
   }
   if (wolves >= villagers) {
-    return loversWin ? "lovers" : foxes > 0 ? "foxes" : "werewolves";
+    return loversWin ? "lovers" : wolfWinFoxCount(state, foxes) > 0 ? "foxes" : "werewolves";
   }
   return undefined;
+}
+
+function wolfWinFoxCount(state: GameState, foxes: number): number {
+  if (!hasBigWolfChildFoxVictoryRule(state)) {
+    return foxes;
+  }
+  const livingBigWolvesAndFoxes = livingPlayers(state).filter((player) => player.role === "big_wolf" || player.role === "fox").length;
+  return livingBigWolvesAndFoxes < 2 ? 0 : foxes;
+}
+
+function hasBigWolfChildFoxVictoryRule(state: GameState): boolean {
+  return state.players.length >= 20 && state.players.some((player) => player.role === "big_wolf") && state.players.some((player) => player.role === "child_fox");
 }
 
 function isLoversVictoryOnly(state: GameState): boolean {
