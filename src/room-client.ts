@@ -560,12 +560,24 @@ function phaseLabel(game) {
   const revote = game.revoteCount ? " ( " + game.revoteCount + " 回目)" : "";
   return day + " 日目 <small>(生存者" + aliveCount + "人)</small>" + revote;
 }
+function updatePhaseWarning(game) {
+  const warning = document.querySelector("#phaseWarning");
+  if (!warning) return;
+  warning.innerHTML = "";
+  if (!game.suddenDeathWarningAt || (game.phase !== "day" && game.phase !== "night")) return;
+  const alert = document.createElement("span");
+  alert.style.backgroundColor = "#CC3300";
+  alert.style.color = "snow";
+  alert.textContent = game.phase === "day" ? "　快要日落了。請趕快投票　" : "　快要日出了。請趕快投票　";
+  warning.append(alert, document.createElement("br"));
+}
 function isWolfRole(value) {
   return value === "werewolf" || value === "big_wolf";
 }
 function renderGame(game) {
   setRoomPhaseClass(game.phase);
   document.querySelector("#phase").innerHTML = phaseLabel(game);
+  updatePhaseWarning(game);
   document.querySelector("#winner").textContent = winnerLabel(game.winner);
   const currentPlayerId = localStorage.getItem(playerKey);
   const currentPlayer = game.players.find((player) => player.playerId === currentPlayerId);
