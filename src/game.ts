@@ -1214,6 +1214,9 @@ function applySuddenDeathForTimedOutActors(state: GameState, targets: GamePlayer
     suddenDeathWarningAt: undefined,
     log
   });
+  if (livingPlayers(resetState).length === 0) {
+    return endGame(resetState, "draw");
+  }
   const winner = getWinner(resetState);
   if (winner) {
     return endGame(resetState, winner);
