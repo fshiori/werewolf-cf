@@ -3910,6 +3910,7 @@ describe("worker routes", () => {
 
     expect(response.status).toBe(200);
     const body = await response.text();
+    expect(body).toContain("<title>汝等是人是狼？ - Werewolf Cloudflare Port</title>");
     expect(body).toContain("&lt;b&gt;Runtime notice&lt;/b&gt;");
     expect(body).not.toContain("<b>Runtime notice</b>");
   });

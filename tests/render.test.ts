@@ -48,6 +48,7 @@ describe("render", () => {
       }
     ]);
 
+    expect(html).toContain("<title>汝等是人是狼？ - Werewolf Cloudflare Port</title>");
     expect(html).toContain("<fieldset>");
     expect(html).toContain('<body bgcolor="white">');
     expect(html).toContain("選單");
