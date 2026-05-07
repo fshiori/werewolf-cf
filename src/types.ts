@@ -147,6 +147,18 @@ export interface TripPublicSummary {
   };
 }
 
+export interface TripRoomRecordSummary {
+  id: number;
+  roomId: string;
+  winner?: GameWinner;
+  day?: number;
+  playerId: string;
+  nickname: string;
+  role: PlayerRole;
+  alive: boolean;
+  createdAt: string;
+}
+
 export interface GameRecordSummary {
   id: number;
   roomId: string;

@@ -913,6 +913,62 @@ describe("worker routes", () => {
     expect(body).not.toContain(tripHash);
   });
 
+  it("renders legacy Trip room record pages without exposing Trip hashes", async () => {
+    const tripHash = await registeredTripHash("ab12CD");
+    const response = await worker.fetch(
+      new Request("http://example.test/trip.php?go=room&id=ab12CD"),
+      envWithRooms(
+        ["room_old", "room_new"],
+        {},
+        {},
+        {
+          room_old: [
+            {
+              id: 1,
+              room_id: "room_old",
+              result_json: '{"winner":"villagers","day":2,"players":[{"playerId":"player_old","nickname":"Old Name","role":"villager","alive":true}]}',
+              created_at: "2026-05-04 03:00:00"
+            }
+          ],
+          room_new: [
+            {
+              id: 2,
+              room_id: "room_new",
+              result_json: '{"winner":"werewolves","day":4,"players":[{"playerId":"player_current","nickname":"Current","role":"werewolf","alive":false},{"playerId":"player_other","nickname":"Other","role":"villager","alive":true}]}',
+              created_at: "2026-05-04 05:00:00"
+            }
+          ]
+        },
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        new Set([tripHash]),
+        new Set(),
+        {
+          player_current: tripHash,
+          player_old: tripHash,
+          player_other: "other_trip_hash"
+        }
+      )
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.text();
+    expect(body).toContain("Trip參與紀錄");
+    expect(body).toContain("room_new");
+    expect(body).toContain("room_old");
+    expect(body).toContain("Current");
+    expect(body).toContain("Old Name");
+    expect(body).toContain("人狼");
+    expect(body).toContain("村民");
+    expect(body).not.toContain("Other");
+    expect(body).not.toContain(tripHash);
+  });
+
   it("returns 404 for formatted room ids missing from D1", async () => {
     const response = await worker.fetch(new Request("http://example.test/room/room_missing"), envWithRooms([]));
 

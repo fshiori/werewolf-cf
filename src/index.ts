@@ -1,9 +1,9 @@
-import { renderAdminConfig, renderAdminConfigLogin, renderAdminIndex, renderAdminRooms, renderAdminRoomsLogin, renderBbs, renderBbsAdmin, renderBbsTopic, renderFederatedList, renderHome, renderIconCatalog, renderLeaderboard, renderManual, renderOldLogs, renderPlayerProfile, renderProtocol, renderRoom, renderRoomEvents, renderRoomRecords, renderRoomTranscript, renderRules, renderScriptInfo, renderStatus, renderTripDetail, renderTripRegistration, renderTripLookup, renderVersion, renderWinRateAnalysis } from "./render";
+import { renderAdminConfig, renderAdminConfigLogin, renderAdminIndex, renderAdminRooms, renderAdminRoomsLogin, renderBbs, renderBbsAdmin, renderBbsTopic, renderFederatedList, renderHome, renderIconCatalog, renderLeaderboard, renderManual, renderOldLogs, renderPlayerProfile, renderProtocol, renderRoom, renderRoomEvents, renderRoomRecords, renderRoomTranscript, renderRules, renderScriptInfo, renderStatus, renderTripDetail, renderTripRegistration, renderTripLookup, renderTripRoomRecords, renderVersion, renderWinRateAnalysis } from "./render";
 import { RoomDurableObject } from "./room";
 import { ROOM_CLIENT_SCRIPT } from "./room-client";
 import { DEFAULT_DAY_MINUTES, DEFAULT_NIGHT_MINUTES } from "./game";
 import { bbsPasswordHash, registeredTripHash, tripHashForRoom } from "./identity";
-import type { BbsReplySummary, BbsTopicSummary, ChannelRestrictions, FederatedRoomSummary, FederatedServerStatus, GamePlayer, GameRecordSummary, GameWinner, LeaderboardEntry, PlayerGameRecordSummary, PlayerStats, RoomEventSummary, RoomOptions, RoomSummary, TripPublicSummary, WinRateEntry } from "./types";
+import type { BbsReplySummary, BbsTopicSummary, ChannelRestrictions, FederatedRoomSummary, FederatedServerStatus, GamePlayer, GameRecordSummary, GameWinner, LeaderboardEntry, PlayerGameRecordSummary, PlayerStats, RoomEventSummary, RoomOptions, RoomSummary, TripPublicSummary, TripRoomRecordSummary, WinRateEntry } from "./types";
 import {
   isRecord,
   validateNickname,
@@ -917,6 +917,52 @@ async function getLegacyTripDetail(env: Env, tripValue: string): Promise<Respons
     return html(renderTripDetail(validateTrip(tripValue), await readTripPublicSummary(env, tripValue)));
   } catch (error) {
     return json({ error: error instanceof Error ? error.message : "Invalid Trip" }, { status: 400 });
+  }
+}
+
+async function listTripRoomRecords(env: Env, tripValue: string): Promise<TripRoomRecordSummary[]> {
+  const trip = validateTrip(tripValue);
+  const tripHash = await registeredTripHash(trip);
+  const players = await env.DB.prepare("SELECT id FROM players WHERE registered_trip_hash = ? ORDER BY id LIMIT 50")
+    .bind(tripHash)
+    .all<{ id: string }>();
+  const playerIds = players.results.map((player) => player.id);
+  if (!playerIds.length) {
+    return [];
+  }
+  const predicates = playerIds.map(() => "result_json LIKE ?").join(" OR ");
+  const patterns = playerIds.map((id) => `%"playerId":"${id}"%`);
+  const result = await env.DB.prepare(
+    `SELECT id, room_id, result_json, created_at FROM game_records WHERE ${predicates} ORDER BY created_at DESC LIMIT 50`
+  )
+    .bind(...patterns)
+    .all<{ id: number; room_id: string; result_json: string; created_at: string }>();
+  return result.results.flatMap((record) => {
+    const parsed = parseRecordResult(record.result_json);
+    const playersInRecord = readRecordPlayers(parsed);
+    const player = playersInRecord.find((candidate) => playerIds.includes(candidate.playerId));
+    if (!player) {
+      return [];
+    }
+    return [{
+      id: record.id,
+      roomId: record.room_id,
+      winner: readRecordWinner(parsed),
+      day: readRecordDay(parsed),
+      playerId: player.playerId,
+      nickname: player.nickname,
+      role: player.role,
+      alive: player.alive,
+      createdAt: record.created_at
+    }];
+  });
+}
+
+async function getLegacyTripRoomRecords(env: Env, tripValue: string): Promise<Response> {
+  try {
+    return html(renderTripRoomRecords(validateTrip(tripValue), await listTripRoomRecords(env, tripValue)));
+  } catch (error) {
+    return json({ error: error instanceof Error ? error.message : "Invalid Trip records" }, { status: 400 });
   }
 }
 
@@ -1988,6 +2034,9 @@ export default {
     if (request.method === "GET" && (url.pathname === "/trip" || url.pathname === "/trip.php")) {
       if (url.pathname === "/trip.php" && url.searchParams.get("go") === "trip" && url.searchParams.get("id")) {
         return getLegacyTripDetail(env, url.searchParams.get("id") ?? "");
+      }
+      if (url.pathname === "/trip.php" && url.searchParams.get("go") === "room" && url.searchParams.get("id")) {
+        return getLegacyTripRoomRecords(env, url.searchParams.get("id") ?? "");
       }
       return html(renderTripRegistration());
     }
