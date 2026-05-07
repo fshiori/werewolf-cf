@@ -1040,6 +1040,10 @@ export function forceSetPlayerAlive(state: GameState, targetPlayerId: string, al
     ...state,
     players,
     votes: Object.fromEntries(Object.entries(state.votes ?? {}).filter(([voterId, votedId]) => voterId !== targetPlayerId && votedId !== targetPlayerId)),
+    nightKills: removePlayerActionReferences(state.nightKills ?? {}, targetPlayerId),
+    divinations: removePlayerActionReferences(state.divinations ?? {}, targetPlayerId),
+    guards: removePlayerActionReferences(state.guards ?? {}, targetPlayerId),
+    catRevives: removePlayerActionReferences(state.catRevives ?? {}, targetPlayerId),
     log: [...state.log, `GM 將 ${target.nickname} 調整為${alive ? "生存" : "死亡"}。`]
   });
 }
@@ -1457,6 +1461,10 @@ function clearActionsForDeadPlayers(state: GameState): GameState {
 
 function keepLivingActorActions(actions: Record<string, string>, livingIds: Set<string>): Record<string, string> {
   return Object.fromEntries(Object.entries(actions).filter(([actorId]) => livingIds.has(actorId)));
+}
+
+function removePlayerActionReferences(actions: Record<string, string>, playerId: string): Record<string, string> {
+  return Object.fromEntries(Object.entries(actions).filter(([actorId, targetId]) => actorId !== playerId && targetId !== playerId));
 }
 
 function pickTopTarget(state: GameState): string | undefined {
