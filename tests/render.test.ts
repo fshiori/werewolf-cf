@@ -727,10 +727,11 @@ describe("render", () => {
           voteStatus: false
         }
       }
-    ]);
+    ], [], { backPageHref: "/index.php?room=1&from=list" });
 
     expect(html).toContain("聯合遊戲列表");
     expect(html).toContain('<b><a href="/list.php">聯合列表</a></b>');
+    expect(html).toContain('<a href="/index.php?room=1&amp;from=list">←返回</a>');
     expect(html).toContain("服務中");
     expect(html).toContain("本伺服器");
     expect(html).toContain('<table border="0" cellpadding="0" cellspacing="0" style="width: 100%">');

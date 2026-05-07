@@ -1695,7 +1695,7 @@ describe("worker routes", () => {
 
   it("renders federated list page from local rooms", async () => {
     const response = await worker.fetch(
-      new Request("http://example.test/list"),
+      new Request("http://example.test/list.php?back_page=/index.php?from=list"),
       envWithRooms(["room_list"], {}, {}, {}, {}, { room_list: "real_time:3:1" }, { room_list: "Friendly" }, { room_list: 22 })
     );
 
@@ -1704,11 +1704,19 @@ describe("worker routes", () => {
     expect(body).toContain("聯合遊戲列表");
     expect(body).toContain("服務中");
     expect(body).toContain("本伺服器");
+    expect(body).toContain('<a href="/index.php?from=list">←返回</a>');
     expect(body).toContain("/login.php?room_no=room_list");
     expect(body).toContain("[room_list]");
     expect(body).toContain("list村");
     expect(body).toContain("Friendly");
     expect(body).toContain("人數22");
+
+    const unsafeResponse = await worker.fetch(
+      new Request("http://example.test/list.php?back_page=javascript:alert(1)"),
+      envWithRooms([])
+    );
+    expect(unsafeResponse.status).toBe(200);
+    expect(await unsafeResponse.text()).not.toContain("javascript:alert");
   });
 
   it("serves PHP-style federated api feed", async () => {

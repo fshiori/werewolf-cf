@@ -45,6 +45,21 @@ function text(body: string): Response {
   return new Response(body, { headers: { "content-type": "text/plain; charset=utf-8" } });
 }
 
+function safeLegacyBackPage(value: string | null, origin: string): string | undefined {
+  if (!value) {
+    return undefined;
+  }
+  try {
+    const parsed = new URL(value, origin);
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+      return undefined;
+    }
+    return parsed.origin === origin ? `${parsed.pathname}${parsed.search}${parsed.hash}` : parsed.href;
+  } catch {
+    return undefined;
+  }
+}
+
 function legacyIconResult(title: string, message: string, backHref = "/icon_upload.php", extra = "", status = 200): Response {
   return html(`<!doctype html>
 <html lang="zh-Hant">
@@ -2329,7 +2344,9 @@ export default {
 
     if (request.method === "GET" && (url.pathname === "/list" || url.pathname === "/list.php")) {
       const federatedList = await listFederatedRooms(env);
-      return html(renderFederatedList(federatedList.rooms, federatedList.peers));
+      return html(renderFederatedList(federatedList.rooms, federatedList.peers, {
+        backPageHref: safeLegacyBackPage(url.searchParams.get("back_page"), url.origin)
+      }));
     }
 
     if (request.method === "GET" && (url.pathname === "/logs" || url.pathname === "/old_log.php")) {
