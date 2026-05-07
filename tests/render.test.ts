@@ -1466,6 +1466,7 @@ describe("render", () => {
     expect(html).toContain("/room/room_abc/log?reverse_log=on&amp;heaven_talk=on&amp;viewer=gm");
     expect(html).toContain("/old_log.php?log_mode=on&amp;room_no=room_abc&amp;reverse_log=on&amp;heaven_talk=on&amp;viewer=player&amp;viewer_player_id=player_wolf");
     expect(html).toContain("/game_log.php?room_no=room_abc&amp;log_mode=on&amp;reverse_log=on&amp;heaven_talk=on&amp;viewer=player&amp;viewer_player_id=player_wolf");
+    expect(html).toContain("Wolf (player_wolf)：<a href=\"/old_log.php?log_mode=on&amp;room_no=room_abc&amp;reverse_log=on&amp;heaven_talk=on&amp;viewer=player&amp;viewer_player_id=player_wolf\">old_log.php</a> / <a href=\"/game_log.php?room_no=room_abc&amp;log_mode=on&amp;reverse_log=on&amp;heaven_talk=on&amp;viewer=player&amp;viewer_player_id=player_wolf\">game_log.php</a>");
     expect(html).toContain('<a href="/old_log.php">←返回</a>');
     expect(html).toContain('<input type="hidden" name="reverse_log" value="on">');
     expect(html).toContain('<input type="hidden" name="heaven_talk" value="on">');
@@ -1487,6 +1488,8 @@ describe("render", () => {
     expect(html).toContain('<option value="player_gm">GM (player_gm)</option>');
     expect(html).toContain('<option value="player_target">Target (player_target)</option>');
     expect(html).toContain("/room/room_abc/log?viewer=player&amp;viewer_player_id=player_target");
+    expect(html).toContain("/old_log.php?log_mode=on&amp;room_no=room_abc&amp;viewer=player&amp;viewer_player_id=player_target");
+    expect(html).toContain("/game_log.php?room_no=room_abc&amp;log_mode=on&amp;viewer=player&amp;viewer_player_id=player_target");
   });
 
   it("renders implemented rules page", () => {
