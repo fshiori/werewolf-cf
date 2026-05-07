@@ -768,8 +768,11 @@ function legacySituationForCommand(command) {
 }
 function syncLegacyVoteHiddenFields(command, game) {
   const situation = document.querySelector('.legacy-vote-form input[name="situation"]');
+  const situationSelector = document.querySelector('.legacy-vote-form select[name="situation_selector"]');
   const voteTimes = document.querySelector('.legacy-vote-form input[name="vote_times"]');
-  if (situation) situation.value = legacySituationForCommand(command);
+  const situationValue = legacySituationForCommand(command);
+  if (situation) situation.value = situationValue;
+  if (situationSelector) situationSelector.value = situationValue;
   if (voteTimes) voteTimes.value = String((game && typeof game.revoteCount === "number" ? game.revoteCount : 0) + 1);
 }
 function updateLegacyVoteTargetList(game, currentPlayer, currentPlayerAlive, currentPlayerId, canManageLobby, canUsePlayerAction) {
