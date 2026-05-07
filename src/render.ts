@@ -1633,7 +1633,7 @@ export function renderStatus(status: {
   return page("Status", shell(`
     <fieldset>
       <legend><strong>伺服器狀態</strong></legend>
-      <table class="form-table">
+      <table class="form-table table1 admin-status-table" border="1" cellspacing="1" cellpadding="2" bgcolor="#CCCCCC" style="width:100%;margin:12px 0 18px;">
         <tr>
           <td><strong>　總狀態：</strong></td>
           <td>${status.ok ? `${healthMark("正常", "ok")}<font color="#008800">正常運作</font>` : `${healthMark("確認", "error")}<font color="#cc0000">需要確認</font>`}</td>
@@ -1650,7 +1650,7 @@ export function renderStatus(status: {
     </fieldset>
     <fieldset>
       <legend><strong>Binding 檢查</strong></legend>
-      <table class="form-table">
+      <table class="form-table table1 admin-status-binding-table" border="1" cellspacing="1" cellpadding="2" bgcolor="#CCCCCC" style="width:100%;margin:12px 0 18px;">
         ${checkRows}
       </table>
     </fieldset>

@@ -3177,10 +3177,12 @@ describe("render", () => {
     });
 
     expect(html).toContain("伺服器狀態");
+    expect(html).toContain('<table class="form-table table1 admin-status-table" border="1" cellspacing="1" cellpadding="2" bgcolor="#CCCCCC" style="width:100%;margin:12px 0 18px;">');
     expect(html).toContain("正常運作");
     expect(html).toContain("health-ok");
     expect(html).toContain("health-idle");
     expect(html).toContain("Binding 檢查");
+    expect(html).toContain('<table class="form-table table1 admin-status-binding-table" border="1" cellspacing="1" cellpadding="2" bgcolor="#CCCCCC" style="width:100%;margin:12px 0 18px;">');
     expect(html).toContain("durableObjects");
     expect(html).toContain("&lt;Runtime&gt;");
 
