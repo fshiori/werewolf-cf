@@ -2188,7 +2188,7 @@ export function renderTripRoomRecords(tripId: string, records: TripRoomRecordSum
           <td align="center"><a href="/player/${escapeHtml(record.playerId)}">${escapeHtml(record.nickname)}</a></td>
           <td align="center">${roleLabelHtml(record.role)}</td>
           <td align="center">${record.alive ? "生存" : "死亡"}</td>
-          <td align="center">${record.winner ? winnerLabel(record.winner) : "不明"}</td>
+          <td align="center">${record.winner ? referenceAssetImg(winnerIconPath(record.winner), `${winnerLabel(record.winner)}勝利`) : "不明"}</td>
           <td align="center">${record.day ?? "?"}</td>
         </tr>
       `).join("")

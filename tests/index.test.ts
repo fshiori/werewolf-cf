@@ -1005,6 +1005,8 @@ describe("worker routes", () => {
     expect(body).toContain("Old Name");
     expect(body).toContain("人狼");
     expect(body).toContain("村民");
+    expect(body).toContain("/assets/reference/img/victory_role_wolf.gif");
+    expect(body).toContain("/assets/reference/img/victory_role_human.gif");
     expect(body).not.toContain("Other");
     expect(body).not.toContain(tripHash);
   });

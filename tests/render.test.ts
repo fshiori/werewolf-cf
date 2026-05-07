@@ -488,7 +488,19 @@ describe("render", () => {
   });
 
   it("renders legacy Trip room-record capacity filter links", () => {
-    const html = renderTripRoomRecords("ab12CD", []);
+    const html = renderTripRoomRecords("ab12CD", [
+      {
+        id: 1,
+        roomId: "room_trip",
+        winner: "werewolves",
+        day: 4,
+        playerId: "player_trip",
+        nickname: "Trip Player",
+        role: "werewolf",
+        alive: false,
+        createdAt: "2026-05-06 12:00:00"
+      }
+    ]);
 
     expect(html).toContain("Trip參與紀錄");
     expect(html).toContain("/trip.php?go=room&id=ab12CD");
@@ -496,6 +508,8 @@ describe("render", () => {
     expect(html).toContain("/trip.php?go=room&id=ab12CD&amp;play=16");
     expect(html).toContain("/trip.php?go=room&id=ab12CD&amp;play=22");
     expect(html).toContain("/trip.php?go=room&id=ab12CD&amp;play=30");
+    expect(html).toContain("/assets/reference/img/victory_role_wolf.gif");
+    expect(html).toContain("人狼勝利");
   });
 
   it("renders legacy Trip room-record pagination links with capacity filters", () => {
