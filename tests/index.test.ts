@@ -1355,6 +1355,48 @@ describe("worker routes", () => {
     expect(missingRoom.status).toBe(404);
   });
 
+  it("supports the legacy user_manager.php registration POST alias", async () => {
+    const env = envWithRooms(["room_exists"]);
+    const form = new URLSearchParams({
+      command: "regist",
+      handle_name: "Alice",
+      tripn: "trip",
+      role: "seer",
+      icon_no: "user_icon/001.gif"
+    });
+    const response = await worker.fetch(new Request("http://example.test/user_manager.php?room_no=room_exists", { method: "POST", body: form }), env);
+
+    expect(response.status).toBe(303);
+    expect(response.headers.get("Location")).toBe("/login.php?room_no=room_exists");
+
+    const formRoomNo = await worker.fetch(new Request("http://example.test/user_manager.php", {
+      method: "POST",
+      body: new URLSearchParams({ command: "regist", room_no: "room_exists", handle_name: "Alice" })
+    }), env);
+    expect(formRoomNo.status).toBe(303);
+    expect(formRoomNo.headers.get("Location")).toBe("/login.php?room_no=room_exists");
+
+    const missingRoomNo = await worker.fetch(new Request("http://example.test/user_manager.php", {
+      method: "POST",
+      body: new URLSearchParams({ command: "regist", handle_name: "Alice" })
+    }), env);
+    expect(missingRoomNo.status).toBe(400);
+    expect(await missingRoomNo.json()).toEqual({ error: "user_manager.php regist requires room_no" });
+
+    const missingRoom = await worker.fetch(new Request("http://example.test/user_manager.php?room_no=room_missing", {
+      method: "POST",
+      body: new URLSearchParams({ command: "regist", handle_name: "Alice" })
+    }), env);
+    expect(missingRoom.status).toBe(404);
+
+    const invalidCommand = await worker.fetch(new Request("http://example.test/user_manager.php?room_no=room_exists", {
+      method: "POST",
+      body: new URLSearchParams({ command: "delete", handle_name: "Alice" })
+    }), env);
+    expect(invalidCommand.status).toBe(400);
+    expect(await invalidCommand.json()).toEqual({ error: "Invalid user_manager.php command" });
+  });
+
   it("serves the external room client script", async () => {
     const response = await worker.fetch(new Request("http://example.test/assets/room-client.js"), envWithRooms([]));
 

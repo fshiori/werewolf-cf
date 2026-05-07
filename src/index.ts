@@ -2891,6 +2891,26 @@ export default {
         return json({ error: error instanceof Error ? error.message : "Invalid room" }, { status: 400 });
       }
     }
+    if (request.method === "POST" && url.pathname === "/user_manager.php") {
+      try {
+        const form = await request.formData().catch(() => null);
+        const command = url.searchParams.get("command") ?? (form ? readFormString(form, "command") : undefined) ?? "regist";
+        if (command !== "regist") {
+          throw new Error("Invalid user_manager.php command");
+        }
+        const roomIdParam = legacyLiveRoomId ?? (form ? readFormString(form, "room_no") : undefined);
+        if (!roomIdParam) {
+          throw new Error("user_manager.php regist requires room_no");
+        }
+        const roomId = validateRoomId(roomIdParam);
+        if (!(await roomExists(env, roomId))) {
+          return new Response("Room not found", { status: 404 });
+        }
+        return new Response(null, { status: 303, headers: { Location: `/login.php?room_no=${encodeURIComponent(roomId)}` } });
+      } catch (error) {
+        return json({ error: error instanceof Error ? error.message : "Invalid user registration" }, { status: 400 });
+      }
+    }
     if (request.method === "GET" && (roomMatch || isLegacyLiveRoomPage)) {
       try {
         if (!roomMatch && !legacyLiveRoomId) {
