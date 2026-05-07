@@ -2811,8 +2811,14 @@ export function renderBbsTopic(topic: BbsTopicSummary, replies: BbsReplySummary[
 
 export function renderRules(): string {
   return page("Rules", shell(`
-    <fieldset>
+    <fieldset style="background-image:url('/assets/reference/img/rule_bg.jpg'); background-repeat:no-repeat; background-position:100% 100%; background-attachment:fixed;">
       <legend><strong>基本流程</strong></legend>
+      <p><img class="title-img" src="/assets/reference/img/rule_title.jpg" alt="Rules"></p>
+      <table border="0" style="margin-bottom:12px;">
+        <tr><td><strong>＜參加遊戲時必須注意的事情＞</strong></td></tr>
+        <tr><td><font color="red">關於遊戲中的內容請不要在遊戲以外的場合進行討論。特別是死亡之後公開其他人的角色，請絕對不要有這種行為。</font></td></tr>
+        <tr><td bgcolor="#aaeeaa"><strong style="font-size:15pt;">＜「汝等是人是狼？」的基本規則＞</strong></td></tr>
+      </table>
       <table class="form-table">
         <tr><td><strong>　開始：</strong></td><td>房主或 GM 可在大廳開始遊戲，角色由村子選項與人數分配。</td></tr>
         <tr><td><strong>　白天：</strong></td><td>生存者公開討論並投票，最高票者處刑；同票會進行一次重新投票。</td></tr>
