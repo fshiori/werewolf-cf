@@ -1,4 +1,4 @@
-import type { BbsReplySummary, BbsTopicSummary, FederatedRoomSummary, FederatedServerStatus, GameRecordSummary, LeaderboardEntry, PlayerRole, RoomEventSummary, RoomSummary, TripPublicSummary, WinRateEntry } from "./types";
+import type { BbsReplySummary, BbsTopicSummary, FederatedRoomSummary, FederatedServerStatus, GameRecordSummary, LeaderboardEntry, PlayerRole, RoomEventSummary, RoomSummary, TripPublicSummary, TripRoomRecordSummary, WinRateEntry } from "./types";
 import { escapeHtml } from "./validation";
 
 function page(title: string, body: string, extraHead = ""): string {
@@ -2061,6 +2061,39 @@ export function renderTripDetail(tripId: string, summary: TripPublicSummary): st
         <td align="center" width="180">玩家</td>
       </tr>
       ${playerRows}
+    </table>
+  `));
+}
+
+export function renderTripRoomRecords(tripId: string, records: TripRoomRecordSummary[]): string {
+  const recordRows = records.length
+    ? records.map((record) => `
+        <tr>
+          <td align="center"><a href="/room/${escapeHtml(record.roomId)}/records">${escapeHtml(record.roomId)}</a></td>
+          <td align="center"><a href="/player/${escapeHtml(record.playerId)}">${escapeHtml(record.nickname)}</a></td>
+          <td align="center">${roleLabelHtml(record.role)}</td>
+          <td align="center">${record.alive ? "生存" : "死亡"}</td>
+          <td align="center">${record.winner ? winnerLabel(record.winner) : "不明"}</td>
+          <td align="center">${record.day ?? "?"}</td>
+        </tr>
+      `).join("")
+    : `<tr><td colspan="6" align="center" class="muted">玩家尚未登記或無資料。</td></tr>`;
+  return page("Trip Room Records", shell(`
+    <center>
+      <strong>Trip參與紀錄</strong><br>
+      <a href="/trip.php?go=trip&id=${escapeHtml(tripId)}">Trip公開資料</a>
+      <a href="/trips">Trip查詢</a>
+    </center>
+    <table border="1" class="table1" bordercolor="#CCCCCC" align="center">
+      <tr class="table3">
+        <td align="center" width="70">村莊ID</td>
+        <td align="center" width="180">暱稱</td>
+        <td align="center" width="80">職業</td>
+        <td align="center" width="50">狀態</td>
+        <td align="center" width="50">勝利</td>
+        <td align="center" width="50">日數</td>
+      </tr>
+      ${recordRows}
     </table>
   `));
 }
