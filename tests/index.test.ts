@@ -1703,6 +1703,20 @@ describe("worker routes", () => {
     expect(body).not.toContain("<legend><strong>管理選單</strong></legend>");
   });
 
+  it("renders the legacy admin.php room list when a token query is present", async () => {
+    const response = await worker.fetch(
+      new Request("http://example.test/admin.php?token=secret"),
+      envWithRooms(["room_admin"], { room_admin_token: "secret" })
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.text();
+    expect(body).toContain("請選擇要廢除的村");
+    expect(body).toContain("room_admin");
+    expect(body).toContain("/admin.php?go=del&amp;id=room_admin&amp;token=secret");
+    expect(body).not.toContain("<legend><strong>管理選單</strong></legend>");
+  });
+
   it("renders active rooms on the room admin page with a valid token", async () => {
     const response = await worker.fetch(
       new Request("http://example.test/admin/rooms?token=secret"),
@@ -1782,7 +1796,7 @@ describe("worker routes", () => {
     );
 
     expect(response.status).toBe(303);
-    expect(response.headers.get("Location")).toBe("/admin.php?go=rooms&token=secret&ended=room_admin");
+    expect(response.headers.get("Location")).toBe("/admin.php?token=secret&ended=room_admin");
     const runs = (env as unknown as { runs: Array<{ query: string; values: unknown[] }> }).runs;
     expect(runs).toContainEqual(
       expect.objectContaining({
@@ -1808,7 +1822,7 @@ describe("worker routes", () => {
     );
 
     expect(response.status).toBe(303);
-    expect(response.headers.get("Location")).toBe("/admin.php?go=rooms&token=secret+cookie&ended=room_admin");
+    expect(response.headers.get("Location")).toBe("/admin.php?token=secret+cookie&ended=room_admin");
     const runs = (env as unknown as { runs: Array<{ query: string; values: unknown[] }> }).runs;
     expect(runs).toContainEqual(
       expect.objectContaining({
