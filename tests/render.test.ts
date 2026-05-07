@@ -1123,8 +1123,11 @@ describe("render", () => {
     expect(html).toContain("白天投票");
     expect(html).toContain("投票紀錄");
     expect(html).toContain("第 2 日 再投票 1");
+    expect(html).toContain("2 日目 ( 2 回目)");
     expect(html).toContain("得票：Bob：2票　Alice：1票");
     expect(html).toContain("vote-table");
+    expect(html).toContain('border="1" cellspacing="0" cellpadding="2" style="font-size:12pt;margin:6px 0 12px 18px;"');
+    expect(html).toContain('colspan="5" align="center"');
     expect(html).toContain("vote-round-header");
     expect(html).toContain("vote-total-row");
     expect(html).toContain("vote-ballot-row");
@@ -1133,9 +1136,9 @@ describe("render", () => {
     expect(html).toContain("投票先");
     expect(html).toContain("<strong>投票</strong>");
     expect(html).toContain("<strong>得票</strong>");
-    expect(html).toContain("<td>Alice</td>\n        <td>1票</td>\n        <td>投票給 2 票 →</td>\n        <td>Bob</td>");
-    expect(html).toContain("<td>Carol</td>\n        <td>0票</td>\n        <td>投票給 2 票 →</td>\n        <td>Bob</td>");
-    expect(html).toContain("<td>Dave</td>\n        <td>0票</td>\n        <td>投票給 1 票 →</td>\n        <td>Alice</td>");
+    expect(html).toContain('<td align="left"><strong>Alice</strong></td>\n        <td>1票</td>\n        <td>投票給 2 票 →</td>\n        <td><strong> Bob </strong></td>');
+    expect(html).toContain('<td align="left"><strong>Carol</strong></td>\n        <td>0票</td>\n        <td>投票給 2 票 →</td>\n        <td><strong> Bob </strong></td>');
+    expect(html).toContain('<td align="left"><strong>Dave</strong></td>\n        <td>0票</td>\n        <td>投票給 1 票 →</td>\n        <td><strong> Alice </strong></td>');
     expect(html).toContain("第 2 日 夜晚");
     expect(html).toContain("襲擊");
     expect(html).toContain("位置");
