@@ -527,6 +527,8 @@ describe("render", () => {
     expect(html).toContain("身份登錄");
     expect(html).toContain("Trip公開資料");
     expect(html).toContain("/trip.php?go=post");
+    expect(html).toContain("/trip.php?go=edit2");
+    expect(html).toContain("/trip.php?go=edit");
     expect(html).toContain("/trip.php?go=out");
     expect(html).toContain("/trip.php?go=icon");
     expect(html).toContain("registerTripButton");
@@ -535,6 +537,12 @@ describe("render", () => {
     expect(html).toContain("removeTripExclusionButton");
     expect(html).toContain('action="/trip.php?go=post"');
     expect(html).toContain('action="/trip.php?go=out"');
+    expect(html).toContain('action="/trip.php?go=edit"');
+    expect(html).toContain('action="/trip.php?go=edit2"');
+    expect(html).toContain('name="nname"');
+    expect(html).toContain('name="lname"');
+    expect(html).toContain('name="lpassword"');
+    expect(html).toContain("此 Cloudflare 版本不保存舊 PHP 管理密碼");
     expect(html).toContain('name="aname"');
     expect(html).toContain("tripLookupButton");
     expect(html).toContain("/api/trips");

@@ -2225,6 +2225,8 @@ export function renderTripRegistration(): string {
   return page("Trip Registration", shell(`
     <p>
       <a href="/trip.php?go=post">身份登錄</a>
+       <a href="/trip.php?go=edit2">修改紀錄</a>
+       <a href="/trip.php?go=edit">修改Trip</a>
        <a href="/trip.php?go=out">排除紀錄</a>
        <a href="/trip.php?go=icon">上傳頭像</a>
        <a href="/trips">Trip查詢</a>
@@ -2263,6 +2265,33 @@ export function renderTripRegistration(): string {
         密碼 <input name="password" type="password" maxlength="128" size="16">
         暱稱 <input name="aname" maxlength="120" size="20">
         <input name="submit" type="submit" value="送出">
+      </form>
+    </fieldset>
+    <fieldset>
+      <legend><strong>修改Trip</strong></legend>
+      <form method="post" action="/trip.php?go=edit" enctype="multipart/form-data" style="margin:10px 20px;">
+        <ul>
+          <li>舊的TRIP <input type="text" name="name" size="24"></li>
+          <li>管理密碼 <input type="password" name="password" size="24"></li>
+          <li>新的TRIP <input type="text" name="nname" size="24"></li>
+          <li>此 Cloudflare 版本不保存舊 PHP 管理密碼；請使用認領身份流程綁定目前玩家。</li>
+        </ul>
+        <input id="tripEditSubmit" name="submit" type="submit" value="送出" disabled>
+      </form>
+    </fieldset>
+    <fieldset>
+      <legend><strong>修改紀錄</strong></legend>
+      <form method="post" action="/trip.php?go=edit2" enctype="multipart/form-data" style="margin:10px 20px;">
+        <ul>
+          <li>請輸入登記之Trip，不是加密後的Trip。</li>
+          <li>舊Trip請輸入加密前的，帳號密碼為過去紀錄村民註冊之密碼。</li>
+          <li>過去紀錄相同的Trip與帳號與密碼將會取代Trip。</li>
+          <li>TRIP <input type="text" name="name" size="24"></li>
+          <li>密碼 <input type="password" name="password" size="24"></li>
+          <li>舊TRIP <input type="text" name="lname" size="24"></li>
+          <li>帳號密碼 <input type="password" name="lpassword" size="24"></li>
+        </ul>
+        <input id="tripEditRecordSubmit" name="submit" type="submit" value="送出" disabled>
       </form>
     </fieldset>
     <fieldset>
