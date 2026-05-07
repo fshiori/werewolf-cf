@@ -2163,6 +2163,12 @@ export function renderTripRoomRecords(tripId: string, records: TripRoomRecordSum
       <strong>Trip參與紀錄</strong><br>
       <a href="/trip.php?go=trip&id=${escapeHtml(tripId)}">Trip公開資料</a>
       <a href="/trips">Trip查詢</a>
+      <br>
+      <a href="/trip.php?go=room&id=${escapeHtml(tripId)}">全部</a>
+      <a href="/trip.php?go=room&id=${escapeHtml(tripId)}&amp;play=8">8</a>
+      <a href="/trip.php?go=room&id=${escapeHtml(tripId)}&amp;play=16">16</a>
+      <a href="/trip.php?go=room&id=${escapeHtml(tripId)}&amp;play=22">22</a>
+      <a href="/trip.php?go=room&id=${escapeHtml(tripId)}&amp;play=30">30</a>
     </center>
     <table border="1" class="table1" bordercolor="#CCCCCC" align="center">
       <tr class="table3">
