@@ -453,18 +453,31 @@ describe("render", () => {
     expect(frame).toContain('data-room-page="frame"');
     expect(frame).toContain("框架入口");
     expect(frame).toContain("保留主要遊戲畫面與即時更新，隱藏診斷性紀錄面板。");
+    expect(frame).toContain('data-legacy-entry="game_frame.php"');
+    expect(frame).toContain("game_frame.php frameset");
+    expect(frame).toContain("<tr><td>rows</td><td colspan=\"2\">85,*</td></tr>");
+    expect(frame).toContain('<tr><td>frame name="up"</td><td>src</td><td><a href="/game_up.php?room_no=room_abc#game_top">game_up.php#game_top</a></td></tr>');
+    expect(frame).toContain('<tr><td>frame name="bottom"</td><td>src</td><td><a href="/game_play.php?room_no=room_abc#game_top">game_play.php#game_top</a></td></tr>');
     expect(frame).toContain('<tr class="room-aux-panel">');
 
     const up = renderRoom("room_abc", { pageMode: "up" });
     expect(up).toContain('data-room-page="up"');
     expect(up).toContain("上方更新");
     expect(up).toContain("著重玩家列表與系統更新");
+    expect(up).toContain('data-legacy-entry="game_up.php"');
+    expect(up).toContain('form name="send"');
+    expect(up).toContain("<tr><td>form name=\"send\"</td><td>target</td><td>bottom</td></tr>");
+    expect(up).toContain('<tr><td>vote_link</td><td colspan="2"><a href="/game_vote.php?room_no=room_abc#game_top">game_vote.php#game_top</a></td></tr>');
     expect(up).toContain('<tr class="room-panel-chat">');
 
     const vote = renderRoom("room_abc", { pageMode: "vote" });
     expect(vote).toContain('data-room-page="vote"');
     expect(vote).toContain("投票入口");
     expect(vote).toContain("著重能力發動與投票操作");
+    expect(vote).toContain('data-legacy-entry="game_vote.php"');
+    expect(vote).toContain("game_vote.php 投票 / 能力入口");
+    expect(vote).toContain("<tr><td>command</td><td colspan=\"2\">vote</td></tr>");
+    expect(vote).toContain('<tr><td>back</td><td colspan="2"><a href="/game_up.php?room_no=room_abc#game_top">←上一頁&amp;重新整理</a></td></tr>');
     expect(vote).toContain('<tr class="view-player-only room-panel-actions">');
   });
 

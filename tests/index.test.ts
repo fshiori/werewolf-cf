@@ -1316,6 +1316,9 @@ describe("worker routes", () => {
       expect(body).toContain(`data-room-page="${pageMode}"`);
       expect(body).toContain(label);
       expect(body).toContain(pageLabel);
+      if (pageMode !== "full") {
+        expect(body).toContain(`data-legacy-entry="${path.slice(1).split("?")[0]}"`);
+      }
       expect(body).toContain("<strong>[住民登錄]</strong>");
       expect(body).toContain('<meta http-equiv="refresh" content="20">');
       expect(body).toContain("/game_play.php?room_no=room_exists&amp;auto_reload=20");
