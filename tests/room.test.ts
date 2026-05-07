@@ -2369,7 +2369,9 @@ describe("RoomDurableObject", () => {
       guards: {},
       catRevives: {},
       lastWords: {},
-      log: []
+      lobbyStartVotes: { player_host: true, player_guest: true },
+      lobbyKickVotes: { player_other: ["player_host", "player_guest"] },
+      log: ["before"]
     };
     const { room, stored, dbRuns } = observableRoomObject(game);
     const hostMessages: SentMessage[] = [];
@@ -2388,6 +2390,9 @@ describe("RoomDurableObject", () => {
     expect(stored.get("gameState")).toEqual(
       expect.objectContaining({
         hostId: "player_host",
+        lobbyStartVotes: {},
+        lobbyKickVotes: {},
+        log: ["before", "Guest 離開這個村莊了", "＜投票重新開始 請盡速重新投票＞"],
         players: [
           { playerId: "player_host", nickname: "Host", role: "villager", alive: true },
           { playerId: "player_other", nickname: "Other", role: "villager", alive: true }

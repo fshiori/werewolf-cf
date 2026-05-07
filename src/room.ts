@@ -532,7 +532,13 @@ export class RoomDurableObject {
           this.broadcast(buildPresenceMessage(this.members()));
           return;
         }
-        const next = leaveLobbyPlayer(loadedGame, member.playerId);
+        const left = leaveLobbyPlayer(loadedGame, member.playerId);
+        const next = {
+          ...left,
+          lobbyStartVotes: {},
+          lobbyKickVotes: {},
+          log: [...left.log, `${member.nickname} 離開這個村莊了`, "＜投票重新開始 請盡速重新投票＞"]
+        };
         await this.saveGameState(next);
         await this.persistRoomEvent(member.playerId, "player_left", { nickname: member.nickname, phase: loadedGame.phase, day: loadedGame.day });
         this.sockets.delete(socket);
