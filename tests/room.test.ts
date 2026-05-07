@@ -784,6 +784,81 @@ describe("RoomDurableObject", () => {
     );
   });
 
+  it("falls back restricted night channels to lovers or self talk like the reference", async () => {
+    const game: GameState = {
+      roomId: "room_abc",
+      phase: "night",
+      day: 1,
+      players: [
+        { playerId: "player_wolf", nickname: "Wolf", role: "werewolf", alive: true, lover: true },
+        { playerId: "player_lover", nickname: "Lover", role: "villager", alive: true, lover: true },
+        { playerId: "player_common", nickname: "Common", role: "common", alive: true },
+        { playerId: "player_packmate", nickname: "Packmate", role: "big_wolf", alive: true }
+      ],
+      votes: {},
+      openVote: false,
+      commonTalkVisible: false,
+      channelRestrictions: { wolf: true, common: true, lovers: false, fox: false },
+      deadRoleVisible: false,
+      wishRole: false,
+      dummyBoy: false,
+      dayMs: 180_000,
+      nightMs: 90_000,
+      selfVote: false,
+      voteStatus: false,
+      revoteCount: 0,
+      nightKills: {},
+      divinations: {},
+      guards: {},
+      catRevives: {},
+      lastWords: {},
+      log: []
+    };
+    const { room, dbRuns } = observableRoomObject(game);
+    const wolfMessages: SentMessage[] = [];
+    const loverMessages: SentMessage[] = [];
+    const commonMessages: SentMessage[] = [];
+    const packmateMessages: SentMessage[] = [];
+    const wolfSocket = fakeSocket(wolfMessages);
+    const loverSocket = fakeSocket(loverMessages);
+    const commonSocket = fakeSocket(commonMessages);
+    const packmateSocket = fakeSocket(packmateMessages);
+    connect(room, wolfSocket, "player_wolf", "Wolf");
+    connect(room, loverSocket, "player_lover", "Lover");
+    connect(room, commonSocket, "player_common", "Common");
+    connect(room, packmateSocket, "player_packmate", "Packmate");
+
+    await sendRaw(room, wolfSocket, JSON.stringify({ type: "wolf_chat", text: "restricted wolf lover" }));
+    await sendRaw(room, commonSocket, JSON.stringify({ type: "common_chat", text: "restricted common self" }));
+
+    expect(wolfMessages).toContainEqual(expect.objectContaining({ type: "lovers_chat", text: "restricted wolf lover" }));
+    expect(loverMessages).toContainEqual(expect.objectContaining({ type: "lovers_chat", text: "restricted wolf lover" }));
+    expect(packmateMessages).toEqual([]);
+    expect(commonMessages).toContainEqual(expect.objectContaining({ type: "self_talk", text: "restricted common self" }));
+    expect(dbRuns).toContainEqual(
+      expect.objectContaining({
+        query: expect.stringContaining("INSERT INTO room_events"),
+        binds: [
+          "room_abc",
+          "player_wolf",
+          "lovers_chat",
+          JSON.stringify({ visibility: "private", nickname: "Wolf", text: "restricted wolf lover", phase: "night", day: 1, location: "night lovers", sourceChannel: "wolf" })
+        ]
+      })
+    );
+    expect(dbRuns).toContainEqual(
+      expect.objectContaining({
+        query: expect.stringContaining("INSERT INTO room_events"),
+        binds: [
+          "room_abc",
+          "player_common",
+          "self_talk",
+          JSON.stringify({ visibility: "private", nickname: "Common", text: "restricted common self", phase: "night", day: 1, location: "night self_talk" })
+        ]
+      })
+    );
+  });
+
   it("persists and echoes self talk only to the speaker", async () => {
     const game: GameState = {
       roomId: "room_abc",
