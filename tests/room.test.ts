@@ -1864,6 +1864,61 @@ describe("RoomDurableObject", () => {
     );
   });
 
+  it("persists GM target nicknames for old-log operation rows", async () => {
+    const game: GameState = {
+      roomId: "room_abc",
+      phase: "day",
+      day: 1,
+      players: [
+        { playerId: "player_target", nickname: "Target", role: "villager", alive: true },
+        { playerId: "player_other", nickname: "Other", role: "villager", alive: true }
+      ],
+      votes: {},
+      openVote: false,
+      commonTalkVisible: false,
+      deadRoleVisible: false,
+      wishRole: false,
+      dummyBoy: false,
+      dayMs: 180_000,
+      nightMs: 90_000,
+      selfVote: false,
+      voteStatus: false,
+      revoteCount: 0,
+      nightKills: {},
+      divinations: {},
+      guards: {},
+      catRevives: {},
+      lastWords: {},
+      log: []
+    };
+    const { room, dbRuns } = observableRoomObject(game);
+    const gmSocket = fakeSocket([]);
+    connect(room, gmSocket, "player_gm", "GM", true);
+
+    await sendRaw(room, gmSocket, JSON.stringify({ type: "gm_set_role", targetPlayerId: "player_target", role: "seer" }));
+    await sendRaw(room, gmSocket, JSON.stringify({ type: "gm_set_flag", targetPlayerId: "player_target", flag: "lover", enabled: true }));
+    await sendRaw(room, gmSocket, JSON.stringify({ type: "gm_set_alive", targetPlayerId: "player_target", alive: false }));
+
+    expect(dbRuns).toContainEqual(
+      expect.objectContaining({
+        query: expect.stringContaining("INSERT INTO room_events"),
+        binds: ["room_abc", "player_gm", "gm_set_role", JSON.stringify({ targetPlayerId: "player_target", targetNickname: "Target", role: "seer" })]
+      })
+    );
+    expect(dbRuns).toContainEqual(
+      expect.objectContaining({
+        query: expect.stringContaining("INSERT INTO room_events"),
+        binds: ["room_abc", "player_gm", "gm_set_flag", JSON.stringify({ targetPlayerId: "player_target", targetNickname: "Target", flag: "lover", enabled: true })]
+      })
+    );
+    expect(dbRuns).toContainEqual(
+      expect.objectContaining({
+        query: expect.stringContaining("INSERT INTO room_events"),
+        binds: ["room_abc", "player_gm", "gm_set_alive", JSON.stringify({ targetPlayerId: "player_target", targetNickname: "Target", alive: false })]
+      })
+    );
+  });
+
   it("sends role partner lists without echoing the viewer", () => {
     const game: GameState = {
       roomId: "room_abc",

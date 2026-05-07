@@ -431,9 +431,10 @@ export class RoomDurableObject {
         }
         const targetPlayerId = validatePlayerId(message.targetPlayerId);
         const next = forceSetPlayerAlive(await this.loadGameState(), targetPlayerId, message.alive);
+        const targetNickname = next.players.find((player) => player.playerId === targetPlayerId)?.nickname;
         await this.saveGameState(next);
         await this.syncRoomStatus(next);
-        await this.persistRoomEvent(member.playerId, "gm_set_alive", { targetPlayerId, alive: message.alive });
+        await this.persistRoomEvent(member.playerId, "gm_set_alive", { targetPlayerId, targetNickname, alive: message.alive });
         await this.broadcastGameState(next);
         this.sendMediumResults(next);
         return;
@@ -445,9 +446,10 @@ export class RoomDurableObject {
         }
         const targetPlayerId = validatePlayerId(message.targetPlayerId);
         const next = forceSetPlayerRole(await this.loadGameState(), targetPlayerId, message.role);
+        const targetNickname = next.players.find((player) => player.playerId === targetPlayerId)?.nickname;
         await this.saveGameState(next);
         await this.syncRoomStatus(next);
-        await this.persistRoomEvent(member.playerId, "gm_set_role", { targetPlayerId, role: message.role });
+        await this.persistRoomEvent(member.playerId, "gm_set_role", { targetPlayerId, targetNickname, role: message.role });
         await this.broadcastGameState(next);
         this.sendRoles(next);
         this.sendMediumResults(next);
@@ -460,9 +462,10 @@ export class RoomDurableObject {
         }
         const targetPlayerId = validatePlayerId(message.targetPlayerId);
         const next = forceSetPlayerFlag(await this.loadGameState(), targetPlayerId, message.flag, message.enabled);
+        const targetNickname = next.players.find((player) => player.playerId === targetPlayerId)?.nickname;
         await this.saveGameState(next);
         await this.syncRoomStatus(next);
-        await this.persistRoomEvent(member.playerId, "gm_set_flag", { targetPlayerId, flag: message.flag, enabled: message.enabled });
+        await this.persistRoomEvent(member.playerId, "gm_set_flag", { targetPlayerId, targetNickname, flag: message.flag, enabled: message.enabled });
         await this.broadcastGameState(next);
         this.sendRoles(next);
         this.sendMediumResults(next);
