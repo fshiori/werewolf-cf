@@ -799,11 +799,16 @@ function federatedRoomValue(room: RoomSummary | FederatedRoomSummary): Federated
   return { ...room, serverName: "本伺服器", serverUrl: "/", roomUrl: `/login.php?room_no=${encodeURIComponent(room.id)}`, local: true };
 }
 
-export function renderFederatedList(rooms: Array<RoomSummary | FederatedRoomSummary>, peers: FederatedServerStatus[] = []): string {
+export function renderFederatedList(
+  rooms: Array<RoomSummary | FederatedRoomSummary>,
+  peers: FederatedServerStatus[] = [],
+  options: { backPageHref?: string } = {}
+): string {
   const peerSummaryRows = peers.map((peer) => `<tr>
         <td>${peer.ok ? `<a href="${escapeHtml(peer.url)}">服務中</a>` : `<a href="${escapeHtml(peer.url)}">失聯中</a>`}</td>
         <td colspan="4"><a href="${escapeHtml(peer.url)}">${escapeHtml(peer.name)} / ${escapeHtml(peer.url)}</a></td>
       </tr>`).join("");
+  const backLink = options.backPageHref ? `<p><a href="${escapeHtml(options.backPageHref)}">←返回</a></p>` : "";
   const rows = rooms.length
     ? rooms.map((value) => {
       const room = federatedRoomValue(value);
@@ -831,6 +836,7 @@ export function renderFederatedList(rooms: Array<RoomSummary | FederatedRoomSumm
   return page("Federated List", shell(`
     <fieldset>
       <legend><strong>聯合遊戲列表</strong></legend>
+      ${backLink}
       <div style="line-height:135%;margin:20px 20px 30px;">
         <strong>
           <table border="0" cellpadding="0" cellspacing="0" style="width: 100%">
