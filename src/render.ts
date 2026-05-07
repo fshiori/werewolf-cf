@@ -1513,6 +1513,26 @@ export function renderIconCatalog(): string {
     { file: "009.gif", name: "紫色", color: "#CC00CC" },
     { file: "010.gif", name: "櫻色", color: "#FF9999" }
   ];
+  const legacyIconColors = [
+    "#000000", "#333333", "#666666", "#999999", "#cccccc", "#ffffff",
+    "#000033", "#333300", "#666600", "#999900", "#cccc00", "#ffff00",
+    "#000066", "#333366", "#666633", "#999933", "#cccc33", "#ffff33",
+    "#000099", "#333399", "#666699", "#999966", "#cccc66", "#ffff66",
+    "#003300", "#336633", "#669966", "#99cc99", "#ccffcc", "#ff00ff",
+    "#006600", "#339933", "#66cc66", "#99ff99", "#cc00cc", "#ff33ff",
+    "#009900", "#33cc33", "#66ff66", "#990099", "#cc33cc", "#ff66ff",
+    "#00cc00", "#33ff33", "#660066", "#993399", "#cc66cc", "#ff99ff",
+    "#00ff00", "#330033", "#663366", "#996699", "#cc99cc", "#ffccff",
+    "#00ffff", "#330000", "#663333", "#996666", "#cc9999", "#ffcccc",
+    "#003366", "#336699", "#6699cc", "#996600", "#cc9933", "#ffcc66"
+  ];
+  const legacyColorRows = Array.from({ length: Math.ceil(legacyIconColors.length / 6) }, (_, rowIndex) => {
+    const cells = legacyIconColors.slice(rowIndex * 6, rowIndex * 6 + 6).map((color) => {
+      const darkText = ["#cccccc", "#ffffff", "#cccc00", "#ffff00", "#cccc33", "#ffff33", "#cccc66", "#ffff66", "#99cc99", "#ccffcc", "#66cc66", "#99ff99", "#33cc33", "#66ff66", "#00cc00", "#33ff33", "#00ff00", "#ffccff", "#00ffff", "#ffcccc", "#6699cc", "#ffcc66"].includes(color);
+      return `<td align="middle" bgcolor="${escapeHtml(color)}"><input type="radio" name="color" value="${escapeHtml(color)}">${darkText ? escapeHtml(color) : `<font color="#ffffff">${escapeHtml(color)}</font>`}</td>`;
+    }).join("");
+    return `<tr>${cells}</tr>`;
+  }).join("");
   const rows = icons.map((icon, index) => {
     const path = `user_icon/${icon.file}`;
     return `<tr>
@@ -1544,6 +1564,7 @@ export function renderIconCatalog(): string {
       <legend><strong>上傳頭像</strong></legend>
       <p><img class="title-img" src="/assets/reference/img/icon_upload_title.jpg" alt="上傳頭像"></p>
       <p><a href="/icon_view.php" style="font-size:12pt;color:blue;">→圖像一覽</a></p>
+      <p align="right">請勿上傳動態GIF，上傳後會以 Cloudflare R2 保存為玩家頭像。</p>
       <table class="form-table">
         <tr>
           <td><label><strong>　玩家ID：</strong></label></td>
@@ -1558,6 +1579,12 @@ export function renderIconCatalog(): string {
         <strong>舊式上傳：</strong>
         玩家ID <input name="player_id" maxlength="64" size="20">
         圖片選擇 <input name="icon_file" type="file" accept="image/png,image/jpeg,image/gif,image/webp" size="28">
+        圖像名稱 <input name="icon_name" maxlength="20" size="20">
+        <br>
+        <strong>圖像的顏色選擇</strong>
+        <label><input type="radio" name="color">自行輸入顏色</label>
+        <input name="color_custom" maxlength="7" size="10" style="border-width:1px;border-color:black;border-style:solid;background-color:aliceblue;">(例：#6699cc)
+        <table cellspacing="2" cellpadding="0" border="0" width="600" style="margin:6px 0;">${legacyColorRows}</table>
         <input name="submit" type="submit" value="上傳">
       </form>
       <form method="post" action="/upload2.php" enctype="multipart/form-data" style="margin:10px 20px;">

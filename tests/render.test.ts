@@ -609,6 +609,14 @@ describe("render", () => {
     expect(html).toContain('action="/upload.php"');
     expect(html).toContain('name="player_id"');
     expect(html).toContain('name="icon_file"');
+    expect(html).toContain("請勿上傳動態GIF");
+    expect(html).toContain("圖像名稱");
+    expect(html).toContain('name="icon_name"');
+    expect(html).toContain("圖像的顏色選擇");
+    expect(html).toContain('name="color" value="#000000"');
+    expect(html).toContain('name="color" value="#6699cc"');
+    expect(html).toContain('name="color_custom"');
+    expect(html).toContain("(例：#6699cc)");
     expect(html).toContain('action="/upload2.php"');
     expect(html).toContain("/api/assets/avatar");
     expect(html).toContain("頭像需小於 512KiB");
