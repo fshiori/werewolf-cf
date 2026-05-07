@@ -730,6 +730,7 @@ describe("render", () => {
     ]);
 
     expect(html).toContain("聯合遊戲列表");
+    expect(html).toContain('<b><a href="/list.php">聯合列表</a></b>');
     expect(html).toContain("服務中");
     expect(html).toContain("本伺服器");
     expect(html).toContain('<table border="0" cellpadding="0" cellspacing="0" style="width: 100%">');
@@ -847,6 +848,7 @@ describe("render", () => {
     ], { winners: { room_finished: "villagers" } });
 
     expect(html).toContain("過去紀錄");
+    expect(html).toContain('<b><a href="/old_log.php">過去紀錄</a></b>');
     expect(html).toContain("村No");
     expect(html).toContain('<th colspan="12" class="column">選項</th>');
     expect(html).toContain("/assets/reference/img/old_log_bg.jpg");
@@ -990,6 +992,7 @@ describe("render", () => {
     const html = renderBbs([], { digestOnly: true });
 
     expect(html).toContain("精華主題列表");
+    expect(html).toContain('<b><a href="/bbs.php?go=dige">精華文章</a></b>');
     expect(html).toContain("沒有精華");
     expect(html).toContain("/bbs.php?go=dige");
   });
@@ -1790,6 +1793,7 @@ describe("render", () => {
     const html = renderScriptInfo();
 
     expect(html).toContain("Script Info");
+    expect(html).toContain('<b><a href="/script_info.php">Script Info</a></b>');
     expect(html).toContain("/assets/reference/img/script_info_bg.jpg");
     expect(html).toContain("/assets/reference/img/script_info_title.jpg");
     expect(html).toContain("＜加入遊戲的系統必備條件＞");
