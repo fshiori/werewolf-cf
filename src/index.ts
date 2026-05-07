@@ -1974,8 +1974,25 @@ async function getRoomTranscriptPage(request: Request, env: Env, roomIdParam: st
     heavenOnly: url.searchParams.get("heaven_only") === "on",
     reverseLog: url.searchParams.get("reverse_log") === "on",
     viewerMode,
-    viewerPlayerId: viewerPlayerIdParam ? validatePlayerId(viewerPlayerIdParam) : undefined
+    viewerPlayerId: viewerPlayerIdParam ? validatePlayerId(viewerPlayerIdParam) : undefined,
+    oldLogReturnHref: oldLogReturnHref(url)
   }));
+}
+
+function oldLogReturnHref(url: URL): string | undefined {
+  const params = new URLSearchParams();
+  const search = url.searchParams.get("search")?.trim() ?? "";
+  const page = readPositivePage(url.searchParams.get("page"));
+  if (search) {
+    params.set("search", search);
+  }
+  if (url.searchParams.get("all") === "1") {
+    params.set("all", "1");
+  } else if (page > 1) {
+    params.set("page", String(page));
+  }
+  const query = params.toString();
+  return query ? `/old_log.php?${query}` : undefined;
 }
 
 function isPrivateRoomEvent(event: RoomEventSummary): boolean {

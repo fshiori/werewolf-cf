@@ -587,6 +587,7 @@ export type RoomTranscriptViewOptions = {
   reverseLog?: boolean;
   viewerMode?: "legacy" | "public" | "player" | "dead" | "gm";
   viewerPlayerId?: string;
+  oldLogReturnHref?: string;
 };
 
 function roomTranscriptHref(roomId: string, params: Record<string, string | undefined>): string {
@@ -836,9 +837,14 @@ export function renderOldLogs(rooms: RoomSummary[], options: { search?: string; 
   const searchValue = options.search ?? "";
   const oldLogBasePath = searchValue ? `/old_log.php?search=${encodeURIComponent(searchValue)}` : "/old_log.php";
   const pagination = options.showAll ? "" : paginationLinks(options.totalRooms, options.page, options.pageSize, oldLogBasePath);
+  const detailStateParams = {
+    ...(searchValue ? { search: searchValue } : {}),
+    ...(options.showAll ? { all: "1" } : options.page && options.page > 1 ? { page: String(options.page) } : {})
+  };
   const rows = rooms.length
     ? rooms.map((room) => {
-      const roomUrl = `/old_log.php?log_mode=on&room_no=${encodeURIComponent(room.id)}`;
+      const roomQuery = new URLSearchParams({ log_mode: "on", room_no: room.id, ...detailStateParams });
+      const roomUrl = `/old_log.php?${roomQuery.toString()}`;
       const winner = options.winners?.[room.id];
       const winnerMark = winner ? referenceAssetImg(winnerIconPath(winner), `${winnerLabel(winner)}勝利`) : "-";
       const poisonMark = room.options.poison
@@ -1125,6 +1131,7 @@ export function renderRoomTranscript(roomId: string, records: GameRecordSummary[
     ...(options.heavenOnly ? { heaven_only: "on" } : {})
   };
   const currentTranscriptParams = { ...displayParams, ...viewerParams };
+  const oldLogReturnHref = options.oldLogReturnHref ?? "/old_log.php";
   const playerCandidates = transcriptPlayerCandidates(records, events);
   const playerOptions = playerCandidates.length
     ? playerCandidates.map((player) => `<option value="${escapeHtml(player.playerId)}"${player.playerId === options.viewerPlayerId ? " selected" : ""}>${escapeHtml(player.label)}</option>`).join("")
@@ -1139,7 +1146,7 @@ export function renderRoomTranscript(roomId: string, records: GameRecordSummary[
   return page(`Room ${roomId} Log`, shell(`
     <fieldset>
       <legend><strong>村子完整紀錄</strong></legend>
-      <p style="margin:0 0 6px 0;"><a href="/old_log.php">←返回</a></p>
+      <p style="margin:0 0 6px 0;"><a href="${escapeHtml(oldLogReturnHref)}">←返回</a></p>
       <table class="form-table">
         <tr><td><strong>　村子：</strong></td><td><a href="/game_view.php?room_no=${encodeURIComponent(roomId)}">${escapeHtml(roomId)}</a></td></tr>
         <tr><td><strong>　索引：</strong></td><td><a href="/room/${escapeHtml(roomId)}/records">對局紀錄</a>　<a href="/room/${escapeHtml(roomId)}/events">事件履歷</a></td></tr>
