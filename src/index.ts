@@ -891,7 +891,7 @@ async function loginLegacyAdmin(request: Request): Promise<Response> {
   return new Response(null, {
     status: 303,
     headers: {
-      Location: `/admin.php?go=rooms&token=${encodeURIComponent(token)}`,
+      Location: `/admin.php?token=${encodeURIComponent(token)}`,
       "Set-Cookie": `adpass=${encodeURIComponent(token)}; Path=/; SameSite=Lax`
     }
   });

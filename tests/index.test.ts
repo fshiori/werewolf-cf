@@ -1546,7 +1546,7 @@ describe("worker routes", () => {
     );
 
     expect(response.status).toBe(303);
-    expect(response.headers.get("Location")).toBe("/admin.php?go=rooms&token=secret%20token");
+    expect(response.headers.get("Location")).toBe("/admin.php?token=secret%20token");
     expect(response.headers.get("Set-Cookie")).toContain("adpass=secret%20token");
   });
 
@@ -1560,7 +1560,7 @@ describe("worker routes", () => {
     );
 
     expect(response.status).toBe(303);
-    expect(response.headers.get("Location")).toBe("/admin.php?go=rooms&token=fallback%20token");
+    expect(response.headers.get("Location")).toBe("/admin.php?token=fallback%20token");
     expect(response.headers.get("Set-Cookie")).toContain("adpass=fallback%20token");
   });
 
