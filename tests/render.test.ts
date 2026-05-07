@@ -621,9 +621,9 @@ describe("render", () => {
     expect(html).toContain('id="submit" name="submit" type="submit" value="送出"');
     expect(html).toContain('form name="trip" method="post" action="/trip.php?go=edit"');
     expect(html).toContain('form name="trip" method="post" action="/trip.php?go=edit2"');
-    expect(html).toContain('name="nname"');
-    expect(html).toContain('name="lname"');
-    expect(html).toContain('name="lpassword"');
+    expect(html).toContain('type="text" name="nname" size="24" value=""');
+    expect(html).toContain('type="text" name="lname" size="24" value=""');
+    expect(html).toContain('type="password" name="lpassword" size="24" value=""');
     expect(html).toContain("此 Cloudflare 版本不保存舊 PHP 管理密碼");
     expect(html).toContain('name="aname"');
     expect(html).toContain("tripLookupButton");
