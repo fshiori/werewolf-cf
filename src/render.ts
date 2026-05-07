@@ -53,9 +53,11 @@ function page(title: string, body: string, extraHead = ""): string {
     body.room-page-frame .room-aux-panel,
     body.room-page-up .room-aux-panel,
     body.room-page-vote .room-aux-panel { display: none; }
+    body.room-page-up .room-panel-members,
     body.room-page-up .room-panel-actions,
     body.room-page-up .room-panel-lastwords,
-    body.room-page-up .room-panel-chat { display: none; }
+    body.room-page-up .room-panel-system { display: none; }
+    body.room-page-up #chatLog { display: none; }
     body.room-page-vote .room-panel-lastwords,
     body.room-page-vote .room-panel-chat,
     body.room-page-vote .room-panel-system { display: none; }
@@ -3602,7 +3604,7 @@ export function renderRoom(roomId: string, options: RenderRoomOptions = {}): str
             </tr>
             <tr class="page-up-only">
               <td>上方</td>
-              <td>著重玩家列表與系統更新；發言、遺言與投票操作面板不顯示。</td>
+              <td>發言上框；保留發言、頻道按鈕與投票入口，隱藏下方主要遊戲畫面。</td>
             </tr>
             <tr class="page-vote-only">
               <td>投票</td>

@@ -260,7 +260,8 @@ describe("render", () => {
     expect(html).toContain("body.room-view-heaven .room-live-chat-only { display: none; }");
     expect(html).toContain(".page-frame-only, .page-up-only, .page-vote-only { display: none; }");
     expect(html).toContain("body.room-page-frame .room-aux-panel");
-    expect(html).toContain("body.room-page-up .room-panel-chat { display: none; }");
+    expect(html).toContain("body.room-page-up .room-panel-members");
+    expect(html).toContain("body.room-page-up #chatLog { display: none; }");
     expect(html).toContain("body.room-page-vote .room-panel-system { display: none; }");
     expect(html).toContain("body.room-phase-night .player-card.voted { background: #004000; color: snow; }");
     expect(html).toContain("body.room-phase-night .player-card.voted a { color: #ccffff; }");
@@ -463,7 +464,7 @@ describe("render", () => {
     const up = renderRoom("room_abc", { pageMode: "up" });
     expect(up).toContain('data-room-page="up"');
     expect(up).toContain("上方更新");
-    expect(up).toContain("著重玩家列表與系統更新");
+    expect(up).toContain("發言上框；保留發言、頻道按鈕與投票入口");
     expect(up).toContain('data-legacy-entry="game_up.php"');
     expect(up).toContain('form name="send"');
     expect(up).toContain("<tr><td>form name=\"send\"</td><td>target</td><td>bottom</td></tr>");
