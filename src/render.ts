@@ -1661,7 +1661,7 @@ export function renderAdminIndex(): string {
   return page("管理選單", shell(`
     <fieldset>
       <legend><strong>管理選單</strong></legend>
-      <table class="form-table">
+      <table class="form-table table1 admin-menu-table" border="1" cellspacing="1" cellpadding="2" bgcolor="#CCCCCC" style="width:100%;margin:12px 0 18px;">
         <tr><td><strong>　廢村管理：</strong></td><td><a href="/admin.php?go=rooms">村子管理</a> - 檢視進行中/已結束村子，必要時以管理密碼廢村。</td></tr>
         <tr><td><strong>　系統設定：</strong></td><td><a href="/admin.php?go=config">設定管理</a> - 更新首頁公告與維護模式。</td></tr>
         <tr><td><strong>　討論管理：</strong></td><td><a href="/admin.php?go=bbs">討論管理</a> - 檢視主題並進入置頂、鎖定、精華設定。</td></tr>
@@ -1671,7 +1671,7 @@ export function renderAdminIndex(): string {
     <fieldset>
       <legend><strong>舊式管理登入</strong></legend>
       <form action="/admin.php?go=in" method="post">
-        <table class="form-table">
+        <table class="form-table table1 admin-login-table" border="1" cellspacing="1" cellpadding="2" bgcolor="#CCCCCC" style="width:100%;margin:12px 0 18px;">
           <tr><td><label><strong>　管理密碼：</strong></label></td><td><input name="apass" type="password" maxlength="128" size="24"> <input type="submit" value="登入"></td></tr>
           <tr><td></td><td class="muted">相容 reference 的 <code>admin.php?go=in</code>，登入後進入廢村管理。</td></tr>
         </table>
@@ -1679,7 +1679,7 @@ export function renderAdminIndex(): string {
     </fieldset>
     <fieldset>
       <legend><strong>管理說明</strong></legend>
-      <table class="form-table">
+      <table class="form-table table1 admin-help-table" border="1" cellspacing="1" cellpadding="2" bgcolor="#CCCCCC" style="width:100%;margin:12px 0 18px;">
         <tr><td><strong>　認證：</strong></td><td>各管理功能仍需輸入對應管理密碼；本頁只提供入口。</td></tr>
         <tr><td><strong>　紀錄：</strong></td><td>廢村與設定變更會透過既有 API 寫入對應的 D1 或 KV 狀態。</td></tr>
       </table>
