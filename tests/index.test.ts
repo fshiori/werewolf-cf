@@ -1056,6 +1056,49 @@ describe("worker routes", () => {
     expect(body).not.toContain("Too Large");
   });
 
+  it("paginates legacy Trip room records and preserves play filters", async () => {
+    const tripHash = await registeredTripHash("ab12CD");
+    const roomIds = Array.from({ length: 16 }, (_, index) => `room_${String(index + 1).padStart(2, "0")}`);
+    const records = Object.fromEntries(roomIds.map((roomId, index) => [
+      roomId,
+      [{
+        id: index + 1,
+        room_id: roomId,
+        result_json: `{"winner":"villagers","day":2,"players":[{"playerId":"player_current","nickname":"Player ${index + 1}","role":"villager","alive":true}]}`,
+        created_at: `2026-05-04 ${String(23 - index).padStart(2, "0")}:00:00`
+      }]
+    ]));
+    const response = await worker.fetch(
+      new Request("http://example.test/trip.php?go=room&id=ab12CD&play=16&page=2"),
+      envWithRooms(
+        roomIds,
+        {},
+        {},
+        records,
+        {},
+        {},
+        {},
+        Object.fromEntries(roomIds.map((id) => [id, 16])),
+        {},
+        {},
+        {},
+        new Set([tripHash]),
+        new Set(),
+        { player_current: tripHash }
+      )
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.text();
+    expect(body).toContain("bbs-pagination");
+    expect(body).toContain('<a href="/trip.php?go=room&id=ab12CD&play=16&page=1">[1]</a>');
+    expect(body).toContain("<strong>[2]</strong>");
+    expect(body).toContain("room_16");
+    expect(body).toContain("Player 16");
+    expect(body).not.toContain("room_15");
+    expect(body).not.toContain(tripHash);
+  });
+
   it("returns 404 for formatted room ids missing from D1", async () => {
     const response = await worker.fetch(new Request("http://example.test/room/room_missing"), envWithRooms([]));
 

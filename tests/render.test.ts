@@ -498,6 +498,15 @@ describe("render", () => {
     expect(html).toContain("/trip.php?go=room&id=ab12CD&amp;play=30");
   });
 
+  it("renders legacy Trip room-record pagination links with capacity filters", () => {
+    const html = renderTripRoomRecords("ab12CD", [], { page: 2, pageSize: 15, totalRecords: 31, play: 16 });
+
+    expect(html).toContain("bbs-pagination");
+    expect(html).toContain('<a href="/trip.php?go=room&id=ab12CD&play=16&page=1">[1]</a>');
+    expect(html).toContain("<strong>[2]</strong>");
+    expect(html).toContain('<a href="/trip.php?go=room&id=ab12CD&play=16&page=3">[3]</a>');
+  });
+
   it("renders dedicated Trip registration page", () => {
     const html = renderTripRegistration();
 

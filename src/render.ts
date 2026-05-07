@@ -2178,7 +2178,9 @@ export function renderTripDetail(tripId: string, summary: TripPublicSummary): st
   `));
 }
 
-export function renderTripRoomRecords(tripId: string, records: TripRoomRecordSummary[]): string {
+export function renderTripRoomRecords(tripId: string, records: TripRoomRecordSummary[], options: { page?: number; pageSize?: number; totalRecords?: number; play?: number } = {}): string {
+  const roomBasePath = `/trip.php?go=room&id=${encodeURIComponent(tripId)}${options.play ? `&play=${String(options.play)}` : ""}`;
+  const pagination = paginationLinks(options.totalRecords, options.page, options.pageSize, roomBasePath);
   const recordRows = records.length
     ? records.map((record) => `
         <tr>
@@ -2203,6 +2205,7 @@ export function renderTripRoomRecords(tripId: string, records: TripRoomRecordSum
       <a href="/trip.php?go=room&id=${escapeHtml(tripId)}&amp;play=22">22</a>
       <a href="/trip.php?go=room&id=${escapeHtml(tripId)}&amp;play=30">30</a>
     </center>
+    ${pagination}
     <table border="1" class="table1" bordercolor="#CCCCCC" align="center">
       <tr class="table3">
         <td align="center" width="70">村莊ID</td>
@@ -2214,6 +2217,7 @@ export function renderTripRoomRecords(tripId: string, records: TripRoomRecordSum
       </tr>
       ${recordRows}
     </table>
+    ${pagination}
   `));
 }
 
