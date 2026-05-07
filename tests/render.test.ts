@@ -2259,6 +2259,50 @@ describe("render", () => {
     expect(html).toContain("night action");
   });
 
+  it("localizes saved PHP system talk payload codes", () => {
+    const html = renderRoomTranscript("room_abc", [], [
+      {
+        id: 1,
+        roomId: "room_abc",
+        playerId: "player_a",
+        eventType: "public_chat",
+        payload: { nickname: "Alice", text: "KICK_DO\tBob", location: "beforegame system", phase: "lobby", day: 0 },
+        createdAt: "2026-05-06 12:01:00"
+      },
+      {
+        id: 2,
+        roomId: "room_abc",
+        playerId: "player_b",
+        eventType: "public_chat",
+        payload: { nickname: "Bob", text: "VOTE_DO\tCarol", location: "day system", phase: "day", day: 2 },
+        createdAt: "2026-05-06 12:02:00"
+      },
+      {
+        id: 3,
+        roomId: "room_abc",
+        playerId: "player_wolf",
+        eventType: "public_chat",
+        payload: { nickname: "Wolf", text: "WOLF_EAT\tDave", location: "night system", phase: "night", day: 2 },
+        createdAt: "2026-05-06 12:03:00"
+      },
+      {
+        id: 4,
+        roomId: "room_abc",
+        playerId: "player_cat",
+        eventType: "public_chat",
+        payload: { nickname: "Cat", text: "CAT_DO\tEve", location: "night system", phase: "night", day: 2 },
+        createdAt: "2026-05-06 12:04:00"
+      }
+    ]);
+
+    expect(html).toContain("內容:對 Bob 投票踢出");
+    expect(html).toContain("內容:將 Carol 投票處死");
+    expect(html).toContain("內容:人狼對 Dave 鎖定為目標");
+    expect(html).toContain("內容:貓又對 Eve 進行復活");
+    expect(html).not.toContain("內容:KICK_DO");
+    expect(html).not.toContain("內容:VOTE_DO");
+  });
+
   it("renders saved GM operation details in transcript payloads", () => {
     const html = renderRoomTranscript("room_abc", [], [
       {
