@@ -1799,6 +1799,29 @@ async function getWinRateAnalysis(env: Env): Promise<Response> {
   return json({ winRates: await listWinRateAnalysis(env) });
 }
 
+async function listLatestRoomWinners(env: Env, roomIds: string[]): Promise<Record<string, GameWinner>> {
+  if (!roomIds.length) {
+    return {};
+  }
+  const placeholders = roomIds.map(() => "?").join(", ");
+  const result = await env.DB.prepare(
+    `SELECT room_id, result_json, created_at FROM game_records WHERE room_id IN (${placeholders}) ORDER BY created_at DESC`
+  )
+    .bind(...roomIds)
+    .all<{ room_id: string; result_json: string; created_at: string }>();
+  const winners: Record<string, GameWinner> = {};
+  for (const record of result.results) {
+    if (winners[record.room_id]) {
+      continue;
+    }
+    const winner = readRecordWinner(parseRecordResult(record.result_json));
+    if (winner) {
+      winners[record.room_id] = winner;
+    }
+  }
+  return winners;
+}
+
 function parseRecordResult(value: string): unknown {
   try {
     return JSON.parse(value);
@@ -2198,7 +2221,7 @@ export default {
       const filteredRooms = search
         ? endedRooms.filter((room) => room.id.includes(search) || room.name.includes(search))
         : endedRooms;
-      return html(renderOldLogs(filteredRooms, { search }));
+      return html(renderOldLogs(filteredRooms, { search, winners: await listLatestRoomWinners(env, filteredRooms.map((room) => room.id)) }));
     }
 
     if (request.method === "GET" && (url.pathname === "/trip" || url.pathname === "/trip.php")) {

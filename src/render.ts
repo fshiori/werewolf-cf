@@ -1,4 +1,4 @@
-import type { BbsReplySummary, BbsTopicSummary, FederatedRoomSummary, FederatedServerStatus, GameRecordSummary, LeaderboardEntry, PlayerRole, RoomEventSummary, RoomSummary, TripPublicSummary, TripRoomRecordSummary, WinRateEntry } from "./types";
+import type { BbsReplySummary, BbsTopicSummary, FederatedRoomSummary, FederatedServerStatus, GameRecordSummary, GameWinner, LeaderboardEntry, PlayerRole, RoomEventSummary, RoomSummary, TripPublicSummary, TripRoomRecordSummary, WinRateEntry } from "./types";
 import { escapeHtml } from "./validation";
 
 function page(title: string, body: string, extraHead = ""): string {
@@ -825,11 +825,13 @@ export function renderFederatedList(rooms: Array<RoomSummary | FederatedRoomSumm
   `));
 }
 
-export function renderOldLogs(rooms: RoomSummary[], options: { search?: string } = {}): string {
+export function renderOldLogs(rooms: RoomSummary[], options: { search?: string; winners?: Record<string, GameWinner> } = {}): string {
   const searchValue = options.search ?? "";
   const rows = rooms.length
     ? rooms.map((room) => {
       const roomUrl = `/old_log.php?log_mode=on&room_no=${encodeURIComponent(room.id)}`;
+      const winner = options.winners?.[room.id];
+      const winnerMark = winner ? referenceAssetImg(winnerIconPath(winner), `${winnerLabel(winner)}勝利`) : "-";
       const optionMarks = [
         room.options.realTime ? optionMark("限時", "img/room_option_real_time.gif") : "",
         room.options.poison ? optionMark("埋毒", "img/room_option_poison.gif") : "",
@@ -857,10 +859,11 @@ export function renderOldLogs(rooms: RoomSummary[], options: { search?: string }
         </td>
         <td align="right" class="row"><small>${escapeHtml(room.createdAt)}</small></td>
         <td align="right" class="row">${maxPlayersMark(room.maxPlayers)}</td>
+        <td align="center" class="row">${winnerMark}</td>
         <td class="row">${optionMarks || "<br>"}</td>
       </tr>`;
     }).join("")
-    : `<tr><td colspan="5" class="muted">沒有遊戲紀錄</td></tr>`;
+    : `<tr><td colspan="6" class="muted">沒有遊戲紀錄</td></tr>`;
 
   return page("Old Logs", shell(`
     <fieldset style="background-image:url('/assets/reference/img/old_log_bg.jpg'); background-repeat:no-repeat; background-position:100% 100%; background-attachment:fixed;">
@@ -874,7 +877,7 @@ export function renderOldLogs(rooms: RoomSummary[], options: { search?: string }
         </form>
       </div>
       <table class="form-table" border="1" cellspacing="1" bgcolor="#CCCCCC" style="margin:12px auto 18px;">
-        <thead><tr><th class="column">村No</th><th class="column">村名</th><th class="column">結束時間</th><th class="column">人數</th><th class="column">選項</th></tr></thead>
+        <thead><tr><th class="column">村No</th><th class="column">村名</th><th class="column">結束時間</th><th class="column">人數</th><th class="column">勝</th><th class="column">選項</th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
     </fieldset>
