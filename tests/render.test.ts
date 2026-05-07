@@ -276,6 +276,9 @@ describe("render", () => {
     expect(html).toContain("body.room-page-vote .room-registration-row,\n    body.room-page-bottom .room-registration-row { display: none; }");
     expect(html).toContain("body.room-page-up .room-panel-members");
     expect(html).toContain("body.room-page-up #chatLog { display: none; }");
+    expect(html).toContain("body.room-page-up .game-header { display: none; }");
+    expect(html).toContain("body.room-page-up .game-shell { width: 100%; margin: 0; }");
+    expect(html).toContain("body.room-page-up .page-up-inline-only { display: inline; }");
     expect(html).toContain("body.room-page-vote .room-panel-system { display: none; }");
     expect(html).toContain("body.room-phase-night .player-card.voted { background: #004000; color: snow; }");
     expect(html).toContain("body.room-phase-night .player-card.voted a { color: #ccffff; }");
@@ -526,6 +529,7 @@ describe("render", () => {
     expect(up).toContain('<a href="/game_up.php?room_no=room_abc&amp;auto_reload=15">15秒</a>');
     expect(up).toContain('form name="send"');
     expect(up).toContain('form class="legacy-send-form" name="send" action="/game_play.php?room_no=room_abc&amp;frame=bottom#game_top" method="POST" target="bottom" onsubmit="return false"');
+    expect(up).toContain('<span class="page-up-inline-only legacy-up-vote-link">[<a href="/game_vote.php?room_no=room_abc#game_top" target="bottom">投票/能力</a>]</span>');
     expect(up).toContain('<input type="hidden" name="command" value="talk">');
     expect(up).toContain('<input type="hidden" name="room_no" value="room_abc">');
     expect(up).toContain('<input type="hidden" name="location" value="day">');
