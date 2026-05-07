@@ -162,6 +162,7 @@ function page(title: string, body: string, extraHead = ""): string {
     .panel td { padding: 6px; vertical-align: top; }
     .player-grid { border-spacing: 5px; border-collapse: separate; font-size: 10pt; }
     .player-card { width: 148px; border: 1px solid #b0b0b0; background: #fafafa; table-layout: fixed; }
+    .player-card.start-voted { background: #ff50ff; }
     .player-card.voted { background: #d0ffff; }
     body.room-phase-night .player-card.voted { background: #004000; color: snow; }
     body.room-phase-night .player-card.voted a { color: #ccffff; }
