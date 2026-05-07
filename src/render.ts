@@ -2982,7 +2982,7 @@ export function renderBbsTopic(topic: BbsTopicSummary, replies: BbsReplySummary[
 }
 
 export function renderRules(): string {
-  return page("Rules", shell(`
+  return page("汝等是人是狼？ Werewolf Cloudflare Port 說明", shell(`
     <fieldset style="background-image:url('/assets/reference/img/rule_bg.jpg'); background-repeat:no-repeat; background-position:100% 100%; background-attachment:fixed;">
       <legend><strong>基本流程</strong></legend>
       <p><img class="title-img" src="/assets/reference/img/rule_title.jpg" alt="Rules"></p>

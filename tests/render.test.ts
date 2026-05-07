@@ -1777,6 +1777,7 @@ describe("render", () => {
   it("renders implemented rules page", () => {
     const html = renderRules();
 
+    expect(html).toContain("<title>汝等是人是狼？ Werewolf Cloudflare Port 說明</title>");
     expect(html).toContain("基本流程");
     expect(html).toContain("/assets/reference/img/rule_bg.jpg");
     expect(html).toContain("/assets/reference/img/rule_title.jpg");
