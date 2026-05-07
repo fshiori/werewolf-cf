@@ -102,6 +102,7 @@ describe("render", () => {
     expect(html).toContain("精華文章");
     expect(html).toContain("/status");
     expect(html).toContain("伺服器狀態");
+    expect(html).toContain("/admin.php");
     expect(html).toContain("/rule.php");
     expect(html).toContain("/manual");
     expect(html).toContain("說明書");

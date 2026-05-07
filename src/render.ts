@@ -231,7 +231,7 @@ function shell(body: string): string {
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/bbs.php">人狼討論</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/bbs.php?go=dige">精華文章</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/status">伺服器狀態</a></td></tr>
-            <tr><td><small><font color="#666666">・</font></small></td><td><a href="/admin">管理選單</a></td></tr>
+            <tr><td><small><font color="#666666">・</font></small></td><td><a href="/admin.php">管理選單</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/rule.php">規則</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/manual">說明書</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/script_info.php">Script Info</a></td></tr>
