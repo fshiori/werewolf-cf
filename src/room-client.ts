@@ -538,11 +538,34 @@ function renderLastWordsPanel(game) {
     return;
   }
   lastWordsLog.className = "";
+  const table = document.createElement("table");
+  const heading = document.createElement("tr");
+  heading.className = "last-words-heading";
+  const headingCell = document.createElement("td");
+  headingCell.colSpan = 2;
+  headingCell.textContent = "　　　　　　　　　　　・早上發現死者的遺書";
+  heading.appendChild(headingCell);
+  table.appendChild(heading);
   entries.slice(-10).forEach((line) => {
-    const entry = document.createElement("div");
-    entry.textContent = line;
-    lastWordsLog.appendChild(entry);
+    const separator = " 的遺言：";
+    const separatorIndex = line.indexOf(separator);
+    const row = document.createElement("tr");
+    row.className = "last-words-row";
+    const nameCell = document.createElement("td");
+    nameCell.className = "last-words-name";
+    const textCell = document.createElement("td");
+    textCell.className = "last-words-text";
+    if (separatorIndex >= 0) {
+      nameCell.textContent = line.slice(0, separatorIndex) + " 的遺言";
+      textCell.textContent = line.slice(separatorIndex + separator.length);
+    } else {
+      nameCell.textContent = "遺言";
+      textCell.textContent = line;
+    }
+    row.append(nameCell, textCell);
+    table.appendChild(row);
   });
+  lastWordsLog.appendChild(table);
 }
 function winnerLabel(value) {
   return {

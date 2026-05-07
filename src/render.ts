@@ -196,6 +196,11 @@ function page(title: string, body: string, extraHead = ""): string {
     #gameLog { max-height: 140px; overflow: auto; background: #ffffff; }
     #lastWordsLog { max-height: 120px; overflow: auto; background: #ffffff; }
     #lastWordsLog div { border-top: 1px dotted silver; padding: 2px 4px; overflow-wrap: anywhere; word-break: break-word; }
+    #lastWordsLog table { width: 100%; border-collapse: collapse; }
+    #lastWordsLog .last-words-heading td { background-color: #ccddff; color: black; font-weight: bold; }
+    #lastWordsLog .last-words-row { background-color: #eeeeff; color: black; }
+    #lastWordsLog .last-words-name, #lastWordsLog .last-words-text { border-top: silver 1px dashed; padding: 2px 4px; }
+    #lastWordsLog .last-words-name { width: 140px; }
     #players button { margin: 2px 4px 2px 0; min-width: 7em; text-align: left; }
     .vote-table { border: 1px solid #999900; background: #ffffee; }
     .vote-table td { border: 1px solid #d0d080; padding: 2px 6px; }
