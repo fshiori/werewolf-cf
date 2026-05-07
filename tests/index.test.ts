@@ -1711,7 +1711,7 @@ describe("worker routes", () => {
     const body = await response.text();
     expect(body).toContain("Topic 16");
     expect(body).not.toContain("Topic 1</a>");
-    expect(body).toContain('<a href="/bbs?page=1">[1]</a>');
+    expect(body).toContain('<a href="/bbs.php?page=1">[1]</a>');
     expect(body).toContain("<strong>[2]</strong>");
   });
 
@@ -1740,7 +1740,7 @@ describe("worker routes", () => {
     expect(body).toContain("討論管理");
     expect(body).toContain("Welcome");
     expect(body).toContain("Alice◆Trip");
-    expect(body).toContain("/bbs/1#bbsModerationForm");
+    expect(body).toContain("/bbs.php?view=1#bbsModerationForm");
     expect(body).toContain("BBS 管理密碼");
   });
 
@@ -2019,7 +2019,7 @@ describe("worker routes", () => {
     const body = await response.text();
     expect(body).toContain("Reply 11");
     expect(body).not.toContain("Reply 1</div>");
-    expect(body).toContain('<a href="/bbs/1?page=1">[1]</a>');
+    expect(body).toContain('<a href="/bbs.php?view=1&page=1">[1]</a>');
     expect(body).toContain("<strong>[2]</strong>");
   });
 
@@ -2135,7 +2135,7 @@ describe("worker routes", () => {
     );
 
     expect(response.status).toBe(303);
-    expect(response.headers.get("Location")).toBe("/bbs/1");
+    expect(response.headers.get("Location")).toBe("/bbs.php?view=1");
     const runs = (env as unknown as { runs: Array<{ query: string; values: unknown[] }> }).runs;
     expect(runs[0].query).toContain("INSERT INTO bbs_topics");
     expect(runs[0].values.slice(0, 3)).toEqual(["Alice", "Welcome", "Hello from PHP form"]);
@@ -2279,7 +2279,7 @@ describe("worker routes", () => {
     );
 
     expect(response.status).toBe(303);
-    expect(response.headers.get("Location")).toBe("/bbs/1?page=2");
+    expect(response.headers.get("Location")).toBe("/bbs.php?view=1&page=2");
     const batches = (env as unknown as { batches: Array<Array<{ query: string; values: unknown[] }>> }).batches;
     expect(batches[0][0].query).toContain("INSERT INTO bbs_replies");
     expect(batches[0][0].values.slice(0, 3)).toEqual([1, "Bob", "Reply from PHP form"]);
@@ -2451,7 +2451,7 @@ describe("worker routes", () => {
     );
 
     expect(response.status).toBe(303);
-    expect(response.headers.get("Location")).toBe("/bbs/1");
+    expect(response.headers.get("Location")).toBe("/bbs.php?view=1");
     const runs = (env as unknown as { runs: Array<{ query: string; values: unknown[] }> }).runs;
     expect(runs[0].query).toContain("UPDATE bbs_topics SET title = ?, message = ?");
     expect(runs[0].values).toEqual(["Edited", "Edited from PHP form", 1]);
@@ -2581,7 +2581,7 @@ describe("worker routes", () => {
     );
 
     expect(response.status).toBe(303);
-    expect(response.headers.get("Location")).toBe("/bbs");
+    expect(response.headers.get("Location")).toBe("/bbs.php");
     const batches = (env as unknown as { batches: Array<Array<{ query: string; values: unknown[] }>> }).batches;
     expect(batches[0][0].query).toContain("DELETE FROM bbs_replies");
     expect(batches[0][0].values).toEqual([1]);
@@ -2685,7 +2685,7 @@ describe("worker routes", () => {
     );
 
     expect(response.status).toBe(303);
-    expect(response.headers.get("Location")).toBe("/bbs/1");
+    expect(response.headers.get("Location")).toBe("/bbs.php?view=1");
     const runs = (env as unknown as { runs: Array<{ query: string; values: unknown[] }> }).runs;
     expect(runs[0].query).toContain("UPDATE bbs_topics SET pinned = ?, locked = ?, digest = ?");
     expect(runs[0].values).toEqual([0, 1, 0, 1]);
@@ -2731,7 +2731,7 @@ describe("worker routes", () => {
     );
 
     expect(response.status).toBe(303);
-    expect(response.headers.get("Location")).toBe("/bbs/1");
+    expect(response.headers.get("Location")).toBe("/bbs.php?view=1");
     const runs = (env as unknown as { runs: Array<{ query: string; values: unknown[] }> }).runs;
     expect(runs[0].query).toContain("UPDATE bbs_replies SET message = ?");
     expect(runs[0].values).toEqual(["Edited reply from PHP form", 2, 1]);
@@ -2776,7 +2776,7 @@ describe("worker routes", () => {
     );
 
     expect(response.status).toBe(303);
-    expect(response.headers.get("Location")).toBe("/bbs/1");
+    expect(response.headers.get("Location")).toBe("/bbs.php?view=1");
     const batches = (env as unknown as { batches: Array<Array<{ query: string; values: unknown[] }>> }).batches;
     expect(batches[0][0].query).toContain("DELETE FROM bbs_replies WHERE id = ? AND topic_id = ?");
     expect(batches[0][0].values).toEqual([2, 1]);
