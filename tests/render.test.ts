@@ -466,6 +466,10 @@ describe("render", () => {
     expect(ROOM_CLIENT_SCRIPT).toContain("靈界視點");
     expect(ROOM_CLIENT_SCRIPT).toContain("投票先非公開");
     expect(ROOM_CLIENT_SCRIPT).toContain("公開投票先");
+    expect(ROOM_CLIENT_SCRIPT).toContain('if (!game.openVote || !Object.keys(voteSummary).length) return;');
+    expect(ROOM_CLIENT_SCRIPT).toContain('table.className = "vote-table";');
+    expect(ROOM_CLIENT_SCRIPT).toContain('headingCell.textContent = phaseLabel(game);');
+    expect(ROOM_CLIENT_SCRIPT).toContain('"投票給 " + (targetTotals[targetId] || 0) + " 票 →"');
     expect(ROOM_CLIENT_SCRIPT).toContain("\" voted\"");
     expect(ROOM_CLIENT_SCRIPT).toContain("投票：");
     expect(ROOM_CLIENT_SCRIPT).toContain("actorCanAct");
