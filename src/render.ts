@@ -1440,18 +1440,20 @@ export function renderRoomTranscript(roomId: string, records: GameRecordSummary[
   const eventRows = renderTranscriptEventSections(visibleEvents);
   const voteRows = renderTranscriptVoteTables(voteEvents, { showTargetCounts: viewerMode !== "public", reverseLog: options.reverseLog });
   const modeLabel = options.heavenOnly ? "逝者靈界" : options.heavenTalk ? "含靈界" : "通常";
+  const playerCandidates = transcriptPlayerCandidates(records, events);
+  const selectedViewerPlayerLabel = playerCandidates.find((player) => player.playerId === options.viewerPlayerId)?.label ?? options.viewerPlayerId;
   const viewerLabel = {
     legacy: "結束後全紀錄",
     public: "旁觀",
-    player: options.viewerPlayerId ? `玩家 ${options.viewerPlayerId}` : "玩家",
+    player: selectedViewerPlayerLabel ? `玩家 ${selectedViewerPlayerLabel}` : "玩家",
     dead: "靈界",
     gm: "GM"
   }[viewerMode];
   const viewerScopeLabel = {
     legacy: "結束後全公開：顯示保存的公開、私有、系統與GM紀錄。",
     public: "旁觀：只顯示公開與系統紀錄，隱藏私人頻道與個人能力內容。",
-    player: options.viewerPlayerId
-      ? `玩家：顯示 ${options.viewerPlayerId} 的私人發言/行動、可聽見的同陣營密談與指向該玩家的GM密語。`
+    player: selectedViewerPlayerLabel
+      ? `玩家：顯示 ${selectedViewerPlayerLabel} 的私人發言/行動、可聽見的同陣營密談與指向該玩家的GM密語。`
       : "玩家：請選擇玩家後顯示該玩家可見的私人紀錄。",
     dead: "靈界：顯示公開、系統與靈界紀錄。",
     gm: "GM：顯示全部保存紀錄。"
@@ -1467,7 +1469,6 @@ export function renderRoomTranscript(roomId: string, records: GameRecordSummary[
   };
   const currentTranscriptParams = { ...displayParams, ...viewerParams };
   const oldLogReturnHref = options.oldLogReturnHref ?? "/old_log.php";
-  const playerCandidates = transcriptPlayerCandidates(records, events);
   const playerOptions = playerCandidates.length
     ? playerCandidates.map((player) => `<option value="${escapeHtml(player.playerId)}"${player.playerId === options.viewerPlayerId ? " selected" : ""}>${escapeHtml(player.label)}</option>`).join("")
     : `<option value="">玩家資料不足</option>`;

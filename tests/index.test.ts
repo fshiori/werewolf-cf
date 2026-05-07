@@ -3972,7 +3972,7 @@ describe("worker routes", () => {
 
     const playerView = await worker.fetch(new Request("http://example.test/room/room_log/log?viewer=player&viewer_player_id=player_wolf&heaven_talk=on"), env);
     const playerBody = await playerView.text();
-    expect(playerBody).toContain("玩家 player_wolf");
+    expect(playerBody).toContain("玩家 Wolf (player_wolf)");
     expect(playerBody).toContain("玩家視點");
     expect(playerBody).toContain('<option value="player_wolf" selected>Wolf (player_wolf)</option>');
     expect(playerBody).toContain("/room/room_log/log?heaven_talk=on&amp;viewer=player&amp;viewer_player_id=player_wolf");
