@@ -707,6 +707,7 @@ describe("render", () => {
     expect(html).toContain("過去紀錄");
     expect(html).toContain("村No");
     expect(html).toContain("Finished 村");
+    expect(html).toContain("/old_log.php?all=1");
     expect(html).toContain("/old_log.php?log_mode=on&amp;room_no=room_finished");
     expect(html).toContain("/assets/reference/img/max16.gif");
     expect(html).toContain("最大16");
