@@ -991,8 +991,11 @@ describe("render", () => {
     expect(html).toContain('<td align="center" width="40">回覆</td>');
     expect(html).toContain('<td align="center" width="150">最後時間</td>');
     expect(html).toContain('form name="bbs" method="post" action="/bbs.php?go=post"');
-    expect(html).toContain('name="bname"');
+    expect(html).toContain('type="text" name="bname" maxlength="32" size="24"');
+    expect(html).toContain('type="password" name="bpass" maxlength="128" size="24"');
+    expect(html).toContain('type="text" name="title" maxlength="50" size="24"');
     expect(html).toContain('name="mess"');
+    expect(html).toContain('id="submit" name="submit" type="submit" value="發表"');
     expect(html).toContain("[置頂] Welcome (精華)");
     expect(html).toContain("bbs-topic-pinned");
     expect(html).toContain("bbs-topic-digest");
@@ -1096,10 +1099,11 @@ describe("render", () => {
     expect(html).toContain('<td class="table3">Bob</td>');
     expect(html).toContain('<td class="table2"><a href="/bbs.php?go=edit&amp;id=1">NO.1</a> &lt;..&gt; [2026-05-06 12:10:00]</td>');
     expect(html).toContain('form name="bbs" method="post" action="/bbs.php?go=postre"');
-    expect(html).toContain('name="bname"');
-    expect(html).toContain('name="bpass"');
+    expect(html).toContain('type="text" name="bname" maxlength="32" size="24"');
+    expect(html).toContain('type="password" name="bpass" maxlength="128" size="24"');
     expect(html).toContain('name="mess"');
     expect(html).toContain('type="hidden" name="id" value="1"');
+    expect(html).toContain('id="submit" name="submit" type="submit" value="回覆"');
     expect(html).toContain("/api/bbs/topics/1/replies");
     expect(html).toContain("bbsReplyPassword");
     expect(html).toContain('password: document.querySelector("#bbsReplyPassword").value');

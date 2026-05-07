@@ -2039,6 +2039,9 @@ describe("worker routes", () => {
     expect(body).toContain('<table border="1" class="table1" bordercolor="#CCCCCC" align="center">');
     expect(body).toContain('<td align="center" width="150">最後時間</td>');
     expect(body).toContain('form name="bbs" method="post" action="/bbs.php?go=post"');
+    expect(body).toContain('type="text" name="bname" maxlength="32" size="24"');
+    expect(body).toContain('type="password" name="bpass" maxlength="128" size="24"');
+    expect(body).toContain('id="submit" name="submit" type="submit" value="發表"');
     expect(body).toContain("[置頂] Welcome (精華)");
     expect(body).toContain("Alice◆Trip");
   });
@@ -2312,7 +2315,10 @@ describe("worker routes", () => {
     expect(body).toContain('<a href="https://example.test" target="_blank">https://example.test</a>');
     expect(body).toContain('<table class="table1" style="width: 600px" align="right">');
     expect(body).toContain('form name="bbs" method="post" action="/bbs.php?go=postre"');
+    expect(body).toContain('type="text" name="bname" maxlength="32" size="24"');
+    expect(body).toContain('type="password" name="bpass" maxlength="128" size="24"');
     expect(body).toContain('type="hidden" name="id" value="1"');
+    expect(body).toContain('id="submit" name="submit" type="submit" value="回覆"');
     expect(body).toContain("/api/bbs/topics/1/replies");
     expect(body).toContain("主題管理");
     expect(body).toContain("/api/bbs/topics/1/moderation");
