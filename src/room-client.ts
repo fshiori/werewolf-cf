@@ -66,6 +66,8 @@ function updateGmStatus() {
   const status = document.querySelector("#gmStatus");
   if (!status) return;
   status.textContent = isGm ? "GM行動中" : "非GM";
+  document.body.classList.toggle("room-gm", isGm);
+  document.body.classList.toggle("room-non-gm", !isGm);
 }
 function playNotifySound() {
   if (!document.querySelector("#soundNotify").checked) return;
