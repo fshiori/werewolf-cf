@@ -181,6 +181,7 @@ function votedPlayerIdsForState(state: GameState): string[] {
 }
 
 export function buildGameStateMessage(state: GameState): ServerMessage {
+  const currentPlayerIds = new Set(state.players.map((player) => player.playerId));
   return {
     type: "game_state",
     phase: state.phase,
@@ -193,8 +194,18 @@ export function buildGameStateMessage(state: GameState): ServerMessage {
     votes: state.openVote ? state.votes : {},
     votedPlayerIds: votedPlayerIdsForState(state),
     lobbyStartVotedPlayerIds: state.phase === "lobby" ? state.players.filter((player) => state.lobbyStartVotes?.[player.playerId]).map((player) => player.playerId) : undefined,
+    lobbyKickVoteTargets:
+      state.phase === "lobby"
+        ? Object.entries(state.lobbyKickVotes ?? {})
+            .filter(([targetPlayerId]) => currentPlayerIds.has(targetPlayerId))
+            .map(([targetPlayerId, votedPlayerIds]) => ({
+              targetPlayerId,
+              votedPlayerIds: votedPlayerIds.filter((playerId) => currentPlayerIds.has(playerId))
+            }))
+            .filter((target) => target.votedPlayerIds.length > 0)
+        : undefined,
     objectionCounts: Object.fromEntries(
-      Object.entries(state.objectionCounts ?? {}).filter(([playerId]) => state.players.some((player) => player.playerId === playerId))
+      Object.entries(state.objectionCounts ?? {}).filter(([playerId]) => currentPlayerIds.has(playerId))
     ),
     winner: state.winner,
     phaseEndsAt: state.phaseEndsAt,

@@ -278,6 +278,30 @@ describe("messages", () => {
     });
   });
 
+  it("publishes filtered lobby kick vote status for current resident targets", () => {
+    const game = {
+      ...createLobbyState("room_abc"),
+      players: [
+        { playerId: "player_1", nickname: "One", role: "villager" as const, alive: true },
+        { playerId: "player_2", nickname: "Two", role: "villager" as const, alive: true },
+        { playerId: "player_target", nickname: "Target", role: "villager" as const, alive: true }
+      ],
+      lobbyKickVotes: {
+        player_target: ["player_1", "missing_voter", "player_2"],
+        missing_target: ["player_1"]
+      }
+    };
+
+    expect(buildGameStateMessage(game)).toMatchObject({
+      type: "game_state",
+      lobbyKickVoteTargets: [{ targetPlayerId: "player_target", votedPlayerIds: ["player_1", "player_2"] }]
+    });
+    expect(buildGameStateMessage({ ...game, phase: "day" as const, day: 1 })).toMatchObject({
+      type: "game_state",
+      lobbyKickVoteTargets: undefined
+    });
+  });
+
   it("shows submitted night action actors without exposing action targets", () => {
     const game = {
       ...createLobbyState("room_abc"),
