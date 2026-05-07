@@ -462,6 +462,10 @@ describe("render", () => {
     expect(ROOM_CLIENT_SCRIPT).toContain("/stats");
     expect(ROOM_CLIENT_SCRIPT).toContain("/api/rooms/");
     expect(ROOM_CLIENT_SCRIPT).toContain("/records");
+    expect(ROOM_CLIENT_SCRIPT).toContain("function eventTypeLabel(eventType)");
+    expect(ROOM_CLIENT_SCRIPT).toContain('eventTypeLabel(event.eventType)');
+    expect(ROOM_CLIENT_SCRIPT).toContain('game_started: "遊戲開始"');
+    expect(ROOM_CLIENT_SCRIPT).not.toContain('event.createdAt + "　" + event.eventType + player');
     expect(ROOM_CLIENT_SCRIPT).toContain("/api/players/\" + playerId + \"/records");
     expect(ROOM_CLIENT_SCRIPT).toContain("game.hostId !== currentPlayerId");
     expect(ROOM_CLIENT_SCRIPT).toContain("game.revoteCount");
