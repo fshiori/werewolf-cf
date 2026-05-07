@@ -2558,22 +2558,19 @@ export function renderBbsTopic(topic: BbsTopicSummary, replies: BbsReplySummary[
   const topicPath = bbsTopicPath(topic.id);
   const pagination = paginationLinks(options.totalReplies, options.page, options.pageSize, topicPath);
   const replyRows = replies.length
-    ? replies.map((reply, index) => `<tr>
-        <td valign="top" align="right"><strong>${escapeHtml(String(index + 1))}</strong></td>
-        <td>
-          <div><strong>${bbsAuthorLabel(reply.name, reply.trip)}</strong> <span class="muted">${escapeHtml(reply.createdAt)}</span></div>
-          <div style="white-space:pre-wrap;margin:6px 0 10px;">${escapeHtml(reply.message)}</div>
-          <div>
+    ? replies.map((reply) => `<tr><td class="table3">${bbsAuthorLabel(reply.name, reply.trip)}</td></tr>
+        <tr><td class="table4"><div style="white-space:pre-wrap;">${escapeHtml(reply.message)}</div></td></tr>
+        <tr><td class="table2"><a href="/bbs.php?go=edit&amp;id=${escapeHtml(String(reply.id))}">NO.${escapeHtml(String(reply.id))}</a> &lt;..&gt; [${escapeHtml(reply.createdAt)}]</td></tr>
+        <tr><td class="table4">
             <textarea class="bbsReplyEditMessage" data-reply-id="${escapeHtml(String(reply.id))}" rows="3" cols="60">${escapeHtml(reply.message)}</textarea><br>
             <input class="bbsReplyEditPassword" data-reply-id="${escapeHtml(String(reply.id))}" type="password" maxlength="128" size="24" placeholder="回覆密碼">
             <button class="bbsReplyEditButton" data-reply-id="${escapeHtml(String(reply.id))}">編輯回覆</button>
             <button class="bbsReplyDeleteButton" data-reply-id="${escapeHtml(String(reply.id))}">刪除回覆</button>
-          </div>
-        </td>
-      </tr>`).join("")
-    : `<tr><td colspan="2" class="muted">尚無回覆。</td></tr>`;
+          </td></tr>`).join("")
+    : `<tr><td class="table4 muted">尚無回覆。</td></tr>`;
 
   const title = `${topic.pinned ? "[置頂] " : ""}${topic.locked ? "[鎖定] " : ""}${topic.title}${topic.digest ? " (精華)" : ""}`;
+  const topicTitle = `${topic.pinned ? "[置頂] " : ""}${topic.locked ? "[鎖定] " : ""}<b>${escapeHtml(topic.title)}</b>${topic.digest ? " (精華)" : ""}`;
   const replyForm = topic.locked
     ? `<p class="muted">此主題已鎖定。</p>`
     : `<form method="post" action="/bbs.php?go=postre" enctype="multipart/form-data" style="margin:10px 20px;">
@@ -2757,23 +2754,28 @@ export function renderBbsTopic(topic: BbsTopicSummary, replies: BbsReplySummary[
     </script>`;
 
   return page("BBS Topic", shell(`
-    <p><a href="/bbs.php">全部主題</a> <a href="#bbsReplyForm">回覆主題</a></p>
+    <p><a href="/bbs.php?go=postre&amp;id=${escapeHtml(String(topic.id))}">回覆主題</a> <a href="/bbs.php">回列表</a></p>
     <fieldset>
-      <legend><strong>${escapeHtml(title)}</strong></legend>
-      <table class="form-table">
-        <tr><td><strong>　作者：</strong></td><td>${bbsAuthorLabel(topic.name, topic.trip)}</td></tr>
-        <tr><td><strong>　時間：</strong></td><td>${escapeHtml(topic.createdAt)}　更新 ${escapeHtml(topic.updatedAt)}</td></tr>
+      <legend><strong>文章列表</strong></legend>
+      <div id="table5">
+      ${pagination}
+      <table border="1" class="table1" width="100%" align="center">
+        <tr><td class="table3">${topicTitle}<br>${bbsAuthorLabel(topic.name, topic.trip)}</td></tr>
+        <tr><td class="table4"><div style="white-space:pre-wrap;">${escapeHtml(topic.message)}</div></td></tr>
+        <tr><td class="table2"><a href="/bbs.php?go=edit&amp;id=${escapeHtml(String(topic.id))}">NO.${escapeHtml(String(topic.id))}</a> &lt;..&gt; [${escapeHtml(topic.createdAt)}]</td></tr>
+      </table>
+      ${replies.length ? `<table class="table1" style="width: 600px" align="right">
+        ${replyRows}
+      </table>` : `<table class="table1" style="width: 600px" align="right">
+        ${replyRows}
+      </table>
+      `}
+      ${pagination}
+      </div>
+      <table class="form-table" style="clear:both;margin-top:12px;">
         <tr><td><strong>　狀態：</strong></td><td>${bbsStatusMarks(topic)}</td></tr>
-        <tr><td><strong>　本文：</strong></td><td><div style="white-space:pre-wrap;">${escapeHtml(topic.message)}</div></td></tr>
+        <tr><td><strong>　更新：</strong></td><td>${escapeHtml(topic.updatedAt)}</td></tr>
       </table>
-    </fieldset>
-    <fieldset>
-      <legend><strong>回覆列表</strong></legend>
-      ${pagination}
-      <table class="form-table" style="margin:12px 20px 18px;">
-        <tbody>${replyRows}</tbody>
-      </table>
-      ${pagination}
     </fieldset>
     <fieldset id="bbsReplyForm">
       <legend><strong>回覆主題</strong></legend>

@@ -987,9 +987,16 @@ describe("render", () => {
     );
 
     expect(html).toContain("Topic body");
-    expect(html).toContain("回覆列表");
+    expect(html).toContain("文章列表");
+    expect(html).toContain('<div id="table5">');
+    expect(html).toContain('<table border="1" class="table1" width="100%" align="center">');
+    expect(html).toContain('<td class="table3"><b>Welcome</b><br>Alice◆Trip</td>');
+    expect(html).toContain('<td class="table2"><a href="/bbs.php?go=edit&amp;id=1">NO.1</a> &lt;..&gt; [2026-05-06 12:00:00]</td>');
+    expect(html).toContain('<table class="table1" style="width: 600px" align="right">');
     expect(html).toContain("Bob");
     expect(html).toContain("Reply body");
+    expect(html).toContain('<td class="table3">Bob</td>');
+    expect(html).toContain('<td class="table2"><a href="/bbs.php?go=edit&amp;id=1">NO.1</a> &lt;..&gt; [2026-05-06 12:10:00]</td>');
     expect(html).toContain('action="/bbs.php?go=postre"');
     expect(html).toContain('name="bname"');
     expect(html).toContain('name="bpass"');
@@ -1037,7 +1044,7 @@ describe("render", () => {
     expect(html).toContain('method: "DELETE"');
     expect(html).toContain("刪除此主題與所有回覆？");
     expect(html).toContain('location.href = "/bbs.php";');
-    expect(html).toContain('<p><a href="/bbs.php">全部主題</a> <a href="#bbsReplyForm">回覆主題</a></p>');
+    expect(html).toContain('<p><a href="/bbs.php?go=postre&amp;id=1">回覆主題</a> <a href="/bbs.php">回列表</a></p>');
   });
 
   it("renders BBS reply pagination links", () => {
