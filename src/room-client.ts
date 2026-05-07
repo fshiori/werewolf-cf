@@ -675,6 +675,13 @@ function gameLogClass(line) {
   if (line.includes("投票") || line.includes("重新投票") || line.includes("重新開始")) return "game-log-vote";
   return "game-log-system";
 }
+function gameLogText(line) {
+  const dayStart = line.match(/^第 (\\d+) 日白天開始。$/);
+  if (dayStart) return "< < 早晨來臨 " + dayStart[1] + " 日目的早上開始 > >";
+  if (/^第 \\d+ 日夜晚開始。$/.test(line)) return "< < 日落、黑暗的夜晚來臨 > >";
+  if (line === "替身君的第一夜開始。") return "< < 日落、黑暗的夜晚來臨 > >";
+  return line;
+}
 function renderGameLogPanel(game) {
   const log = document.querySelector("#gameLog");
   log.innerHTML = "";
@@ -688,7 +695,7 @@ function renderGameLogPanel(game) {
     const cell = document.createElement("td");
     cell.colSpan = 3;
     cell.align = "left";
-    cell.textContent = "　　　　　　　　　　　　" + line;
+    cell.textContent = "　　　　　　　　　　　　" + gameLogText(line);
     row.appendChild(cell);
     table.appendChild(row);
   });
