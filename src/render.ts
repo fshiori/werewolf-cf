@@ -821,7 +821,7 @@ export function renderOldLogs(rooms: RoomSummary[]): string {
   return page("Old Logs", shell(`
     <fieldset>
       <legend><strong>過去紀錄</strong></legend>
-      <p><a href="/">←返回</a> <a href="/logs?all=1">[全部顯示]</a></p>
+      <p><a href="/">←返回</a> <a href="/old_log.php?all=1">[全部顯示]</a></p>
       <table class="form-table" border="1" cellspacing="1" bgcolor="#CCCCCC" style="margin:12px auto 18px;">
         <thead><tr><th class="column">村No</th><th class="column">村名</th><th class="column">結束時間</th><th class="column">人數</th><th class="column">選項</th></tr></thead>
         <tbody>${rows}</tbody>
