@@ -1331,6 +1331,26 @@ describe("game", () => {
     expect(next.log.at(-1)).toBe("＜投票結果有問題 請重新投票＞");
   });
 
+  it("draws the game when sudden death kills every living player", () => {
+    const day = {
+      ...activeState("day", [
+        { playerId: "player_1", nickname: "Wolf", role: "werewolf", alive: true },
+        { playerId: "player_2", nickname: "Villager", role: "villager", alive: true }
+      ]),
+      phaseEndsAt: "2026-05-06T00:00:00.000Z",
+      suddenDeathWarningAt: "2026-05-06T00:00:00.000Z"
+    };
+
+    const next = advancePhaseByAlarm(day, Date.parse("2026-05-06T00:02:00.000Z"));
+
+    expect(next.phase).toBe("ended");
+    expect(next.winner).toBe("draw");
+    expect(next.players.every((player) => !player.alive)).toBe(true);
+    expect(next.log).toContain("Wolf 突然暴斃死亡。");
+    expect(next.log).toContain("Villager 突然暴斃死亡。");
+    expect(next.log.at(-1)).toBe("平手。");
+  });
+
   it("warns before sudden-deathing required night actors who have not acted when a timed phase expires", () => {
     const players: GameState["players"] = [
       { playerId: "player_1", nickname: "Wolf", role: "werewolf", alive: true },
