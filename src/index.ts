@@ -2398,7 +2398,7 @@ export default {
       return getBbsTopic(env, bbsTopicApiMatch[1]);
     }
 
-    if (request.method === "GET" && (url.pathname === "/rules" || url.pathname === "/rule.php")) {
+    if (request.method === "GET" && (url.pathname === "/rules" || url.pathname === "/rule.php" || url.pathname === "/lang/jpn/rule.php")) {
       return html(renderRules());
     }
 
@@ -2406,7 +2406,7 @@ export default {
       return html(renderManual());
     }
 
-    if (request.method === "GET" && (url.pathname === "/script-info" || url.pathname === "/script_info.php")) {
+    if (request.method === "GET" && (url.pathname === "/script-info" || url.pathname === "/script_info.php" || url.pathname === "/lang/jpn/script_info.php")) {
       return html(renderScriptInfo());
     }
 
@@ -2414,7 +2414,7 @@ export default {
       return html(renderProtocol());
     }
 
-    if (request.method === "GET" && (url.pathname === "/version" || url.pathname === "/version.php")) {
+    if (request.method === "GET" && (url.pathname === "/version" || url.pathname === "/version.php" || url.pathname === "/lang/cht/version.htm")) {
       return html(renderVersion());
     }
 
