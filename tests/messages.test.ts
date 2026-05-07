@@ -236,6 +236,7 @@ describe("messages", () => {
       hostId: undefined,
       revoteCount: 0,
       commonTalkVisible: false,
+      objectionCounts: {},
       players: [
         { playerId: "player_1", nickname: "&lt;Wolf&gt;", alive: true },
         { playerId: "player_2", nickname: "Bob", alive: true },
@@ -243,6 +244,11 @@ describe("messages", () => {
       ]
     });
     expect(JSON.stringify(buildGameStateMessage(game))).not.toContain('"role"');
+
+    expect(buildGameStateMessage({ ...game, objectionCounts: { player_1: 2, missing_player: 1 } })).toMatchObject({
+      type: "game_state",
+      objectionCounts: { player_1: 2 }
+    });
 
     const suddenDeathWarningAt = "2026-05-06T00:03:00.000Z";
     expect(buildGameStateMessage({ ...game, suddenDeathWarningAt })).toMatchObject({

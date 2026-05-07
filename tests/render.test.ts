@@ -298,6 +298,8 @@ describe("render", () => {
     expect(html).toContain("sendSelfTalk");
     expect(html).toContain("sendObjection");
     expect(html).toContain("soundNotify");
+    expect(html).toContain("/assets/reference/img/objection.gif");
+    expect(html).toContain("objectionRemaining");
     expect(html).toContain("lastWordsText");
     expect(html).toContain("setLastWords");
   });
@@ -417,6 +419,8 @@ describe("render", () => {
     expect(ROOM_CLIENT_SCRIPT).toContain("共有：");
     expect(ROOM_CLIENT_SCRIPT).toContain("wolf_chat");
     expect(ROOM_CLIENT_SCRIPT).toContain("objection");
+    expect(ROOM_CLIENT_SCRIPT).toContain("maxObjections - ((game.objectionCounts || {})[currentPlayerId] || 0)");
+    expect(ROOM_CLIENT_SCRIPT).toContain("#objectionRemaining");
     expect(ROOM_CLIENT_SCRIPT).toContain("playNotifySound");
     expect(ROOM_CLIENT_SCRIPT).toContain("function notifyStateSound(nextGame, previousGame)");
     expect(ROOM_CLIENT_SCRIPT).toContain("nextGame.revoteCount > previousGame.revoteCount");
