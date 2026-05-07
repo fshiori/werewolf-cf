@@ -203,6 +203,8 @@ function page(title: string, body: string, extraHead = ""): string {
     #gmControlPanel { margin-top: 4px; border: 1px dotted #999999; background: #f7f7f7; }
     #gmControlPanel th { background: #ddddff; color: #000000; text-align: left; font-size: 10pt; padding: 2px 4px; }
     #gmControlPanel td { padding: 2px 4px; font-size: 10pt; }
+    #gmControlPanel .gm-controls-only { display: none; }
+    body.room-gm #gmControlPanel .gm-controls-only { display: table-row; }
     #gmStatus { color: #cc0000; font-weight: bold; }
     #gameLog { max-height: 140px; overflow: auto; background: #ffffff; }
     #gameLog table { width: 100%; border-collapse: collapse; font-size: 12pt; font-family: "PMingLiU", "Noto Serif TC", serif; }
@@ -3627,11 +3629,11 @@ export function renderRoom(roomId: string, options: RenderRoomOptions = {}): str
                 <label><input id="soundNotify" type="checkbox"> 音效</label>
                 <table id="gmControlPanel">
                   <tr><th colspan="2">GM行動 <span id="gmStatus">非GM</span></th></tr>
-                  <tr>
+                  <tr class="gm-controls-only">
                     <td>發言</td>
                     <td><button id="sendGmChat" disabled>GM</button> <select id="gmWhisperTarget"></select> <button id="sendGmWhisper" disabled>GM私語</button></td>
                   </tr>
-                  <tr>
+                  <tr class="gm-controls-only">
                     <td>流程</td>
                     <td>
                       <button id="gmAdvancePhase" disabled>GM換日</button>
@@ -3644,7 +3646,7 @@ export function renderRoom(roomId: string, options: RenderRoomOptions = {}): str
                       <button id="gmEndGame" disabled>GM裁定</button>
                     </td>
                   </tr>
-                  <tr>
+                  <tr class="gm-controls-only">
                     <td>玩家</td>
                     <td>
                       <button id="gmKillPlayer" disabled>GM死亡</button>
@@ -3674,7 +3676,7 @@ export function renderRoom(roomId: string, options: RenderRoomOptions = {}): str
                       <button id="gmDisableFlag" disabled>GM解除</button>
                     </td>
                   </tr>
-                  <tr>
+                  <tr class="gm-controls-only">
                     <td>頻道</td>
                     <td>
                       <button id="gmEnableCommonVoice" disabled>共有公開</button>
