@@ -1452,7 +1452,8 @@ describe("render", () => {
     expect(html).toContain("/room/room_abc/log?reverse_log=on&amp;heaven_talk=on&amp;viewer=public");
     expect(html).toContain("/room/room_abc/log?reverse_log=on&amp;heaven_talk=on&amp;viewer=gm");
     expect(html).toContain("/old_log.php?log_mode=on&amp;room_no=room_abc&amp;reverse_log=on&amp;heaven_talk=on&amp;viewer=player&amp;viewer_player_id=player_wolf");
-    expect(html).toContain("/game_log.php?room_no=room_abc&amp;reverse_log=on&amp;heaven_talk=on&amp;viewer=player&amp;viewer_player_id=player_wolf");
+    expect(html).toContain("/game_log.php?room_no=room_abc&amp;log_mode=on&amp;reverse_log=on&amp;heaven_talk=on&amp;viewer=player&amp;viewer_player_id=player_wolf");
+    expect(html).toContain('<a href="/old_log.php">←返回</a>');
     expect(html).toContain('<input type="hidden" name="reverse_log" value="on">');
     expect(html).toContain('<input type="hidden" name="heaven_talk" value="on">');
     expect(html).toContain('<option value="player_wolf" selected>Wolf (player_wolf)</option>');
