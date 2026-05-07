@@ -2985,7 +2985,8 @@ export function renderRules(): string {
   return page("汝等是人是狼？ Werewolf Cloudflare Port 說明", shell(`
     <fieldset style="background-image:url('/assets/reference/img/rule_bg.jpg'); background-repeat:no-repeat; background-position:100% 100%; background-attachment:fixed;">
       <legend><strong>基本流程</strong></legend>
-      <p><img class="title-img" src="/assets/reference/img/rule_title.jpg" alt="Rules"></p>
+      <a href="/index.php">←返回</a><br>
+      <img class="title-img" src="/assets/reference/img/rule_title.jpg" alt="Rules">
       <table border="0" style="margin-bottom:12px;">
         <tr><td><strong>＜參加遊戲時必須注意的事情＞</strong></td></tr>
         <tr><td><font color="red">關於遊戲中的內容請不要在遊戲以外的場合進行討論。特別是死亡之後公開其他人的角色，請絕對不要有這種行為。</font></td></tr>
