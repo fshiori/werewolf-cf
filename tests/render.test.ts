@@ -241,6 +241,7 @@ describe("render", () => {
     expect(html).toContain("body.room-view-heaven .view-heaven-only { display: table-row; }");
     expect(html).toContain("進入房間");
     expect(html).toContain(".player-card { width: 148px; border: 1px solid #b0b0b0; background: #fafafa; table-layout: fixed; }");
+    expect(html).toContain(".player-card.start-voted { background: #ff50ff; }");
     expect(html).toContain(".player-name { padding-left: 5px; max-width: 96px; overflow-wrap: anywhere; word-break: break-word; }");
     expect(html).toContain("#chatLog div, #gameLog div { border-top: 1px dashed silver; padding: 2px 4px; overflow-wrap: anywhere; word-break: break-word; }");
     expect(html).toContain("#lastWordsLog div { border-top: 1px dotted silver; padding: 2px 4px; overflow-wrap: anywhere; word-break: break-word; }");
@@ -433,6 +434,8 @@ describe("render", () => {
     expect(ROOM_CLIENT_SCRIPT).toContain("votedPlayerIds");
     expect(ROOM_CLIENT_SCRIPT).toContain("game.openVote ? \"公開投票先\" : \"投票先非公開\"");
     expect(ROOM_CLIENT_SCRIPT).toContain("lobbyKickVoteTargets");
+    expect(ROOM_CLIENT_SCRIPT).toContain("const lobbyStartVotedPlayerIds = new Set(game.lobbyStartVotedPlayerIds || []);");
+    expect(ROOM_CLIENT_SCRIPT).toContain('lobbyStartVotedPlayerIds.has(player.playerId) ? " start-voted" : ""');
     expect(ROOM_CLIENT_SCRIPT).toContain("踢出投票：");
     expect(ROOM_CLIENT_SCRIPT).toContain("function appendVoteObserverPanel(container, game, currentPlayer, currentPlayerDead, voteSummary, votedPlayerIds)");
     expect(ROOM_CLIENT_SCRIPT).toContain("旁觀視點");

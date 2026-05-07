@@ -628,6 +628,7 @@ function renderGame(game) {
   gmWhisperTarget.innerHTML = "";
   const voteTargets = game.votes || {};
   const votedPlayerIds = new Set(game.votedPlayerIds || []);
+  const lobbyStartVotedPlayerIds = new Set(game.lobbyStartVotedPlayerIds || []);
   const lobbyKickVoteTargets = new Map((game.lobbyKickVoteTargets || []).map((target) => [target.targetPlayerId, target.votedPlayerIds || []]));
   const voteSummary = {};
   Object.entries(voteTargets).forEach(([voterId, targetId]) => {
@@ -649,7 +650,10 @@ function renderGame(game) {
       playerGrid.appendChild(row);
     }
     const card = document.createElement("td");
-    card.className = "player-card" + (votedPlayerIds.has(player.playerId) ? " voted" : "") + (player.alive ? "" : " dead");
+    card.className = "player-card" +
+      (lobbyStartVotedPlayerIds.has(player.playerId) ? " start-voted" : "") +
+      (votedPlayerIds.has(player.playerId) ? " voted" : "") +
+      (player.alive ? "" : " dead");
     const initial = (player.nickname || "?").slice(0, 1);
     const cardTable = document.createElement("table");
     const cardRow = document.createElement("tr");
