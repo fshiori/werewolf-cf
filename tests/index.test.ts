@@ -1355,6 +1355,47 @@ describe("worker routes", () => {
     expect(missingRoom.status).toBe(404);
   });
 
+  it("supports the legacy game_vote.php POST alias without mutating game state", async () => {
+    const env = envWithRooms(["room_exists"]);
+    const form = new URLSearchParams({
+      command: "vote",
+      situation: "VOTE_KILL",
+      vote_times: "1",
+      target_no: "player_target"
+    });
+    const response = await worker.fetch(new Request("http://example.test/game_vote.php?room_no=room_exists", { method: "POST", body: form }), env);
+
+    expect(response.status).toBe(303);
+    expect(response.headers.get("Location")).toBe("/game_vote.php?room_no=room_exists#game_top");
+
+    const formRoomNo = await worker.fetch(new Request("http://example.test/game_vote.php", {
+      method: "POST",
+      body: new URLSearchParams({ command: "vote", room_no: "room_exists", situation: "VOTE_KILL", target_no: "player_target" })
+    }), env);
+    expect(formRoomNo.status).toBe(303);
+    expect(formRoomNo.headers.get("Location")).toBe("/game_vote.php?room_no=room_exists#game_top");
+
+    const missingRoomNo = await worker.fetch(new Request("http://example.test/game_vote.php", {
+      method: "POST",
+      body: new URLSearchParams({ command: "vote", situation: "VOTE_KILL" })
+    }), env);
+    expect(missingRoomNo.status).toBe(400);
+    expect(await missingRoomNo.json()).toEqual({ error: "game_vote.php vote requires room_no" });
+
+    const missingRoom = await worker.fetch(new Request("http://example.test/game_vote.php?room_no=room_missing", {
+      method: "POST",
+      body: new URLSearchParams({ command: "vote", situation: "VOTE_KILL" })
+    }), env);
+    expect(missingRoom.status).toBe(404);
+
+    const invalidCommand = await worker.fetch(new Request("http://example.test/game_vote.php?room_no=room_exists", {
+      method: "POST",
+      body: new URLSearchParams({ command: "delete", situation: "VOTE_KILL" })
+    }), env);
+    expect(invalidCommand.status).toBe(400);
+    expect(await invalidCommand.json()).toEqual({ error: "Invalid game_vote.php command" });
+  });
+
   it("supports the legacy user_manager.php registration POST alias", async () => {
     const env = envWithRooms(["room_exists"]);
     const form = new URLSearchParams({

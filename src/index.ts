@@ -2891,6 +2891,26 @@ export default {
         return json({ error: error instanceof Error ? error.message : "Invalid room" }, { status: 400 });
       }
     }
+    if (request.method === "POST" && url.pathname === "/game_vote.php") {
+      try {
+        const form = await request.formData().catch(() => null);
+        const command = url.searchParams.get("command") ?? (form ? readFormString(form, "command") : undefined) ?? "vote";
+        if (command !== "vote") {
+          throw new Error("Invalid game_vote.php command");
+        }
+        const roomIdParam = legacyLiveRoomId ?? (form ? readFormString(form, "room_no") : undefined);
+        if (!roomIdParam) {
+          throw new Error("game_vote.php vote requires room_no");
+        }
+        const roomId = validateRoomId(roomIdParam);
+        if (!(await roomExists(env, roomId))) {
+          return new Response("Room not found", { status: 404 });
+        }
+        return new Response(null, { status: 303, headers: { Location: `/game_vote.php?room_no=${encodeURIComponent(roomId)}#game_top` } });
+      } catch (error) {
+        return json({ error: error instanceof Error ? error.message : "Invalid vote" }, { status: 400 });
+      }
+    }
     if (request.method === "POST" && url.pathname === "/user_manager.php") {
       try {
         const form = await request.formData().catch(() => null);

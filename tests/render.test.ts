@@ -519,6 +519,7 @@ describe("render", () => {
     expect(vote).toContain("<tr><td>夜晚</td><td>situation</td><td>WOLF_EAT / MAGE_DO / FOSI_DO / GUARD_DO / CAT_DO</td></tr>");
     expect(vote).toContain('form class="legacy-vote-form" name="game_vote" action="/game_vote.php?room_no=room_abc#game_top" method="POST" onsubmit="return false"');
     expect(vote).toContain('<input type="hidden" name="command" value="vote">');
+    expect(vote).toContain('<input type="hidden" name="room_no" value="room_abc">');
     expect(vote).toContain('<input type="hidden" name="situation" value="VOTE_KILL">');
     expect(vote).toContain('<input type="hidden" name="vote_times" value="1">');
     expect(vote).toContain('<option value="GAMESTART">GAMESTART</option>');
