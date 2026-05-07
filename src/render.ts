@@ -1,4 +1,4 @@
-import type { BbsReplySummary, BbsTopicSummary, FederatedRoomSummary, FederatedServerStatus, GameRecordSummary, LeaderboardEntry, PlayerRole, RoomEventSummary, RoomSummary, WinRateEntry } from "./types";
+import type { BbsReplySummary, BbsTopicSummary, FederatedRoomSummary, FederatedServerStatus, GameRecordSummary, LeaderboardEntry, PlayerRole, RoomEventSummary, RoomSummary, TripPublicSummary, WinRateEntry } from "./types";
 import { escapeHtml } from "./validation";
 
 function page(title: string, body: string, extraHead = ""): string {
@@ -2014,6 +2014,54 @@ export function renderTripLookup(): string {
         }
       });
     </script>
+  `));
+}
+
+export function renderTripDetail(tripId: string, summary: TripPublicSummary): string {
+  const playerRows = summary.players.length
+    ? summary.players.map((playerId, index) => `
+        <tr>
+          <td align="center">${index + 1}</td>
+          <td align="center"><a href="/player/${escapeHtml(playerId)}">${escapeHtml(playerId)}</a></td>
+        </tr>
+      `).join("")
+    : `<tr><td colspan="2" align="center" class="muted">尚無認領玩家。</td></tr>`;
+  return page("Trip Detail", shell(`
+    <center>
+      <strong>Trip公開資料</strong><br>
+      該Trip使用 ${summary.stats.gamesPlayed} 次，已知使用玩家如下(排除重複)<br>
+      <a href="/trips">Trip查詢</a>
+    </center>
+    <table border="1" class="table1" bordercolor="#CCCCCC" align="center">
+      <tr class="table3">
+        <td align="center" width="90">項目</td>
+        <td align="center" width="240">狀態</td>
+      </tr>
+      <tr>
+        <td align="center">Trip</td>
+        <td align="center">${escapeHtml(tripId)}</td>
+      </tr>
+      <tr>
+        <td align="center">登記</td>
+        <td align="center">${summary.registered ? `<span class="health-mark health-ok">已登記</span>已登記` : `<span class="health-mark health-idle">未登記</span>未登記`}</td>
+      </tr>
+      <tr>
+        <td align="center">排除</td>
+        <td align="center">${summary.excluded ? `<span class="health-mark health-error">已排除</span><font color="#990000">已排除</font>` : `<span class="health-mark health-ok">未排除</span>未排除`}</td>
+      </tr>
+      <tr>
+        <td align="center">戰績</td>
+        <td align="center">正:${summary.stats.wins}/負:${summary.stats.losses}/場:${summary.stats.gamesPlayed}</td>
+      </tr>
+    </table>
+    <br>
+    <table border="1" class="table1" bordercolor="#CCCCCC" align="center">
+      <tr class="table3">
+        <td align="center" width="50">ID</td>
+        <td align="center" width="180">玩家</td>
+      </tr>
+      ${playerRows}
+    </table>
   `));
 }
 

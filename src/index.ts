@@ -1,9 +1,9 @@
-import { renderAdminConfig, renderAdminConfigLogin, renderAdminIndex, renderAdminRooms, renderAdminRoomsLogin, renderBbs, renderBbsAdmin, renderBbsTopic, renderFederatedList, renderHome, renderIconCatalog, renderLeaderboard, renderManual, renderOldLogs, renderPlayerProfile, renderProtocol, renderRoom, renderRoomEvents, renderRoomRecords, renderRoomTranscript, renderRules, renderScriptInfo, renderStatus, renderTripRegistration, renderTripLookup, renderVersion, renderWinRateAnalysis } from "./render";
+import { renderAdminConfig, renderAdminConfigLogin, renderAdminIndex, renderAdminRooms, renderAdminRoomsLogin, renderBbs, renderBbsAdmin, renderBbsTopic, renderFederatedList, renderHome, renderIconCatalog, renderLeaderboard, renderManual, renderOldLogs, renderPlayerProfile, renderProtocol, renderRoom, renderRoomEvents, renderRoomRecords, renderRoomTranscript, renderRules, renderScriptInfo, renderStatus, renderTripDetail, renderTripRegistration, renderTripLookup, renderVersion, renderWinRateAnalysis } from "./render";
 import { RoomDurableObject } from "./room";
 import { ROOM_CLIENT_SCRIPT } from "./room-client";
 import { DEFAULT_DAY_MINUTES, DEFAULT_NIGHT_MINUTES } from "./game";
 import { bbsPasswordHash, registeredTripHash, tripHashForRoom } from "./identity";
-import type { BbsReplySummary, BbsTopicSummary, ChannelRestrictions, FederatedRoomSummary, FederatedServerStatus, GamePlayer, GameRecordSummary, GameWinner, LeaderboardEntry, PlayerGameRecordSummary, PlayerStats, RoomEventSummary, RoomOptions, RoomSummary, WinRateEntry } from "./types";
+import type { BbsReplySummary, BbsTopicSummary, ChannelRestrictions, FederatedRoomSummary, FederatedServerStatus, GamePlayer, GameRecordSummary, GameWinner, LeaderboardEntry, PlayerGameRecordSummary, PlayerStats, RoomEventSummary, RoomOptions, RoomSummary, TripPublicSummary, WinRateEntry } from "./types";
 import {
   isRecord,
   validateNickname,
@@ -868,6 +868,37 @@ async function claimTrip(request: Request, env: Env): Promise<Response> {
   }
 }
 
+async function readTripPublicSummary(env: Env, tripValue: string): Promise<TripPublicSummary> {
+  const trip = validateTrip(tripValue);
+  const tripHash = await registeredTripHash(trip);
+  const [registered, excluded, players, stats] = await Promise.all([
+    env.DB.prepare("SELECT trip_hash FROM registered_trips WHERE trip_hash = ? LIMIT 1")
+      .bind(tripHash)
+      .first<{ trip_hash: string }>(),
+    env.DB.prepare("SELECT trip_hash FROM excluded_trips WHERE trip_hash = ? LIMIT 1")
+      .bind(tripHash)
+      .first<{ trip_hash: string }>(),
+    env.DB.prepare("SELECT id FROM players WHERE registered_trip_hash = ? ORDER BY id LIMIT 50")
+      .bind(tripHash)
+      .all<{ id: string }>(),
+    env.DB.prepare(
+      "SELECT COALESCE(SUM(ps.games_played), 0) AS games_played, COALESCE(SUM(ps.wins), 0) AS wins, COALESCE(SUM(ps.losses), 0) AS losses FROM player_stats ps INNER JOIN players p ON p.id = ps.player_id WHERE p.registered_trip_hash = ?"
+    )
+      .bind(tripHash)
+      .first<{ games_played: number; wins: number; losses: number }>()
+  ]);
+  return {
+    registered: Boolean(registered),
+    excluded: Boolean(excluded),
+    players: players.results.map((player) => player.id),
+    stats: {
+      gamesPlayed: stats?.games_played ?? 0,
+      wins: stats?.wins ?? 0,
+      losses: stats?.losses ?? 0
+    }
+  };
+}
+
 async function getTripLookup(request: Request, env: Env): Promise<Response> {
   try {
     const url = new URL(request.url);
@@ -875,36 +906,15 @@ async function getTripLookup(request: Request, env: Env): Promise<Response> {
     if (!tripValue) {
       return json({ error: "Trip is required" }, { status: 400 });
     }
-    const trip = validateTrip(tripValue);
-    const tripHash = await registeredTripHash(trip);
-    const [registered, excluded, players, stats] = await Promise.all([
-      env.DB.prepare("SELECT trip_hash FROM registered_trips WHERE trip_hash = ? LIMIT 1")
-        .bind(tripHash)
-        .first<{ trip_hash: string }>(),
-      env.DB.prepare("SELECT trip_hash FROM excluded_trips WHERE trip_hash = ? LIMIT 1")
-        .bind(tripHash)
-        .first<{ trip_hash: string }>(),
-      env.DB.prepare("SELECT id FROM players WHERE registered_trip_hash = ? ORDER BY id LIMIT 50")
-        .bind(tripHash)
-        .all<{ id: string }>(),
-      env.DB.prepare(
-        "SELECT COALESCE(SUM(ps.games_played), 0) AS games_played, COALESCE(SUM(ps.wins), 0) AS wins, COALESCE(SUM(ps.losses), 0) AS losses FROM player_stats ps INNER JOIN players p ON p.id = ps.player_id WHERE p.registered_trip_hash = ?"
-      )
-        .bind(tripHash)
-        .first<{ games_played: number; wins: number; losses: number }>()
-    ]);
-    return json({
-      trip: {
-        registered: Boolean(registered),
-        excluded: Boolean(excluded),
-        players: players.results.map((player) => player.id),
-        stats: {
-          gamesPlayed: stats?.games_played ?? 0,
-          wins: stats?.wins ?? 0,
-          losses: stats?.losses ?? 0
-        }
-      }
-    });
+    return json({ trip: await readTripPublicSummary(env, tripValue) });
+  } catch (error) {
+    return json({ error: error instanceof Error ? error.message : "Invalid Trip" }, { status: 400 });
+  }
+}
+
+async function getLegacyTripDetail(env: Env, tripValue: string): Promise<Response> {
+  try {
+    return html(renderTripDetail(validateTrip(tripValue), await readTripPublicSummary(env, tripValue)));
   } catch (error) {
     return json({ error: error instanceof Error ? error.message : "Invalid Trip" }, { status: 400 });
   }
@@ -1976,6 +1986,9 @@ export default {
     }
 
     if (request.method === "GET" && (url.pathname === "/trip" || url.pathname === "/trip.php")) {
+      if (url.pathname === "/trip.php" && url.searchParams.get("go") === "trip" && url.searchParams.get("id")) {
+        return getLegacyTripDetail(env, url.searchParams.get("id") ?? "");
+      }
       return html(renderTripRegistration());
     }
 

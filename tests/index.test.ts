@@ -874,6 +874,45 @@ describe("worker routes", () => {
     expect(JSON.stringify(body)).not.toContain(tripHash);
   });
 
+  it("renders legacy Trip detail pages without exposing Trip hashes", async () => {
+    const tripHash = await registeredTripHash("ab12CD");
+    const response = await worker.fetch(
+      new Request("http://example.test/trip.php?go=trip&id=ab12CD"),
+      envWithRooms(
+        [],
+        {},
+        {
+          player_a: { games_played: 3, wins: 2, losses: 1 },
+          player_b: { games_played: 4, wins: 1, losses: 3 }
+        },
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+        new Set([tripHash]),
+        new Set(),
+        {
+          player_a: tripHash,
+          player_b: tripHash
+        }
+      )
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.text();
+    expect(body).toContain("Trip公開資料");
+    expect(body).toContain("ab12CD");
+    expect(body).toContain("已登記");
+    expect(body).toContain("player_a");
+    expect(body).toContain("player_b");
+    expect(body).toContain("正:3/負:4/場:7");
+    expect(body).not.toContain(tripHash);
+  });
+
   it("returns 404 for formatted room ids missing from D1", async () => {
     const response = await worker.fetch(new Request("http://example.test/room/room_missing"), envWithRooms([]));
 
