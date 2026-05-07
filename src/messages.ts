@@ -209,6 +209,12 @@ export function buildGameStateMessage(state: GameState): ServerMessage {
     objectionCounts: Object.fromEntries(
       Object.entries(state.objectionCounts ?? {}).filter(([playerId]) => currentPlayerIds.has(playerId))
     ),
+    roomEndVotedPlayerIds:
+      state.phase === "lobby" || state.phase === "day"
+        ? Object.entries(state.roomEndVotes ?? {})
+            .filter(([playerId, day]) => currentPlayerIds.has(playerId) && day === state.day)
+            .map(([playerId]) => playerId)
+        : undefined,
     winner: state.winner,
     phaseEndsAt: state.phaseEndsAt,
     suddenDeathWarningAt: state.suddenDeathWarningAt,

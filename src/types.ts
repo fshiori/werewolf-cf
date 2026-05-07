@@ -249,6 +249,7 @@ export interface GameState {
   catRevives: Record<string, string>;
   lastWords: Record<string, string>;
   objectionCounts?: Record<string, number>;
+  roomEndVotes?: Record<string, number>;
   lobbyStartVotes?: Record<string, boolean>;
   lobbyKickVotes?: Record<string, string[]>;
   mediumReading?: MediumReading;
@@ -415,6 +416,10 @@ export type ObjectionClientMessage = {
   type: "objection";
 };
 
+export type RoomEndVoteClientMessage = {
+  type: "room_end_vote";
+};
+
 export type ClientMessage =
   | JoinClientMessage
   | ChatClientMessage
@@ -445,7 +450,8 @@ export type ClientMessage =
   | GuardClientMessage
   | CatReviveClientMessage
   | SetLastWordsClientMessage
-  | ObjectionClientMessage;
+  | ObjectionClientMessage
+  | RoomEndVoteClientMessage;
 
 export type ServerMessage =
   | { type: "joined"; roomId: string; playerId: string; members: RoomMember[] }
@@ -484,6 +490,7 @@ export type ServerMessage =
       lobbyStartVotedPlayerIds?: string[];
       lobbyKickVoteTargets?: Array<{ targetPlayerId: string; votedPlayerIds: string[] }>;
       objectionCounts: Record<string, number>;
+      roomEndVotedPlayerIds?: string[];
       winner?: GameWinner;
       phaseEndsAt?: string;
       suddenDeathWarningAt?: string;

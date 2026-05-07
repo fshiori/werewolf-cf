@@ -661,6 +661,47 @@ export function raiseObjection(state: GameState, playerId: string): GameState {
   };
 }
 
+export function requestRoomEnd(state: GameState, playerId: string): GameState {
+  if (state.phase === "ended" || state.phase === "night") {
+    throw new Error("Room end requests are only available before the game or during the day");
+  }
+  const player = assertLivingPlayer(state, playerId);
+  if (state.roomEndVotes?.[playerId] === state.day) {
+    throw new Error("Room end already requested today");
+  }
+  const roomEndVotes = {
+    ...(state.roomEndVotes ?? {}),
+    [playerId]: state.day
+  };
+  const livingCount = livingPlayers(state).length;
+  const requestCount = Object.entries(roomEndVotes).filter(([candidateId, day]) =>
+    day === state.day && state.players.some((candidate) => candidate.playerId === candidateId && candidate.alive)
+  ).length;
+  const next = {
+    ...state,
+    roomEndVotes,
+    log: [...state.log, `${player.nickname} 要求廢村。`]
+  };
+  if (requestCount >= 2 && requestCount > Math.floor(livingCount / 2)) {
+    return {
+      ...next,
+      phase: "ended",
+      winner: undefined,
+      phaseEndsAt: undefined,
+      suddenDeathWarningAt: undefined,
+      votes: {},
+      revoteCount: 0,
+      nightKills: {},
+      divinations: {},
+      guards: {},
+      catRevives: {},
+      mediumReading: undefined,
+      log: [...next.log, "抗議人數超過生存人數一半，廢村。"]
+    };
+  }
+  return next;
+}
+
 export function setLastWords(state: GameState, playerId: string, text: string): GameState {
   if (state.phase === "lobby" || state.phase === "ended") {
     throw new Error("Last words are only available during active games");

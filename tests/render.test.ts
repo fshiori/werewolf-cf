@@ -448,6 +448,9 @@ describe("render", () => {
     expect(ROOM_CLIENT_SCRIPT).toContain("共有：");
     expect(ROOM_CLIENT_SCRIPT).toContain("wolf_chat");
     expect(ROOM_CLIENT_SCRIPT).toContain("objection");
+    expect(ROOM_CLIENT_SCRIPT).toContain("room_end_vote");
+    expect(ROOM_CLIENT_SCRIPT).toContain("#sendRoomEndVote");
+    expect(ROOM_CLIENT_SCRIPT).toContain("game.roomEndVotedPlayerIds");
     expect(ROOM_CLIENT_SCRIPT).toContain("maxObjections - ((game.objectionCounts || {})[currentPlayerId] || 0)");
     expect(ROOM_CLIENT_SCRIPT).toContain("#objectionRemaining");
     expect(ROOM_CLIENT_SCRIPT).toContain("playNotifySound");
@@ -1946,6 +1949,7 @@ describe("render", () => {
     expect(html).toContain("start_vote");
     expect(html).toContain("kick_vote");
     expect(html).toContain("leave_room");
+    expect(html).toContain("room_end_vote");
     expect(html).toContain("Server Messages");
     expect(html).toContain("game_state");
     expect(html).toContain("revealed_roles");

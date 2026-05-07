@@ -12,6 +12,7 @@ type SentMessage = {
   targetNickname?: string;
   playerId?: string;
   votedPlayerIds?: string[];
+  roomEndVotedPlayerIds?: string[];
   lobbyStartVotedPlayerIds?: string[];
   required?: number;
   ready?: boolean;
@@ -28,6 +29,7 @@ type SentMessage = {
   lovers?: Array<{ playerId: string; nickname: string }>;
   roles?: Record<string, string>;
   players?: Array<{ playerId: string; nickname: string; alive: boolean; role?: string }>;
+  winner?: string;
 };
 
 type CloseEvent = {
@@ -541,6 +543,73 @@ describe("RoomDurableObject", () => {
         ]
       })
     );
+  });
+
+  it("ends the room when live room-end requests exceed half of living players", async () => {
+    const game: GameState = {
+      roomId: "room_abc",
+      phase: "day",
+      day: 1,
+      players: [
+        { playerId: "player_a", nickname: "Alice", role: "villager", alive: true },
+        { playerId: "player_b", nickname: "Bob", role: "villager", alive: true },
+        { playerId: "player_wolf", nickname: "Wolf", role: "werewolf", alive: true }
+      ],
+      votes: { player_a: "player_wolf" },
+      openVote: false,
+      commonTalkVisible: false,
+      deadRoleVisible: false,
+      wishRole: false,
+      dummyBoy: false,
+      dayMs: 180_000,
+      nightMs: 90_000,
+      selfVote: false,
+      voteStatus: false,
+      revoteCount: 0,
+      nightKills: {},
+      divinations: {},
+      guards: {},
+      catRevives: {},
+      lastWords: {},
+      log: []
+    };
+    const { room, stored, batches, dbRuns } = observableRoomObject(game);
+    const aliceMessages: SentMessage[] = [];
+    const bobMessages: SentMessage[] = [];
+    const aliceSocket = fakeSocket(aliceMessages);
+    const bobSocket = fakeSocket(bobMessages);
+    connect(room, aliceSocket, "player_a", "Alice");
+    connect(room, bobSocket, "player_b", "Bob");
+
+    await sendRaw(room, aliceSocket, JSON.stringify({ type: "room_end_vote" }));
+    expect((stored.get("gameState") as GameState).phase).toBe("day");
+    expect(aliceMessages).toContainEqual(expect.objectContaining({ type: "game_state", roomEndVotedPlayerIds: ["player_a"] }));
+
+    await sendRaw(room, bobSocket, JSON.stringify({ type: "room_end_vote" }));
+
+    const saved = stored.get("gameState") as GameState;
+    expect(saved.phase).toBe("ended");
+    expect(saved.winner).toBeUndefined();
+    expect(saved.votes).toEqual({});
+    expect(saved.log).toEqual(expect.arrayContaining(["Alice 要求廢村。", "Bob 要求廢村。", "抗議人數超過生存人數一半，廢村。"]));
+    const endedMessage = bobMessages.find((message) => message.type === "game_state" && message.phase === "ended");
+    expect(endedMessage).toBeDefined();
+    expect(endedMessage).not.toHaveProperty("winner");
+    expect(dbRuns).toContainEqual(
+      expect.objectContaining({
+        query: expect.stringContaining("INSERT INTO room_events"),
+        binds: [
+          "room_abc",
+          "player_b",
+          "room_end_requested",
+          JSON.stringify({ nickname: "Bob", phase: "ended", day: 1 })
+        ]
+      })
+    );
+    expect(batches[0]).toEqual(expect.arrayContaining([
+      expect.objectContaining({ query: expect.stringContaining("UPDATE rooms SET status = 'ended'"), binds: ["room_abc"] }),
+      expect.objectContaining({ query: expect.stringContaining("INSERT INTO game_records") })
+    ]));
   });
 
   it("persists private chat as private transcript events", async () => {
