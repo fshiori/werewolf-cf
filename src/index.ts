@@ -979,9 +979,18 @@ async function listTripRoomRecords(env: Env, tripValue: string, maxPlayers?: num
   });
 }
 
-async function getLegacyTripRoomRecords(env: Env, tripValue: string, playValue: string | null): Promise<Response> {
+async function getLegacyTripRoomRecords(env: Env, tripValue: string, playValue: string | null, pageValue: string | null): Promise<Response> {
   try {
-    return html(renderTripRoomRecords(validateTrip(tripValue), await listTripRoomRecords(env, tripValue, tripRoomCapacityFilter(playValue))));
+    const page = readPositivePage(pageValue);
+    const play = tripRoomCapacityFilter(playValue);
+    const records = await listTripRoomRecords(env, tripValue, play);
+    const visibleRecords = records.slice((page - 1) * TRIP_ROOM_PAGE_SIZE, page * TRIP_ROOM_PAGE_SIZE);
+    return html(renderTripRoomRecords(validateTrip(tripValue), visibleRecords, {
+      page,
+      pageSize: TRIP_ROOM_PAGE_SIZE,
+      totalRecords: records.length,
+      play
+    }));
   } catch (error) {
     return json({ error: error instanceof Error ? error.message : "Invalid Trip records" }, { status: 400 });
   }
@@ -1098,6 +1107,7 @@ function bbsTopicFromRow(topic: {
 const BBS_TOPIC_PAGE_SIZE = 15;
 const BBS_REPLY_PAGE_SIZE = 10;
 const OLD_LOG_PAGE_SIZE = 25;
+const TRIP_ROOM_PAGE_SIZE = 15;
 
 async function countBbsTopics(env: Env, digestOnly = false): Promise<number> {
   const row = await env.DB.prepare(`SELECT COUNT(*) AS count FROM bbs_topics${digestOnly ? " WHERE digest = 1" : ""}`)
@@ -2240,7 +2250,7 @@ export default {
         return getLegacyTripDetail(env, url.searchParams.get("id") ?? "");
       }
       if (url.pathname === "/trip.php" && url.searchParams.get("go") === "room" && url.searchParams.get("id")) {
-        return getLegacyTripRoomRecords(env, url.searchParams.get("id") ?? "", url.searchParams.get("play"));
+        return getLegacyTripRoomRecords(env, url.searchParams.get("id") ?? "", url.searchParams.get("play"), url.searchParams.get("page"));
       }
       if (url.pathname === "/trip.php" && url.searchParams.get("go") === "icon") {
         return html(renderIconCatalog());
