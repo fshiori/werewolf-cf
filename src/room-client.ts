@@ -669,6 +669,31 @@ function updateLobbyStartNotice(game) {
   table.appendChild(row);
   notice.appendChild(table);
 }
+function gameLogClass(line) {
+  if (line.includes("要求廢村") || line.includes("廢村") || line.includes("暴斃")) return "game-log-danger";
+  if (!line.includes("沒有死亡") && (line.includes("死亡") || line.includes("處決") || line.includes("牽連"))) return "game-log-death";
+  if (line.includes("投票") || line.includes("重新投票") || line.includes("重新開始")) return "game-log-vote";
+  return "game-log-system";
+}
+function renderGameLogPanel(game) {
+  const log = document.querySelector("#gameLog");
+  log.innerHTML = "";
+  const table = document.createElement("table");
+  table.border = "0";
+  table.cellPadding = "0";
+  table.cellSpacing = "0";
+  game.log.slice(-20).forEach((line) => {
+    const row = document.createElement("tr");
+    row.className = gameLogClass(line);
+    const cell = document.createElement("td");
+    cell.colSpan = 3;
+    cell.align = "left";
+    cell.textContent = "　　　　　　　　　　　　" + line;
+    row.appendChild(cell);
+    table.appendChild(row);
+  });
+  log.appendChild(table);
+}
 function isWolfRole(value) {
   return value === "werewolf" || value === "big_wolf";
 }
@@ -838,13 +863,7 @@ function renderGame(game) {
     players.textContent = "尚無玩家。";
     playerGrid.innerHTML = "";
   }
-  const log = document.querySelector("#gameLog");
-  log.innerHTML = "";
-  game.log.slice(-20).forEach((line) => {
-    const div = document.createElement("div");
-    div.textContent = line;
-    log.appendChild(div);
-  });
+  renderGameLogPanel(game);
   renderLastWordsPanel(game);
 }
 

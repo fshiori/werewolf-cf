@@ -246,6 +246,9 @@ describe("render", () => {
     expect(html).toContain(".player-card.start-voted { background: #ff50ff; }");
     expect(html).toContain(".player-name { padding-left: 5px; max-width: 96px; overflow-wrap: anywhere; word-break: break-word; }");
     expect(html).toContain("#chatLog div, #gameLog div { border-top: 1px dashed silver; padding: 2px 4px; overflow-wrap: anywhere; word-break: break-word; }");
+    expect(html).toContain("#gameLog .game-log-system td { background-color: #efefef; color: black; font-weight: bold; }");
+    expect(html).toContain("#gameLog .game-log-vote td { background-color: #999900; color: snow; font-weight: bold; }");
+    expect(html).toContain("#gameLog .game-log-danger td { background-color: red; color: snow; font-weight: bold; }");
     expect(html).toContain("#lastWordsLog div { border-top: 1px dotted silver; padding: 2px 4px; overflow-wrap: anywhere; word-break: break-word; }");
     expect(html).toContain("#lastWordsLog .last-words-heading td { background-color: #ccddff; color: black; font-weight: bold; }");
     expect(html).toContain("#lastWordsLog .last-words-row { background-color: #eeeeff; color: black; }");
@@ -328,6 +331,9 @@ describe("render", () => {
     expect(html).toContain("能力發動 / 投票");
     expect(html).toContain('id="actionPrompt"');
     expect(html).toContain('id="voteReminder"');
+    expect(ROOM_CLIENT_SCRIPT).toContain("function renderGameLogPanel(game)");
+    expect(ROOM_CLIENT_SCRIPT).toContain("row.className = gameLogClass(line);");
+    expect(ROOM_CLIENT_SCRIPT).toContain('cell.textContent = "　　　　　　　　　　　　" + line;');
     expect(html).toContain("尚無公開遺言。");
     expect(html).toContain("wishRole");
     expect(html).toContain("<option value=\"seer\">占卜師</option>");
