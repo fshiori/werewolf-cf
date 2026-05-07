@@ -733,6 +733,7 @@ describe("render", () => {
 
     expect(html).toContain("過去紀錄");
     expect(html).toContain("村No");
+    expect(html).toContain("/assets/reference/img/old_log_bg.jpg");
     expect(html).toContain("/assets/reference/img/old_log_title.jpg");
     expect(html).toContain('form name="old_log" action="/old_log.php" method="get"');
     expect(html).toContain('name="search"');
