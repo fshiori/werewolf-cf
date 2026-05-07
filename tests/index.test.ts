@@ -1852,17 +1852,17 @@ describe("worker routes", () => {
 
       expect(response.status).toBe(200);
       const body = await response.text();
-      expect(requestedUrls).toEqual(["https://remote.example/api/rooms"]);
+      expect(requestedUrls).toEqual(["https://remote.example/base/api/rooms"]);
       expect(body).toContain("[room_list]");
       expect(body).toContain("[remote_room]");
       expect(body).toContain("Remote村");
       expect(body).toContain("遠端伺服器");
       expect(body).toContain('<table border="0" cellpadding="0" cellspacing="0" style="width: 100%">');
       expect(body).toContain('<tr><td colspan="5"><hr></td></tr>');
-      expect(body).toContain("https://remote.example/room/remote_room");
-      expect(body).toContain('<a href="https://remote.example">服務中</a>');
-      expect(body).toContain('<td colspan="4"><a href="https://remote.example">遠端伺服器 / https://remote.example</a></td>');
-      expect(body).toContain("遠端伺服器 / https://remote.example");
+      expect(body).toContain("https://remote.example/base/room/remote_room");
+      expect(body).toContain('<a href="https://remote.example/base">服務中</a>');
+      expect(body).toContain('<td colspan="4"><a href="https://remote.example/base">遠端伺服器 / https://remote.example/base</a></td>');
+      expect(body).toContain("遠端伺服器 / https://remote.example/base");
       expect(body).toContain("聯合伺服器狀態");
       expect(body).toContain("服務中");
     } finally {
@@ -1888,9 +1888,9 @@ describe("worker routes", () => {
       const body = await response.text();
       expect(body).toContain("聯合伺服器狀態");
       expect(body).toContain("故障伺服器");
-      expect(body).toContain("https://broken.example");
-      expect(body).toContain('<a href="https://broken.example">失聯中</a>');
-      expect(body).toContain("故障伺服器 / https://broken.example");
+      expect(body).toContain("https://broken.example/base");
+      expect(body).toContain('<a href="https://broken.example/base">失聯中</a>');
+      expect(body).toContain("故障伺服器 / https://broken.example/base");
       expect(body).toContain("連線失敗");
       expect(body).not.toContain("network down");
     } finally {
@@ -1921,7 +1921,7 @@ describe("worker routes", () => {
 
       expect(response.status).toBe(200);
       const body = await response.text();
-      expect(requestedUrls).toEqual(["https://legacy.example/api/rooms", "https://legacy.example/api.php"]);
+      expect(requestedUrls).toEqual(["https://legacy.example/base/api/rooms", "https://legacy.example/base/api.php"]);
       expect(body).toContain("[123]");
       expect(body).toContain("Legacy村");
       expect(body).toContain("Old peer");
