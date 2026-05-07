@@ -1534,6 +1534,7 @@ export function renderAdminRooms(rooms: RoomSummary[], statusFilter: AdminRoomSt
 }
 
 export function renderIconCatalog(activeMenu = "/icon_view.php"): string {
+  const pageTitle = activeMenu === "/icon_upload.php" ? "用戶圖像上傳" : "用戶圖像一覽";
   const icons = [
     { file: "001.gif", name: "明灰", color: "#DDDDDD" },
     { file: "002.gif", name: "暗灰", color: "#999999" },
@@ -1614,7 +1615,7 @@ export function renderIconCatalog(activeMenu = "/icon_view.php"): string {
   });
   const iconRows = Array.from({ length: Math.ceil(iconCells.length / 5) }, (_, rowIndex) => `<tr>${iconCells.slice(rowIndex * 5, rowIndex * 5 + 5).join("")}</tr>`).join("");
 
-  return page("Icons", shell(`
+  return page(pageTitle, shell(`
     <fieldset style="background-image:url('/assets/reference/img/icon_view_bg.jpg'); background-repeat: repeat;">
       <legend><strong>頭像一覽</strong></legend>
       <p><a href="/index.php">←返回</a></p>

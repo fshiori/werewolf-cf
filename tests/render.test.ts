@@ -672,6 +672,7 @@ describe("render", () => {
   it("renders default icon catalog as a normal HTML page", () => {
     const html = renderIconCatalog();
 
+    expect(html).toContain("<title>用戶圖像一覽</title>");
     expect(html).toContain("頭像一覽");
     expect((html.match(/<a href="\/index.php">←返回<\/a>/g) ?? []).length).toBe(2);
     expect(html).toContain("/assets/reference/img/icon_view_title.jpg");
@@ -715,6 +716,13 @@ describe("render", () => {
     expect(html).toContain('action="/upload2.php"');
     expect(html).toContain("/api/assets/avatar");
     expect(html).toContain("頭像需小於 512KiB");
+  });
+
+  it("renders the legacy icon upload title for upload aliases", () => {
+    const html = renderIconCatalog("/icon_upload.php");
+
+    expect(html).toContain("<title>用戶圖像上傳</title>");
+    expect(html).toContain('<b><a href="/icon_upload.php">頭像上傳</a></b>');
   });
 
   it("renders federated list as a normal HTML page", () => {
