@@ -1351,6 +1351,17 @@ describe("worker routes", () => {
     }
   });
 
+  it("marks icon upload aliases active in the legacy menu", async () => {
+    for (const path of ["/icon_upload.php", "/upload.php", "/upload2.php"] as const) {
+      const response = await worker.fetch(new Request(`http://example.test${path}`), envWithRooms([]));
+      const body = await response.text();
+
+      expect(response.status).toBe(200);
+      expect(body).toContain('<td><b><a href="/icon_upload.php">頭像上傳</a></b></td>');
+      expect(body).toContain('<td><a href="/icon_view.php">頭像一覽</a></td>');
+    }
+  });
+
   it("renders manual page", async () => {
     const response = await worker.fetch(new Request("http://example.test/manual"), envWithRooms([]));
 
