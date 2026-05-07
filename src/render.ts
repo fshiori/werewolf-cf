@@ -1653,7 +1653,7 @@ export function renderIconCatalog(): string {
         <br>
         <strong>圖像的顏色選擇</strong>
         <label><input type="radio" name="color">自行輸入顏色</label>
-        <input name="color_custom" maxlength="7" size="10" style="border-width:1px;border-color:black;border-style:solid;background-color:aliceblue;">(例：#6699cc)
+        <input name="color" maxlength="7" size="10" style="border-width:1px;border-color:black;border-style:solid;background-color:aliceblue;">(例：#6699cc)
         <table cellspacing="2" cellpadding="0" border="0" width="600" style="margin:6px 0;">${legacyColorRows}</table>
         <input name="submit" type="submit" value="上傳">
       </form>
