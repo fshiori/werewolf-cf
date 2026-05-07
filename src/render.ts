@@ -935,7 +935,7 @@ export function renderOldLogs(rooms: RoomSummary[], options: { search?: string; 
     }).join("")
     : `<tr><td colspan="17" class="muted">沒有遊戲紀錄</td></tr>`;
 
-  return page("Old Logs", shell(`
+  return page("汝等是人是狼？[過去紀錄]", shell(`
     <fieldset style="background-image:url('/assets/reference/img/old_log_bg.jpg'); background-repeat:no-repeat; background-position:100% 100%; background-attachment:fixed;">
       <legend><strong>過去紀錄</strong></legend>
       <p><a href="/index.php">←返回</a> <a href="/old_log.php?all=1">[全部顯示]</a></p>
