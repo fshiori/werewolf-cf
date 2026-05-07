@@ -996,7 +996,8 @@ export function renderRoomRecords(roomId: string, records: GameRecordSummary[]):
     <fieldset>
       <legend><strong>村子對局紀錄</strong></legend>
       <table class="form-table">
-        <tr><td><strong>　村子：</strong></td><td><a href="/room/${escapeHtml(roomId)}">${escapeHtml(roomId)}</a></td></tr>
+        <tr><td><strong>　村子：</strong></td><td><a href="/game_view.php?room_no=${encodeURIComponent(roomId)}">${escapeHtml(roomId)}</a></td></tr>
+        <tr><td><strong>　紀錄：</strong></td><td><a href="/game_log.php?room_no=${encodeURIComponent(roomId)}&amp;log_mode=on">村子完整紀錄</a></td></tr>
       </table>
       <table class="form-table" style="margin:12px 20px 18px;">
         <thead><tr><td><strong>時間</strong></td><td><strong>結果</strong></td></tr></thead>
@@ -1020,7 +1021,8 @@ export function renderRoomEvents(roomId: string, events: RoomEventSummary[]): st
     <fieldset>
       <legend><strong>村子事件履歷</strong></legend>
       <table class="form-table">
-        <tr><td><strong>　村子：</strong></td><td><a href="/room/${escapeHtml(roomId)}">${escapeHtml(roomId)}</a></td></tr>
+        <tr><td><strong>　村子：</strong></td><td><a href="/game_view.php?room_no=${encodeURIComponent(roomId)}">${escapeHtml(roomId)}</a></td></tr>
+        <tr><td><strong>　紀錄：</strong></td><td><a href="/game_log.php?room_no=${encodeURIComponent(roomId)}&amp;log_mode=on">村子完整紀錄</a></td></tr>
       </table>
       <table class="form-table" style="margin:12px 20px 18px;">
         <thead><tr><td><strong>時間</strong></td><td><strong>事件</strong></td><td><strong>玩家</strong></td><td><strong>內容</strong></td></tr></thead>
