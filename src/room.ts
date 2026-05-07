@@ -2,6 +2,7 @@ import {
   advancePhaseByAlarm,
   canJoinRoomState,
   canStartGame,
+  channelRestrictionsForState,
   canUseCommonChannel,
   canUseDeadChannel,
   canUseFoxChannel,
@@ -26,6 +27,7 @@ import {
   forceSetPlayerFlag,
   forceSetPlayerRole,
   foxesForPlayer,
+  isWerewolfRole,
   leaveLobbyPlayer,
   loversForPlayer,
   mediumReadingsForPlayer,
@@ -213,10 +215,15 @@ export class RoomDurableObject {
 
       if (message.type === "wolf_chat") {
         const game = await this.loadGameState();
+        const text = validateChatText(message.text);
         if (!canUseWerewolfChannel(game, member.playerId)) {
+          if (this.canFallbackRestrictedTalk(game, member.playerId, "wolf")) {
+            const next = await this.recordConversationActivity(game);
+            await this.persistRestrictedTalkFallback(socket, next, member, text, "wolf");
+            return;
+          }
           throw new Error("Werewolf channel is only available to living werewolves at night");
         }
-        const text = validateChatText(message.text);
         const next = await this.recordConversationActivity(game);
         await this.persistRoomEvent(member.playerId, "wolf_chat", {
           visibility: "private",
@@ -232,10 +239,15 @@ export class RoomDurableObject {
 
       if (message.type === "fox_chat") {
         const game = await this.loadGameState();
+        const text = validateChatText(message.text);
         if (!canUseFoxChannel(game, member.playerId)) {
+          if (this.canFallbackRestrictedTalk(game, member.playerId, "fox")) {
+            const next = await this.recordConversationActivity(game);
+            await this.persistRestrictedTalkFallback(socket, next, member, text, "fox");
+            return;
+          }
           throw new Error("Fox channel is only available to living foxes at night");
         }
-        const text = validateChatText(message.text);
         const next = await this.recordConversationActivity(game);
         await this.persistRoomEvent(member.playerId, "fox_chat", {
           visibility: "private",
@@ -251,10 +263,15 @@ export class RoomDurableObject {
 
       if (message.type === "common_chat") {
         const game = await this.loadGameState();
+        const text = validateChatText(message.text);
         if (!canUseCommonChannel(game, member.playerId)) {
+          if (this.canFallbackRestrictedTalk(game, member.playerId, "common")) {
+            const next = await this.recordConversationActivity(game);
+            await this.persistSelfTalkFallback(socket, next, member, text);
+            return;
+          }
           throw new Error("Common channel is only available to living common partners at night");
         }
-        const text = validateChatText(message.text);
         const next = await this.recordConversationActivity(game);
         await this.persistRoomEvent(member.playerId, "common_chat", { visibility: "private", nickname: member.nickname, text, phase: next.phase, day: next.day });
         this.broadcastCommon(game, buildCommonChatMessage(member.playerId, member.nickname, text));
@@ -266,10 +283,15 @@ export class RoomDurableObject {
 
       if (message.type === "lovers_chat") {
         const game = await this.loadGameState();
+        const text = validateChatText(message.text);
         if (!canUseLoversChannel(game, member.playerId)) {
+          if (this.canFallbackRestrictedTalk(game, member.playerId, "lovers")) {
+            const next = await this.recordConversationActivity(game);
+            await this.persistSelfTalkFallback(socket, next, member, text);
+            return;
+          }
           throw new Error("Lovers channel is only available to living lovers at night");
         }
-        const text = validateChatText(message.text);
         const next = await this.recordConversationActivity(game);
         await this.persistRoomEvent(member.playerId, "lovers_chat", { visibility: "private", nickname: member.nickname, text, phase: next.phase, day: next.day });
         this.broadcastLovers(game, buildLoversChatMessage(member.playerId, member.nickname, text));
@@ -828,6 +850,37 @@ export class RoomDurableObject {
 
   private canHearCompositeLoversTalk(gameState: GameState, actorPlayerId: string, listenerPlayerId: string): boolean {
     return this.isCompositeLoversTalk(gameState, actorPlayerId) && canUseLoversChannel(gameState, listenerPlayerId);
+  }
+
+  private canFallbackRestrictedTalk(gameState: GameState, playerId: string, channel: keyof ChannelRestrictions): boolean {
+    const player = gameState.players.find((candidate) => candidate.playerId === playerId);
+    if (gameState.phase !== "night" || player?.alive !== true || channelRestrictionsForState(gameState)[channel] !== true) {
+      return false;
+    }
+    if (channel === "wolf") {
+      return isWerewolfRole(player.role);
+    }
+    if (channel === "fox") {
+      return player.role === "fox";
+    }
+    if (channel === "common") {
+      return player.role === "common";
+    }
+    return player.lover === true;
+  }
+
+  private async persistRestrictedTalkFallback(socket: WebSocket, gameState: GameState, member: RoomMember, text: string, channel: "wolf" | "fox"): Promise<void> {
+    if (canUseLoversChannel(gameState, member.playerId)) {
+      await this.persistRoomEvent(member.playerId, "lovers_chat", { visibility: "private", nickname: member.nickname, text, phase: gameState.phase, day: gameState.day, location: "night lovers", sourceChannel: channel });
+      this.broadcastLovers(gameState, buildLoversChatMessage(member.playerId, member.nickname, text));
+      return;
+    }
+    await this.persistSelfTalkFallback(socket, gameState, member, text);
+  }
+
+  private async persistSelfTalkFallback(socket: WebSocket, gameState: GameState, member: RoomMember, text: string): Promise<void> {
+    await this.persistRoomEvent(member.playerId, "self_talk", { visibility: "private", nickname: member.nickname, text, phase: gameState.phase, day: gameState.day, location: "night self_talk" });
+    this.send(socket, buildSelfTalkMessage(member.playerId, member.nickname, text));
   }
 
   private broadcastDead(gameState: GameState, message: unknown): void {
