@@ -1836,6 +1836,7 @@ describe("render", () => {
   it("renders script info page", () => {
     const html = renderScriptInfo();
 
+    expect(html).toContain("<title>汝等是人是狼？ Werewolf Cloudflare Port 系統特點</title>");
     expect(html).toContain("Script Info");
     expect(html).toContain('<b><a href="/script_info.php">Script Info</a></b>');
     expect(html).toContain("/assets/reference/img/script_info_bg.jpg");
