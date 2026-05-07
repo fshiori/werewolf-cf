@@ -509,6 +509,17 @@ describe("render", () => {
     expect(vote).toContain("<tr><td>等待室</td><td>situation</td><td>GAMESTART / KICK_DO / FKICK_DO</td></tr>");
     expect(vote).toContain("<tr><td>白天</td><td>situation</td><td>VOTE_KILL + vote_times</td></tr>");
     expect(vote).toContain("<tr><td>夜晚</td><td>situation</td><td>WOLF_EAT / MAGE_DO / FOSI_DO / GUARD_DO / CAT_DO</td></tr>");
+    expect(vote).toContain('form class="legacy-vote-form" name="game_vote" action="/game_vote.php?room_no=room_abc#game_top" method="POST" onsubmit="return false"');
+    expect(vote).toContain('<input type="hidden" name="command" value="vote">');
+    expect(vote).toContain('<input type="hidden" name="situation" value="VOTE_KILL">');
+    expect(vote).toContain('<input type="hidden" name="vote_times" value="1">');
+    expect(vote).toContain('<option value="GAMESTART">GAMESTART</option>');
+    expect(vote).toContain('<option value="VOTE_KILL" selected>VOTE_KILL</option>');
+    expect(vote).toContain('<option value="CAT_DO">CAT_DO</option>');
+    expect(vote).toContain('<div id="legacyVoteTargetList">等待狀態更新</div>');
+    expect(vote).toContain('<input type="radio" name="target_no" value="" disabled>');
+    expect(vote).toContain('<input type="submit" value="投將該員\'處刑\'一票" disabled>');
+    expect(vote).toContain('<input type="submit" value="咬下去" disabled>');
     expect(vote).toContain('class="table_votelist1"');
     expect(vote).toContain("投將該員'處刑'一票 / 咬下去 / 占卜對象 / 護衛對象 / 復活對象");
     expect(vote).toContain('<tr><td>back</td><td colspan="2"><a href="/game_up.php?room_no=room_abc#game_top">←上一頁&amp;重新整理</a></td></tr>');

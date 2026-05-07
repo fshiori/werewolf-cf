@@ -72,6 +72,11 @@ function page(title: string, body: string, extraHead = ""): string {
     .legacy-entry-map .table_votelist1 { border-top: #000000 1px dotted; border-left: #000000 1px dotted; border-bottom: #000000 1px dotted; width: 26px; text-align: center; }
     .legacy-entry-map .table_votelist2 { font-size: 10pt; border-top: #000000 1px dotted; border-bottom: #000000 1px dotted; border-right: #000000 1px dotted; width: 150px; }
     .legacy-entry-map input[type="radio"] { vertical-align: middle; }
+    .legacy-vote-shell { width: 100%; margin-top: 6px; }
+    .legacy-vote-shell td { padding: 2px 4px; vertical-align: top; }
+    .legacy-vote-shell .table_votelist1 { border-top: #000000 1px dotted; border-left: #000000 1px dotted; border-bottom: #000000 1px dotted; width: 26px; text-align: center; }
+    .legacy-vote-shell .table_votelist2 { font-size: 10pt; border-top: #000000 1px dotted; border-bottom: #000000 1px dotted; border-right: #000000 1px dotted; width: 150px; }
+    .legacy-vote-submit { text-align: center; padding-top: 6px; }
     table { border-collapse: collapse; }
     input, button, select {
       font: inherit;
@@ -3688,6 +3693,62 @@ function legacyRoomEntryMap(roomId: string, autoReloadSeconds: 0 | 15 | 20 | 30,
   return "";
 }
 
+function legacyVoteFormShell(roomId: string, autoReloadSeconds: 0 | 15 | 20 | 30): string {
+  const actionHref = legacyRoomHref("/game_vote.php", roomId, autoReloadSeconds);
+  const backHref = legacyRoomHref("/game_up.php", roomId, autoReloadSeconds);
+  return `
+      <tr class="page-vote-only">
+        <td>
+          <table class="panel">
+            <tr><th>投票 / 能力發動</th></tr>
+            <tr>
+              <td>
+                <form class="legacy-vote-form" name="game_vote" action="${actionHref}#game_top" method="POST" onsubmit="return false">
+                  <input type="hidden" name="command" value="vote">
+                  <input type="hidden" name="situation" value="VOTE_KILL">
+                  <input type="hidden" name="vote_times" value="1">
+                  <table class="legacy-vote-shell">
+                    <tr>
+                      <td colspan="2">
+                        <select name="situation_selector" disabled>
+                          <option value="GAMESTART">GAMESTART</option>
+                          <option value="KICK_DO">KICK_DO</option>
+                          <option value="FKICK_DO">FKICK_DO</option>
+                          <option value="VOTE_KILL" selected>VOTE_KILL</option>
+                          <option value="WOLF_EAT">WOLF_EAT</option>
+                          <option value="MAGE_DO">MAGE_DO</option>
+                          <option value="FOSI_DO">FOSI_DO</option>
+                          <option value="GUARD_DO">GUARD_DO</option>
+                          <option value="CAT_DO">CAT_DO</option>
+                        </select>
+                        <a href="${backHref}#game_top">←上一頁&amp;重新整理</a>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="table_votelist1">◆</td>
+                      <td class="table_votelist2">
+                        <div id="legacyVoteTargetList">等待狀態更新</div>
+                        <input type="radio" name="target_no" value="" disabled>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td colspan="2" class="legacy-vote-submit">
+                        <input type="submit" value="投將該員'處刑'一票" disabled>
+                        <input type="submit" value="咬下去" disabled>
+                        <input type="submit" value="占卜對象" disabled>
+                        <input type="submit" value="護衛對象" disabled>
+                        <input type="submit" value="復活對象" disabled>
+                      </td>
+                    </tr>
+                  </table>
+                </form>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>`;
+}
+
 function roomPageTitle(roomId: string, pageMode: "full" | "frame" | "up" | "vote", viewMode: "player" | "spectator" | "heaven"): string {
   if (pageMode === "frame") {
     return "汝等是人是狼？＜遊戲＞";
@@ -3886,6 +3947,7 @@ export function renderRoom(roomId: string, options: RenderRoomOptions = {}): str
           </table>
         </td>
       </tr>
+      ${legacyVoteFormShell(roomId, autoReloadSeconds)}
       <tr class="view-player-only room-panel-actions">
         <td>
           <table class="panel">
