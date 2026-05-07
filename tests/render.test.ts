@@ -607,6 +607,7 @@ describe("render", () => {
     expect(html).toContain("/trip.php?go=post");
     expect(html).toContain("/trip.php?go=edit2");
     expect(html).toContain("/trip.php?go=edit");
+    expect(html).toContain("/trip.php?go=accadd");
     expect(html).toContain("/trip.php?go=out");
     expect(html).toContain("/trip.php?go=icon");
     expect(html).toContain("registerTripButton");
@@ -621,9 +622,13 @@ describe("render", () => {
     expect(html).toContain('id="submit" name="submit" type="submit" value="送出"');
     expect(html).toContain('form name="trip" method="post" action="/trip.php?go=edit"');
     expect(html).toContain('form name="trip" method="post" action="/trip.php?go=edit2"');
+    expect(html).toContain('form name="trip" method="post" action="/trip.php?go=accadd"');
     expect(html).toContain('type="text" name="nname" size="24" value=""');
     expect(html).toContain('type="text" name="lname" size="24" value=""');
     expect(html).toContain('type="password" name="lpassword" size="24" value=""');
+    expect(html).toContain('type="text" name="aname" size="24" value=""');
+    expect(html).toContain('type="password" name="apassword" size="24" value=""');
+    expect(html).toContain('id="tripClaimLegacySubmit" name="submit" type="submit" value="送出" disabled');
     expect(html).toContain("此 Cloudflare 版本不保存舊 PHP 管理密碼");
     expect(html).toContain('name="aname"');
     expect(html).toContain("tripLookupButton");
