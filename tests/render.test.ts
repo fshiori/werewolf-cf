@@ -513,6 +513,7 @@ describe("render", () => {
   it("renders Trip lookup page", () => {
     const html = renderTripLookup();
 
+    expect(html).toContain("<title>汝等是人是狼？ - Werewolf Cloudflare Port</title>");
     expect(html).toContain("Trip查詢");
     expect(html).toContain("Trip公開資料");
     expect(html).toContain('form name="trip" action="/trip.php" method="get"');
@@ -542,6 +543,7 @@ describe("render", () => {
       }
     ]);
 
+    expect(html).toContain("<title>汝等是人是狼？ - Werewolf Cloudflare Port</title>");
     expect(html).toContain("Trip參與紀錄");
     expect(html).toContain("/trip.php?go=room&id=ab12CD");
     expect(html).toContain("/trip.php?go=room&id=ab12CD&amp;play=8");
@@ -574,6 +576,7 @@ describe("render", () => {
       }
     ]);
 
+    expect(html).toContain("<title>汝等是人是狼？ - Werewolf Cloudflare Port</title>");
     expect(html).toContain("評語");
     expect(html).toContain("/trip.php?go=trip&id=ab12CD");
     expect(html).toContain("/trip.php?go=room&id=ab12CD");
@@ -589,6 +592,7 @@ describe("render", () => {
   it("renders legacy Trip rating surface", () => {
     const html = renderTripRating("room_abc", "ab12CD");
 
+    expect(html).toContain("<title>汝等是人是狼？ - Werewolf Cloudflare Port</title>");
     expect(html).toContain("評分");
     expect(html).toContain("/trip.php?go=trip&id=ab12CD");
     expect(html).toContain("/trip.php?go=smess&id=ab12CD");
@@ -602,6 +606,7 @@ describe("render", () => {
   it("renders dedicated Trip registration page", () => {
     const html = renderTripRegistration();
 
+    expect(html).toContain("<title>汝等是人是狼？ - Werewolf Cloudflare Port</title>");
     expect(html).toContain("身份登錄");
     expect(html).toContain("Trip公開資料");
     expect(html).toContain("/trip.php?go=post");

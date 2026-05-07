@@ -2188,7 +2188,7 @@ export function renderPlayerProfile(playerId: string): string {
 }
 
 export function renderTripLookup(): string {
-  return page("Trip Lookup", shell(`
+  return page("汝等是人是狼？ - Werewolf Cloudflare Port", shell(`
     <fieldset>
       <legend><strong>Trip查詢</strong></legend>
       <form name="trip" action="/trip.php" method="get" enctype="multipart/form-data" style="margin:10px 20px;">
@@ -2258,7 +2258,7 @@ export function renderTripDetail(tripId: string, summary: TripPublicSummary): st
         </tr>
       `).join("")
     : `<tr><td colspan="2" align="center" class="muted">尚無認領玩家。</td></tr>`;
-  return page("Trip Detail", shell(`
+  return page("汝等是人是狼？ - Werewolf Cloudflare Port", shell(`
     <center>
       <strong>Trip公開資料</strong><br>
       該Trip使用 ${summary.stats.gamesPlayed} 次，已知使用玩家如下(排除重複)<br>
@@ -2311,7 +2311,7 @@ export function renderTripComments(tripId: string, scores: TripScoreSummary[] = 
       </tr>
     `).join("")
     : `<tr><td colspan="4" align="center" class="muted">沒有資料</td></tr>`;
-  return page("Trip Comments", shell(`
+  return page("汝等是人是狼？ - Werewolf Cloudflare Port", shell(`
     <center>
       <strong>評語</strong><br>
       <a href="/trip.php?go=trip&id=${escapeHtml(tripId)}">Trip公開資料</a>
@@ -2333,7 +2333,7 @@ export function renderTripComments(tripId: string, scores: TripScoreSummary[] = 
 }
 
 export function renderTripRating(roomId: string, tripId: string): string {
-  return page("Trip Rating", shell(`
+  return page("汝等是人是狼？ - Werewolf Cloudflare Port", shell(`
     <center>
       <strong>評分</strong><br>
       <a href="/trip.php?go=trip&id=${escapeHtml(tripId)}">Trip公開資料</a>
@@ -2371,7 +2371,7 @@ export function renderTripRoomRecords(tripId: string, records: TripRoomRecordSum
         </tr>
       `).join("")
     : `<tr><td colspan="6" align="center" class="muted">玩家尚未登記或無資料。</td></tr>`;
-  return page("Trip Room Records", shell(`
+  return page("汝等是人是狼？ - Werewolf Cloudflare Port", shell(`
     <center>
       <strong>Trip參與紀錄</strong><br>
       <a href="/trip.php?go=trip&id=${escapeHtml(tripId)}">Trip公開資料</a>
@@ -2400,7 +2400,7 @@ export function renderTripRoomRecords(tripId: string, records: TripRoomRecordSum
 }
 
 export function renderTripRegistration(): string {
-  return page("Trip Registration", shell(`
+  return page("汝等是人是狼？ - Werewolf Cloudflare Port", shell(`
     <p>
       <a href="/trip.php?go=post">身份登錄</a>
        <a href="/trip.php?go=edit2">修改紀錄</a>
