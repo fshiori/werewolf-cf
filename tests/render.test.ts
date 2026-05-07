@@ -53,6 +53,11 @@ describe("render", () => {
     expect(html).toContain('background-image: url("/assets/reference/img/top_bg.jpg")');
     expect(html).toContain('/assets/reference/img/top_title.jpg');
     expect(html).toContain('alt="汝等是人是狼？"');
+    expect(html).toContain("PHP4 + MYSQLスクリプト");
+    expect(html).toContain("配布ホームページ");
+    expect(html).toContain("天の欠片");
+    expect(html).toContain("網站管理者");
+    expect(html).toContain('<a href="/admin.php" style="color:blue;" target="_blank">Werewolf CF</a>');
     expect(html).toContain("遊戲列表");
     expect(html).toContain("戰績排行榜");
     expect(html).toContain("管理選單");

@@ -261,6 +261,18 @@ function shell(body: string, activeMenu?: string): string {
         </td>
         <td class="main">${body}</td>
       </tr>
+      <tr>
+        <td></td>
+        <td align="right">
+          <div style="margin-top:10px;"><small>
+            [PHP4 + MYSQLスクリプト　<a href="http://p45.aaacafe.ne.jp/~netfilms/" style="color:blue;" target="_blank">配布ホームページ</a>]
+            [写真素材　<a href="http://keppen.web.infoseek.co.jp/" style="color:blue;" target="_blank">天の欠片</a>]<br>
+            [修改 <a href="http://test.ngct.net" style="color:blue;" target="_blank">小企鵝</a> 翻譯 殿]
+            [中文化/修補　<a href="http://jinro.sbh.idv.tw" style="color:blue;" target="_blank">蜜蜂貓之家</a>]
+            [網站管理者 <a href="/admin.php" style="color:blue;" target="_blank">Werewolf CF</a>]
+          </small></div>
+        </td>
+      </tr>
     </table>
   `;
 }
