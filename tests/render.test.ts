@@ -1126,7 +1126,8 @@ describe("render", () => {
     expect(html).toContain('<option value="del">刪除</option>');
     expect(html).toContain('<option value="edit" selected>編輯</option>');
     expect(html).toContain('<option value="todige">加精華</option>');
-    expect(html).toContain('name="password"');
+    expect(html).toContain('type="password" name="password" maxlength="128" size="24" value=""');
+    expect(html).toContain('id="submit" name="submit" type="submit" value="送出"');
     expect(html).toContain("bbsAdminToken");
     expect(html).toContain("werewolf_cf_bbs_admin_token");
     expect(html).toContain("/api/bbs/topics/1/moderation");
