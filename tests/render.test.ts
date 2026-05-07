@@ -613,10 +613,10 @@ describe("render", () => {
     expect(html).toContain("claimTripButton");
     expect(html).toContain("excludeTripButton");
     expect(html).toContain("removeTripExclusionButton");
-    expect(html).toContain('action="/trip.php?go=post"');
-    expect(html).toContain('action="/trip.php?go=out"');
-    expect(html).toContain('action="/trip.php?go=edit"');
-    expect(html).toContain('action="/trip.php?go=edit2"');
+    expect(html).toContain('form name="trip" method="post" action="/trip.php?go=post"');
+    expect(html).toContain('form name="trip" method="post" action="/trip.php?go=out"');
+    expect(html).toContain('form name="trip" method="post" action="/trip.php?go=edit"');
+    expect(html).toContain('form name="trip" method="post" action="/trip.php?go=edit2"');
     expect(html).toContain('name="nname"');
     expect(html).toContain('name="lname"');
     expect(html).toContain('name="lpassword"');
@@ -989,7 +989,7 @@ describe("render", () => {
     expect(html).toContain('<td align="center" width="170">作者</td>');
     expect(html).toContain('<td align="center" width="40">回覆</td>');
     expect(html).toContain('<td align="center" width="150">最後時間</td>');
-    expect(html).toContain('action="/bbs.php?go=post"');
+    expect(html).toContain('form name="bbs" method="post" action="/bbs.php?go=post"');
     expect(html).toContain('name="bname"');
     expect(html).toContain('name="mess"');
     expect(html).toContain("[置頂] Welcome (精華)");
@@ -1094,7 +1094,7 @@ describe("render", () => {
     expect(html).toContain('Reply <a href="http://www.example.test" target="_blank">www.example.test</a><br /><b>body</b>');
     expect(html).toContain('<td class="table3">Bob</td>');
     expect(html).toContain('<td class="table2"><a href="/bbs.php?go=edit&amp;id=1">NO.1</a> &lt;..&gt; [2026-05-06 12:10:00]</td>');
-    expect(html).toContain('action="/bbs.php?go=postre"');
+    expect(html).toContain('form name="bbs" method="post" action="/bbs.php?go=postre"');
     expect(html).toContain('name="bname"');
     expect(html).toContain('name="bpass"');
     expect(html).toContain('name="mess"');
@@ -1116,7 +1116,7 @@ describe("render", () => {
     expect(html).toContain("狀態");
     expect(html).toContain('<span class="bbs-status-mark">一般</span>');
     expect(html).toContain("主題管理");
-    expect(html).toContain('action="/bbs.php?go=edit&amp;id=1"');
+    expect(html).toContain('form name="bbs" method="post" action="/bbs.php?go=edit&amp;id=1"');
     expect(html).toContain('name="editis"');
     expect(html).toContain('<option value="del">刪除</option>');
     expect(html).toContain('<option value="edit" selected>編輯</option>');

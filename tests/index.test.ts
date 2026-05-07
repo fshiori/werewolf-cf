@@ -914,10 +914,10 @@ describe("worker routes", () => {
     expect(body).toContain("registerTripButton");
     expect(body).toContain("claimTripButton");
     expect(body).toContain("excludeTripButton");
-    expect(body).toContain('action="/trip.php?go=post"');
-    expect(body).toContain('action="/trip.php?go=out"');
-    expect(body).toContain('action="/trip.php?go=edit"');
-    expect(body).toContain('action="/trip.php?go=edit2"');
+    expect(body).toContain('form name="trip" method="post" action="/trip.php?go=post"');
+    expect(body).toContain('form name="trip" method="post" action="/trip.php?go=out"');
+    expect(body).toContain('form name="trip" method="post" action="/trip.php?go=edit"');
+    expect(body).toContain('form name="trip" method="post" action="/trip.php?go=edit2"');
     expect(body).toContain('name="nname"');
     expect(body).toContain('name="lname"');
     expect(body).toContain('name="lpassword"');
@@ -2038,7 +2038,7 @@ describe("worker routes", () => {
     expect(body).toContain("/bbs.php?go=dige");
     expect(body).toContain('<table border="1" class="table1" bordercolor="#CCCCCC" align="center">');
     expect(body).toContain('<td align="center" width="150">最後時間</td>');
-    expect(body).toContain('action="/bbs.php?go=post"');
+    expect(body).toContain('form name="bbs" method="post" action="/bbs.php?go=post"');
     expect(body).toContain("[置頂] Welcome (精華)");
     expect(body).toContain("Alice◆Trip");
   });
@@ -2311,7 +2311,7 @@ describe("worker routes", () => {
     expect(body).toContain("Bob");
     expect(body).toContain('<a href="https://example.test" target="_blank">https://example.test</a>');
     expect(body).toContain('<table class="table1" style="width: 600px" align="right">');
-    expect(body).toContain('action="/bbs.php?go=postre"');
+    expect(body).toContain('form name="bbs" method="post" action="/bbs.php?go=postre"');
     expect(body).toContain('type="hidden" name="id" value="1"');
     expect(body).toContain("/api/bbs/topics/1/replies");
     expect(body).toContain("主題管理");
@@ -2369,7 +2369,7 @@ describe("worker routes", () => {
     const body = await response.text();
     expect(body).toContain("Welcome");
     expect(body).toContain("bbsModerationForm");
-    expect(body).toContain('action="/bbs.php?go=edit&amp;id=1"');
+    expect(body).toContain('form name="bbs" method="post" action="/bbs.php?go=edit&amp;id=1"');
     expect(body).toContain('name="editis"');
     expect(body).toContain("bbsTopicEditButton");
     expect(body).toContain("/api/bbs/topics/1/content");

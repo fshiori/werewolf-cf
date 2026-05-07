@@ -2424,7 +2424,7 @@ export function renderTripRegistration(): string {
           <td><input id="excludeTrip" maxlength="32" size="12"> <input id="excludeTripReason" maxlength="120" size="28"> <button id="excludeTripButton">排除紀錄</button> <button id="removeTripExclusionButton">解除排除</button> <span id="excludeTripStatus" class="muted"></span></td>
         </tr>
       </table>
-      <form method="post" action="/trip.php?go=post" enctype="multipart/form-data" style="margin:10px 20px;">
+      <form name="trip" method="post" action="/trip.php?go=post" enctype="multipart/form-data" style="margin:10px 20px;">
         <strong>舊式登錄：</strong>
         TRIP <input name="name" maxlength="32" size="16">
         密碼 <input name="password" type="password" maxlength="128" size="16">
@@ -2433,7 +2433,7 @@ export function renderTripRegistration(): string {
     </fieldset>
     <fieldset>
       <legend><strong>排除紀錄</strong></legend>
-      <form method="post" action="/trip.php?go=out" enctype="multipart/form-data" style="margin:10px 20px;">
+      <form name="trip" method="post" action="/trip.php?go=out" enctype="multipart/form-data" style="margin:10px 20px;">
         <ul>
           <li>請輸入登記之Trip，不是加密後的Trip。</li>
           <li>排除紀錄請輸入過去紀錄之玩家暱稱。</li>
@@ -2446,7 +2446,7 @@ export function renderTripRegistration(): string {
     </fieldset>
     <fieldset>
       <legend><strong>修改Trip</strong></legend>
-      <form method="post" action="/trip.php?go=edit" enctype="multipart/form-data" style="margin:10px 20px;">
+      <form name="trip" method="post" action="/trip.php?go=edit" enctype="multipart/form-data" style="margin:10px 20px;">
         <ul>
           <li>舊的TRIP <input type="text" name="name" size="24"></li>
           <li>管理密碼 <input type="password" name="password" size="24"></li>
@@ -2458,7 +2458,7 @@ export function renderTripRegistration(): string {
     </fieldset>
     <fieldset>
       <legend><strong>修改紀錄</strong></legend>
-      <form method="post" action="/trip.php?go=edit2" enctype="multipart/form-data" style="margin:10px 20px;">
+      <form name="trip" method="post" action="/trip.php?go=edit2" enctype="multipart/form-data" style="margin:10px 20px;">
         <ul>
           <li>請輸入登記之Trip，不是加密後的Trip。</li>
           <li>舊Trip請輸入加密前的，帳號密碼為過去紀錄村民註冊之密碼。</li>
@@ -2646,7 +2646,7 @@ export function renderBbs(topics: BbsTopicSummary[], options: { digestOnly?: boo
     </fieldset>
     <fieldset id="bbsPostForm">
       <legend><strong>發表主題</strong></legend>
-      <form method="post" action="/bbs.php?go=post" enctype="multipart/form-data" style="margin:10px 20px;">
+      <form name="bbs" method="post" action="/bbs.php?go=post" enctype="multipart/form-data" style="margin:10px 20px;">
         <strong>舊式發表：</strong>
         暱稱 <input name="bname" maxlength="32" size="16">
         密碼 <input name="bpass" type="password" maxlength="128" size="16">
@@ -2749,7 +2749,7 @@ export function renderBbsTopic(topic: BbsTopicSummary, replies: BbsReplySummary[
   const topicTitle = `${topic.pinned ? "[置頂] " : ""}${topic.locked ? "[鎖定] " : ""}<b>${escapeHtml(topic.title)}</b>${topic.digest ? " (精華)" : ""}`;
   const replyForm = topic.locked
     ? `<p class="muted">此主題已鎖定。</p>`
-    : `<form method="post" action="/bbs.php?go=postre" enctype="multipart/form-data" style="margin:10px 20px;">
+    : `<form name="bbs" method="post" action="/bbs.php?go=postre" enctype="multipart/form-data" style="margin:10px 20px;">
         <strong>舊式回覆：</strong>
         暱稱 <input name="bname" maxlength="32" size="16">
         密碼 <input name="bpass" type="password" maxlength="128" size="16"><br>
@@ -2793,7 +2793,7 @@ export function renderBbsTopic(topic: BbsTopicSummary, replies: BbsReplySummary[
           location.href = Number.isInteger(replyPage) && replyPage > 1 ? "${topicPath}&page=" + encodeURIComponent(String(replyPage)) : "${topicPath}";
         });
       </script>`;
-  const moderationPanel = `<form method="post" action="/bbs.php?go=edit&amp;id=${escapeHtml(String(topic.id))}" enctype="multipart/form-data" style="margin:10px 20px;">
+  const moderationPanel = `<form name="bbs" method="post" action="/bbs.php?go=edit&amp;id=${escapeHtml(String(topic.id))}" enctype="multipart/form-data" style="margin:10px 20px;">
       您對文章編號${escapeHtml(String(topic.id))}進行管理，請選擇項目<br>
       <select name="editis">
         <option value="del">刪除</option>
