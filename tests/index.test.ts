@@ -3792,6 +3792,67 @@ describe("worker routes", () => {
     expect(await missingRoom.json()).toEqual({ error: "old_log.php requires room_no" });
   });
 
+  it("applies viewer masking on legacy transcript aliases", async () => {
+    const env = envWithRooms(
+      ["room_log"],
+      { "room_status:room_log": "ended" },
+      {},
+      {},
+      {
+        room_log: [
+          {
+            id: 3,
+            room_id: "room_log",
+            player_id: "player_wolf",
+            event_type: "wolf_chat",
+            payload_json: '{"visibility":"private","nickname":"Wolf","text":"howl","phase":"night","day":2}',
+            created_at: "2026-05-06 12:03:00"
+          },
+          {
+            id: 2,
+            room_id: "room_log",
+            player_id: "player_dead",
+            event_type: "dead_chat",
+            payload_json: '{"visibility":"private","nickname":"Dead","text":"heaven","phase":"night","day":2}',
+            created_at: "2026-05-06 12:02:00"
+          },
+          {
+            id: 1,
+            room_id: "room_log",
+            player_id: null,
+            event_type: "game_started",
+            payload_json: '{"day":1,"players":4}',
+            created_at: "2026-05-06 12:01:00"
+          }
+        ]
+      }
+    );
+
+    const publicView = await worker.fetch(new Request("http://example.test/old_log.php?log_mode=on&room_no=room_log&viewer=public&heaven_talk=on"), env);
+    const publicBody = await publicView.text();
+    expect(publicView.status).toBe(200);
+    expect(publicBody).toContain("旁觀");
+    expect(publicBody).toContain("遊戲開始");
+    expect(publicBody).not.toContain("內容:howl");
+    expect(publicBody).not.toContain("內容:heaven");
+
+    const deadView = await worker.fetch(new Request("http://example.test/game_log.php?room_no=room_log&viewer=dead&heaven_talk=on"), env);
+    const deadBody = await deadView.text();
+    expect(deadView.status).toBe(200);
+    expect(deadBody).toContain("靈界");
+    expect(deadBody).toContain("heaven");
+    expect(deadBody).not.toContain("內容:howl");
+    expect(deadBody).toContain("/old_log.php?log_mode=on&amp;room_no=room_log&amp;heaven_talk=on&amp;viewer=dead");
+
+    const gmView = await worker.fetch(new Request("http://example.test/game_log.php?room_no=room_log&viewer=gm&heaven_talk=on"), env);
+    const gmBody = await gmView.text();
+    expect(gmView.status).toBe(200);
+    expect(gmBody).toContain("GM");
+    expect(gmBody).toContain("howl");
+    expect(gmBody).toContain("heaven");
+    expect(gmBody).toContain("/game_log.php?room_no=room_log&amp;log_mode=on&amp;heaven_talk=on&amp;viewer=gm");
+  });
+
   it("applies old-log heaven filters on room transcript page", async () => {
     const env = envWithRooms(
       ["room_log"],
