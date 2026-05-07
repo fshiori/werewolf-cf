@@ -1856,7 +1856,9 @@ describe("render", () => {
     expect(html).toContain("Script Info");
     expect(html).toContain('<b><a href="/script_info.php">Script Info</a></b>');
     expect(html).toContain("/assets/reference/img/script_info_bg.jpg");
-    expect(html).toContain("/assets/reference/img/script_info_title.jpg");
+    expect(html).toContain('<a href="/index.php">←返回</a><br>');
+    expect(html).toContain('<img class="title-img" src="/assets/reference/img/script_info_title.jpg" alt="Script Info"><br><br>');
+    expect(html).not.toContain('<p><img class="title-img" src="/assets/reference/img/script_info_title.jpg" alt="Script Info"></p>');
     expect(html).toContain("＜加入遊戲的系統必備條件＞");
     expect(html).toContain("支援 JavaScript、Cookie");
     expect(html).toContain("＜和其他的script差在哪裡？＞");
