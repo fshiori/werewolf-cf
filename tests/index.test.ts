@@ -1463,7 +1463,8 @@ describe("worker routes", () => {
     expect(body).toContain("/admin.php?go=config");
     expect(body).toContain("/admin.php?go=bbs");
     expect(body).toContain('action="/admin.php?go=in"');
-    expect(body).toContain('name="adpass"');
+    expect(body).toContain('name="apass"');
+    expect(body).not.toContain('name="adpass"');
     expect(body).toContain("各管理功能仍需輸入對應管理密碼");
   });
 
@@ -1471,13 +1472,26 @@ describe("worker routes", () => {
     const response = await worker.fetch(
       new Request("http://example.test/admin.php?go=in", {
         method: "POST",
-        body: new URLSearchParams({ adpass: "secret token" })
+        body: new URLSearchParams({ apass: "secret token" })
       }),
       envWithRooms([])
     );
 
     expect(response.status).toBe(303);
     expect(response.headers.get("Location")).toBe("/admin.php?go=rooms&token=secret%20token");
+  });
+
+  it("keeps accepting the older adpass admin login field", async () => {
+    const response = await worker.fetch(
+      new Request("http://example.test/admin.php?go=in", {
+        method: "POST",
+        body: new URLSearchParams({ adpass: "fallback token" })
+      }),
+      envWithRooms([])
+    );
+
+    expect(response.status).toBe(303);
+    expect(response.headers.get("Location")).toBe("/admin.php?go=rooms&token=fallback%20token");
   });
 
   it("supports the legacy admin.php logout link", async () => {

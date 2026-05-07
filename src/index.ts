@@ -870,7 +870,7 @@ function legacyBbsTopicLocation(topicId: number | string, page?: number): string
 
 async function loginLegacyAdmin(request: Request): Promise<Response> {
   const form = await request.formData();
-  const token = readFormString(form, "adpass") ?? "";
+  const token = readFormString(form, "apass") ?? readFormString(form, "adpass") ?? "";
   return new Response(null, {
     status: 303,
     headers: { Location: `/admin.php?go=rooms&token=${encodeURIComponent(token)}` }
