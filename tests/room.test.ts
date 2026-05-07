@@ -704,6 +704,86 @@ describe("RoomDurableObject", () => {
     );
   });
 
+  it("broadcasts wolf and fox lover composite night talk to lover sockets", async () => {
+    const game: GameState = {
+      roomId: "room_abc",
+      phase: "night",
+      day: 1,
+      players: [
+        { playerId: "player_wolf", nickname: "Wolf", role: "werewolf", alive: true, lover: true },
+        { playerId: "player_fox", nickname: "Fox", role: "fox", alive: true, lover: true },
+        { playerId: "player_lover", nickname: "Lover", role: "villager", alive: true, lover: true },
+        { playerId: "player_villager", nickname: "Villager", role: "villager", alive: true },
+        { playerId: "player_packmate", nickname: "Packmate", role: "big_wolf", alive: true }
+      ],
+      votes: {},
+      openVote: false,
+      commonTalkVisible: false,
+      deadRoleVisible: false,
+      wishRole: false,
+      dummyBoy: false,
+      dayMs: 180_000,
+      nightMs: 90_000,
+      selfVote: false,
+      voteStatus: false,
+      revoteCount: 0,
+      nightKills: {},
+      divinations: {},
+      guards: {},
+      catRevives: {},
+      lastWords: {},
+      log: []
+    };
+    const { room, dbRuns } = observableRoomObject(game);
+    const wolfMessages: SentMessage[] = [];
+    const foxMessages: SentMessage[] = [];
+    const loverMessages: SentMessage[] = [];
+    const villagerMessages: SentMessage[] = [];
+    const packmateMessages: SentMessage[] = [];
+    const wolfSocket = fakeSocket(wolfMessages);
+    const foxSocket = fakeSocket(foxMessages);
+    const loverSocket = fakeSocket(loverMessages);
+    const villagerSocket = fakeSocket(villagerMessages);
+    const packmateSocket = fakeSocket(packmateMessages);
+    connect(room, wolfSocket, "player_wolf", "Wolf");
+    connect(room, foxSocket, "player_fox", "Fox");
+    connect(room, loverSocket, "player_lover", "Lover");
+    connect(room, villagerSocket, "player_villager", "Villager");
+    connect(room, packmateSocket, "player_packmate", "Packmate");
+
+    await sendRaw(room, wolfSocket, JSON.stringify({ type: "wolf_chat", text: "wolf lover secret" }));
+    await sendRaw(room, foxSocket, JSON.stringify({ type: "fox_chat", text: "fox lover secret" }));
+
+    expect(wolfMessages).toContainEqual(expect.objectContaining({ type: "wolf_chat", text: "wolf lover secret" }));
+    expect(packmateMessages).toContainEqual(expect.objectContaining({ type: "wolf_chat", text: "wolf lover secret" }));
+    expect(loverMessages).toContainEqual(expect.objectContaining({ type: "wolf_chat", text: "wolf lover secret" }));
+    expect(loverMessages).toContainEqual(expect.objectContaining({ type: "fox_chat", text: "fox lover secret" }));
+    expect(foxMessages).toContainEqual(expect.objectContaining({ type: "fox_chat", text: "fox lover secret" }));
+    expect(villagerMessages).toEqual([]);
+    expect(dbRuns).toContainEqual(
+      expect.objectContaining({
+        query: expect.stringContaining("INSERT INTO room_events"),
+        binds: [
+          "room_abc",
+          "player_wolf",
+          "wolf_chat",
+          JSON.stringify({ visibility: "private", nickname: "Wolf", text: "wolf lover secret", phase: "night", day: 1, location: "night wolf lovers" })
+        ]
+      })
+    );
+    expect(dbRuns).toContainEqual(
+      expect.objectContaining({
+        query: expect.stringContaining("INSERT INTO room_events"),
+        binds: [
+          "room_abc",
+          "player_fox",
+          "fox_chat",
+          JSON.stringify({ visibility: "private", nickname: "Fox", text: "fox lover secret", phase: "night", day: 1, location: "night fox lovers" })
+        ]
+      })
+    );
+  });
+
   it("persists and echoes self talk only to the speaker", async () => {
     const game: GameState = {
       roomId: "room_abc",
