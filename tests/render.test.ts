@@ -1832,6 +1832,61 @@ describe("render", () => {
     expect(seerView).toContain("可聽見的同陣營密談");
   });
 
+  it("shows composite wolf or fox lover transcript rows to lover player views", () => {
+    const records = [
+      {
+        id: 1,
+        roomId: "room_abc",
+        result: {
+          winner: "villagers",
+          day: 3,
+          players: [
+            { playerId: "player_lover", nickname: "Lover", role: "villager", alive: true, lover: true },
+            { playerId: "player_villager", nickname: "Villager", role: "villager", alive: true },
+            { playerId: "player_wolf", nickname: "Wolf", role: "werewolf", alive: true, lover: true },
+            { playerId: "player_fox", nickname: "Fox", role: "fox", alive: true, lover: true }
+          ]
+        },
+        createdAt: "2026-05-06 12:00:00"
+      }
+    ];
+    const events = [
+      {
+        id: 1,
+        roomId: "room_abc",
+        playerId: "player_wolf",
+        eventType: "wolf_chat",
+        payload: { visibility: "private", nickname: "Wolf", text: "wolf lover message", location: "night wolf lovers", phase: "night", day: 2 },
+        createdAt: "2026-05-06 12:02:00"
+      },
+      {
+        id: 2,
+        roomId: "room_abc",
+        playerId: "player_fox",
+        eventType: "fox_chat",
+        payload: { visibility: "private", nickname: "Fox", text: "fox lover message", location: "night fox lovers", phase: "night", day: 2 },
+        createdAt: "2026-05-06 12:03:00"
+      },
+      {
+        id: 3,
+        roomId: "room_abc",
+        playerId: "player_wolf",
+        eventType: "wolf_chat",
+        payload: { visibility: "private", nickname: "Wolf", text: "pack only message", location: "night wolf", phase: "night", day: 2 },
+        createdAt: "2026-05-06 12:04:00"
+      }
+    ];
+
+    const loverView = renderRoomTranscript("room_abc", records, events, { viewerMode: "player", viewerPlayerId: "player_lover", heavenTalk: true });
+    expect(loverView).toContain("wolf lover message");
+    expect(loverView).toContain("fox lover message");
+    expect(loverView).not.toContain("pack only message");
+
+    const villagerView = renderRoomTranscript("room_abc", records, events, { viewerMode: "player", viewerPlayerId: "player_villager", heavenTalk: true });
+    expect(villagerView).not.toContain("wolf lover message");
+    expect(villagerView).not.toContain("fox lover message");
+  });
+
   it("renders room transcript reverse log controls", () => {
     const html = renderRoomTranscript(
       "room_abc",

@@ -728,15 +728,23 @@ function isWerewolfTranscriptRole(role: unknown): boolean {
   return role === "werewolf" || role === "big_wolf";
 }
 
+function isCompositeLoversTranscriptEvent(event: RoomEventSummary): boolean {
+  const value = recordValue(event.payload);
+  if (value.lovers === true || value.lover === true || value.loversChannel === true) {
+    return true;
+  }
+  return typeof value.location === "string" && value.location.includes("lovers");
+}
+
 function isViewerChannelTranscriptEvent(event: RoomEventSummary, viewerPlayer?: Record<string, unknown>): boolean {
   if (!viewerPlayer) {
     return false;
   }
   switch (event.eventType) {
     case "wolf_chat":
-      return isWerewolfTranscriptRole(viewerPlayer.role);
+      return isWerewolfTranscriptRole(viewerPlayer.role) || (viewerPlayer.lover === true && isCompositeLoversTranscriptEvent(event));
     case "fox_chat":
-      return viewerPlayer.role === "fox";
+      return viewerPlayer.role === "fox" || (viewerPlayer.lover === true && isCompositeLoversTranscriptEvent(event));
     case "common_chat":
       return viewerPlayer.role === "common";
     case "lovers_chat":
