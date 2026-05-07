@@ -4374,7 +4374,12 @@ describe("worker routes", () => {
     );
 
     expect(upload.status).toBe(200);
-    expect(await upload.json()).toEqual({ key: "avatars/player_avatar" });
+    expect(upload.headers.get("content-type")).toContain("text/html");
+    const uploadBody = await upload.text();
+    expect(uploadBody).toContain("圖像上傳結果");
+    expect(uploadBody).toContain("上傳完成");
+    expect(uploadBody).toContain("/assets/avatar/player_avatar");
+    expect(uploadBody).toContain("/icon_view.php");
 
     const download = await worker.fetch(new Request("http://example.test/assets/avatar/player_avatar"), env);
 
@@ -4465,7 +4470,10 @@ describe("worker routes", () => {
     const download = await worker.fetch(new Request("http://example.test/assets/avatar/player_avatar"), env);
 
     expect(removal.status).toBe(200);
-    expect(await removal.json()).toEqual({ removed: true });
+    expect(removal.headers.get("content-type")).toContain("text/html");
+    const removalBody = await removal.text();
+    expect(removalBody).toContain("アイコン削除完了");
+    expect(removalBody).toContain("/icon_upload.php");
     expect(download.status).toBe(404);
   });
 
