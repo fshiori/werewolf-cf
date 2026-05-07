@@ -123,6 +123,9 @@ function envWithRooms(
                   const reply = bbsReplies.find((value) => value.id === Number(values[0]) && value.topic_id === Number(values[1]));
                   return reply ? { password_hash: reply.password_hash ?? null } : null;
                 }
+                if (query.includes("FROM bbs_replies") && query.includes("WHERE id = ? LIMIT 1")) {
+                  return bbsReplies.find((reply) => reply.id === Number(values[0])) ?? null;
+                }
                 if (query.includes("FROM bbs_replies")) {
                   return bbsReplies.find((reply) => reply.id === Number(values[0]) && reply.topic_id === Number(values[1])) ?? null;
                 }
@@ -2596,6 +2599,99 @@ describe("worker routes", () => {
     const runs = (env as unknown as { runs: Array<{ query: string; values: unknown[] }> }).runs;
     expect(runs[0].query).toContain("UPDATE bbs_topics SET pinned = ?, locked = ?, digest = ?");
     expect(runs[0].values).toEqual([0, 1, 0, 1]);
+  });
+
+  it("accepts legacy BBS reply edit form posts", async () => {
+    const env = envWithRooms([], {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, new Set(), new Set(), {}, [
+      {
+        id: 1,
+        name: "Alice",
+        title: "Welcome",
+        message: "Topic body",
+        trip_hash: null,
+        reply_count: 1,
+        pinned: 0,
+        locked: 0,
+        digest: 0,
+        created_at: "2026-05-06 12:00:00",
+        updated_at: "2026-05-06 12:00:00"
+      }
+    ], [
+      {
+        id: 2,
+        topic_id: 1,
+        name: "Bob",
+        message: "Reply body",
+        trip_hash: null,
+        password_hash: await bbsPasswordHash("secret"),
+        created_at: "2026-05-06 12:10:00"
+      }
+    ]);
+    const body = new FormData();
+    body.set("editis", "editok");
+    body.set("password", "secret");
+    body.set("mess", "Edited reply from PHP form");
+
+    const response = await worker.fetch(
+      new Request("http://example.test/bbs.php?go=edit&id=2", {
+        method: "POST",
+        body
+      }),
+      env
+    );
+
+    expect(response.status).toBe(303);
+    expect(response.headers.get("Location")).toBe("/bbs/1");
+    const runs = (env as unknown as { runs: Array<{ query: string; values: unknown[] }> }).runs;
+    expect(runs[0].query).toContain("UPDATE bbs_replies SET message = ?");
+    expect(runs[0].values).toEqual(["Edited reply from PHP form", 2, 1]);
+  });
+
+  it("accepts legacy BBS reply delete form posts", async () => {
+    const env = envWithRooms([], {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, new Set(), new Set(), {}, [
+      {
+        id: 1,
+        name: "Alice",
+        title: "Welcome",
+        message: "Topic body",
+        trip_hash: null,
+        reply_count: 1,
+        pinned: 0,
+        locked: 0,
+        digest: 0,
+        created_at: "2026-05-06 12:00:00",
+        updated_at: "2026-05-06 12:00:00"
+      }
+    ], [
+      {
+        id: 2,
+        topic_id: 1,
+        name: "Bob",
+        message: "Reply body",
+        trip_hash: null,
+        password_hash: await bbsPasswordHash("secret"),
+        created_at: "2026-05-06 12:10:00"
+      }
+    ]);
+    const body = new FormData();
+    body.set("editis", "del");
+    body.set("password", "secret");
+
+    const response = await worker.fetch(
+      new Request("http://example.test/bbs.php?go=edit&id=2", {
+        method: "POST",
+        body
+      }),
+      env
+    );
+
+    expect(response.status).toBe(303);
+    expect(response.headers.get("Location")).toBe("/bbs/1");
+    const batches = (env as unknown as { batches: Array<Array<{ query: string; values: unknown[] }>> }).batches;
+    expect(batches[0][0].query).toContain("DELETE FROM bbs_replies WHERE id = ? AND topic_id = ?");
+    expect(batches[0][0].values).toEqual([2, 1]);
+    expect(batches[0][1].query).toContain("UPDATE bbs_topics SET reply_count = MAX(reply_count - 1, 0)");
+    expect(batches[0][1].values).toEqual([1]);
   });
 
   it("deletes BBS replies with the configured admin token", async () => {
