@@ -220,23 +220,23 @@ function shell(body: string): string {
           <table class="menu-box"><tr><th>選單</th></tr></table>
           <table class="menu-list">
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/">首頁</a></td></tr>
-            <tr><td><small><font color="#666666">・</font></small></td><td><a href="/list">聯合列表</a></td></tr>
-            <tr><td><small><font color="#666666">・</font></small></td><td><a href="/logs">過去紀錄</a></td></tr>
+            <tr><td><small><font color="#666666">・</font></small></td><td><a href="/list.php">聯合列表</a></td></tr>
+            <tr><td><small><font color="#666666">・</font></small></td><td><a href="/old_log.php">過去紀錄</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/leaderboard">戰績排行榜</a></td></tr>
-            <tr><td><small><font color="#666666">・</font></small></td><td><a href="/stats">勝率分析</a></td></tr>
-            <tr><td><small><font color="#666666">・</font></small></td><td><a href="/icons">頭像一覽</a></td></tr>
-            <tr><td><small><font color="#666666">・</font></small></td><td><a href="/icons#upload">頭像上傳</a></td></tr>
-            <tr><td><small><font color="#666666">・</font></small></td><td><a href="/trip">身份登錄</a></td></tr>
+            <tr><td><small><font color="#666666">・</font></small></td><td><a href="/stats.php">勝率分析</a></td></tr>
+            <tr><td><small><font color="#666666">・</font></small></td><td><a href="/icon_view.php">頭像一覽</a></td></tr>
+            <tr><td><small><font color="#666666">・</font></small></td><td><a href="/icon_upload.php">頭像上傳</a></td></tr>
+            <tr><td><small><font color="#666666">・</font></small></td><td><a href="/trip.php">身份登錄</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/trips">Trip查詢</a></td></tr>
-            <tr><td><small><font color="#666666">・</font></small></td><td><a href="/bbs">人狼討論</a></td></tr>
-            <tr><td><small><font color="#666666">・</font></small></td><td><a href="/bbs?digest=1">精華文章</a></td></tr>
+            <tr><td><small><font color="#666666">・</font></small></td><td><a href="/bbs.php">人狼討論</a></td></tr>
+            <tr><td><small><font color="#666666">・</font></small></td><td><a href="/bbs.php?go=dige">精華文章</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/status">伺服器狀態</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/admin">管理選單</a></td></tr>
-            <tr><td><small><font color="#666666">・</font></small></td><td><a href="/rules">規則</a></td></tr>
+            <tr><td><small><font color="#666666">・</font></small></td><td><a href="/rule.php">規則</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/manual">說明書</a></td></tr>
-            <tr><td><small><font color="#666666">・</font></small></td><td><a href="/script-info">Script Info</a></td></tr>
+            <tr><td><small><font color="#666666">・</font></small></td><td><a href="/script_info.php">Script Info</a></td></tr>
             <tr><td><small><font color="#666666">・</font></small></td><td><a href="/protocol">通訊協定</a></td></tr>
-            <tr><td><small><font color="#666666">・</font></small></td><td><a href="/version">版本</a></td></tr>
+            <tr><td><small><font color="#666666">・</font></small></td><td><a href="/version.php">版本</a></td></tr>
           </table>
         </td>
         <td class="main">${body}</td>
