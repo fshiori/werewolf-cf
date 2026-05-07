@@ -193,13 +193,24 @@ function adminRoomStatusFilter(value: string | null): "active" | "ended" | "all"
   return value === "ended" || value === "all" ? value : "active";
 }
 
+function readCookie(request: Request, name: string): string | undefined {
+  const cookie = request.headers.get("Cookie") ?? request.headers.get("cookie") ?? "";
+  for (const part of cookie.split(";")) {
+    const [rawKey, ...rawValue] = part.trim().split("=");
+    if (rawKey === name) {
+      return decodeURIComponent(rawValue.join("="));
+    }
+  }
+  return undefined;
+}
+
 async function requireRoomAdmin(request: Request, env: Env): Promise<Response | undefined> {
   const adminToken = await env.CONFIG.get("room_admin_token");
   if (!adminToken) {
     return json({ error: "Room admin is not configured" }, { status: 403 });
   }
   const url = new URL(request.url);
-  const provided = request.headers.get("x-room-admin-token") ?? url.searchParams.get("token") ?? "";
+  const provided = request.headers.get("x-room-admin-token") ?? url.searchParams.get("token") ?? readCookie(request, "adpass") ?? "";
   if (provided !== adminToken) {
     return json({ error: "Room admin token is invalid" }, { status: 403 });
   }
@@ -879,7 +890,10 @@ async function loginLegacyAdmin(request: Request): Promise<Response> {
   const token = readFormString(form, "apass") ?? readFormString(form, "adpass") ?? "";
   return new Response(null, {
     status: 303,
-    headers: { Location: `/admin.php?go=rooms&token=${encodeURIComponent(token)}` }
+    headers: {
+      Location: `/admin.php?go=rooms&token=${encodeURIComponent(token)}`,
+      "Set-Cookie": `adpass=${encodeURIComponent(token)}; Path=/; SameSite=Lax`
+    }
   });
 }
 
@@ -2591,7 +2605,7 @@ export default {
     }
 
     if (request.method === "GET" && url.pathname === "/admin.php" && url.searchParams.get("go") === "out") {
-      return new Response(null, { status: 303, headers: { Location: "/index.php" } });
+      return new Response(null, { status: 303, headers: { Location: "/index.php", "Set-Cookie": "adpass=; Path=/; Max-Age=0; SameSite=Lax" } });
     }
 
     if (request.method === "GET" && (url.pathname === "/admin" || (url.pathname === "/admin.php" && !url.searchParams.has("go")))) {
@@ -2616,7 +2630,7 @@ export default {
       const rooms = (await listRooms(env)).filter((room) => (
         statusFilter === "all" ? true : statusFilter === "ended" ? room.status === "ended" : room.status !== "ended"
       ));
-      return html(renderAdminRooms(rooms, statusFilter, url.searchParams.get("token") ?? ""));
+      return html(renderAdminRooms(rooms, statusFilter, url.searchParams.get("token") ?? readCookie(request, "adpass") ?? ""));
     }
 
     if (request.method === "GET" && (url.pathname === "/admin/config" || (url.pathname === "/admin.php" && url.searchParams.get("go") === "config"))) {
