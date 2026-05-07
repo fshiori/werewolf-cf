@@ -1289,7 +1289,7 @@ export function renderRoomEvents(roomId: string, events: RoomEventSummary[]): st
   const rows = events.length
     ? events.map((event) => `<tr>
         <td>${escapeHtml(event.createdAt)}</td>
-        <td>${escapeHtml(event.eventType)}</td>
+        <td>${escapeHtml(eventTypeLabel(event.eventType))}</td>
         <td>${event.playerId ? escapeHtml(event.playerId) : `<span class="muted">系統</span>`}</td>
         <td>${escapeHtml(formatEventPayload(event.payload))}</td>
       </tr>`).join("")

@@ -1412,7 +1412,8 @@ describe("render", () => {
     expect(html).toContain("村子事件履歷");
     expect(html).toContain("/game_view.php?room_no=room_abc");
     expect(html).toContain("/game_log.php?room_no=room_abc&amp;log_mode=on");
-    expect(html).toContain("game_started");
+    expect(html).toContain("遊戲開始");
+    expect(html).not.toContain(">game_started<");
     expect(html).toContain("player_a");
     expect(html).toContain("第1日");
     expect(html).toContain("4人");
