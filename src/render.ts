@@ -2448,9 +2448,9 @@ export function renderTripRegistration(): string {
       <legend><strong>修改Trip</strong></legend>
       <form name="trip" method="post" action="/trip.php?go=edit" enctype="multipart/form-data" style="margin:10px 20px;">
         <ul>
-          <li>舊的TRIP <input type="text" name="name" size="24"></li>
-          <li>管理密碼 <input type="password" name="password" size="24"></li>
-          <li>新的TRIP <input type="text" name="nname" size="24"></li>
+          <li>舊的TRIP <input type="text" name="name" size="24" value=""></li>
+          <li>管理密碼 <input type="password" name="password" size="24" value=""></li>
+          <li>新的TRIP <input type="text" name="nname" size="24" value=""></li>
           <li>此 Cloudflare 版本不保存舊 PHP 管理密碼；請使用認領身份流程綁定目前玩家。</li>
         </ul>
         <input id="tripEditSubmit" name="submit" type="submit" value="送出" disabled>
@@ -2463,10 +2463,10 @@ export function renderTripRegistration(): string {
           <li>請輸入登記之Trip，不是加密後的Trip。</li>
           <li>舊Trip請輸入加密前的，帳號密碼為過去紀錄村民註冊之密碼。</li>
           <li>過去紀錄相同的Trip與帳號與密碼將會取代Trip。</li>
-          <li>TRIP <input type="text" name="name" size="24"></li>
-          <li>密碼 <input type="password" name="password" size="24"></li>
-          <li>舊TRIP <input type="text" name="lname" size="24"></li>
-          <li>帳號密碼 <input type="password" name="lpassword" size="24"></li>
+          <li>TRIP <input type="text" name="name" size="24" value=""></li>
+          <li>密碼 <input type="password" name="password" size="24" value=""></li>
+          <li>舊TRIP <input type="text" name="lname" size="24" value=""></li>
+          <li>帳號密碼 <input type="password" name="lpassword" size="24" value=""></li>
         </ul>
         <input id="tripEditRecordSubmit" name="submit" type="submit" value="送出" disabled>
       </form>

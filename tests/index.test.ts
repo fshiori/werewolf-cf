@@ -922,8 +922,9 @@ describe("worker routes", () => {
     expect(body).toContain('id="submit" name="submit" type="submit" value="送出"');
     expect(body).toContain('form name="trip" method="post" action="/trip.php?go=edit"');
     expect(body).toContain('form name="trip" method="post" action="/trip.php?go=edit2"');
-    expect(body).toContain('name="nname"');
-    expect(body).toContain('name="lname"');
+    expect(body).toContain('type="text" name="nname" size="24" value=""');
+    expect(body).toContain('type="text" name="lname" size="24" value=""');
+    expect(body).toContain('type="password" name="lpassword" size="24" value=""');
     expect(body).toContain('name="lpassword"');
     expect(body).toContain("Trip公開資料");
     expect(body).toContain("/api/trips/lookup?trip=");
