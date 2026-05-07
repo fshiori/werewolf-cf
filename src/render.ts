@@ -1279,8 +1279,9 @@ export function renderRoomRecords(roomId: string, records: GameRecordSummary[]):
     : `<tr><td colspan="2" class="muted">尚無對局紀錄。</td></tr>`;
 
   return page(`Room ${roomId} Records`, shell(`
-    <fieldset>
+    <fieldset style="background-image:url('/assets/reference/img/old_log_bg.jpg'); background-repeat:no-repeat; background-position:100% 100%; background-attachment:fixed;">
       <legend><strong>村子對局紀錄</strong></legend>
+      <img class="title-img" src="/assets/reference/img/old_log_title.jpg" alt="過去紀錄"><br>
       <table class="form-table">
         <tr><td><strong>　村子：</strong></td><td><a href="/game_view.php?room_no=${encodeURIComponent(roomId)}">${escapeHtml(roomId)}</a></td></tr>
         <tr><td><strong>　紀錄：</strong></td><td><a href="/game_log.php?room_no=${encodeURIComponent(roomId)}&amp;log_mode=on">村子完整紀錄</a></td></tr>
@@ -1304,8 +1305,9 @@ export function renderRoomEvents(roomId: string, events: RoomEventSummary[]): st
     : `<tr><td colspan="4" class="muted">尚無事件。</td></tr>`;
 
   return page(`Room ${roomId} Events`, shell(`
-    <fieldset>
+    <fieldset style="background-image:url('/assets/reference/img/old_log_bg.jpg'); background-repeat:no-repeat; background-position:100% 100%; background-attachment:fixed;">
       <legend><strong>村子事件履歷</strong></legend>
+      <img class="title-img" src="/assets/reference/img/old_log_title.jpg" alt="過去紀錄"><br>
       <table class="form-table">
         <tr><td><strong>　村子：</strong></td><td><a href="/game_view.php?room_no=${encodeURIComponent(roomId)}">${escapeHtml(roomId)}</a></td></tr>
         <tr><td><strong>　紀錄：</strong></td><td><a href="/game_log.php?room_no=${encodeURIComponent(roomId)}&amp;log_mode=on">村子完整紀錄</a></td></tr>
