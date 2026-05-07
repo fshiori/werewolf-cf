@@ -3167,6 +3167,18 @@ export function renderRoom(roomId: string, options: RenderRoomOptions = {}): str
                   <option value="child_fox">子狐</option>
                   <option value="cat">貓又</option>
                 </select>
+                <div class="muted" style="margin-top:3px;">
+                  <img class="title-img" src="/assets/reference/img/user_regist_role_none.gif" alt="無">無
+                  <img class="title-img" src="/assets/reference/img/user_regist_role_human.gif" alt="村民">村民
+                  <img class="title-img" src="/assets/reference/img/user_regist_role_wolf.gif" alt="人狼">人狼
+                  <img class="title-img" src="/assets/reference/img/user_regist_role_mage.gif" alt="占卜師">占卜師
+                  <img class="title-img" src="/assets/reference/img/user_regist_role_necromancer.gif" alt="靈能者">靈能者
+                  <img class="title-img" src="/assets/reference/img/user_regist_role_mad.gif" alt="狂人">狂人
+                  <img class="title-img" src="/assets/reference/img/user_regist_role_guard.gif" alt="獵人">獵人
+                  <img class="title-img" src="/assets/reference/img/user_regist_role_common.gif" alt="共有者">共有者
+                  <img class="title-img" src="/assets/reference/img/user_regist_role_fox.gif" alt="妖狐">妖狐
+                  <img class="title-img" src="/assets/reference/img/user_regist_role_betr.gif" alt="背德者">背德者
+                </div>
               </td>
             </tr>
             <tr class="view-player-only">
