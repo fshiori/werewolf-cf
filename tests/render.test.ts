@@ -705,18 +705,18 @@ describe("render", () => {
         createdAt: "2026-05-06 12:00:00",
         options: {
           poison: true,
-          bigWolf: false,
+          bigWolf: true,
           authority: true,
           decider: true,
-          lovers: false,
-          betrayer: false,
+          lovers: true,
+          betrayer: true,
           childFox: false,
           twoFoxes: false,
           cat: false,
           lastWords: false,
           openVote: true,
-          commonTalkVisible: false,
-          deadRoleVisible: false,
+          commonTalkVisible: true,
+          deadRoleVisible: true,
           wishRole: true,
           dummyBoy: true,
           customDummy: true,
@@ -733,6 +733,7 @@ describe("render", () => {
 
     expect(html).toContain("過去紀錄");
     expect(html).toContain("村No");
+    expect(html).toContain('<th colspan="12" class="column">選項</th>');
     expect(html).toContain("/assets/reference/img/old_log_bg.jpg");
     expect(html).toContain("/assets/reference/img/old_log_title.jpg");
     expect(html).toContain('form name="old_log" action="/old_log.php" method="get"');
@@ -753,6 +754,12 @@ describe("render", () => {
     expect(html).toContain("/assets/reference/img/room_option_dummy_boy.gif");
     expect(html).toContain("/assets/reference/img/room_option_decide.gif");
     expect(html).toContain("/assets/reference/img/room_option_authority.gif");
+    expect(html).toContain("/assets/reference/img/room_option_wfbig.gif");
+    expect(html).toContain("/assets/reference/img/room_option_betr.gif");
+    expect(html).toContain("/assets/reference/img/rei.gif");
+    expect(html).toContain("/assets/reference/img/conn_look.gif");
+    expect(html).toContain("/assets/reference/img/room_option_lovers.gif");
+    expect((html.match(/<td class="row old-log-option-cell">/g) ?? []).length).toBe(12);
     expect(html).toContain('<a href="/old_log.php">過去紀錄</a>');
   });
 
@@ -761,6 +768,7 @@ describe("render", () => {
 
     expect(html).toContain("搜尋");
     expect(html).toContain('value="Alpha &amp; Beta"');
+    expect(html).toContain('<td colspan="17" class="muted">沒有遊戲紀錄</td>');
   });
 
   it("renders BBS as a normal HTML page", () => {

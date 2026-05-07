@@ -123,6 +123,9 @@ function page(title: string, body: string, extraHead = ""): string {
     .health-error { border-color: #cc0000; background: #ffe6e6; color: #cc0000; }
     .health-idle { border-color: #666666; background: #eeeeee; color: #333333; }
     .ref-icon { width: 16px; height: 16px; border: 0; vertical-align: text-bottom; margin-right: 2px; }
+    .old-log-option-cell { width: 16px; text-align: center; vertical-align: middle; padding: 0; }
+    .old-log-option-cell .option-mark { border: 0; background: transparent; font-size: 0; padding: 0; margin: 0; }
+    .old-log-option-cell .ref-icon { margin-right: 0; vertical-align: middle; }
     .form-table td { padding: 4px 2px; vertical-align: top; }
     .game-shell { width: 800px; margin: 8px auto 18px; }
     .game-shell > tbody > tr > td { padding: 0 0 8px; }
@@ -720,6 +723,10 @@ function optionMark(label: string, iconPath?: string): string {
   return `<span class="option-mark">${iconPath ? referenceAssetImg(iconPath, label) : ""}${escapeHtml(label)}</span>`;
 }
 
+function optionCell(mark: string): string {
+  return `<td class="row old-log-option-cell">${mark || "<br>"}</td>`;
+}
+
 function channelRestrictionOptionMark(room: RoomSummary): string {
   const restrictions = room.options.channelRestrictions;
   if (!restrictions || !(restrictions.wolf || restrictions.common || restrictions.lovers || restrictions.fox)) {
@@ -832,26 +839,32 @@ export function renderOldLogs(rooms: RoomSummary[], options: { search?: string; 
       const roomUrl = `/old_log.php?log_mode=on&room_no=${encodeURIComponent(room.id)}`;
       const winner = options.winners?.[room.id];
       const winnerMark = winner ? referenceAssetImg(winnerIconPath(winner), `${winnerLabel(winner)}勝利`) : "-";
-      const optionMarks = [
+      const poisonMark = room.options.poison
+        ? optionMark("埋毒", "img/room_option_poison.gif")
+        : room.options.cat
+          ? optionMark("貓又", "img/room_option_cat.gif")
+          : "";
+      const foxSideMark = room.options.betrayer
+        ? optionMark("背德", "img/room_option_betr.gif")
+        : room.options.childFox
+          ? optionMark("子狐", "img/room_option_fosi.gif")
+          : room.options.twoFoxes
+            ? optionMark("雙狐", "img/room_option_foxs.gif")
+            : "";
+      const optionCells = [
         room.options.wishRole ? optionMark("希望", "img/room_option_wish_role.gif") : "",
         room.options.realTime ? optionMark("限時", "img/room_option_real_time.gif") : "",
-        room.options.dummyBoy ? optionMark("替身", "img/room_option_dummy_boy.gif") : "",
-        room.options.customDummy ? optionMark("自訂替身", "img/room_option_dummy_boy.gif") : "",
-        room.options.poison ? optionMark("埋毒", "img/room_option_poison.gif") : "",
-        room.options.bigWolf ? optionMark("大狼", "img/room_option_wfbig.gif") : "",
+        room.options.dummyBoy || room.options.customDummy ? optionMark("替身", "img/room_option_dummy_boy.gif") : "",
+        room.options.openVote ? optionMark("公開票", "img/room_option_open_vote.gif") : "",
         room.options.decider ? optionMark("決定", "img/room_option_decide.gif") : "",
         room.options.authority ? optionMark("權力", "img/room_option_authority.gif") : "",
-        room.options.lovers ? optionMark("戀人", "img/room_option_lovers.gif") : "",
-        room.options.betrayer ? optionMark("背德", "img/room_option_betr.gif") : "",
-        room.options.childFox ? optionMark("子狐", "img/room_option_fosi.gif") : "",
-        room.options.twoFoxes ? optionMark("雙狐", "img/room_option_foxs.gif") : "",
-        room.options.cat ? optionMark("貓又", "img/room_option_cat.gif") : "",
-        room.options.deadRoleVisible ? optionMark("靈視", "img/room_option_rei.gif") : "",
-        room.options.openVote ? optionMark("公開票", "img/room_option_open_vote.gif") : "",
-        room.options.commonTalkVisible ? optionMark("共有聲", "img/room_option_common.gif") : "",
-        channelRestrictionOptionMark(room),
-        room.options.voteStatus ? optionMark("投票済", "img/conn_look.gif") : ""
-      ].filter(Boolean).join(" ");
+        poisonMark,
+        room.options.bigWolf ? optionMark("大狼", "img/room_option_wfbig.gif") : "",
+        foxSideMark,
+        room.options.deadRoleVisible ? optionMark("靈視", "img/rei.gif") : "",
+        room.options.commonTalkVisible ? optionMark("共有聲", "img/conn_look.gif") : "",
+        room.options.lovers ? optionMark("戀人", "img/room_option_lovers.gif") : ""
+      ].map(optionCell).join("");
       return `<tr>
         <td align="right" class="row">${escapeHtml(room.id)}</td>
         <td align="right" class="row">
@@ -865,10 +878,10 @@ export function renderOldLogs(rooms: RoomSummary[], options: { search?: string; 
         <td align="right" class="row"><small>${escapeHtml(room.createdAt)}</small></td>
         <td align="right" class="row">${maxPlayersMark(room.maxPlayers)}</td>
         <td align="center" class="row">${winnerMark}</td>
-        <td class="row">${optionMarks || "<br>"}</td>
+        ${optionCells}
       </tr>`;
     }).join("")
-    : `<tr><td colspan="6" class="muted">沒有遊戲紀錄</td></tr>`;
+    : `<tr><td colspan="17" class="muted">沒有遊戲紀錄</td></tr>`;
 
   return page("Old Logs", shell(`
     <fieldset style="background-image:url('/assets/reference/img/old_log_bg.jpg'); background-repeat:no-repeat; background-position:100% 100%; background-attachment:fixed;">
@@ -882,7 +895,7 @@ export function renderOldLogs(rooms: RoomSummary[], options: { search?: string; 
         </form>
       </div>
       <table class="form-table" border="1" cellspacing="1" bgcolor="#CCCCCC" style="margin:12px auto 18px;">
-        <thead><tr><th class="column">村No</th><th class="column">村名</th><th class="column">結束時間</th><th class="column">人數</th><th class="column">勝</th><th class="column">選項</th></tr></thead>
+        <thead><tr><th class="column">村No</th><th class="column">村名</th><th class="column">結束時間</th><th class="column">人數</th><th class="column">勝</th><th colspan="12" class="column">選項</th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
     </fieldset>
