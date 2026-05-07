@@ -618,6 +618,12 @@ describe("render", () => {
     expect(ROOM_CLIENT_SCRIPT).toContain('"已行動 " + votedPlayerIds.size + "。"');
     expect(ROOM_CLIENT_SCRIPT).toContain('if (!game.openVote || !Object.keys(voteSummary).length) return;');
     expect(ROOM_CLIENT_SCRIPT).toContain("updateVoteObserverPanel(game, currentPlayer, currentPlayerDead, voteSummary, votedPlayerIds);");
+    expect(ROOM_CLIENT_SCRIPT).toContain("function updateLegacyVoteTargetList(game, currentPlayer, currentPlayerAlive, currentPlayerId, canManageLobby, canUsePlayerAction)");
+    expect(ROOM_CLIENT_SCRIPT).toContain('document.querySelector("#legacyVoteTargetList")');
+    expect(ROOM_CLIENT_SCRIPT).toContain("legacyTargetCommand(game, currentPlayer, currentPlayerAlive, currentPlayerId, canManageLobby, canUsePlayerAction, player)");
+    expect(ROOM_CLIENT_SCRIPT).toContain("updateLegacyVoteTargetList(game, currentPlayer, currentPlayerAlive, currentPlayerId, canManageLobby, canUsePlayerAction);");
+    expect(ROOM_CLIENT_SCRIPT).toContain('radio.name = "target_no";');
+    expect(ROOM_CLIENT_SCRIPT).toContain('button.addEventListener("click", () => {');
     expect(ROOM_CLIENT_SCRIPT).toContain('table.className = "vote-table";');
     expect(ROOM_CLIENT_SCRIPT).toContain('headingCell.textContent = phaseLabel(game);');
     expect(ROOM_CLIENT_SCRIPT).toContain('"投票給 " + (targetTotals[targetId] || 0) + " 票 →"');
