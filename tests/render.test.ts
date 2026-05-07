@@ -419,6 +419,9 @@ describe("render", () => {
     expect(ROOM_CLIENT_SCRIPT).toContain("game.revoteCount");
     expect(ROOM_CLIENT_SCRIPT).toContain("function setRoomPhaseClass(phase)");
     expect(ROOM_CLIENT_SCRIPT).toContain('document.body.classList.add("room-phase-" + phase);');
+    expect(ROOM_CLIENT_SCRIPT).toContain("function phaseLabel(game)");
+    expect(ROOM_CLIENT_SCRIPT).toContain('" 日目 <small>(生存者" + aliveCount + "人)</small>"');
+    expect(ROOM_CLIENT_SCRIPT).toContain('document.querySelector("#phase").innerHTML = phaseLabel(game);');
     expect(ROOM_CLIENT_SCRIPT).toContain("currentPlayerAlive");
     expect(ROOM_CLIENT_SCRIPT).toContain("currentPlayerDead");
     expect(ROOM_CLIENT_SCRIPT).toContain("voteSummary");
