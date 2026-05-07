@@ -163,6 +163,17 @@ describe("render", () => {
     expect(html).toContain("自訂替身君名稱及遺言");
     expect(html).toContain("允許玩家白天投票給自己");
     expect(html).toContain("已投票玩家以特殊底色顯示");
+    expect(html).toContain("/assets/reference/img/room_option_poison.gif");
+    expect(html).toContain("/assets/reference/img/room_option_authority.gif");
+    expect(html).toContain("/assets/reference/img/room_option_decide.gif");
+    expect(html).toContain("/assets/reference/img/room_option_betr.gif");
+    expect(html).toContain("/assets/reference/img/room_option_cat.gif");
+    expect(html).toContain("/assets/reference/img/room_option_will.gif");
+    expect(html).toContain("/assets/reference/img/room_option_open_vote.gif");
+    expect(html).toContain("/assets/reference/img/room_option_common.gif");
+    expect(html).toContain("/assets/reference/img/room_option_wish_role.gif");
+    expect(html).toContain("/assets/reference/img/room_option_gm.gif");
+    expect(html).toContain("/assets/reference/img/room_option_voteme.gif");
     expect(html).toContain("JSON.stringify({ name, comment, maxPlayers, playerId:");
     expect(html).toContain("options: { poison, bigWolf, authority, decider, lovers, betrayer, childFox, twoFoxes, cat, lastWords, openVote, commonTalkVisible, deadRoleVisible, wishRole, tripRequired, gmEnabled, gmTrip, dummyBoy, customDummy, dummyName, dummyLastWords, realTime, dayMinutes, nightMinutes, selfVote, voteStatus }");
     expect(html).toContain("埋毒");
