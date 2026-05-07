@@ -245,6 +245,8 @@ describe("render", () => {
     expect(html).toContain(".player-name { padding-left: 5px; max-width: 96px; overflow-wrap: anywhere; word-break: break-word; }");
     expect(html).toContain("#chatLog div, #gameLog div { border-top: 1px dashed silver; padding: 2px 4px; overflow-wrap: anywhere; word-break: break-word; }");
     expect(html).toContain("#lastWordsLog div { border-top: 1px dotted silver; padding: 2px 4px; overflow-wrap: anywhere; word-break: break-word; }");
+    expect(html).toContain("#lastWordsLog .last-words-heading td { background-color: #ccddff; color: black; font-weight: bold; }");
+    expect(html).toContain("#lastWordsLog .last-words-row { background-color: #eeeeff; color: black; }");
     expect(html).toContain("body.room-phase-night .player-card.voted { background: #004000; color: snow; }");
     expect(html).toContain("body.room-phase-night .player-card.voted a { color: #ccffff; }");
     expect(html).toContain("Trip");
@@ -497,6 +499,9 @@ describe("render", () => {
     expect(ROOM_CLIENT_SCRIPT).toContain("function renderLastWordsPanel(game)");
     expect(ROOM_CLIENT_SCRIPT).toContain('line.includes(" 的遺言：")');
     expect(ROOM_CLIENT_SCRIPT).toContain("尚無公開遺言。");
+    expect(ROOM_CLIENT_SCRIPT).toContain("・早上發現死者的遺書");
+    expect(ROOM_CLIENT_SCRIPT).toContain('const separator = " 的遺言：";');
+    expect(ROOM_CLIENT_SCRIPT).toContain('nameCell.textContent = line.slice(0, separatorIndex) + " 的遺言";');
     expect(ROOM_CLIENT_SCRIPT).toContain("self_talk");
     expect(ROOM_CLIENT_SCRIPT).toContain("#sendSelfTalk");
     expect(ROOM_CLIENT_SCRIPT).toContain("[自言自語]");
