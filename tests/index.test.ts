@@ -751,6 +751,17 @@ describe("worker routes", () => {
     expect(runs[0].values[1]).toBe("Blocked nickname");
   });
 
+  it("renders the legacy Trip icon upload alias", async () => {
+    const response = await worker.fetch(new Request("http://example.test/trip.php?go=icon"), envWithRooms([]));
+
+    expect(response.status).toBe(200);
+    const body = await response.text();
+    expect(body).toContain("頭像一覽");
+    expect(body).toContain("上傳頭像");
+    expect(body).toContain("/assets/reference/img/icon_upload_title.jpg");
+    expect(body).toContain("iconUploadButton");
+  });
+
   it("removes Trip exclusions", async () => {
     const env = envWithRooms([]);
     const response = await worker.fetch(
