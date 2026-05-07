@@ -353,6 +353,7 @@ describe("render", () => {
     expect(ROOM_CLIENT_SCRIPT).toContain("請選擇要占卜的對象");
     expect(ROOM_CLIENT_SCRIPT).toContain("請選擇護衛的人");
     expect(ROOM_CLIENT_SCRIPT).toContain("請選擇投票處死的對象");
+    expect(ROOM_CLIENT_SCRIPT).toContain("お前はもう死んでいる・・・");
   });
 
   it("renders room page meta refresh for PHP-style auto reload", () => {
