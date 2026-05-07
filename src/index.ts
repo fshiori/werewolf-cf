@@ -934,7 +934,12 @@ async function getLegacyTripDetail(env: Env, tripValue: string): Promise<Respons
   }
 }
 
-async function listTripRoomRecords(env: Env, tripValue: string): Promise<TripRoomRecordSummary[]> {
+function tripRoomCapacityFilter(value: string | null): number | undefined {
+  const parsed = Number.parseInt(value ?? "", 10);
+  return [8, 16, 22, 30].includes(parsed) ? parsed : undefined;
+}
+
+async function listTripRoomRecords(env: Env, tripValue: string, maxPlayers?: number): Promise<TripRoomRecordSummary[]> {
   const trip = validateTrip(tripValue);
   const tripHash = await registeredTripHash(trip);
   const players = await env.DB.prepare("SELECT id FROM players WHERE registered_trip_hash = ? ORDER BY id LIMIT 50")
@@ -946,10 +951,12 @@ async function listTripRoomRecords(env: Env, tripValue: string): Promise<TripRoo
   }
   const predicates = playerIds.map(() => "result_json LIKE ?").join(" OR ");
   const patterns = playerIds.map((id) => `%"playerId":"${id}"%`);
+  const capacityJoin = maxPlayers ? "JOIN rooms ON rooms.id = game_records.room_id" : "";
+  const capacityPredicate = maxPlayers ? " AND rooms.max_user = ?" : "";
   const result = await env.DB.prepare(
-    `SELECT id, room_id, result_json, created_at FROM game_records WHERE ${predicates} ORDER BY created_at DESC LIMIT 50`
+    `SELECT game_records.id, game_records.room_id, game_records.result_json, game_records.created_at FROM game_records ${capacityJoin} WHERE (${predicates})${capacityPredicate} ORDER BY game_records.created_at DESC LIMIT 50`
   )
-    .bind(...patterns)
+    .bind(...patterns, ...(maxPlayers ? [maxPlayers] : []))
     .all<{ id: number; room_id: string; result_json: string; created_at: string }>();
   return result.results.flatMap((record) => {
     const parsed = parseRecordResult(record.result_json);
@@ -972,9 +979,9 @@ async function listTripRoomRecords(env: Env, tripValue: string): Promise<TripRoo
   });
 }
 
-async function getLegacyTripRoomRecords(env: Env, tripValue: string): Promise<Response> {
+async function getLegacyTripRoomRecords(env: Env, tripValue: string, playValue: string | null): Promise<Response> {
   try {
-    return html(renderTripRoomRecords(validateTrip(tripValue), await listTripRoomRecords(env, tripValue)));
+    return html(renderTripRoomRecords(validateTrip(tripValue), await listTripRoomRecords(env, tripValue, tripRoomCapacityFilter(playValue))));
   } catch (error) {
     return json({ error: error instanceof Error ? error.message : "Invalid Trip records" }, { status: 400 });
   }
@@ -2194,7 +2201,7 @@ export default {
         return getLegacyTripDetail(env, url.searchParams.get("id") ?? "");
       }
       if (url.pathname === "/trip.php" && url.searchParams.get("go") === "room" && url.searchParams.get("id")) {
-        return getLegacyTripRoomRecords(env, url.searchParams.get("id") ?? "");
+        return getLegacyTripRoomRecords(env, url.searchParams.get("id") ?? "", url.searchParams.get("play"));
       }
       if (url.pathname === "/trip.php" && url.searchParams.get("go") === "icon") {
         return html(renderIconCatalog());
