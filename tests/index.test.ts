@@ -3046,6 +3046,8 @@ describe("worker routes", () => {
     expect(body).toContain("werewolf_cf_default_icon");
     expect(body).toContain("上傳頭像");
     expect(body).toContain("iconUploadButton");
+    expect(body).toContain('action="/upload.php"');
+    expect(body).toContain('action="/upload2.php"');
     expect(body).toContain("/api/assets/avatar");
   });
 
