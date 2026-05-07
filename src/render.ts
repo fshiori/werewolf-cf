@@ -2980,8 +2980,14 @@ export function renderVersion(): string {
 
 export function renderScriptInfo(): string {
   return page("Script Info", shell(`
-    <fieldset>
+    <fieldset style="background-image:url('/assets/reference/img/script_info_bg.jpg'); background-repeat:no-repeat; background-position:100% 100%; background-attachment:fixed;">
       <legend><strong>Script Info</strong></legend>
+      <p><img class="title-img" src="/assets/reference/img/script_info_title.jpg" alt="Script Info"></p>
+      <table border="0" style="margin-bottom:12px;">
+        <tr><td bgcolor="#aaeeaa"><strong style="font-size:15pt;">＜加入遊戲的系統必備條件＞</strong></td></tr>
+        <tr><td>為了加入遊戲您必須支援 JavaScript、Cookie，並讓電腦時鐘準時。建議畫面解析度 1024x768 以上。</td></tr>
+        <tr><td bgcolor="#aaeeaa"><strong style="font-size:15pt;">＜和其他的script差在哪裡？＞</strong></td></tr>
+      </table>
       <table class="form-table">
         <tr><td><strong>　Project：</strong></td><td>Werewolf Cloudflare Port</td></tr>
         <tr><td><strong>　Reference：</strong></td><td><code>ref/diam1.3.61.kz_Build0912/script_info.php</code></td></tr>

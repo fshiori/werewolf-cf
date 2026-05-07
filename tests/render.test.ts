@@ -1708,6 +1708,11 @@ describe("render", () => {
     const html = renderScriptInfo();
 
     expect(html).toContain("Script Info");
+    expect(html).toContain("/assets/reference/img/script_info_bg.jpg");
+    expect(html).toContain("/assets/reference/img/script_info_title.jpg");
+    expect(html).toContain("＜加入遊戲的系統必備條件＞");
+    expect(html).toContain("支援 JavaScript、Cookie");
+    expect(html).toContain("＜和其他的script差在哪裡？＞");
     expect(html).toContain("ref/diam1.3.61.kz_Build0912/script_info.php");
     expect(html).toContain("時間設定");
     expect(html).toContain("60秒沉默後推進1時間");

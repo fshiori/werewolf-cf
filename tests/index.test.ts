@@ -1276,6 +1276,8 @@ describe("worker routes", () => {
     expect(response.status).toBe(200);
     const body = await response.text();
     expect(body).toContain("Script Info");
+    expect(body).toContain("/assets/reference/img/script_info_title.jpg");
+    expect(body).toContain("＜加入遊戲的系統必備條件＞");
     expect(body).toContain("時間設定");
     expect(body).toContain("突然死警告");
   });
