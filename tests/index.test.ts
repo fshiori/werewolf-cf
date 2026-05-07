@@ -3745,6 +3745,25 @@ describe("worker routes", () => {
     expect(body).not.toContain("<b>Runtime notice</b>");
   });
 
+  it("serves legacy announcement.txt from KV config", async () => {
+    const response = await worker.fetch(
+      new Request("http://example.test/announcement.txt"),
+      envWithRooms([], { home_announcement: "Runtime notice" })
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toContain("text/plain");
+    expect(await response.text()).toBe("Runtime notice\n");
+  });
+
+  it("serves default legacy announcement.txt when KV is absent", async () => {
+    const response = await worker.fetch(new Request("http://example.test/announcement.txt"), envWithRooms([]));
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toContain("text/plain");
+    expect(await response.text()).toContain("目前支援建立村子");
+  });
+
   it("renders maintenance mode on home from KV config", async () => {
     const response = await worker.fetch(
       new Request("http://example.test/"),

@@ -1,4 +1,4 @@
-import { renderAdminConfig, renderAdminConfigLogin, renderAdminIndex, renderAdminRooms, renderAdminRoomsLogin, renderBbs, renderBbsAdmin, renderBbsTopic, renderFederatedList, renderHome, renderIconCatalog, renderLeaderboard, renderManual, renderOldLogs, renderPlayerProfile, renderProtocol, renderRoom, renderRoomEvents, renderRoomRecords, renderRoomTranscript, renderRules, renderScriptInfo, renderStatus, renderTripComments, renderTripDetail, renderTripRating, renderTripRegistration, renderTripLookup, renderTripRoomRecords, renderVersion, renderWinRateAnalysis } from "./render";
+import { DEFAULT_ANNOUNCEMENT, renderAdminConfig, renderAdminConfigLogin, renderAdminIndex, renderAdminRooms, renderAdminRoomsLogin, renderBbs, renderBbsAdmin, renderBbsTopic, renderFederatedList, renderHome, renderIconCatalog, renderLeaderboard, renderManual, renderOldLogs, renderPlayerProfile, renderProtocol, renderRoom, renderRoomEvents, renderRoomRecords, renderRoomTranscript, renderRules, renderScriptInfo, renderStatus, renderTripComments, renderTripDetail, renderTripRating, renderTripRegistration, renderTripLookup, renderTripRoomRecords, renderVersion, renderWinRateAnalysis } from "./render";
 import { RoomDurableObject } from "./room";
 import { ROOM_CLIENT_SCRIPT } from "./room-client";
 import { DEFAULT_DAY_MINUTES, DEFAULT_NIGHT_MINUTES } from "./game";
@@ -557,6 +557,10 @@ async function getRoomStatusValue(env: Env, roomId: string): Promise<string | un
 async function getHomeAnnouncement(env: Env): Promise<string | undefined> {
   const announcement = await env.CONFIG.get("home_announcement");
   return announcement?.trim() || undefined;
+}
+
+async function getAnnouncementText(env: Env): Promise<Response> {
+  return text(`${(await getHomeAnnouncement(env)) ?? DEFAULT_ANNOUNCEMENT}\n`);
 }
 
 async function isMaintenanceMode(env: Env): Promise<boolean> {
@@ -2195,6 +2199,10 @@ export default {
     if (request.method === "GET" && (url.pathname === "/" || url.pathname === "/index.php" || url.pathname === "/room_manager.php")) {
       const [rooms, announcement, maintenanceMode] = await Promise.all([listRooms(env), getHomeAnnouncement(env), isMaintenanceMode(env)]);
       return html(renderHome(rooms, announcement, maintenanceMode));
+    }
+
+    if (request.method === "GET" && url.pathname === "/announcement.txt") {
+      return getAnnouncementText(env);
     }
 
     if (request.method === "GET" && url.pathname === "/api/rooms") {
