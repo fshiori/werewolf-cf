@@ -1687,6 +1687,22 @@ describe("worker routes", () => {
     expect(body).toContain("/admin.php?go=del&amp;id=room_admin&amp;token=secret%20cookie");
   });
 
+  it("renders the legacy admin.php room list when the adpass cookie is present", async () => {
+    const response = await worker.fetch(
+      new Request("http://example.test/admin.php", {
+        headers: { Cookie: "adpass=secret%20cookie" }
+      }),
+      envWithRooms(["room_admin"], { room_admin_token: "secret cookie" })
+    );
+
+    expect(response.status).toBe(200);
+    const body = await response.text();
+    expect(body).toContain("請選擇要廢除的村");
+    expect(body).toContain("room_admin");
+    expect(body).toContain("/admin.php?go=del&amp;id=room_admin&amp;token=secret%20cookie");
+    expect(body).not.toContain("<legend><strong>管理選單</strong></legend>");
+  });
+
   it("renders active rooms on the room admin page with a valid token", async () => {
     const response = await worker.fetch(
       new Request("http://example.test/admin/rooms?token=secret"),

@@ -1395,6 +1395,19 @@ async function endRoomByLegacyAdminLink(request: Request, env: Env, roomIdParam:
   }
 }
 
+async function renderAdminRoomsPage(request: Request, env: Env): Promise<Response> {
+  const url = new URL(request.url);
+  const authError = await requireRoomAdmin(request, env);
+  if (authError) {
+    return html(renderAdminRoomsLogin());
+  }
+  const statusFilter = adminRoomStatusFilter(url.searchParams.get("status"));
+  const rooms = (await listRooms(env)).filter((room) => (
+    statusFilter === "all" ? true : statusFilter === "ended" ? room.status === "ended" : room.status !== "ended"
+  ));
+  return html(renderAdminRooms(rooms, statusFilter, url.searchParams.get("token") ?? readCookie(request, "adpass") ?? ""));
+}
+
 async function getBbsTopic(env: Env, topicIdParam: string): Promise<Response> {
   try {
     const topicId = validateBbsTopicId(topicIdParam);
@@ -2608,6 +2621,10 @@ export default {
       return new Response(null, { status: 303, headers: { Location: "/index.php", "Set-Cookie": "adpass=; Path=/; Max-Age=0; SameSite=Lax" } });
     }
 
+    if (request.method === "GET" && url.pathname === "/admin.php" && !url.searchParams.has("go") && readCookie(request, "adpass")) {
+      return renderAdminRoomsPage(request, env);
+    }
+
     if (request.method === "GET" && (url.pathname === "/admin" || (url.pathname === "/admin.php" && !url.searchParams.has("go")))) {
       return html(renderAdminIndex());
     }
@@ -2622,15 +2639,7 @@ export default {
     }
 
     if (request.method === "GET" && (url.pathname === "/admin/rooms" || (url.pathname === "/admin.php" && url.searchParams.get("go") === "rooms"))) {
-      const authError = await requireRoomAdmin(request, env);
-      if (authError) {
-        return html(renderAdminRoomsLogin());
-      }
-      const statusFilter = adminRoomStatusFilter(url.searchParams.get("status"));
-      const rooms = (await listRooms(env)).filter((room) => (
-        statusFilter === "all" ? true : statusFilter === "ended" ? room.status === "ended" : room.status !== "ended"
-      ));
-      return html(renderAdminRooms(rooms, statusFilter, url.searchParams.get("token") ?? readCookie(request, "adpass") ?? ""));
+      return renderAdminRoomsPage(request, env);
     }
 
     if (request.method === "GET" && (url.pathname === "/admin/config" || (url.pathname === "/admin.php" && url.searchParams.get("go") === "config"))) {
