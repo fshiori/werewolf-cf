@@ -3506,7 +3506,7 @@ export function renderProtocol(): string {
         <tr><td><strong>　role：</strong></td><td>私密角色訊息，包含可見同伴與權力者資訊。</td></tr>
         <tr><td><strong>　chat family：</strong></td><td>公開、狼、狐、共有、戀人、靈界、GM 與 GM 私語訊息。</td></tr>
         <tr><td><strong>　common voice：</strong></td><td><code>commonTalkVisible</code> 啟用時，非共有者會收到匿名 <code>common_chat</code>，<code>playerId</code> 為 <code>common_voice</code>；GM 可用 <code>gm_set_common_voice</code> 即時切換。</td></tr>
-        <tr><td><strong>　action_ack：</strong></td><td>確認開始遊戲、投票、襲擊、占卜、護衛、子狐占卜、貓又復活、踢人、退出、廢村請求或 GM 換日/裁定/生死/角色/旗標/選項調整。</td></tr>
+        <tr><td><strong>　action_ack：</strong></td><td>確認開始遊戲、投票、襲擊、占卜、護衛、子狐占卜、貓又復活、踢人、退出、廢村請求或 GM 換日/裁定/生死/角色/旗標/選項調整；<code>actionAckActions</code>：<code>start_game</code> / <code>vote</code> / <code>night_kill</code> / <code>divine</code> / <code>guard</code> / <code>child_fox_divine</code> / <code>cat_revive</code> / <code>kick_player</code> / <code>leave_room</code> / <code>room_end_vote</code> / <code>gm_advance_phase</code> / <code>gm_end_game</code> / <code>gm_set_alive</code> / <code>gm_set_role</code> / <code>gm_set_flag</code> / <code>gm_set_common_voice</code> / <code>gm_set_channel_restrictions</code>。</td></tr>
         <tr><td><strong>　divination_result / child_fox_result / medium_result：</strong></td><td>私密角色結果。</td></tr>
         <tr><td><strong>　revealed_roles：</strong></td><td>幽靈視角啟用時給死亡玩家；遊戲結束後給所有人。</td></tr>
         <tr><td><strong>　last_words_ack / error：</strong></td><td>遺言確認與驗證、權限、階段或規則錯誤。</td></tr>
