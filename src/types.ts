@@ -476,7 +476,7 @@ export type ServerMessage =
   | { type: "child_fox_result"; targetPlayerId: string; targetNickname: string; result: ChildFoxDivinationResult }
   | { type: "medium_result"; day: number; targetPlayerId: string; targetNickname: string; result: MediumResult }
   | { type: "last_words_ack" }
-  | { type: "action_ack"; action: "vote" | "night_kill" | "guard" | "child_fox_divine" | "cat_revive" | "kick_player" | "leave_room" | "gm_set_common_voice" | "gm_set_channel_restrictions"; targetPlayerId: string }
+  | { type: "action_ack"; action: "vote" | "night_kill" | "divine" | "guard" | "child_fox_divine" | "cat_revive" | "kick_player" | "leave_room" | "gm_set_common_voice" | "gm_set_channel_restrictions"; targetPlayerId: string }
   | {
       type: "game_state";
       roomId: string;

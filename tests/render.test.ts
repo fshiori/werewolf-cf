@@ -3359,6 +3359,7 @@ describe("render", () => {
     expect(html).toContain("game_state");
     expect(html).toContain("房間 <code>roomId</code>");
     expect(html).toContain("<code>openVote</code>/<code>selfVote</code>/<code>voteStatus</code>");
+    expect(html).toContain("確認投票、襲擊、占卜、護衛");
     expect(html).toContain("revealed_roles");
     expect(html).toContain("common_voice");
     expect(html).toContain("/api/protocol");
