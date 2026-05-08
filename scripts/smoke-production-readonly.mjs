@@ -57,10 +57,14 @@ const checks = [
         && value?.websocket?.clientMessages?.includes("gm_set_channel_restrictions")
         && requiredGameStateFields.every((field) => value?.websocket?.gameStateFields?.includes(field))
         && requiredActionAckActions.every((action) => value?.websocket?.actionAckActions?.includes(action))
+        && typeof value?.websocket?.voteVisibility?.openVote === "string"
+        && typeof value?.websocket?.voteVisibility?.voteStatus === "string"
+        && typeof value?.websocket?.voteVisibility?.hiddenVoteSelf === "string"
+        && typeof value?.websocket?.voteVisibility?.hiddenNightActionSelf === "string"
         && value?.websocket?.channelVariants?.common_chat?.publicVoicePlayerId === "common_voice"
         && value?.websocket?.channelVariants?.common_chat?.publicVoiceNickname === "共有者的聲音";
     },
-    expected: "websocket protocol metadata with common voice variant, GM command list, game_state field manifest, and action_ack action manifest"
+    expected: "websocket protocol metadata with common voice variant, GM command list, vote visibility semantics, game_state field manifest, and action_ack action manifest"
   },
   {
     path: "/api/config",

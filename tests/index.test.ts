@@ -4798,6 +4798,12 @@ describe("worker routes", () => {
           "gm_set_channel_restrictions"
         ],
         privateChannels: ["wolf_chat", "fox_chat", "common_chat", "lovers_chat", "dead_chat", "self_talk", "gm_chat", "gm_whisper"],
+        voteVisibility: {
+          openVote: "Public day vote mappings and votedPlayerIds are included in game_state.",
+          voteStatus: "When openVote is disabled, public game_state includes votedPlayerIds without targets.",
+          hiddenVoteSelf: "A voter still receives their own hidden vote mapping and votedPlayerIds entry.",
+          hiddenNightActionSelf: "A night actor still receives their own completed action status and target."
+        },
         channelVariants: {
           common_chat: {
             publicVoicePlayerId: "common_voice",
