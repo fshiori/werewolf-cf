@@ -50,15 +50,17 @@ const checks = [
     kind: "json",
     validate(value) {
       const requiredGameStateFields = ["roomId", "phase", "day", "revoteCount", "commonTalkVisible", "channelRestrictions", "players", "openVote", "selfVote", "voteStatus", "votes", "votedPlayerIds", "objectionCounts", "log"];
+      const requiredActionAckActions = ["start_game", "vote", "night_kill", "divine", "guard", "child_fox_divine", "cat_revive", "kick_player", "leave_room", "room_end_vote", "gm_advance_phase", "gm_end_game", "gm_set_alive", "gm_set_role", "gm_set_flag", "gm_set_common_voice", "gm_set_channel_restrictions"];
       return value?.websocket?.path === "/ws/room/:roomId"
         && value?.websocket?.firstClientMessage === "join"
         && value?.websocket?.clientMessages?.includes("gm_set_common_voice")
         && value?.websocket?.clientMessages?.includes("gm_set_channel_restrictions")
         && requiredGameStateFields.every((field) => value?.websocket?.gameStateFields?.includes(field))
+        && requiredActionAckActions.every((action) => value?.websocket?.actionAckActions?.includes(action))
         && value?.websocket?.channelVariants?.common_chat?.publicVoicePlayerId === "common_voice"
         && value?.websocket?.channelVariants?.common_chat?.publicVoiceNickname === "共有者的聲音";
     },
-    expected: "websocket protocol metadata with common voice variant, GM command list, and game_state field manifest"
+    expected: "websocket protocol metadata with common voice variant, GM command list, game_state field manifest, and action_ack action manifest"
   },
   {
     path: "/api/config",

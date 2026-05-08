@@ -815,6 +815,25 @@ function getProtocol(): Response {
         "suddenDeathWarningAt",
         "log"
       ],
+      actionAckActions: [
+        "start_game",
+        "vote",
+        "night_kill",
+        "divine",
+        "guard",
+        "child_fox_divine",
+        "cat_revive",
+        "kick_player",
+        "leave_room",
+        "room_end_vote",
+        "gm_advance_phase",
+        "gm_end_game",
+        "gm_set_alive",
+        "gm_set_role",
+        "gm_set_flag",
+        "gm_set_common_voice",
+        "gm_set_channel_restrictions"
+      ],
       privateChannels: ["wolf_chat", "fox_chat", "common_chat", "lovers_chat", "dead_chat", "self_talk", "gm_chat", "gm_whisper"],
       channelVariants: {
         common_chat: {

@@ -36,6 +36,25 @@ function protocolMetadata() {
         "suddenDeathWarningAt",
         "log"
       ],
+      actionAckActions: [
+        "start_game",
+        "vote",
+        "night_kill",
+        "divine",
+        "guard",
+        "child_fox_divine",
+        "cat_revive",
+        "kick_player",
+        "leave_room",
+        "room_end_vote",
+        "gm_advance_phase",
+        "gm_end_game",
+        "gm_set_alive",
+        "gm_set_role",
+        "gm_set_flag",
+        "gm_set_common_voice",
+        "gm_set_channel_restrictions"
+      ],
       channelVariants: {
         common_chat: {
           publicVoicePlayerId: "common_voice",
@@ -235,6 +254,22 @@ describe("production read-only smoke script", () => {
     expect(result.status).toBe(1);
     expect(result.stderr).toContain("/api/protocol");
     expect(result.stderr).toContain("game_state field manifest");
+  });
+
+  it("fails when protocol action_ack action metadata is incomplete", async () => {
+    const metadata = protocolMetadata();
+    metadata.websocket.actionAckActions = ["vote", "night_kill"];
+    const host = await startServer({
+      "/api/protocol": {
+        contentType: "application/json",
+        body: JSON.stringify(metadata)
+      }
+    });
+    const result = await runScript([host]);
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("/api/protocol");
+    expect(result.stderr).toContain("action_ack action manifest");
   });
 
   it("fails when protocol GM command metadata is missing", async () => {
