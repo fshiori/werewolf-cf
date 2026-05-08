@@ -546,6 +546,7 @@ describe("render", () => {
     expect(vote).toContain("投票入口");
     expect(vote).toContain("著重能力發動與投票操作");
     expect(vote).toContain("body.room-page-vote .room-registration-row");
+    expect(vote).toContain("body.room-page-vote .game-header .full-room-only,");
     expect(vote).toContain('data-legacy-entry="game_vote.php"');
     expect(vote).toContain('[<a href="/game_vote.php?room_no=room_abc">手動更新</a>]');
     expect(vote).toContain('<a href="/game_vote.php?room_no=room_abc&amp;auto_reload=15">15秒</a>');
