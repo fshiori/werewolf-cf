@@ -1454,6 +1454,8 @@ describe("worker routes", () => {
     const bottomBody = await bottomResponse.text();
     expect(bottomBody).toContain('data-room-page="bottom"');
     expect(bottomBody).toContain("body.room-page-bottom .room-chat-controls { display: none; }");
+    expect(bottomBody).toContain("body.room-page-bottom .legacy-entry-map,");
+    expect(bottomBody).toContain("body.room-page-bottom .page-bottom-only { display: none; }");
     expect(bottomBody).toContain("下方遊戲");
     expect(bottomBody).toContain("game_play.php 下框");
     expect(bottomBody).toContain('<a href="/game_play.php?room_no=room_exists&amp;auto_reload=15&amp;frame=bottom">15秒</a>');
