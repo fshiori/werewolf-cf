@@ -76,6 +76,30 @@ function responseFor(path, method = "GET") {
   if (path === "/room/room_ui_smoke" && method === "GET") {
     return { contentType: "text/html", body: '<!doctype html><title>[room_ui_smoke] 進入房間 玩家列表 能力發動 / 投票 對局紀錄 事件履歷 完整紀錄 /assets/room-client.js 旁觀視點 只觀看公開資訊 靈界視點 死亡後視點入口</title>' };
   }
+  if (path === "/game_frame.php" && method === "GET") {
+    return {
+      contentType: "text/html",
+      body: '<!doctype html><title>汝等是人是狼？＜遊戲＞</title><frameset><frame name="up" src="/game_up.php?room_no=room_ui_smoke&amp;auto_reload=20#game_top"><frame name="bottom" src="/game_play.php?room_no=room_ui_smoke&amp;auto_reload=20&amp;frame=bottom#game_top"></frameset>'
+    };
+  }
+  if (path === "/game_up.php" && method === "GET") {
+    return {
+      contentType: "text/html",
+      body: '<!doctype html><title>上方更新</title><style>body.room-page-up .game-header { display: none; }</style><table data-room-page="up"><form id="legacySendForm" name="send" target="bottom"><a href="/game_vote.php?room_no=room_ui_smoke&amp;auto_reload=20#game_top" target="bottom">投票/能力</a></form></table>'
+    };
+  }
+  if (path === "/game_play.php" && method === "GET") {
+    return {
+      contentType: "text/html",
+      body: '<!doctype html><title>下方遊戲</title><style>body.room-page-bottom .legacy-entry-map, body.room-page-bottom .page-bottom-only { display: none; } body.room-page-bottom .room-chat-controls { display: none; }</style><table data-room-page="bottom"><tr><td>發言紀錄</td></tr></table>'
+    };
+  }
+  if (path === "/game_vote.php" && method === "GET") {
+    return {
+      contentType: "text/html",
+      body: '<!doctype html><title>投票入口</title><style>body.room-page-vote .legacy-entry-map, body.room-page-vote .page-vote-only { display: none; } body.room-page-vote .room-panel-members, body.room-page-vote .room-panel-actions { display: none; }</style><table data-room-page="vote"><form class="legacy-vote-form" name="game_vote"></form></table>'
+    };
+  }
   if (path === "/room/room_ui_smoke/records" && method === "GET") {
     return { contentType: "text/html", body: "<!doctype html><title>村子對局紀錄 room_ui_smoke</title>" };
   }
@@ -141,6 +165,8 @@ describe("local UI smoke script", () => {
 
     expect(result.status).toBe(0);
     expect(result.stdout).toContain("ok /room/room_ui_smoke");
+    expect(result.stdout).toContain("ok /game_frame.php?room_no=room_ui_smoke&auto_reload=20");
+    expect(result.stdout).toContain("ok /game_vote.php?room_no=room_ui_smoke&auto_reload=20");
     expect(result.stdout).toContain("Test UI smoke passed");
   });
 
@@ -155,5 +181,18 @@ describe("local UI smoke script", () => {
 
     expect(result.status).toBe(1);
     expect(result.stderr).toContain("房間JSON");
+  });
+
+  it("fails when legacy frame pages omit hidden diagnostic chrome CSS", async () => {
+    const host = await startServer({
+      "GET /game_vote.php": {
+        contentType: "text/html",
+        body: '<!doctype html><title>投票入口</title><style>body.room-page-vote .room-panel-members, body.room-page-vote .room-panel-actions { display: none; }</style><table data-room-page="vote"><form class="legacy-vote-form" name="game_vote"></form></table>'
+      }
+    });
+    const result = await runScript([host]);
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("body.room-page-vote .legacy-entry-map,");
   });
 });

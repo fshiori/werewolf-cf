@@ -117,6 +117,32 @@ try {
   await expectHtml(`/room/${roomId}`, [`[${roomId}]`, "進入房間", "玩家列表", "能力發動 / 投票", "對局紀錄", "事件履歷", "完整紀錄", "/assets/room-client.js"], ["房間JSON", "對局JSON", "事件JSON", "new WebSocket"]);
   await expectHtml(`/room/${roomId}?view=spectator`, ["旁觀視點", "只觀看公開資訊", "玩家列表", "/assets/room-client.js"], ["房間JSON", "new WebSocket"]);
   await expectHtml(`/room/${roomId}?view=heaven`, ["靈界視點", "死亡後視點入口", "玩家列表", "/assets/room-client.js"], ["房間JSON", "new WebSocket"]);
+  await expectHtml(`/game_frame.php?room_no=${encodeURIComponent(roomId)}&auto_reload=20`, [
+    "汝等是人是狼？＜遊戲＞",
+    `<frame name="up" src="/game_up.php?room_no=${roomId}&amp;auto_reload=20#game_top"`,
+    `<frame name="bottom" src="/game_play.php?room_no=${roomId}&amp;auto_reload=20&amp;frame=bottom#game_top"`
+  ], ["data-room-page=\"frame\"", "房間JSON"]);
+  await expectHtml(`/game_up.php?room_no=${encodeURIComponent(roomId)}&auto_reload=20`, [
+    "data-room-page=\"up\"",
+    "form id=\"legacySendForm\" name=\"send\"",
+    "target=\"bottom\"",
+    `href=\"/game_vote.php?room_no=${roomId}&amp;auto_reload=20#game_top\" target=\"bottom\"`,
+    "body.room-page-up .game-header { display: none; }"
+  ], ["房間JSON"]);
+  await expectHtml(`/game_play.php?room_no=${encodeURIComponent(roomId)}&auto_reload=20&frame=bottom`, [
+    "data-room-page=\"bottom\"",
+    "body.room-page-bottom .legacy-entry-map,",
+    "body.room-page-bottom .page-bottom-only { display: none; }",
+    "body.room-page-bottom .room-chat-controls { display: none; }",
+    "發言紀錄"
+  ], ["房間JSON"]);
+  await expectHtml(`/game_vote.php?room_no=${encodeURIComponent(roomId)}&auto_reload=20`, [
+    "data-room-page=\"vote\"",
+    "form class=\"legacy-vote-form\" name=\"game_vote\"",
+    "body.room-page-vote .legacy-entry-map,",
+    "body.room-page-vote .page-vote-only { display: none; }",
+    "body.room-page-vote .room-panel-members,"
+  ], ["房間JSON"]);
   await expectHtml(`/room/${roomId}/records`, ["村子對局紀錄", roomId]);
   await expectHtml(`/room/${roomId}/events`, ["村子事件履歷", roomId, "room_created"]);
   await expectHtml(`/room/${roomId}/log`, ["村子完整紀錄", roomId, "room_created"]);
