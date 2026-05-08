@@ -60,6 +60,12 @@ function protocolMetadata() {
           publicVoicePlayerId: "common_voice",
           publicVoiceNickname: "共有者的聲音"
         }
+      },
+      voteVisibility: {
+        openVote: "Public day vote mappings and votedPlayerIds are included in game_state.",
+        voteStatus: "When openVote is disabled, public game_state includes votedPlayerIds without targets.",
+        hiddenVoteSelf: "A voter still receives their own hidden vote mapping and votedPlayerIds entry.",
+        hiddenNightActionSelf: "A night actor still receives their own completed action status and target."
       }
     }
   };
@@ -270,6 +276,22 @@ describe("production read-only smoke script", () => {
     expect(result.status).toBe(1);
     expect(result.stderr).toContain("/api/protocol");
     expect(result.stderr).toContain("action_ack action manifest");
+  });
+
+  it("fails when protocol vote visibility metadata is missing", async () => {
+    const metadata = protocolMetadata();
+    delete metadata.websocket.voteVisibility;
+    const host = await startServer({
+      "/api/protocol": {
+        contentType: "application/json",
+        body: JSON.stringify(metadata)
+      }
+    });
+    const result = await runScript([host]);
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("/api/protocol");
+    expect(result.stderr).toContain("vote visibility semantics");
   });
 
   it("fails when protocol GM command metadata is missing", async () => {
