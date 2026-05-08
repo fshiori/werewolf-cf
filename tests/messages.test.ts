@@ -173,6 +173,11 @@ describe("messages", () => {
       action: "guard",
       targetPlayerId: "player_1"
     });
+    expect(buildActionAckMessage("divine", "player_1")).toEqual({
+      type: "action_ack",
+      action: "divine",
+      targetPlayerId: "player_1"
+    });
     expect(buildActionAckMessage("kick_player", "player_2")).toEqual({
       type: "action_ack",
       action: "kick_player",

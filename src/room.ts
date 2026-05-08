@@ -656,6 +656,7 @@ export class RoomDurableObject {
           day: game.day
         });
         this.send(socket, buildDivinationResultMessage(targetPlayerId, result.targetNickname, result.result));
+        this.send(socket, buildActionAckMessage("divine", targetPlayerId));
         await this.broadcastGameState(result.state);
         this.sendMediumResults(result.state);
         return;

@@ -4011,6 +4011,7 @@ describe("RoomDurableObject", () => {
     await sendRaw(room, socket, JSON.stringify({ type: "divine", targetPlayerId: "player_wolf" }));
 
     expect(messages).toContainEqual(expect.objectContaining({ type: "divination_result", targetPlayerId: "player_wolf" }));
+    expect(messages).toContainEqual(expect.objectContaining({ type: "action_ack", action: "divine", targetPlayerId: "player_wolf" }));
     expect(messages).toContainEqual(expect.objectContaining({ type: "game_state", phase: "day", day: 2 }));
   });
 
