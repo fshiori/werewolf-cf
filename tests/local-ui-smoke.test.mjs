@@ -68,7 +68,7 @@ function responseFor(path, method = "GET") {
     return { contentType: "text/html", body: "<!doctype html><title>版本資訊 Werewolf Cloudflare Port</title>" };
   }
   if (path === "/assets/room-client.js" && method === "GET") {
-    return { contentType: "text/javascript", body: 'const roomShell = document.querySelector("[data-room-id]"); new WebSocket("ws://example.test");' };
+    return { contentType: "text/javascript", body: 'const roomShell = document.querySelector("[data-room-id]"); new WebSocket("ws://example.test"); const label = "投開始遊戲一票"; const command = "start_vote"; const situation = "GAMESTART";' };
   }
   if (path === "/api/rooms" && method === "POST") {
     return { contentType: "application/json", body: JSON.stringify({ roomId: "room_ui_smoke" }) };

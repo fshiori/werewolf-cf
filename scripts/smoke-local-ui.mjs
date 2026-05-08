@@ -93,7 +93,7 @@ try {
   await expectHtml("/script-info", ["Script Info", "Cloudflare Workers / TypeScript"]);
   await expectHtml("/protocol", ["WebSocket 入口", "game_state"]);
   await expectHtml("/version", ["版本資訊", "Werewolf Cloudflare Port"]);
-  await expectHtml("/assets/room-client.js", ["new WebSocket", "data-room-id"]);
+  await expectHtml("/assets/room-client.js", ["new WebSocket", "data-room-id", "投開始遊戲一票", "start_vote", "GAMESTART"]);
 
   const createResult = await expectJson(
     "/api/rooms",
