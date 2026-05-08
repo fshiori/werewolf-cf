@@ -75,6 +75,8 @@ function page(title: string, body: string, extraHead = ""): string {
     body.room-page-vote .room-panel-actions,
     body.room-page-vote .room-panel-members,
     body.room-page-vote .room-panel-system { display: none; }
+    body.room-page-vote .legacy-entry-map,
+    body.room-page-vote .page-vote-only { display: none; }
     body.room-page-vote .game-header .full-room-only,
     body.room-page-bottom .game-header .full-room-only { display: none; }
     body.room-page-bottom .room-chat-controls { display: none; }
