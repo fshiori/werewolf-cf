@@ -11,6 +11,7 @@ function protocolMetadata() {
     websocket: {
       path: "/ws/room/:roomId",
       firstClientMessage: "join",
+      clientMessages: ["join", "gm_set_common_voice", "gm_set_channel_restrictions"],
       channelVariants: {
         common_chat: {
           publicVoicePlayerId: "common_voice",
@@ -182,7 +183,33 @@ describe("production read-only smoke script", () => {
 
     expect(result.status).toBe(1);
     expect(result.stderr).toContain("/api/protocol");
-    expect(result.stderr).toContain("common voice variant");
+    expect(result.stderr).toContain("GM command list");
+  });
+
+  it("fails when protocol GM command metadata is missing", async () => {
+    const host = await startServer({
+      "/api/protocol": {
+        contentType: "application/json",
+        body: JSON.stringify({
+          websocket: {
+            path: "/ws/room/:roomId",
+            firstClientMessage: "join",
+            clientMessages: ["join"],
+            channelVariants: {
+              common_chat: {
+                publicVoicePlayerId: "common_voice",
+                publicVoiceNickname: "共有者的聲音"
+              }
+            }
+          }
+        })
+      }
+    });
+    const result = await runScript([host]);
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("/api/protocol");
+    expect(result.stderr).toContain("GM command list");
   });
 
   it("fails when an HTML page does not contain the expected page text", async () => {
