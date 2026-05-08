@@ -627,9 +627,11 @@ describe("RoomDurableObject", () => {
 
     await sendRaw(room, aliceSocket, JSON.stringify({ type: "room_end_vote" }));
     expect((stored.get("gameState") as GameState).phase).toBe("day");
+    expect(aliceMessages).toContainEqual(expect.objectContaining({ type: "action_ack", action: "room_end_vote", targetPlayerId: "player_a" }));
     expect(aliceMessages).toContainEqual(expect.objectContaining({ type: "game_state", roomEndVotedPlayerIds: ["player_a"] }));
 
     await sendRaw(room, bobSocket, JSON.stringify({ type: "room_end_vote" }));
+    expect(bobMessages).toContainEqual(expect.objectContaining({ type: "action_ack", action: "room_end_vote", targetPlayerId: "player_b" }));
 
     const saved = stored.get("gameState") as GameState;
     expect(saved.phase).toBe("ended");
