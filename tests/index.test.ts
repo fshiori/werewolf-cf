@@ -4545,6 +4545,7 @@ describe("worker routes", () => {
           "gm_set_alive",
           "gm_set_role",
           "gm_set_flag",
+          "gm_set_common_voice",
           "gm_set_channel_restrictions",
           "start_game",
           "start_vote",
