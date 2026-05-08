@@ -1524,6 +1524,30 @@ describe("worker routes", () => {
     expect(missingRoom.status).toBe(404);
   });
 
+  it("supports legacy game_play.php objection links without mutating game state", async () => {
+    const env = envWithRooms(["room_exists"]);
+    const response = await worker.fetch(new Request("http://example.test/game_play.php?room_no=room_exists&set_objection=set&auto_reload=20&frame=bottom"), env);
+
+    expect(response.status).toBe(303);
+    expect(response.headers.get("Location")).toBe("/game_play.php?room_no=room_exists&auto_reload=20&frame=bottom#game_top");
+
+    const roomEndResponse = await worker.fetch(new Request("http://example.test/game_play.php?room_no=room_exists&set_objection=roomend&auto_reload=5"), env);
+    expect(roomEndResponse.status).toBe(303);
+    expect(roomEndResponse.headers.get("Location")).toBe("/game_play.php?room_no=room_exists&auto_reload=15#game_top");
+
+    const missingRoomNo = await worker.fetch(new Request("http://example.test/game_play.php?set_objection=set"), env);
+    expect(missingRoomNo.status).toBe(400);
+    expect(await missingRoomNo.json()).toEqual({ error: "game_play.php objection requires room_no" });
+
+    const missingRoom = await worker.fetch(new Request("http://example.test/game_play.php?room_no=room_missing&set_objection=set"), env);
+    expect(missingRoom.status).toBe(404);
+    expect(await missingRoom.text()).toBe("Room not found");
+
+    const invalidObjection = await worker.fetch(new Request("http://example.test/game_play.php?room_no=room_exists&set_objection=bad"), env);
+    expect(invalidObjection.status).toBe(400);
+    expect(await invalidObjection.json()).toEqual({ error: "Invalid game_play.php objection" });
+  });
+
   it("supports the legacy game_play.php talk POST alias without mutating game state", async () => {
     const env = envWithRooms(["room_exists"]);
     const form = new URLSearchParams({
