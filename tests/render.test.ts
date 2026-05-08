@@ -718,6 +718,7 @@ describe("render", () => {
     expect(ROOM_CLIENT_SCRIPT).toContain("syncLegacyVoteHiddenFields(legacyVoteCommands[selectedTarget.value], latestGame, targetPlayer);");
     expect(ROOM_CLIENT_SCRIPT).toContain("sendCommand(legacyVoteCommands[selectedTarget.value]);");
     expect(ROOM_CLIENT_SCRIPT).toContain("function legacySituationForCommand(command)");
+    expect(ROOM_CLIENT_SCRIPT).toContain('if (typeof command.situation === "string") return command.situation;');
     expect(ROOM_CLIENT_SCRIPT).toContain('start_vote: "GAMESTART"');
     expect(ROOM_CLIENT_SCRIPT).toContain('kick_vote: "KICK_DO"');
     expect(ROOM_CLIENT_SCRIPT).toContain('kick_player: "FKICK_DO"');
@@ -750,6 +751,16 @@ describe("render", () => {
     expect(ROOM_CLIENT_SCRIPT).toContain('radio.addEventListener("change", () => syncLegacyVoteHiddenFields(action.command, game, player));');
     expect(ROOM_CLIENT_SCRIPT).toContain("radio.checked = true;");
     expect(ROOM_CLIENT_SCRIPT).toContain("syncLegacyVoteHiddenFields(action.command, game, player);");
+    expect(ROOM_CLIENT_SCRIPT).toContain("function updateLegacyGmTargetList(game)");
+    expect(ROOM_CLIENT_SCRIPT).toContain('document.querySelector("#legacyGmTargetList")');
+    expect(ROOM_CLIENT_SCRIPT).toContain("function legacyGmActionId()");
+    expect(ROOM_CLIENT_SCRIPT).toContain('document.querySelector(\'.legacy-vote-form input[name="actid"]\')');
+    expect(ROOM_CLIENT_SCRIPT).toContain("function legacyGmActionDisabled(actionId, game, player)");
+    expect(ROOM_CLIENT_SCRIPT).toContain('if (actionId === "GM_KILL") return !player.alive;');
+    expect(ROOM_CLIENT_SCRIPT).toContain('if (actionId === "GM_RESU") return player.alive;');
+    expect(ROOM_CLIENT_SCRIPT).toContain('table.className = "legacy-vote-shell legacy-gm-target-shell";');
+    expect(ROOM_CLIENT_SCRIPT).toContain('radio.addEventListener("change", () => syncLegacyVoteHiddenFields({ type: "legacy_gm", situation: actionId }, game, player));');
+    expect(ROOM_CLIENT_SCRIPT).toContain("updateLegacyGmTargetList(game);");
     expect(ROOM_CLIENT_SCRIPT).toContain('button.addEventListener("click", () => {');
     expect(ROOM_CLIENT_SCRIPT).toContain('table.className = "vote-table";');
     expect(ROOM_CLIENT_SCRIPT).toContain('headingCell.textContent = phaseLabel(game);');

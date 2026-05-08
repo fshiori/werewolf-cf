@@ -756,6 +756,7 @@ function legacyTargetCommand(game, currentPlayer, currentPlayerAlive, currentPla
 }
 function legacySituationForCommand(command) {
   if (!command) return "VOTE_KILL";
+  if (typeof command.situation === "string") return command.situation;
   return {
     start_vote: "GAMESTART",
     kick_vote: "KICK_DO",
@@ -767,6 +768,25 @@ function legacySituationForCommand(command) {
     guard: "GUARD_DO",
     cat_revive: "CAT_DO"
   }[command.type] || "VOTE_KILL";
+}
+function legacyGmActionId() {
+  const action = document.querySelector('.legacy-vote-form input[name="actid"]');
+  return action ? action.value : "";
+}
+function legacyGmActionLabel(actionId, player) {
+  return {
+    GM_KILL: "殺人 " + player.nickname,
+    GM_RESU: "復活 " + player.nickname,
+    GM_CHROLE: "改變職業 " + player.nickname,
+    GM_MARK: "標記 " + player.nickname,
+    GM_DEMARK: "取消標記 " + player.nickname
+  }[actionId] || player.nickname;
+}
+function legacyGmActionDisabled(actionId, game, player) {
+  if (!isGm || !(game.phase === "day" || game.phase === "night")) return true;
+  if (actionId === "GM_KILL") return !player.alive;
+  if (actionId === "GM_RESU") return player.alive;
+  return !(actionId === "GM_CHROLE" || actionId === "GM_MARK" || actionId === "GM_DEMARK");
 }
 function syncLegacyVoteHiddenFields(command, game, targetPlayer) {
   const situation = document.querySelector('.legacy-vote-form input[name="situation"]');
@@ -848,6 +868,51 @@ function updateLegacyVoteTargetList(game, currentPlayer, currentPlayerAlive, cur
       if (action.command) sendCommand(action.command);
     });
     targetCell.append(player.nickname, document.createElement("br"), radio, " ", button);
+    row.append(markerCell, targetCell);
+    table.appendChild(row);
+  });
+  container.appendChild(table);
+}
+function updateLegacyGmTargetList(game) {
+  const container = document.querySelector("#legacyGmTargetList");
+  if (!container) return;
+  container.innerHTML = "";
+  const actionId = legacyGmActionId();
+  if (!actionId) {
+    container.textContent = "未指定 GM 行動。";
+    return;
+  }
+  if (!isGm) {
+    container.textContent = "GM 登錄後可選擇目標。";
+    return;
+  }
+  if (!(game.phase === "day" || game.phase === "night")) {
+    container.textContent = "GM 行動限白天或夜晚。";
+    return;
+  }
+  if (game.players.length === 0) {
+    container.textContent = "尚無玩家。";
+    return;
+  }
+  const table = document.createElement("table");
+  table.className = "legacy-vote-shell legacy-gm-target-shell";
+  game.players.forEach((player) => {
+    const disabled = legacyGmActionDisabled(actionId, game, player);
+    const row = document.createElement("tr");
+    const markerCell = document.createElement("td");
+    markerCell.className = "table_votelist1";
+    markerCell.textContent = "◆";
+    const targetCell = document.createElement("td");
+    targetCell.className = "table_votelist2";
+    const radio = document.createElement("input");
+    radio.type = "radio";
+    radio.name = "target_no";
+    radio.value = player.playerId;
+    radio.disabled = disabled;
+    radio.addEventListener("change", () => syncLegacyVoteHiddenFields({ type: "legacy_gm", situation: actionId }, game, player));
+    const label = document.createElement("span");
+    label.textContent = legacyGmActionLabel(actionId, player);
+    targetCell.append(player.nickname, document.createElement("br"), radio, " ", label);
     row.append(markerCell, targetCell);
     table.appendChild(row);
   });
@@ -1073,6 +1138,7 @@ function renderGame(game) {
   updateActionPrompt(game, currentPlayer, currentPlayerAlive, votedPlayerIds);
   updateVoteObserverPanel(game, currentPlayer, currentPlayerDead, voteSummary, votedPlayerIds);
   updateLegacyVoteTargetList(game, currentPlayer, currentPlayerAlive, currentPlayerId, canManageLobby, canUsePlayerAction);
+  updateLegacyGmTargetList(game);
   let row;
   game.players.forEach((player) => {
     const option = document.createElement("option");
