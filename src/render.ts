@@ -3783,6 +3783,13 @@ function legacyVoteFormShell(roomId: string, autoReloadSeconds: 0 | 15 | 20 | 30
                     <tr>
                       <td class="table_votelist1">◆</td>
                       <td class="table_votelist2">
+                        開始遊戲<br>
+                        <button type="button" disabled>投開始遊戲一票</button>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="table_votelist1">◆</td>
+                      <td class="table_votelist2">
                         <div id="legacyVoteTargetList">等待狀態更新</div>
                         <input type="radio" name="target_no" value="" disabled>
                       </td>

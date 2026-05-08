@@ -569,6 +569,7 @@ describe("render", () => {
     expect(vote).toContain('<input type="hidden" name="vote_times" value="1">');
     expect(vote).toContain('<input type="hidden" name="target_player_id" value="">');
     expect(vote).toContain('<input type="hidden" name="target_handle_name" value="">');
+    expect(vote).toContain('<button type="button" disabled>投開始遊戲一票</button>');
     expect(vote).toContain('<option value="GAMESTART">GAMESTART</option>');
     expect(vote).toContain('<option value="VOTE_KILL" selected>VOTE_KILL</option>');
     expect(vote).toContain('<option value="CAT_DO">CAT_DO</option>');
