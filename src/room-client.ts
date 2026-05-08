@@ -801,6 +801,26 @@ function updateLegacyVoteTargetList(game, currentPlayer, currentPlayerAlive, cur
   }
   const table = document.createElement("table");
   table.className = "legacy-vote-shell";
+  if (game.phase === "lobby") {
+    const row = document.createElement("tr");
+    const markerCell = document.createElement("td");
+    markerCell.className = "table_votelist1";
+    markerCell.textContent = "◆";
+    const startCell = document.createElement("td");
+    startCell.className = "table_votelist2";
+    const button = document.createElement("button");
+    button.type = "button";
+    button.textContent = "投開始遊戲一票";
+    button.disabled = !currentPlayerAlive;
+    button.addEventListener("click", () => {
+      const command = { type: "start_vote" };
+      syncLegacyVoteHiddenFields(command, game);
+      sendCommand(command);
+    });
+    startCell.append("開始遊戲", document.createElement("br"), button);
+    row.append(markerCell, startCell);
+    table.appendChild(row);
+  }
   game.players.forEach((player) => {
     const action = legacyTargetCommand(game, currentPlayer, currentPlayerAlive, currentPlayerId, canManageLobby, canUsePlayerAction, player);
     const row = document.createElement("tr");
