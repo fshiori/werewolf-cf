@@ -1547,12 +1547,20 @@ describe("worker routes", () => {
     expect(response.status).toBe(303);
     expect(response.headers.get("Location")).toBe("/login.php?room_no=room_exists");
 
+    const reloadResponse = await worker.fetch(new Request("http://example.test/user_manager.php?room_no=room_exists&auto_reload=20", { method: "POST", body: form }), env);
+    expect(reloadResponse.status).toBe(303);
+    expect(reloadResponse.headers.get("Location")).toBe("/login.php?room_no=room_exists&auto_reload=20");
+
+    const normalizedReloadResponse = await worker.fetch(new Request("http://example.test/user_manager.php?room_no=room_exists&auto_reload=5", { method: "POST", body: form }), env);
+    expect(normalizedReloadResponse.status).toBe(303);
+    expect(normalizedReloadResponse.headers.get("Location")).toBe("/login.php?room_no=room_exists&auto_reload=15");
+
     const formRoomNo = await worker.fetch(new Request("http://example.test/user_manager.php", {
       method: "POST",
-      body: new URLSearchParams({ command: "regist", room_no: "room_exists", handle_name: "Alice" })
+      body: new URLSearchParams({ command: "regist", room_no: "room_exists", auto_reload: "30", handle_name: "Alice" })
     }), env);
     expect(formRoomNo.status).toBe(303);
-    expect(formRoomNo.headers.get("Location")).toBe("/login.php?room_no=room_exists");
+    expect(formRoomNo.headers.get("Location")).toBe("/login.php?room_no=room_exists&auto_reload=30");
 
     const missingRoomNo = await worker.fetch(new Request("http://example.test/user_manager.php", {
       method: "POST",

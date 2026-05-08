@@ -924,6 +924,13 @@ function readFormString(form: FormData, name: string): string | undefined {
   return typeof value === "string" ? value : undefined;
 }
 
+function legacyAutoReloadQuery(url: URL, form?: FormData | null): string {
+  const autoReloadParam = url.searchParams.get("auto_reload") ?? (form ? readFormString(form, "auto_reload") : undefined);
+  const autoReloadValue = autoReloadParam ? Number(autoReloadParam) : 0;
+  const autoReloadSeconds = autoReloadValue > 0 && autoReloadValue < 15 ? 15 : autoReloadValue === 15 || autoReloadValue === 20 || autoReloadValue === 30 ? autoReloadValue : 0;
+  return autoReloadSeconds ? `&auto_reload=${autoReloadSeconds}` : "";
+}
+
 function hasFormValue(form: FormData, name: string): boolean {
   return form.get(name) !== null;
 }
@@ -3028,10 +3035,7 @@ export default {
         if (!(await roomExists(env, roomId))) {
           return new Response("Room not found", { status: 404 });
         }
-        const autoReloadParam = url.searchParams.get("auto_reload") ?? (form ? readFormString(form, "auto_reload") : undefined);
-        const autoReloadValue = autoReloadParam ? Number(autoReloadParam) : 0;
-        const autoReloadSeconds = autoReloadValue > 0 && autoReloadValue < 15 ? 15 : autoReloadValue === 15 || autoReloadValue === 20 || autoReloadValue === 30 ? autoReloadValue : 0;
-        const autoReloadQuery = autoReloadSeconds ? `&auto_reload=${autoReloadSeconds}` : "";
+        const autoReloadQuery = legacyAutoReloadQuery(url, form);
         return new Response(null, { status: 303, headers: { Location: `/game_vote.php?room_no=${encodeURIComponent(roomId)}${autoReloadQuery}#game_top` } });
       } catch (error) {
         return json({ error: error instanceof Error ? error.message : "Invalid vote" }, { status: 400 });
@@ -3052,7 +3056,8 @@ export default {
         if (!(await roomExists(env, roomId))) {
           return new Response("Room not found", { status: 404 });
         }
-        return new Response(null, { status: 303, headers: { Location: `/login.php?room_no=${encodeURIComponent(roomId)}` } });
+        const autoReloadQuery = legacyAutoReloadQuery(url, form);
+        return new Response(null, { status: 303, headers: { Location: `/login.php?room_no=${encodeURIComponent(roomId)}${autoReloadQuery}` } });
       } catch (error) {
         return json({ error: error instanceof Error ? error.message : "Invalid user registration" }, { status: 400 });
       }
