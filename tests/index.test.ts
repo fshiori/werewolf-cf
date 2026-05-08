@@ -4449,6 +4449,24 @@ describe("worker routes", () => {
     expect(playerBody).toContain("howl");
     expect(playerBody).not.toContain("mutter");
 
+    const cookiePlayerView = await worker.fetch(new Request("http://example.test/room/room_log/log?viewer=player&heaven_talk=on", {
+      headers: { Cookie: "werewolf_cf_player_id=player_wolf" }
+    }), env);
+    const cookiePlayerBody = await cookiePlayerView.text();
+    expect(cookiePlayerView.status).toBe(200);
+    expect(cookiePlayerBody).toContain("玩家 Wolf (player_wolf)");
+    expect(cookiePlayerBody).toContain("howl");
+    expect(cookiePlayerBody).not.toContain("mutter");
+    expect(cookiePlayerBody).toContain("/room/room_log/log?heaven_talk=on&amp;viewer=player&amp;viewer_player_id=player_wolf");
+
+    const legacyCookiePlayerView = await worker.fetch(new Request("http://example.test/old_log.php?log_mode=on&room_no=room_log&viewer=player&heaven_talk=on", {
+      headers: { Cookie: "player_id=player_wolf" }
+    }), env);
+    const legacyCookiePlayerBody = await legacyCookiePlayerView.text();
+    expect(legacyCookiePlayerView.status).toBe(200);
+    expect(legacyCookiePlayerBody).toContain("玩家 Wolf (player_wolf)");
+    expect(legacyCookiePlayerBody).toContain("/old_log.php?log_mode=on&amp;room_no=room_log&amp;heaven_talk=on&amp;viewer=player&amp;viewer_player_id=player_wolf");
+
     const targetPlayerView = await worker.fetch(new Request("http://example.test/room/room_log/log?viewer=player&viewer_player_id=player_target&heaven_talk=on"), env);
     const targetPlayerBody = await targetPlayerView.text();
     expect(targetPlayerView.status).toBe(200);
@@ -4459,6 +4477,12 @@ describe("worker routes", () => {
     const missingPlayerView = await worker.fetch(new Request("http://example.test/room/room_log/log?viewer=player"), env);
     expect(missingPlayerView.status).toBe(400);
     expect(await missingPlayerView.json()).toEqual({ error: "Player transcript viewer requires viewer_player_id" });
+
+    const unknownCookiePlayerView = await worker.fetch(new Request("http://example.test/room/room_log/log?viewer=player", {
+      headers: { Cookie: "playerId=player_unknown" }
+    }), env);
+    expect(unknownCookiePlayerView.status).toBe(400);
+    expect(await unknownCookiePlayerView.json()).toEqual({ error: "Player transcript viewer is not part of this room history" });
 
     const invalidPlayerView = await worker.fetch(new Request("http://example.test/room/room_log/log?viewer=player&viewer_player_id=bad"), env);
     expect(invalidPlayerView.status).toBe(400);
