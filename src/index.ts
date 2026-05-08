@@ -2174,6 +2174,14 @@ function roomTranscriptKnownPlayerIds(records: GameRecordSummary[], events: Room
   return playerIds;
 }
 
+function roomTranscriptViewerPlayerId(request: Request, url: URL): string | null {
+  return url.searchParams.get("viewer_player_id")
+    ?? readCookie(request, "werewolf_cf_player_id")
+    ?? readCookie(request, "player_id")
+    ?? readCookie(request, "playerId")
+    ?? null;
+}
+
 async function getRoomTranscriptPage(request: Request, env: Env, roomIdParam: string): Promise<Response> {
   const url = new URL(request.url);
   const roomId = validateRoomId(roomIdParam);
@@ -2182,8 +2190,8 @@ async function getRoomTranscriptPage(request: Request, env: Env, roomIdParam: st
   }
   const [records, events] = await Promise.all([listRoomRecords(env, roomId), listRoomEvents(env, roomId, { fullHistory: true })]);
   const viewerModeParam = url.searchParams.get("viewer");
-  const viewerPlayerIdParam = url.searchParams.get("viewer_player_id");
   const viewerMode = viewerModeParam === "public" || viewerModeParam === "player" || viewerModeParam === "dead" || viewerModeParam === "gm" ? viewerModeParam : "legacy";
+  const viewerPlayerIdParam = viewerMode === "player" ? roomTranscriptViewerPlayerId(request, url) : null;
   if (viewerMode === "player" && !viewerPlayerIdParam) {
     throw new Error("Player transcript viewer requires viewer_player_id");
   }
