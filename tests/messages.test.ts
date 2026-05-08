@@ -188,6 +188,11 @@ describe("messages", () => {
       action: "leave_room",
       targetPlayerId: "player_3"
     });
+    expect(buildActionAckMessage("gm_set_role", "player_4")).toEqual({
+      type: "action_ack",
+      action: "gm_set_role",
+      targetPlayerId: "player_4"
+    });
   });
 
   it("builds escaped lobby start vote messages", () => {

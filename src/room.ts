@@ -435,6 +435,7 @@ export class RoomDurableObject {
         await this.saveGameState(next);
         await this.syncRoomStatus(next);
         await this.persistRoomEvent(member.playerId, "gm_set_alive", { targetPlayerId, targetNickname, alive: message.alive });
+        this.send(socket, buildActionAckMessage("gm_set_alive", targetPlayerId));
         await this.broadcastGameState(next);
         this.sendMediumResults(next);
         return;
@@ -450,6 +451,7 @@ export class RoomDurableObject {
         await this.saveGameState(next);
         await this.syncRoomStatus(next);
         await this.persistRoomEvent(member.playerId, "gm_set_role", { targetPlayerId, targetNickname, role: message.role });
+        this.send(socket, buildActionAckMessage("gm_set_role", targetPlayerId));
         await this.broadcastGameState(next);
         this.sendRoles(next);
         this.sendMediumResults(next);
@@ -466,6 +468,7 @@ export class RoomDurableObject {
         await this.saveGameState(next);
         await this.syncRoomStatus(next);
         await this.persistRoomEvent(member.playerId, "gm_set_flag", { targetPlayerId, targetNickname, flag: message.flag, enabled: message.enabled });
+        this.send(socket, buildActionAckMessage("gm_set_flag", targetPlayerId));
         await this.broadcastGameState(next);
         this.sendRoles(next);
         this.sendMediumResults(next);
