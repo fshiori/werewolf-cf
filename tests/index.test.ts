@@ -1495,6 +1495,14 @@ describe("worker routes", () => {
     expect(bottomBody).toContain("game_play.php 下框");
     expect(bottomBody).toContain('<a href="/game_play.php?room_no=room_exists&amp;auto_reload=15&amp;frame=bottom">15秒</a>');
 
+    const gmVoteResponse = await worker.fetch(new Request("http://example.test/game_vote.php?room_no=room_exists&auto_reload=20&aid=GM_CHANNEL"), env);
+    expect(gmVoteResponse.status).toBe(200);
+    const gmVoteBody = await gmVoteResponse.text();
+    expect(gmVoteBody).toContain("GM行動 - 調整頻道");
+    expect(gmVoteBody).toContain('form class="legacy-vote-form" name="game_vote" action="/game_vote.php?room_no=room_exists&amp;auto_reload=20&amp;actid=GM_CHANNEL#game_top" method="POST" onsubmit="return false"');
+    expect(gmVoteBody).toContain('<input type="hidden" name="actid" value="GM_CHANNEL">');
+    expect(gmVoteBody).toContain('name="ch_lovers" value="ch_lovers"');
+
     const missingRoomNo = await worker.fetch(new Request("http://example.test/game_view.php"), env);
     expect(missingRoomNo.status).toBe(400);
     expect(await missingRoomNo.json()).toEqual({ error: "game_view.php requires room_no" });

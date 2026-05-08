@@ -3623,6 +3623,7 @@ export type RenderRoomOptions = {
   viewMode?: "player" | "spectator" | "heaven";
   pageMode?: "full" | "frame" | "up" | "vote" | "bottom";
   legacyPath?: LegacyRoomPath;
+  legacyGmActionId?: string | null;
 };
 
 function normalizeAutoReloadSeconds(value: number | undefined): 0 | 15 | 20 | 30 {
@@ -3746,20 +3747,97 @@ function legacyRoomEntryMap(roomId: string, autoReloadSeconds: 0 | 15 | 20 | 30,
   return "";
 }
 
-function legacyVoteFormShell(roomId: string, autoReloadSeconds: 0 | 15 | 20 | 30): string {
+const LEGACY_GM_ACTION_LABELS = {
+  GM_KILL: "殺人",
+  GM_RESU: "復活",
+  GM_CHROLE: "改變職業",
+  GM_MARK: "標記",
+  GM_DEMARK: "取消標記",
+  GM_CHANNEL: "調整頻道",
+  GM_DECL: "宣告勝利"
+} as const;
+
+type LegacyGmActionId = keyof typeof LEGACY_GM_ACTION_LABELS;
+
+function normalizeLegacyGmActionId(value: string | undefined | null): LegacyGmActionId | undefined {
+  return value && value in LEGACY_GM_ACTION_LABELS ? value as LegacyGmActionId : undefined;
+}
+
+function legacyGmVoteFallback(actionId: LegacyGmActionId): string {
+  if (actionId === "GM_DECL") {
+    return `
+                    <tr class="legacy-gm-vote-row">
+                      <td class="table_votelist1">GM</td>
+                      <td class="table_votelist2">
+                        宣告陣營勝利：
+                        <select name="victory_role">
+                          <option value="human">村人</option>
+                          <option value="wolf">人狼</option>
+                          <option value="fox">妖狐</option>
+                          <option value="lovers">戀人</option>
+                          <option value="draw">和局</option>
+                          <option value="custo">自行宣判</option>
+                        </select>
+                        <input type="hidden" name="target_no" value="1">
+                        <input type="submit" value="宣告勝利">
+                      </td>
+                    </tr>`;
+  }
+  if (actionId === "GM_CHANNEL") {
+    return `
+                    <tr class="legacy-gm-vote-row">
+                      <td class="table_votelist1">GM</td>
+                      <td class="table_votelist2">
+                        關閉頻道：
+                        <label><input type="checkbox" name="ch_wolf" value="ch_wolf"> 人狼</label>
+                        <label><input type="checkbox" name="ch_common" value="ch_common"> 共有</label>
+                        <label><input type="checkbox" name="ch_lovers" value="ch_lovers"> 戀人</label>
+                        <label><input type="checkbox" name="ch_fox" value="ch_fox"> 妖狐</label>
+                        <input type="hidden" name="target_no" value="1">
+                        <input type="submit" value="變更頻道設定">
+                      </td>
+                    </tr>`;
+  }
+  const submitLabels: Record<Exclude<LegacyGmActionId, "GM_DECL" | "GM_CHANNEL">, string> = {
+    GM_KILL: "殺很大，殺不用錢",
+    GM_RESU: "小黑魂，人！",
+    GM_CHROLE: "轉換職業",
+    GM_MARK: "上標記",
+    GM_DEMARK: "解除標記"
+  };
+  return `
+                    <tr class="legacy-gm-vote-row">
+                      <td class="table_votelist1">GM</td>
+                      <td class="table_votelist2">
+                        ${LEGACY_GM_ACTION_LABELS[actionId]}<br>
+                        <div id="legacyGmTargetList">等待 GM 目標更新</div>
+                        <input type="radio" name="target_no" value="" disabled>
+                        ${actionId === "GM_CHROLE" ? `<br>更改為：<select name="new_role"><option value="human">村民</option><option value="wolf">人狼</option><option value="wolf wfbig">大狼</option><option value="mage">占卜師</option><option value="necromancer">靈能者</option><option value="mad">狂人</option><option value="guard">獵人</option><option value="common">共有者</option><option value="fox">妖狐</option><option value="fosi">子狐</option><option value="poison">埋毒者</option><option value="betr">背德</option></select>
+                        <select name="new_subrole"><option value="">無副職</option><option value="authority">權力者</option><option value="decide">決定者</option><option value="lovers">戀人</option></select>` : ""}
+                        <input type="submit" value="${submitLabels[actionId]}">
+                      </td>
+                    </tr>`;
+}
+
+function legacyVoteFormShell(roomId: string, autoReloadSeconds: 0 | 15 | 20 | 30, legacyGmActionId?: LegacyGmActionId): string {
   const actionHref = legacyRoomHref("/game_vote.php", roomId, autoReloadSeconds);
   const backHref = legacyRoomHref("/game_up.php", roomId, autoReloadSeconds);
+  const gmActionQuery = legacyGmActionId ? `&amp;actid=${legacyGmActionId}` : "";
+  const gmActionHidden = legacyGmActionId ? `
+                  <input type="hidden" name="actid" value="${legacyGmActionId}">` : "";
+  const gmActionFallback = legacyGmActionId ? legacyGmVoteFallback(legacyGmActionId) : "";
   return `
       <tr class="page-vote-only">
         <td>
           <table class="panel">
-            <tr><th>投票 / 能力發動</th></tr>
+            <tr><th>${legacyGmActionId ? `GM行動 - ${LEGACY_GM_ACTION_LABELS[legacyGmActionId]}` : "投票 / 能力發動"}</th></tr>
             <tr>
               <td>
-                <form class="legacy-vote-form" name="game_vote" action="${actionHref}#game_top" method="POST" onsubmit="return false">
+                <form class="legacy-vote-form" name="game_vote" action="${actionHref}${gmActionQuery}#game_top" method="POST" onsubmit="return false">
                   <input type="hidden" name="command" value="vote">
                   <input type="hidden" name="room_no" value="${escapeHtml(roomId)}">
-                  <input type="hidden" name="situation" value="VOTE_KILL">
+                  <input type="hidden" name="situation" value="${legacyGmActionId ?? "VOTE_KILL"}">
+                  ${gmActionHidden}
                   <input type="hidden" name="vote_times" value="1">
                   <input type="hidden" name="target_player_id" value="">
                   <input type="hidden" name="target_handle_name" value="">
@@ -3794,6 +3872,7 @@ function legacyVoteFormShell(roomId: string, autoReloadSeconds: 0 | 15 | 20 | 30
                         <input type="radio" name="target_no" value="" disabled>
                       </td>
                     </tr>
+                    ${gmActionFallback}
                     <tr>
                       <td colspan="2" class="legacy-vote-submit">
                         <input type="submit" value="投將該員'處刑'一票">
@@ -3876,6 +3955,7 @@ export function renderRoom(roomId: string, options: RenderRoomOptions = {}): str
   const autoReloadSeconds = normalizeAutoReloadSeconds(options.autoReloadSeconds);
   const viewMode = normalizeRoomViewMode(options.viewMode);
   const pageMode = normalizeRoomPageMode(options.pageMode);
+  const legacyGmActionId = normalizeLegacyGmActionId(options.legacyGmActionId);
   const legacyPath = options.legacyPath;
   const roomPath = `/room/${escapeHtml(roomId)}`;
   const viewLabel = viewMode === "spectator" ? "旁觀視點" : viewMode === "heaven" ? "靈界視點" : "玩家視點";
@@ -4068,7 +4148,7 @@ export function renderRoom(roomId: string, options: RenderRoomOptions = {}): str
           </table>
         </td>
       </tr>
-      ${legacyVoteFormShell(roomId, autoReloadSeconds)}
+      ${legacyVoteFormShell(roomId, autoReloadSeconds, legacyGmActionId)}
       <tr class="view-player-only room-panel-actions">
         <td>
           <table class="panel">
