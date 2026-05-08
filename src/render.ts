@@ -72,6 +72,7 @@ function page(title: string, body: string, extraHead = ""): string {
     body.room-page-up .page-up-inline-only { display: inline; }
     body.room-page-vote .room-panel-lastwords,
     body.room-page-vote .room-panel-chat,
+    body.room-page-vote .room-panel-actions,
     body.room-page-vote .room-panel-system { display: none; }
     body.room-page-bottom .game-header .full-room-only { display: none; }
     body.room-page-bottom .room-chat-controls { display: none; }
