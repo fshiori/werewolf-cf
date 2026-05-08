@@ -3128,7 +3128,8 @@ export default {
           autoReloadSeconds: autoReloadParam ? Number(autoReloadParam) : 0,
           viewMode,
           pageMode,
-          legacyPath: isLegacyLiveRoomPage ? url.pathname as LegacyRoomPath : undefined
+          legacyPath: isLegacyLiveRoomPage ? url.pathname as LegacyRoomPath : undefined,
+          legacyGmActionId: url.pathname === "/game_vote.php" ? url.searchParams.get("aid") : undefined
         }));
       } catch (error) {
         return json({ error: error instanceof Error ? error.message : "Invalid room" }, { status: 400 });

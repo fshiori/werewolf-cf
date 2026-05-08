@@ -588,6 +588,22 @@ describe("render", () => {
     expect(vote).toContain("body.room-page-vote .page-vote-description { display: none; }");
     expect(vote).not.toContain("body.room-page-vote .page-vote-only { display: none; }");
     expect(vote).toContain('<tr class="view-player-only room-panel-actions">');
+
+    const gmVote = renderRoom("room_abc", { pageMode: "vote", legacyGmActionId: "GM_DECL" });
+    expect(gmVote).toContain("GM行動 - 宣告勝利");
+    expect(gmVote).toContain('form class="legacy-vote-form" name="game_vote" action="/game_vote.php?room_no=room_abc&amp;actid=GM_DECL#game_top" method="POST" onsubmit="return false"');
+    expect(gmVote).toContain('<input type="hidden" name="situation" value="GM_DECL">');
+    expect(gmVote).toContain('<input type="hidden" name="actid" value="GM_DECL">');
+    expect(gmVote).toContain('宣告陣營勝利：');
+    expect(gmVote).toContain('<option value="lovers">戀人</option>');
+    expect(gmVote).toContain('<input type="submit" value="宣告勝利">');
+
+    const gmChannelVote = renderRoom("room_abc", { pageMode: "vote", legacyGmActionId: "GM_CHANNEL" });
+    expect(gmChannelVote).toContain("GM行動 - 調整頻道");
+    expect(gmChannelVote).toContain('<input type="hidden" name="actid" value="GM_CHANNEL">');
+    expect(gmChannelVote).toContain('關閉頻道：');
+    expect(gmChannelVote).toContain('name="ch_wolf" value="ch_wolf"');
+    expect(gmChannelVote).toContain('<input type="submit" value="變更頻道設定">');
   });
 
   it("renders game_frame.php as a legacy frameset shell", () => {
