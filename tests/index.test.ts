@@ -4175,6 +4175,22 @@ describe("worker routes", () => {
     expect(gmBody).toContain('<form method="get" action="/game_log.php"');
     expect(gmBody).toContain('<input type="hidden" name="room_no" value="room_log">');
     expect(gmBody).toContain('<input type="hidden" name="log_mode" value="on">');
+
+    const playerView = await worker.fetch(new Request("http://example.test/old_log.php?log_mode=on&room_no=room_log&viewer=player&viewer_player_id=player_wolf&reverse_log=on&heaven_talk=on"), env);
+    const playerBody = await playerView.text();
+    expect(playerView.status).toBe(200);
+    expect(playerBody).toContain("玩家 Wolf (player_wolf)");
+    expect(playerBody).toContain("howl");
+    expect(playerBody).not.toContain("內容:heaven");
+    expect(playerBody).toContain("/old_log.php?log_mode=on&amp;room_no=room_log&amp;reverse_log=on&amp;heaven_talk=on&amp;viewer=player&amp;viewer_player_id=player_wolf");
+    expect(playerBody).toContain("/game_log.php?room_no=room_log&amp;log_mode=on&amp;reverse_log=on&amp;heaven_talk=on&amp;viewer=player&amp;viewer_player_id=player_wolf");
+    expect(playerBody).toContain('<form method="get" action="/old_log.php"');
+    expect(playerBody).toContain('<input type="hidden" name="log_mode" value="on">');
+    expect(playerBody).toContain('<input type="hidden" name="room_no" value="room_log">');
+    expect(playerBody).toContain('<input type="hidden" name="viewer" value="player">');
+    expect(playerBody).toContain('<input type="hidden" name="reverse_log" value="on">');
+    expect(playerBody).toContain('<input type="hidden" name="heaven_talk" value="on">');
+    expect(playerBody).toContain('<option value="player_wolf" selected>Wolf (player_wolf)</option>');
   });
 
   it("applies old-log heaven filters on room transcript page", async () => {
