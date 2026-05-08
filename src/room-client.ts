@@ -413,7 +413,8 @@ if (legacyVoteForm) {
     event.preventDefault();
     const selectedTarget = legacyVoteForm.querySelector('input[name="target_no"]:checked');
     if (!selectedTarget || !legacyVoteCommands[selectedTarget.value]) return;
-    syncLegacyVoteHiddenFields(legacyVoteCommands[selectedTarget.value], latestGame);
+    const targetPlayer = latestGame && Array.isArray(latestGame.players) ? latestGame.players.find((player) => player.playerId === selectedTarget.value) : undefined;
+    syncLegacyVoteHiddenFields(legacyVoteCommands[selectedTarget.value], latestGame, targetPlayer);
     sendCommand(legacyVoteCommands[selectedTarget.value]);
   });
 }
@@ -767,14 +768,18 @@ function legacySituationForCommand(command) {
     cat_revive: "CAT_DO"
   }[command.type] || "VOTE_KILL";
 }
-function syncLegacyVoteHiddenFields(command, game) {
+function syncLegacyVoteHiddenFields(command, game, targetPlayer) {
   const situation = document.querySelector('.legacy-vote-form input[name="situation"]');
   const situationSelector = document.querySelector('.legacy-vote-form select[name="situation_selector"]');
   const voteTimes = document.querySelector('.legacy-vote-form input[name="vote_times"]');
+  const targetPlayerId = document.querySelector('.legacy-vote-form input[name="target_player_id"]');
+  const targetHandleName = document.querySelector('.legacy-vote-form input[name="target_handle_name"]');
   const situationValue = legacySituationForCommand(command);
   if (situation) situation.value = situationValue;
   if (situationSelector) situationSelector.value = situationValue;
   if (voteTimes) voteTimes.value = String((game && typeof game.revoteCount === "number" ? game.revoteCount : 0) + 1);
+  if (targetPlayerId) targetPlayerId.value = targetPlayer ? targetPlayer.playerId : "";
+  if (targetHandleName) targetHandleName.value = targetPlayer ? targetPlayer.nickname : "";
 }
 function updateLegacyVoteTargetList(game, currentPlayer, currentPlayerAlive, currentPlayerId, canManageLobby, canUsePlayerAction) {
   const container = document.querySelector("#legacyVoteTargetList");
@@ -812,14 +817,14 @@ function updateLegacyVoteTargetList(game, currentPlayer, currentPlayerAlive, cur
     if (!action.disabled && action.command) {
       legacyVoteCommands[player.playerId] = action.command;
     }
-    radio.addEventListener("change", () => syncLegacyVoteHiddenFields(action.command, game));
+    radio.addEventListener("change", () => syncLegacyVoteHiddenFields(action.command, game, player));
     const button = document.createElement("button");
     button.type = "button";
     button.textContent = action.label;
     button.disabled = action.disabled;
     button.addEventListener("click", () => {
       radio.checked = true;
-      syncLegacyVoteHiddenFields(action.command, game);
+      syncLegacyVoteHiddenFields(action.command, game, player);
       if (action.command) sendCommand(action.command);
     });
     targetCell.append(player.nickname, document.createElement("br"), radio, " ", button);
