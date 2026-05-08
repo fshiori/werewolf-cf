@@ -12,7 +12,30 @@ function protocolMetadata() {
       path: "/ws/room/:roomId",
       firstClientMessage: "join",
       clientMessages: ["join", "gm_set_common_voice", "gm_set_channel_restrictions"],
-      gameStateFields: ["roomId", "phase", "day", "players", "openVote", "selfVote", "voteStatus", "votes", "votedPlayerIds", "ownNightActionTarget"],
+      gameStateFields: [
+        "roomId",
+        "phase",
+        "day",
+        "hostId",
+        "revoteCount",
+        "commonTalkVisible",
+        "channelRestrictions",
+        "players",
+        "openVote",
+        "selfVote",
+        "voteStatus",
+        "votes",
+        "votedPlayerIds",
+        "ownNightActionTarget",
+        "lobbyStartVotedPlayerIds",
+        "lobbyKickVoteTargets",
+        "objectionCounts",
+        "roomEndVotedPlayerIds",
+        "winner",
+        "phaseEndsAt",
+        "suddenDeathWarningAt",
+        "log"
+      ],
       channelVariants: {
         common_chat: {
           publicVoicePlayerId: "common_voice",
@@ -187,7 +210,7 @@ describe("production read-only smoke script", () => {
     expect(result.stderr).toContain("GM command list");
   });
 
-  it("fails when protocol game_state self-vote metadata is missing", async () => {
+  it("fails when protocol game_state field metadata is incomplete", async () => {
     const host = await startServer({
       "/api/protocol": {
         contentType: "application/json",
@@ -211,7 +234,7 @@ describe("production read-only smoke script", () => {
 
     expect(result.status).toBe(1);
     expect(result.stderr).toContain("/api/protocol");
-    expect(result.stderr).toContain("game_state selfVote field");
+    expect(result.stderr).toContain("game_state field manifest");
   });
 
   it("fails when protocol GM command metadata is missing", async () => {
