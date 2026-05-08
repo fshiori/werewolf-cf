@@ -139,6 +139,8 @@ try {
   await expectHtml(`/game_vote.php?room_no=${encodeURIComponent(roomId)}&auto_reload=20`, [
     "data-room-page=\"vote\"",
     "form class=\"legacy-vote-form\" name=\"game_vote\"",
+    "name=\"target_player_id\"",
+    "name=\"target_handle_name\"",
     "body.room-page-vote .legacy-entry-map,",
     "body.room-page-vote .page-vote-description { display: none; }",
     "body.room-page-vote .room-panel-members,"

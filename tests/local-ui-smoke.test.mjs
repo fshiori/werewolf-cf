@@ -97,7 +97,7 @@ function responseFor(path, method = "GET") {
   if (path === "/game_vote.php" && method === "GET") {
     return {
       contentType: "text/html",
-      body: '<!doctype html><title>投票入口</title><style>body.room-page-vote .legacy-entry-map, body.room-page-vote .page-vote-description { display: none; } body.room-page-vote .room-panel-members, body.room-page-vote .room-panel-actions { display: none; }</style><table data-room-page="vote"><form class="legacy-vote-form" name="game_vote"></form></table>'
+      body: '<!doctype html><title>投票入口</title><style>body.room-page-vote .legacy-entry-map, body.room-page-vote .page-vote-description { display: none; } body.room-page-vote .room-panel-members, body.room-page-vote .room-panel-actions { display: none; }</style><table data-room-page="vote"><form class="legacy-vote-form" name="game_vote"><input type="hidden" name="target_player_id"><input type="hidden" name="target_handle_name"></form></table>'
     };
   }
   if (path === "/room/room_ui_smoke/records" && method === "GET") {
@@ -187,7 +187,7 @@ describe("local UI smoke script", () => {
     const host = await startServer({
       "GET /game_vote.php": {
         contentType: "text/html",
-        body: '<!doctype html><title>投票入口</title><style>body.room-page-vote .room-panel-members, body.room-page-vote .room-panel-actions { display: none; }</style><table data-room-page="vote"><form class="legacy-vote-form" name="game_vote"></form></table>'
+        body: '<!doctype html><title>投票入口</title><style>body.room-page-vote .room-panel-members, body.room-page-vote .room-panel-actions { display: none; }</style><table data-room-page="vote"><form class="legacy-vote-form" name="game_vote"><input type="hidden" name="target_player_id"><input type="hidden" name="target_handle_name"></form></table>'
       }
     });
     const result = await runScript([host]);
