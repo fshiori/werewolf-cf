@@ -329,7 +329,7 @@ export function buildLastWordsAckMessage(): ServerMessage {
 }
 
 export function buildActionAckMessage(
-  action: "vote" | "night_kill" | "divine" | "guard" | "child_fox_divine" | "cat_revive" | "kick_player" | "leave_room" | "room_end_vote" | "gm_advance_phase" | "gm_end_game" | "gm_set_alive" | "gm_set_role" | "gm_set_flag" | "gm_set_common_voice" | "gm_set_channel_restrictions",
+  action: "start_game" | "vote" | "night_kill" | "divine" | "guard" | "child_fox_divine" | "cat_revive" | "kick_player" | "leave_room" | "room_end_vote" | "gm_advance_phase" | "gm_end_game" | "gm_set_alive" | "gm_set_role" | "gm_set_flag" | "gm_set_common_voice" | "gm_set_channel_restrictions",
   targetPlayerId: string
 ): ServerMessage {
   return { type: "action_ack", action, targetPlayerId };

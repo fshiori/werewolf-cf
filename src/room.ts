@@ -361,6 +361,7 @@ export class RoomDurableObject {
         await this.saveGameState(next);
         await this.syncRoomStatus(next);
         await this.persistRoomEvent(member.playerId, "game_started", { day: next.day, players: next.players.length });
+        this.send(socket, buildActionAckMessage("start_game", member.playerId));
         await this.broadcastGameState(next);
         this.sendRoles(next);
         return;

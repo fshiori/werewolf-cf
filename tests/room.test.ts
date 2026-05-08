@@ -2362,6 +2362,7 @@ describe("RoomDurableObject", () => {
 
     await sendRaw(room, hostSocket, JSON.stringify({ type: "start_game" }));
 
+    expect(hostMessages).toContainEqual(expect.objectContaining({ type: "action_ack", action: "start_game", targetPlayerId: "player_host" }));
     for (const messages of [hostMessages, guestMessages, thirdMessages]) {
       expect(messages).toContainEqual(expect.objectContaining({ type: "game_state", phase: "day", day: 1 }));
       expect(messages.find((message) => message.type === "game_state")?.players?.some((player) => "role" in player)).toBe(false);
@@ -2637,6 +2638,7 @@ describe("RoomDurableObject", () => {
 
     await sendRaw(room, gmSocket, JSON.stringify({ type: "start_game" }));
 
+    expect(gmMessages).toContainEqual(expect.objectContaining({ type: "action_ack", action: "start_game", targetPlayerId: "player_gm" }));
     expect(gmMessages).toContainEqual(expect.objectContaining({ type: "game_state", phase: "day", day: 1 }));
     expect(gmMessages.some((message) => message.type === "role")).toBe(false);
     for (const messages of [hostMessages, guestMessages, thirdMessages]) {

@@ -203,6 +203,11 @@ describe("messages", () => {
       action: "gm_advance_phase",
       targetPlayerId: "player_gm"
     });
+    expect(buildActionAckMessage("start_game", "player_host")).toEqual({
+      type: "action_ack",
+      action: "start_game",
+      targetPlayerId: "player_host"
+    });
   });
 
   it("builds escaped lobby start vote messages", () => {
