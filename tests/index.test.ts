@@ -1524,6 +1524,58 @@ describe("worker routes", () => {
     expect(missingRoom.status).toBe(404);
   });
 
+  it("supports the legacy game_play.php talk POST alias without mutating game state", async () => {
+    const env = envWithRooms(["room_exists"]);
+    const form = new URLSearchParams({
+      command: "talk",
+      room_no: "room_exists",
+      location: "day",
+      sentence: "legacy hello"
+    });
+    const response = await worker.fetch(new Request("http://example.test/game_play.php?room_no=room_exists&auto_reload=20&frame=bottom", {
+      method: "POST",
+      body: form
+    }), env);
+
+    expect(response.status).toBe(303);
+    expect(response.headers.get("Location")).toBe("/game_play.php?room_no=room_exists&auto_reload=20&frame=bottom#game_top");
+
+    const formFrameResponse = await worker.fetch(new Request("http://example.test/game_play.php?auto_reload=5", {
+      method: "POST",
+      body: new URLSearchParams({ command: "talk", room_no: "room_exists", frame: "bottom", sentence: "legacy fallback" })
+    }), env);
+    expect(formFrameResponse.status).toBe(303);
+    expect(formFrameResponse.headers.get("Location")).toBe("/game_play.php?room_no=room_exists&auto_reload=15&frame=bottom#game_top");
+
+    const fullPageResponse = await worker.fetch(new Request("http://example.test/game_play.php", {
+      method: "POST",
+      body: new URLSearchParams({ command: "talk", room_no: "room_exists", auto_reload: "30", sentence: "legacy full" })
+    }), env);
+    expect(fullPageResponse.status).toBe(303);
+    expect(fullPageResponse.headers.get("Location")).toBe("/game_play.php?room_no=room_exists&auto_reload=30#game_top");
+
+    const missingRoomNo = await worker.fetch(new Request("http://example.test/game_play.php", {
+      method: "POST",
+      body: new URLSearchParams({ command: "talk", sentence: "missing room" })
+    }), env);
+    expect(missingRoomNo.status).toBe(400);
+    expect(await missingRoomNo.json()).toEqual({ error: "game_play.php talk requires room_no" });
+
+    const missingRoom = await worker.fetch(new Request("http://example.test/game_play.php?room_no=room_missing", {
+      method: "POST",
+      body: form
+    }), env);
+    expect(missingRoom.status).toBe(404);
+    expect(await missingRoom.text()).toBe("Room not found");
+
+    const invalidCommand = await worker.fetch(new Request("http://example.test/game_play.php?room_no=room_exists", {
+      method: "POST",
+      body: new URLSearchParams({ command: "vote", room_no: "room_exists" })
+    }), env);
+    expect(invalidCommand.status).toBe(400);
+    expect(await invalidCommand.json()).toEqual({ error: "Invalid game_play.php command" });
+  });
+
   it("supports the legacy game_vote.php POST alias without mutating game state", async () => {
     const env = envWithRooms(["room_exists"]);
     const form = new URLSearchParams({
