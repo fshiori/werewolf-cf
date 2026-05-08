@@ -3405,6 +3405,8 @@ describe("render", () => {
     expect(html).toContain("game_state");
     expect(html).toContain("房間 <code>roomId</code>");
     expect(html).toContain("<code>openVote</code>/<code>selfVote</code>/<code>voteStatus</code>");
+    expect(html).toContain("<code>openVote</code> 公開白天投票對應與已投票者");
+    expect(html).toContain("<code>voteStatus</code> 在非公開票時只公開已投票者");
     expect(html).toContain("<code>gameStateFields</code>");
     expect(html).toContain("<code>roomId</code> / <code>phase</code> / <code>day</code>");
     expect(html).toContain("<code>lobbyStartVotedPlayerIds</code> / <code>lobbyKickVoteTargets</code>");
