@@ -2338,8 +2338,9 @@ async function createLegacyRoom(request: Request, env: Env): Promise<Response> {
       nickname,
       options
     });
+    const autoReloadQuery = legacyAutoReloadQuery(new URL(request.url), form);
 
-    return new Response(null, { status: 303, headers: { Location: `/login.php?room_no=${encodeURIComponent(roomId)}` } });
+    return new Response(null, { status: 303, headers: { Location: `/login.php?room_no=${encodeURIComponent(roomId)}${autoReloadQuery}` } });
   } catch (error) {
     return json({ error: error instanceof Error ? error.message : "Failed to create room" }, { status: 400 });
   }

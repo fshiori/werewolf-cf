@@ -790,6 +790,38 @@ describe("worker routes", () => {
     expect(await invalidCommand.json()).toEqual({ error: "Invalid room_manager.php command" });
   });
 
+  it("preserves legacy room creation reload redirects", async () => {
+    const env = envWithRooms([]);
+    const queryReloadResponse = await worker.fetch(new Request("http://example.test/room_manager.php?auto_reload=5", {
+      method: "POST",
+      body: new URLSearchParams({
+        command: "CREATE_ROOM",
+        player_id: "player_reload_owner",
+        nickname: "Reload Owner",
+        room_name: "Reload Room",
+        room_comment: "Reload comment",
+        max_user: "16"
+      })
+    }), env);
+    expect(queryReloadResponse.status).toBe(303);
+    expect(queryReloadResponse.headers.get("Location")).toMatch(/^\/login\.php\?room_no=room_[0-9a-f]{16}&auto_reload=15$/);
+
+    const formReloadResponse = await worker.fetch(new Request("http://example.test/room_manager.php", {
+      method: "POST",
+      body: new URLSearchParams({
+        command: "CREATE_ROOM",
+        player_id: "player_form_reload_owner",
+        nickname: "Form Reload Owner",
+        room_name: "Form Reload Room",
+        room_comment: "Form reload comment",
+        max_user: "16",
+        auto_reload: "30"
+      })
+    }), env);
+    expect(formReloadResponse.status).toBe(303);
+    expect(formReloadResponse.headers.get("Location")).toMatch(/^\/login\.php\?room_no=room_[0-9a-f]{16}&auto_reload=30$/);
+  });
+
   it("rejects GM rooms without a GM Trip", async () => {
     const response = await worker.fetch(
       new Request("http://example.test/api/rooms", {
