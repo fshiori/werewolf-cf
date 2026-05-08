@@ -271,7 +271,7 @@ describe("render", () => {
     expect(html).toContain("#lastWordsLog .last-words-row { background-color: #eeeeff; color: black; }");
     expect(html).toContain("body.room-view-spectator .room-chat-controls { display: none; }");
     expect(html).toContain("body.room-view-heaven .room-live-chat-only { display: none; }");
-    expect(html).toContain(".page-frame-only, .page-up-only, .page-vote-only, .page-bottom-only { display: none; }");
+    expect(html).toContain(".page-frame-only, .page-up-only, .page-vote-only, .page-vote-description, .page-bottom-only { display: none; }");
     expect(html).toContain("body.room-page-frame .room-aux-panel");
     expect(html).toContain("body.room-page-vote .room-registration-row,\n    body.room-page-bottom .room-registration-row { display: none; }");
     expect(html).toContain("body.room-page-up .room-panel-members");
@@ -283,7 +283,8 @@ describe("render", () => {
     expect(html).toContain("body.room-page-vote .room-panel-members,");
     expect(html).toContain("body.room-page-vote .room-panel-system { display: none; }");
     expect(html).toContain("body.room-page-vote .legacy-entry-map,");
-    expect(html).toContain("body.room-page-vote .page-vote-only { display: none; }");
+    expect(html).toContain("body.room-page-vote .page-vote-description { display: none; }");
+    expect(html).not.toContain("body.room-page-vote .page-vote-only { display: none; }");
     expect(html).toContain("body.room-phase-night .player-card.voted { background: #004000; color: snow; }");
     expect(html).toContain("body.room-phase-night .player-card.voted a { color: #ccffff; }");
     expect(html).toContain("Trip");
@@ -579,7 +580,8 @@ describe("render", () => {
     expect(vote).toContain("body.room-page-vote .room-panel-actions,");
     expect(vote).toContain("body.room-page-vote .room-panel-members,");
     expect(vote).toContain("body.room-page-vote .legacy-entry-map,");
-    expect(vote).toContain("body.room-page-vote .page-vote-only { display: none; }");
+    expect(vote).toContain("body.room-page-vote .page-vote-description { display: none; }");
+    expect(vote).not.toContain("body.room-page-vote .page-vote-only { display: none; }");
     expect(vote).toContain('<tr class="view-player-only room-panel-actions">');
   });
 

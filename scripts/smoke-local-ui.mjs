@@ -140,9 +140,9 @@ try {
     "data-room-page=\"vote\"",
     "form class=\"legacy-vote-form\" name=\"game_vote\"",
     "body.room-page-vote .legacy-entry-map,",
-    "body.room-page-vote .page-vote-only { display: none; }",
+    "body.room-page-vote .page-vote-description { display: none; }",
     "body.room-page-vote .room-panel-members,"
-  ], ["房間JSON"]);
+  ], ["房間JSON", "body.room-page-vote .page-vote-only { display: none; }"]);
   await expectHtml(`/room/${roomId}/records`, ["村子對局紀錄", roomId]);
   await expectHtml(`/room/${roomId}/events`, ["村子事件履歷", roomId, "room_created"]);
   await expectHtml(`/room/${roomId}/log`, ["村子完整紀錄", roomId, "room_created"]);

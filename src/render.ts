@@ -48,7 +48,7 @@ function page(title: string, body: string, extraHead = ""): string {
     body.room-view-spectator .view-spectator-only,
     body.room-view-heaven .view-heaven-only { display: table-row; }
     body.room-view-heaven .panel th { background: #cccccc; }
-    .page-frame-only, .page-up-only, .page-vote-only, .page-bottom-only { display: none; }
+    .page-frame-only, .page-up-only, .page-vote-only, .page-vote-description, .page-bottom-only { display: none; }
     body.room-page-frame .page-frame-only,
     body.room-page-up .page-up-only,
     body.room-page-vote .page-vote-only,
@@ -76,7 +76,7 @@ function page(title: string, body: string, extraHead = ""): string {
     body.room-page-vote .room-panel-members,
     body.room-page-vote .room-panel-system { display: none; }
     body.room-page-vote .legacy-entry-map,
-    body.room-page-vote .page-vote-only { display: none; }
+    body.room-page-vote .page-vote-description { display: none; }
     body.room-page-vote .game-header .full-room-only,
     body.room-page-bottom .game-header .full-room-only { display: none; }
     body.room-page-bottom .legacy-entry-map,
@@ -3941,7 +3941,7 @@ export function renderRoom(roomId: string, options: RenderRoomOptions = {}): str
               <td>上方</td>
               <td>發言上框；保留發言、頻道按鈕與投票入口，隱藏下方主要遊戲畫面。</td>
             </tr>
-            <tr class="page-vote-only">
+            <tr class="page-vote-description">
               <td>投票</td>
               <td>著重能力發動與投票操作；發言、遺言、系統與診斷面板不顯示。</td>
             </tr>
