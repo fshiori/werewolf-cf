@@ -537,7 +537,9 @@ describe("render", () => {
     expect(up).toContain('<a href="/game_up.php?room_no=room_abc&amp;auto_reload=15">15秒</a>');
     expect(up).toContain('form name="send"');
     expect(up).toContain('form class="legacy-send-form" name="send" action="/game_play.php?room_no=room_abc&amp;frame=bottom#game_top" method="POST" target="bottom" onsubmit="return false"');
-    expect(up).toContain('<span class="page-up-inline-only legacy-up-vote-link">[<a href="/game_vote.php?room_no=room_abc#game_top" target="bottom">投票/能力</a>]</span>');
+    expect(up).toContain('<span class="page-up-inline-only legacy-up-vote-link">[<a href="/game_vote.php?room_no=room_abc#game_top" target="bottom">投票/能力</a>]<span class="legacy-gm-action-links">');
+    expect(up).toContain('<a href="/game_vote.php?room_no=room_abc&amp;aid=GM_KILL#game_top" name="vote_link_kill" target="bottom"><small>殺人</small></a>');
+    expect(up).toContain('<a href="/game_vote.php?room_no=room_abc&amp;aid=GM_DECL#game_top" name="vote_link_decl" target="bottom"><small>宣告勝利</small></a>');
     expect(up).toContain('<input type="hidden" name="command" value="talk">');
     expect(up).toContain('<input type="hidden" name="room_no" value="room_abc">');
     expect(up).toContain('<input type="hidden" name="location" value="day">');

@@ -3815,11 +3815,20 @@ function legacyVoteFormShell(roomId: string, autoReloadSeconds: 0 | 15 | 20 | 30
 function legacySendFormStart(roomId: string, autoReloadSeconds: 0 | 15 | 20 | 30): string {
   const actionHref = legacyRoomBottomFrameHref(roomId, autoReloadSeconds);
   const voteHref = legacyRoomHref("/game_vote.php", roomId, autoReloadSeconds);
+  const gmActionLinks = [
+    ["GM_KILL", "殺人", "kill"],
+    ["GM_RESU", "復活", "resu"],
+    ["GM_CHROLE", "改變職業", "chrole"],
+    ["GM_MARK", "標記", "mark"],
+    ["GM_DEMARK", "取消標記", "demark"],
+    ["GM_CHANNEL", "調整頻道", "channel"],
+    ["GM_DECL", "宣告勝利", "decl"]
+  ].map(([aid, label, name]) => `[<a href="${voteHref}&amp;aid=${aid}#game_top" name="vote_link_${name}" target="bottom"><small>${label}</small></a>]`).join("");
   return `<form class="legacy-send-form" name="send" action="${actionHref}#game_top" method="POST" target="bottom" onsubmit="return false">
                   <input type="hidden" name="command" value="talk">
                   <input type="hidden" name="room_no" value="${escapeHtml(roomId)}">
                   <input type="hidden" name="location" value="day">
-                  <span class="page-up-inline-only legacy-up-vote-link">[<a href="${voteHref}#game_top" target="bottom">投票/能力</a>]</span>`;
+                  <span class="page-up-inline-only legacy-up-vote-link">[<a href="${voteHref}#game_top" target="bottom">投票/能力</a>]<span class="legacy-gm-action-links">${gmActionLinks}</span></span>`;
 }
 
 function roomPageTitle(roomId: string, pageMode: "full" | "frame" | "up" | "vote" | "bottom", viewMode: "player" | "spectator" | "heaven"): string {
