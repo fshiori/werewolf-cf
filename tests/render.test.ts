@@ -3362,6 +3362,10 @@ describe("render", () => {
     expect(html).toContain("確認開始遊戲、投票、襲擊、占卜、護衛");
     expect(html).toContain("廢村請求");
     expect(html).toContain("GM 換日/裁定/生死/角色/旗標/選項調整");
+    expect(html).toContain("<code>actionAckActions</code>");
+    expect(html).toContain("<code>start_game</code> / <code>vote</code> / <code>night_kill</code>");
+    expect(html).toContain("<code>gm_advance_phase</code> / <code>gm_end_game</code>");
+    expect(html).toContain("<code>gm_set_common_voice</code> / <code>gm_set_channel_restrictions</code>");
     expect(html).toContain("revealed_roles");
     expect(html).toContain("common_voice");
     expect(html).toContain("/api/protocol");
