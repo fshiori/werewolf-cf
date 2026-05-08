@@ -3043,6 +3043,28 @@ export default {
         return json({ error: error instanceof Error ? error.message : "Invalid vote" }, { status: 400 });
       }
     }
+    if (request.method === "POST" && url.pathname === "/game_play.php") {
+      try {
+        const form = await request.formData().catch(() => null);
+        const command = url.searchParams.get("command") ?? (form ? readFormString(form, "command") : undefined) ?? "talk";
+        if (command !== "talk") {
+          throw new Error("Invalid game_play.php command");
+        }
+        const roomIdParam = legacyLiveRoomId ?? (form ? readFormString(form, "room_no") : undefined);
+        if (!roomIdParam) {
+          throw new Error("game_play.php talk requires room_no");
+        }
+        const roomId = validateRoomId(roomIdParam);
+        if (!(await roomExists(env, roomId))) {
+          return new Response("Room not found", { status: 404 });
+        }
+        const autoReloadQuery = legacyAutoReloadQuery(url, form);
+        const frameQuery = url.searchParams.get("frame") === "bottom" || (form ? readFormString(form, "frame") : undefined) === "bottom" ? "&frame=bottom" : "";
+        return new Response(null, { status: 303, headers: { Location: `/game_play.php?room_no=${encodeURIComponent(roomId)}${autoReloadQuery}${frameQuery}#game_top` } });
+      } catch (error) {
+        return json({ error: error instanceof Error ? error.message : "Invalid talk" }, { status: 400 });
+      }
+    }
     if (request.method === "POST" && url.pathname === "/user_manager.php") {
       try {
         const form = await request.formData().catch(() => null);
