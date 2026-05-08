@@ -99,6 +99,7 @@ Expected:
 - `/api/version` capabilities include `websocket_protocol`.
 - `/api/protocol` returns `websocket.path: "/ws/room/:roomId"` and `websocket.firstClientMessage: "join"`.
 - `/api/protocol` returns `websocket.channelVariants.common_chat.publicVoicePlayerId: "common_voice"` and `publicVoiceNickname: "共有者的聲音"`.
+- `/api/protocol` lists `gm_set_common_voice` and `gm_set_channel_restrictions` in `websocket.clientMessages`.
 - `/api/config` returns `config.maintenanceMode`.
 - HTML pages return `200 OK`; `/protocol` includes `WebSocket 入口` and `common_voice`.
 

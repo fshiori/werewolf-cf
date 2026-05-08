@@ -51,10 +51,12 @@ const checks = [
     validate(value) {
       return value?.websocket?.path === "/ws/room/:roomId"
         && value?.websocket?.firstClientMessage === "join"
+        && value?.websocket?.clientMessages?.includes("gm_set_common_voice")
+        && value?.websocket?.clientMessages?.includes("gm_set_channel_restrictions")
         && value?.websocket?.channelVariants?.common_chat?.publicVoicePlayerId === "common_voice"
         && value?.websocket?.channelVariants?.common_chat?.publicVoiceNickname === "共有者的聲音";
     },
-    expected: "websocket protocol metadata with common voice variant"
+    expected: "websocket protocol metadata with common voice variant and GM command list"
   },
   {
     path: "/api/config",
