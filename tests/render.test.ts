@@ -509,6 +509,7 @@ describe("render", () => {
     expect(bottom).toContain("game_frame.php 下框；保留主遊戲輸出");
     expect(bottom).toContain("body.room-page-bottom .room-registration-row");
     expect(bottom).toContain("body.room-page-bottom .game-header .full-room-only { display: none; }");
+    expect(bottom).toContain("body.room-page-bottom .room-chat-controls { display: none; }");
     expect(bottom).toContain('data-legacy-entry="game_play.php bottom"');
     expect(bottom).toContain('[<a href="/game_play.php?room_no=room_abc&amp;frame=bottom">手動更新</a>]');
     expect(bottom).toContain('<a href="/game_play.php?room_no=room_abc&amp;auto_reload=15&amp;frame=bottom">15秒</a>');
