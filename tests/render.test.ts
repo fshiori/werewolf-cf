@@ -724,6 +724,10 @@ describe("render", () => {
     expect(ROOM_CLIENT_SCRIPT).toContain("syncLegacyVoteHiddenFields(undefined, game);");
     expect(ROOM_CLIENT_SCRIPT).toContain('radio.name = "target_no";');
     expect(ROOM_CLIENT_SCRIPT).toContain("legacyVoteCommands[player.playerId] = action.command;");
+    expect(ROOM_CLIENT_SCRIPT).toContain('button.textContent = "投開始遊戲一票";');
+    expect(ROOM_CLIENT_SCRIPT).toContain('const command = { type: "start_vote" };');
+    expect(ROOM_CLIENT_SCRIPT).toContain('syncLegacyVoteHiddenFields(command, game);');
+    expect(ROOM_CLIENT_SCRIPT).toContain('sendCommand(command);');
     expect(ROOM_CLIENT_SCRIPT).toContain('radio.addEventListener("change", () => syncLegacyVoteHiddenFields(action.command, game, player));');
     expect(ROOM_CLIENT_SCRIPT).toContain("radio.checked = true;");
     expect(ROOM_CLIENT_SCRIPT).toContain("syncLegacyVoteHiddenFields(action.command, game, player);");
