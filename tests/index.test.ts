@@ -1476,6 +1476,14 @@ describe("worker routes", () => {
     expect(response.status).toBe(303);
     expect(response.headers.get("Location")).toBe("/game_view.php?room_no=room_exists");
 
+    const reloadResponse = await worker.fetch(new Request("http://example.test/game_play.php?go=out&room_no=room_exists&auto_reload=20"), env);
+    expect(reloadResponse.status).toBe(303);
+    expect(reloadResponse.headers.get("Location")).toBe("/game_view.php?room_no=room_exists&auto_reload=20");
+
+    const normalizedReloadResponse = await worker.fetch(new Request("http://example.test/game_play.php?go=out&room_no=room_exists&auto_reload=5"), env);
+    expect(normalizedReloadResponse.status).toBe(303);
+    expect(normalizedReloadResponse.headers.get("Location")).toBe("/game_view.php?room_no=room_exists&auto_reload=15");
+
     const missingRoomNo = await worker.fetch(new Request("http://example.test/game_play.php?go=out"), env);
     expect(missingRoomNo.status).toBe(400);
     expect(await missingRoomNo.json()).toEqual({ error: "game_play.php out requires room_no" });

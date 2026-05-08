@@ -3015,7 +3015,8 @@ export default {
         if (!(await roomExists(env, roomId))) {
           return new Response("Room not found", { status: 404 });
         }
-        return new Response(null, { status: 303, headers: { Location: `/game_view.php?room_no=${encodeURIComponent(roomId)}` } });
+        const autoReloadQuery = legacyAutoReloadQuery(url);
+        return new Response(null, { status: 303, headers: { Location: `/game_view.php?room_no=${encodeURIComponent(roomId)}${autoReloadQuery}` } });
       } catch (error) {
         return json({ error: error instanceof Error ? error.message : "Invalid room" }, { status: 400 });
       }
