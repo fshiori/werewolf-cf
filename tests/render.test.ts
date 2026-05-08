@@ -709,6 +709,8 @@ describe("render", () => {
     expect(ROOM_CLIENT_SCRIPT).toContain("situationSelector.value = situationValue;");
     expect(ROOM_CLIENT_SCRIPT).toContain('voteTimes.value = String((game && typeof game.revoteCount === "number" ? game.revoteCount : 0) + 1);');
     expect(ROOM_CLIENT_SCRIPT).toContain("legacyTargetCommand(game, currentPlayer, currentPlayerAlive, currentPlayerId, canManageLobby, canUsePlayerAction, player)");
+    expect(ROOM_CLIENT_SCRIPT).toContain('const selfTargetAllowed = game.phase === "day" && game.selfVote === true;');
+    expect(ROOM_CLIENT_SCRIPT).toContain("(player.playerId === currentPlayerId && !selfTargetAllowed)");
     expect(ROOM_CLIENT_SCRIPT).toContain("updateLegacyVoteTargetList(game, currentPlayer, currentPlayerAlive, currentPlayerId, canManageLobby, canUsePlayerAction);");
     expect(ROOM_CLIENT_SCRIPT).toContain("syncLegacyVoteHiddenFields(undefined, game);");
     expect(ROOM_CLIENT_SCRIPT).toContain('radio.name = "target_no";');

@@ -718,11 +718,12 @@ function updateActionPrompt(game, currentPlayer, currentPlayerAlive, votedPlayer
 function legacyTargetCommand(game, currentPlayer, currentPlayerAlive, currentPlayerId, canManageLobby, canUsePlayerAction, player) {
   const canKickVoteLobby = game.phase === "lobby" && currentPlayer && !isGm && player.playerId !== currentPlayerId;
   const catReviveTarget = game.phase === "night" && game.day > 1 && role === "cat" && !player.alive;
+  const selfTargetAllowed = game.phase === "day" && game.selfVote === true;
   const disabled =
     (!canUsePlayerAction && !(canManageLobby && player.playerId !== currentPlayerId) && !canKickVoteLobby) ||
     (game.phase === "night" && role === "cat" && !catReviveTarget) ||
     (!player.alive && !catReviveTarget) ||
-    player.playerId === currentPlayerId ||
+    (player.playerId === currentPlayerId && !selfTargetAllowed) ||
     game.phase === "ended" ||
     !currentPlayerAlive;
   if (game.phase === "lobby") {
@@ -1113,11 +1114,12 @@ function renderGame(game) {
     const canKickVoteLobby = game.phase === "lobby" && currentPlayer && !isGm && player.playerId !== currentPlayerId;
     button.textContent = canManageLobby && player.playerId !== currentPlayerId ? "踢 " + player.nickname : canKickVoteLobby ? "踢票 " + player.nickname : (player.alive ? "" : "× ") + player.nickname;
     const catReviveTarget = game.phase === "night" && game.day > 1 && role === "cat" && !player.alive;
+    const selfTargetAllowed = game.phase === "day" && game.selfVote === true;
     button.disabled =
       (!canUsePlayerAction && !(canManageLobby && player.playerId !== currentPlayerId) && !canKickVoteLobby) ||
       (game.phase === "night" && role === "cat" && !catReviveTarget) ||
       (!player.alive && !catReviveTarget) ||
-      player.playerId === currentPlayerId ||
+      (player.playerId === currentPlayerId && !selfTargetAllowed) ||
       game.phase === "ended";
     if (!player.alive) {
       button.className = "dead";
