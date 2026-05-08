@@ -187,7 +187,7 @@ function votedPlayerIdsForState(state: GameState, viewerPlayerId?: string): stri
     }
     return actorIds;
   }
-  const voterIds = state.voteStatus ? Object.keys(state.votes) : [];
+  const voterIds = state.voteStatus || (state.phase === "day" && state.openVote) ? Object.keys(state.votes) : [];
   if (viewerPlayerId && state.votes[viewerPlayerId] && !voterIds.includes(viewerPlayerId)) {
     return [...voterIds, viewerPlayerId];
   }
