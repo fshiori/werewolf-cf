@@ -676,6 +676,9 @@ describe("render", () => {
     expect(ROOM_CLIENT_SCRIPT).toContain("/api/players/\" + playerId + \"/records");
     expect(ROOM_CLIENT_SCRIPT).toContain("game.hostId !== currentPlayerId");
     expect(ROOM_CLIENT_SCRIPT).toContain("game.revoteCount");
+    expect(ROOM_CLIENT_SCRIPT).toContain("function syncPlayerCookie()");
+    expect(ROOM_CLIENT_SCRIPT).toContain('document.cookie = "werewolf_cf_player_id=" + encodeURIComponent(playerId) + "; Path=/; SameSite=Lax";');
+    expect(ROOM_CLIENT_SCRIPT).toContain("syncPlayerCookie();");
     expect(ROOM_CLIENT_SCRIPT).toContain("function setRoomPhaseClass(phase)");
     expect(ROOM_CLIENT_SCRIPT).toContain('document.body.classList.add("room-phase-" + phase);');
     expect(ROOM_CLIENT_SCRIPT).toContain("function phaseLabel(game)");

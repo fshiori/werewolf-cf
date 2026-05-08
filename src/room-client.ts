@@ -5,6 +5,12 @@ const playerKey = "werewolf_cf_player_id";
 if (!localStorage.getItem(playerKey)) {
   localStorage.setItem(playerKey, "player_" + crypto.randomUUID().replaceAll("-", ""));
 }
+function syncPlayerCookie() {
+  const playerId = localStorage.getItem(playerKey);
+  if (!playerId) return;
+  document.cookie = "werewolf_cf_player_id=" + encodeURIComponent(playerId) + "; Path=/; SameSite=Lax";
+}
+syncPlayerCookie();
 document.querySelector("#nickname").value = localStorage.getItem("werewolf_cf_nickname") || "";
 document.querySelector("#trip").value = localStorage.getItem("werewolf_cf_trip") || "";
 document.querySelector("#defaultIcon").value = localStorage.getItem("werewolf_cf_default_icon") || "";
@@ -239,6 +245,7 @@ document.querySelector("#connect").addEventListener("click", () => {
   localStorage.setItem("werewolf_cf_nickname", nickname);
   localStorage.setItem("werewolf_cf_trip", trip);
   localStorage.setItem("werewolf_cf_default_icon", iconPath);
+  syncPlayerCookie();
   refreshAuxiliaryPanels();
   ws = new WebSocket((location.protocol === "https:" ? "wss://" : "ws://") + location.host + "/ws/room/" + roomId);
   ws.addEventListener("open", () => ws.send(JSON.stringify({ type: "join", playerId: localStorage.getItem(playerKey), nickname, trip, wishRole, iconPath })));
