@@ -1670,6 +1670,24 @@ describe("game", () => {
     expect(game.log.at(-1)).toBe("妖狐勝利。");
   });
 
+  it("gives child foxes the fox win when wolves are extinct", () => {
+    let game = activeState("day", [
+      { playerId: "player_1", nickname: "Wolf", role: "werewolf", alive: true },
+      { playerId: "player_2", nickname: "Child Fox", role: "child_fox", alive: true },
+      { playerId: "player_3", nickname: "Villager A", role: "villager", alive: true },
+      { playerId: "player_4", nickname: "Villager B", role: "villager", alive: true }
+    ]);
+
+    game = castDayVote(game, "player_1", "player_3");
+    game = castDayVote(game, "player_2", "player_1");
+    game = castDayVote(game, "player_3", "player_1");
+    game = castDayVote(game, "player_4", "player_1");
+
+    expect(game.phase).toBe("ended");
+    expect(game.winner).toBe("foxes");
+    expect(game.log.at(-1)).toBe("妖狐勝利。");
+  });
+
   it("does not let a lone child fox steal a wolf win in big-wolf child-fox rooms", () => {
     let game = activeState("day", [
       { playerId: "player_1", nickname: "Wolf", role: "werewolf", alive: true },
