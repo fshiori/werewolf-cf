@@ -112,7 +112,7 @@ function responseFor(path) {
     return { contentType: "text/html", body: "<!doctype html><title>規則</title>" };
   }
   if (path === "/protocol") {
-    return { contentType: "text/html", body: "<!doctype html><title>WebSocket 入口 common_voice</title>" };
+    return { contentType: "text/html", body: "<!doctype html><title>WebSocket 入口 common_voice gameStateFields actionAckActions</title>" };
   }
   if (path === "/version") {
     return { contentType: "text/html", body: "<!doctype html><title>版本資訊</title>" };
@@ -316,7 +316,7 @@ describe("production read-only smoke script", () => {
     const host = await startServer({
       "/protocol": {
         contentType: "text/html",
-        body: "<!doctype html><title>WebSocket 入口</title>"
+        body: "<!doctype html><title>WebSocket 入口 gameStateFields actionAckActions</title>"
       }
     });
     const result = await runScript([host]);
@@ -324,6 +324,20 @@ describe("production read-only smoke script", () => {
     expect(result.status).toBe(1);
     expect(result.stderr).toContain("/protocol");
     expect(result.stderr).toContain("common_voice");
+  });
+
+  it("fails when the protocol page omits protocol manifests", async () => {
+    const host = await startServer({
+      "/protocol": {
+        contentType: "text/html",
+        body: "<!doctype html><title>WebSocket 入口 common_voice</title>"
+      }
+    });
+    const result = await runScript([host]);
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("/protocol");
+    expect(result.stderr).toContain("gameStateFields");
   });
 
   it("requires a Worker URL", async () => {
