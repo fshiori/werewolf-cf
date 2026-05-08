@@ -488,6 +488,7 @@ export type ServerMessage =
       channelRestrictions: ChannelRestrictions;
       players: PublicGamePlayer[];
       openVote: boolean;
+      selfVote: boolean;
       voteStatus: boolean;
       votes: Record<string, string>;
       votedPlayerIds: string[];

@@ -238,6 +238,7 @@ describe("messages", () => {
       revoteCount: 0,
       commonTalkVisible: false,
       openVote: false,
+      selfVote: false,
       voteStatus: false,
       objectionCounts: {},
       players: [
@@ -289,6 +290,11 @@ describe("messages", () => {
       voteStatus: true,
       votes: { player_1: "player_2" },
       votedPlayerIds: ["player_1"]
+    });
+
+    expect(buildGameStateMessage({ ...hidden, selfVote: true })).toMatchObject({
+      type: "game_state",
+      selfVote: true
     });
   });
 
