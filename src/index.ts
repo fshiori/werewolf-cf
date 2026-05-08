@@ -3007,6 +3007,26 @@ export default {
     if (request.method === "GET" && url.pathname === "/game_play.php" && url.searchParams.get("go") === "del") {
       return endRoomByLegacyAdminLink(request, env, url.searchParams.get("id") ?? legacyLiveRoomId ?? "", "/admin/rooms");
     }
+    if (request.method === "GET" && url.pathname === "/game_play.php" && url.searchParams.has("set_objection")) {
+      try {
+        if (!legacyLiveRoomId) {
+          throw new Error("game_play.php objection requires room_no");
+        }
+        const objection = url.searchParams.get("set_objection");
+        if (objection !== "set" && objection !== "roomend") {
+          throw new Error("Invalid game_play.php objection");
+        }
+        const roomId = validateRoomId(legacyLiveRoomId);
+        if (!(await roomExists(env, roomId))) {
+          return new Response("Room not found", { status: 404 });
+        }
+        const autoReloadQuery = legacyAutoReloadQuery(url);
+        const frameQuery = url.searchParams.get("frame") === "bottom" ? "&frame=bottom" : "";
+        return new Response(null, { status: 303, headers: { Location: `/game_play.php?room_no=${encodeURIComponent(roomId)}${autoReloadQuery}${frameQuery}#game_top` } });
+      } catch (error) {
+        return json({ error: error instanceof Error ? error.message : "Invalid objection" }, { status: 400 });
+      }
+    }
     if (request.method === "GET" && url.pathname === "/game_play.php" && url.searchParams.get("go") === "out") {
       try {
         if (!legacyLiveRoomId) {
