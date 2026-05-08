@@ -3761,6 +3761,8 @@ function legacyVoteFormShell(roomId: string, autoReloadSeconds: 0 | 15 | 20 | 30
                   <input type="hidden" name="room_no" value="${escapeHtml(roomId)}">
                   <input type="hidden" name="situation" value="VOTE_KILL">
                   <input type="hidden" name="vote_times" value="1">
+                  <input type="hidden" name="target_player_id" value="">
+                  <input type="hidden" name="target_handle_name" value="">
                   <table class="legacy-vote-shell">
                     <tr>
                       <td colspan="2">
