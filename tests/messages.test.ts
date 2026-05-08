@@ -294,6 +294,11 @@ describe("messages", () => {
   it("hides vote mappings unless open vote is enabled", () => {
     const hidden = {
       ...createLobbyState("room_abc"),
+      phase: "day" as const,
+      players: [
+        { playerId: "player_1", nickname: "Alice", role: "villager" as const, alive: true },
+        { playerId: "player_2", nickname: "Bob", role: "villager" as const, alive: true }
+      ],
       votes: { player_1: "player_2" },
       openVote: false,
       voteStatus: false
@@ -308,7 +313,7 @@ describe("messages", () => {
     expect(buildGameStateMessage(statusOnly)).toMatchObject({ type: "game_state", openVote: false, voteStatus: true, votes: {}, votedPlayerIds: ["player_1"] });
     expect(buildGameStateMessage(statusOnly, "player_1")).toMatchObject({ type: "game_state", openVote: false, voteStatus: true, votes: { player_1: "player_2" }, votedPlayerIds: ["player_1"] });
     expect(buildGameStateMessage(statusOnly, "player_2")).toMatchObject({ type: "game_state", openVote: false, voteStatus: true, votes: {}, votedPlayerIds: ["player_1"] });
-    expect(buildGameStateMessage(visible)).toMatchObject({ type: "game_state", openVote: true, voteStatus: false, votes: { player_1: "player_2" }, votedPlayerIds: [] });
+    expect(buildGameStateMessage(visible)).toMatchObject({ type: "game_state", openVote: true, voteStatus: false, votes: { player_1: "player_2" }, votedPlayerIds: ["player_1"] });
     expect(buildGameStateMessage(visibleWithStatus)).toMatchObject({
       type: "game_state",
       openVote: true,
