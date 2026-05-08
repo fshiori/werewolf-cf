@@ -53,10 +53,11 @@ const checks = [
         && value?.websocket?.firstClientMessage === "join"
         && value?.websocket?.clientMessages?.includes("gm_set_common_voice")
         && value?.websocket?.clientMessages?.includes("gm_set_channel_restrictions")
+        && value?.websocket?.gameStateFields?.includes("selfVote")
         && value?.websocket?.channelVariants?.common_chat?.publicVoicePlayerId === "common_voice"
         && value?.websocket?.channelVariants?.common_chat?.publicVoiceNickname === "共有者的聲音";
     },
-    expected: "websocket protocol metadata with common voice variant and GM command list"
+    expected: "websocket protocol metadata with common voice variant, GM command list, and game_state selfVote field"
   },
   {
     path: "/api/config",
