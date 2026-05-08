@@ -2043,6 +2043,7 @@ describe("RoomDurableObject", () => {
 
     await sendRaw(room, gmSocket, JSON.stringify({ type: "gm_advance_phase" }));
 
+    expect(gmMessages).toContainEqual(expect.objectContaining({ type: "action_ack", action: "gm_advance_phase", targetPlayerId: "player_gm" }));
     for (const messages of [gmMessages, wolfMessages, targetMessages, otherMessages]) {
       const state = messages.find((message) => message.type === "game_state");
       expect(state).toEqual(expect.objectContaining({ type: "game_state", phase: "night", day: 1 }));
@@ -2139,6 +2140,7 @@ describe("RoomDurableObject", () => {
 
     await sendRaw(room, gmSocket, JSON.stringify({ type: "gm_end_game", winner: "villagers" }));
 
+    expect(gmMessages).toContainEqual(expect.objectContaining({ type: "action_ack", action: "gm_end_game", targetPlayerId: "player_gm" }));
     for (const messages of [gmMessages, wolfMessages, villagerMessages, seerMessages]) {
       const state = messages.find((message) => message.type === "game_state");
       expect(state).toEqual(expect.objectContaining({ type: "game_state", phase: "ended", day: 2, winner: "villagers" }));
