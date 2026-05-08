@@ -3028,7 +3028,11 @@ export default {
         if (!(await roomExists(env, roomId))) {
           return new Response("Room not found", { status: 404 });
         }
-        return new Response(null, { status: 303, headers: { Location: `/game_vote.php?room_no=${encodeURIComponent(roomId)}#game_top` } });
+        const autoReloadParam = url.searchParams.get("auto_reload") ?? (form ? readFormString(form, "auto_reload") : undefined);
+        const autoReloadValue = autoReloadParam ? Number(autoReloadParam) : 0;
+        const autoReloadSeconds = autoReloadValue > 0 && autoReloadValue < 15 ? 15 : autoReloadValue === 15 || autoReloadValue === 20 || autoReloadValue === 30 ? autoReloadValue : 0;
+        const autoReloadQuery = autoReloadSeconds ? `&auto_reload=${autoReloadSeconds}` : "";
+        return new Response(null, { status: 303, headers: { Location: `/game_vote.php?room_no=${encodeURIComponent(roomId)}${autoReloadQuery}#game_top` } });
       } catch (error) {
         return json({ error: error instanceof Error ? error.message : "Invalid vote" }, { status: 400 });
       }

@@ -1497,12 +1497,20 @@ describe("worker routes", () => {
     expect(response.status).toBe(303);
     expect(response.headers.get("Location")).toBe("/game_vote.php?room_no=room_exists#game_top");
 
+    const reloadResponse = await worker.fetch(new Request("http://example.test/game_vote.php?room_no=room_exists&auto_reload=20", { method: "POST", body: form }), env);
+    expect(reloadResponse.status).toBe(303);
+    expect(reloadResponse.headers.get("Location")).toBe("/game_vote.php?room_no=room_exists&auto_reload=20#game_top");
+
+    const normalizedReloadResponse = await worker.fetch(new Request("http://example.test/game_vote.php?room_no=room_exists&auto_reload=5", { method: "POST", body: form }), env);
+    expect(normalizedReloadResponse.status).toBe(303);
+    expect(normalizedReloadResponse.headers.get("Location")).toBe("/game_vote.php?room_no=room_exists&auto_reload=15#game_top");
+
     const formRoomNo = await worker.fetch(new Request("http://example.test/game_vote.php", {
       method: "POST",
-      body: new URLSearchParams({ command: "vote", room_no: "room_exists", situation: "VOTE_KILL", target_no: "player_target" })
+      body: new URLSearchParams({ command: "vote", room_no: "room_exists", auto_reload: "30", situation: "VOTE_KILL", target_no: "player_target" })
     }), env);
     expect(formRoomNo.status).toBe(303);
-    expect(formRoomNo.headers.get("Location")).toBe("/game_vote.php?room_no=room_exists#game_top");
+    expect(formRoomNo.headers.get("Location")).toBe("/game_vote.php?room_no=room_exists&auto_reload=30#game_top");
 
     const missingRoomNo = await worker.fetch(new Request("http://example.test/game_vote.php", {
       method: "POST",
