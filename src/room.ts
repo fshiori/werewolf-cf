@@ -406,6 +406,7 @@ export class RoomDurableObject {
         await this.saveGameState(next);
         await this.syncRoomStatus(next);
         await this.persistRoomEvent(member.playerId, "gm_advanced_phase", { phase: loadedGame.phase, day: loadedGame.day });
+        this.send(socket, buildActionAckMessage("gm_advance_phase", member.playerId));
         await this.broadcastGameState(next);
         this.sendMediumResults(next);
         this.sendRoles(next);
@@ -420,6 +421,7 @@ export class RoomDurableObject {
         await this.saveGameState(next);
         await this.syncRoomStatus(next);
         await this.persistRoomEvent(member.playerId, "gm_ended_game", { winner: message.winner, day: next.day });
+        this.send(socket, buildActionAckMessage("gm_end_game", member.playerId));
         await this.broadcastGameState(next);
         this.sendMediumResults(next);
         return;
