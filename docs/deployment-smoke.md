@@ -111,7 +111,7 @@ Create a short-lived smoke room only when production writes are acceptable:
 npm run smoke:production:write -- "$WORKER_HOST" --yes
 ```
 
-The automated write smoke creates a temporary room, verifies `GET /api/rooms/:roomId`, confirms the WebSocket `join` path returns `joined`, `presence`, and `game_state`, then uploads, reads, and deletes an R2 avatar. If the avatar round trip fails after upload, the script still attempts a best-effort avatar cleanup before exiting. The smoke room and player rows remain in D1 as short-lived production smoke data because there is no production room-delete endpoint.
+The automated write smoke creates a temporary room, verifies `GET /api/rooms/:roomId`, confirms the WebSocket `join` path returns `joined`, `presence`, and a same-room `game_state`, then uploads, reads, and deletes an R2 avatar. If the avatar round trip fails after upload, the script still attempts a best-effort avatar cleanup before exiting. The smoke room and player rows remain in D1 as short-lived production smoke data because there is no production room-delete endpoint.
 
 Or run the equivalent manual checks:
 
@@ -145,6 +145,7 @@ Expected server messages:
 - `joined`
 - `presence`
 - `game_state`
+- Same `roomId` on `joined` and `game_state`
 
 Close the WebSocket after verifying the messages.
 

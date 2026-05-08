@@ -129,8 +129,8 @@ async function verifyWebSocket(roomId) {
         if (message.type === "presence" && !Array.isArray(message.members)) {
           throw new Error("WebSocket join smoke: presence payload must include members");
         }
-        if (message.type === "game_state" && (typeof message.phase !== "string" || typeof message.day !== "number")) {
-          throw new Error("WebSocket join smoke: game_state payload must include phase and day");
+        if (message.type === "game_state" && (message.roomId !== roomId || typeof message.phase !== "string" || typeof message.day !== "number")) {
+          throw new Error("WebSocket join smoke: game_state payload must include roomId, phase and day");
         }
         if ([...requiredTypes].every((type) => seenTypes.has(type))) {
           clearTimeout(timeout);

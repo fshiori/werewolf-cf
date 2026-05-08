@@ -232,6 +232,7 @@ describe("messages", () => {
 
     expect(buildGameStateMessage(game)).toMatchObject({
       type: "game_state",
+      roomId: "room_abc",
       phase: "day",
       hostId: undefined,
       revoteCount: 0,
@@ -421,6 +422,7 @@ describe("messages", () => {
 
     expect(message.type).toBe("game_state");
     if (message.type === "game_state") {
+      expect(message.roomId).toBe("room_abc");
       expect(message.log).toEqual(["Alice 的遺言：&lt;script&gt;alert(1)&lt;/script&gt;"]);
     }
   });
