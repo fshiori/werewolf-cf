@@ -36,7 +36,7 @@ async function startServer(overrides = {}) {
   const websocketMessages = overrides.websocketMessages ?? [
     { type: "joined", roomId, playerId: "player_smoke_host" },
     { type: "presence", members: [] },
-    { type: "game_state", roomId, phase: "lobby", day: 0 }
+    { type: "game_state", roomId, phase: "lobby", day: 0, openVote: false, selfVote: false, voteStatus: false }
   ];
   let avatarDeleted = false;
   const sockets = new Set();
@@ -215,7 +215,7 @@ describe("production write smoke script", () => {
       websocketMessages: [
         { type: "joined", roomId: "room_other", playerId: "player_smoke_host" },
         { type: "presence", members: [] },
-        { type: "game_state", roomId: "room_smoke", phase: "lobby", day: 0 }
+        { type: "game_state", roomId: "room_smoke", phase: "lobby", day: 0, openVote: false, selfVote: false, voteStatus: false }
       ]
     });
     const result = await runScript([host, "--yes"]);
@@ -235,7 +235,7 @@ describe("production write smoke script", () => {
     const result = await runScript([host, "--yes"]);
 
     expect(result.status).toBe(1);
-    expect(result.stderr).toContain("game_state payload must include roomId, phase and day");
+    expect(result.stderr).toContain("game_state payload must include roomId, phase, day and vote option booleans");
   });
 
   it("fails when websocket game state room does not match the smoke room", async () => {
@@ -243,13 +243,13 @@ describe("production write smoke script", () => {
       websocketMessages: [
         { type: "joined", roomId: "room_smoke", playerId: "player_smoke_host" },
         { type: "presence", members: [] },
-        { type: "game_state", roomId: "room_other", phase: "lobby", day: 0 }
+        { type: "game_state", roomId: "room_other", phase: "lobby", day: 0, openVote: false, selfVote: false, voteStatus: false }
       ]
     });
     const result = await runScript([host, "--yes"]);
 
     expect(result.status).toBe(1);
-    expect(result.stderr).toContain("game_state payload must include roomId, phase and day");
+    expect(result.stderr).toContain("game_state payload must include roomId, phase, day and vote option booleans");
   });
 
   it("fails when room creation does not return a room id", async () => {

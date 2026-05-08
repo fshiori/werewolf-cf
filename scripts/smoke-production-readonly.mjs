@@ -49,15 +49,16 @@ const checks = [
     path: "/api/protocol",
     kind: "json",
     validate(value) {
+      const requiredGameStateFields = ["roomId", "phase", "day", "revoteCount", "commonTalkVisible", "channelRestrictions", "players", "openVote", "selfVote", "voteStatus", "votes", "votedPlayerIds", "objectionCounts", "log"];
       return value?.websocket?.path === "/ws/room/:roomId"
         && value?.websocket?.firstClientMessage === "join"
         && value?.websocket?.clientMessages?.includes("gm_set_common_voice")
         && value?.websocket?.clientMessages?.includes("gm_set_channel_restrictions")
-        && value?.websocket?.gameStateFields?.includes("selfVote")
+        && requiredGameStateFields.every((field) => value?.websocket?.gameStateFields?.includes(field))
         && value?.websocket?.channelVariants?.common_chat?.publicVoicePlayerId === "common_voice"
         && value?.websocket?.channelVariants?.common_chat?.publicVoiceNickname === "共有者的聲音";
     },
-    expected: "websocket protocol metadata with common voice variant, GM command list, and game_state selfVote field"
+    expected: "websocket protocol metadata with common voice variant, GM command list, and game_state field manifest"
   },
   {
     path: "/api/config",

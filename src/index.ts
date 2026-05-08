@@ -791,7 +791,30 @@ function getProtocol(): Response {
         "role",
         "error"
       ],
-      gameStateFields: ["roomId", "phase", "day", "players", "openVote", "selfVote", "voteStatus", "votes", "votedPlayerIds", "ownNightActionTarget"],
+      gameStateFields: [
+        "roomId",
+        "phase",
+        "day",
+        "hostId",
+        "revoteCount",
+        "commonTalkVisible",
+        "channelRestrictions",
+        "players",
+        "openVote",
+        "selfVote",
+        "voteStatus",
+        "votes",
+        "votedPlayerIds",
+        "ownNightActionTarget",
+        "lobbyStartVotedPlayerIds",
+        "lobbyKickVoteTargets",
+        "objectionCounts",
+        "roomEndVotedPlayerIds",
+        "winner",
+        "phaseEndsAt",
+        "suddenDeathWarningAt",
+        "log"
+      ],
       privateChannels: ["wolf_chat", "fox_chat", "common_chat", "lovers_chat", "dead_chat", "self_talk", "gm_chat", "gm_whisper"],
       channelVariants: {
         common_chat: {
