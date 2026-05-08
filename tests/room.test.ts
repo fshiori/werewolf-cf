@@ -1643,6 +1643,7 @@ describe("RoomDurableObject", () => {
 
     await sendRaw(room, gmSocket, JSON.stringify({ type: "gm_set_role", targetPlayerId: "player_target", role: "seer" }));
 
+    expect(gmMessages).toContainEqual(expect.objectContaining({ type: "action_ack", action: "gm_set_role", targetPlayerId: "player_target" }));
     for (const messages of [gmMessages, targetMessages, otherMessages]) {
       expect(messages).toContainEqual(expect.objectContaining({ type: "game_state", phase: "day", day: 1 }));
       expect(messages.find((message) => message.type === "game_state")?.players?.some((player) => "role" in player)).toBe(false);
@@ -1742,6 +1743,7 @@ describe("RoomDurableObject", () => {
 
     await sendRaw(room, gmSocket, JSON.stringify({ type: "gm_set_alive", targetPlayerId: "player_target", alive: false }));
 
+    expect(gmMessages).toContainEqual(expect.objectContaining({ type: "action_ack", action: "gm_set_alive", targetPlayerId: "player_target" }));
     for (const messages of [gmMessages, targetMessages, otherMessages]) {
       const state = messages.find((message) => message.type === "game_state");
       expect(state).toEqual(expect.objectContaining({ type: "game_state", phase: "day", day: 1, votes: {} }));
@@ -1839,6 +1841,7 @@ describe("RoomDurableObject", () => {
 
     await sendRaw(room, gmSocket, JSON.stringify({ type: "gm_set_flag", targetPlayerId: "player_target", flag: "lover", enabled: true }));
 
+    expect(gmMessages).toContainEqual(expect.objectContaining({ type: "action_ack", action: "gm_set_flag", targetPlayerId: "player_target" }));
     for (const messages of [gmMessages, targetMessages, otherMessages]) {
       expect(messages).toContainEqual(expect.objectContaining({ type: "game_state", phase: "night", day: 1 }));
       expect(messages.find((message) => message.type === "game_state")?.players?.some((player) => "role" in player)).toBe(false);
