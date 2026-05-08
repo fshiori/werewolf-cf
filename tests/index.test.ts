@@ -1422,6 +1422,8 @@ describe("worker routes", () => {
       if (pageMode === "vote") {
         expect(body).toContain("body.room-page-vote .room-panel-actions,");
         expect(body).toContain("body.room-page-vote .room-panel-members,");
+        expect(body).toContain("body.room-page-vote .legacy-entry-map,");
+        expect(body).toContain("body.room-page-vote .page-vote-only { display: none; }");
         expect(body).toContain("body.room-page-vote .game-header .full-room-only,");
       }
       expect(body).toContain("<strong>[住民登錄]</strong>");

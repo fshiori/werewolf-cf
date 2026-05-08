@@ -282,6 +282,8 @@ describe("render", () => {
     expect(html).toContain("body.room-page-vote .room-panel-actions,");
     expect(html).toContain("body.room-page-vote .room-panel-members,");
     expect(html).toContain("body.room-page-vote .room-panel-system { display: none; }");
+    expect(html).toContain("body.room-page-vote .legacy-entry-map,");
+    expect(html).toContain("body.room-page-vote .page-vote-only { display: none; }");
     expect(html).toContain("body.room-phase-night .player-card.voted { background: #004000; color: snow; }");
     expect(html).toContain("body.room-phase-night .player-card.voted a { color: #ccffff; }");
     expect(html).toContain("Trip");
@@ -574,6 +576,8 @@ describe("render", () => {
     expect(vote).toContain('<tr><td>back</td><td colspan="2"><a href="/game_up.php?room_no=room_abc#game_top">←上一頁&amp;重新整理</a></td></tr>');
     expect(vote).toContain("body.room-page-vote .room-panel-actions,");
     expect(vote).toContain("body.room-page-vote .room-panel-members,");
+    expect(vote).toContain("body.room-page-vote .legacy-entry-map,");
+    expect(vote).toContain("body.room-page-vote .page-vote-only { display: none; }");
     expect(vote).toContain('<tr class="view-player-only room-panel-actions">');
   });
 
