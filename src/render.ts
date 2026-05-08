@@ -3502,7 +3502,7 @@ export function renderProtocol(): string {
       <legend><strong>Server Messages</strong></legend>
       <table class="form-table">
         <tr><td><strong>　joined / presence：</strong></td><td>連線確認與目前成員清單。</td></tr>
-        <tr><td><strong>　game_state：</strong></td><td>公開階段、日期、玩家生死、投票可見狀態、只回傳給本人的夜晚行動目標、勝者、計時與系統 log。</td></tr>
+        <tr><td><strong>　game_state：</strong></td><td>房間 <code>roomId</code>、公開階段、日期、玩家生死、投票可見狀態、只回傳給本人的夜晚行動目標、勝者、計時與系統 log。</td></tr>
         <tr><td><strong>　role：</strong></td><td>私密角色訊息，包含可見同伴與權力者資訊。</td></tr>
         <tr><td><strong>　chat family：</strong></td><td>公開、狼、狐、共有、戀人、靈界、GM 與 GM 私語訊息。</td></tr>
         <tr><td><strong>　common voice：</strong></td><td><code>commonTalkVisible</code> 啟用時，非共有者會收到匿名 <code>common_chat</code>，<code>playerId</code> 為 <code>common_voice</code>；GM 可用 <code>gm_set_common_voice</code> 即時切換。</td></tr>

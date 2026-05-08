@@ -228,6 +228,7 @@ export function buildGameStateMessage(state: GameState, viewerPlayerId?: string)
   const currentPlayerIds = new Set(state.players.map((player) => player.playerId));
   return {
     type: "game_state",
+    roomId: state.roomId,
     phase: state.phase,
     day: state.day,
     hostId: state.hostId,
