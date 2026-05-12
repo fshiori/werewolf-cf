@@ -55,17 +55,12 @@ These items remain useful, but they should not block the core stable candidate:
 Before calling a production deployment stable, run the remote-only steps that cannot be verified without Cloudflare account access:
 
 ```bash
+npm run check:production-ready
 npx wrangler d1 migrations apply werewolf-cf-db --remote --config wrangler.production.toml
 npm run check:d1-schema:remote
 npm run deploy
 export WORKER_HOST="https://<worker-host>"
-npm run smoke:production -- "$WORKER_HOST"
-npm run smoke:production:write -- "$WORKER_HOST" --yes
-npm run smoke:production:game -- "$WORKER_HOST" --yes
-```
-
-The same production smoke sequence can be run with:
-
-```bash
 npm run smoke:production:stable -- "$WORKER_HOST" --yes
 ```
+
+Use the read-only `npm run smoke:production -- "$WORKER_HOST"` instead of the stable production smoke only when production writes are not acceptable.
