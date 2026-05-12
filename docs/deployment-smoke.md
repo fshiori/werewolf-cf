@@ -10,23 +10,18 @@ export WORKER_HOST="https://<worker-host>"
 
 ## Preflight
 
-Run local gates before touching remote resources:
+Run the production-ready gate before touching remote resources:
 
 ```bash
 node --version
-npm test
-npm run typecheck
-git diff --check
-npm run check:wrangler -- --production
+npm run check:production-ready
 ```
 
 Expected:
 
 - Node.js is `>=22.0.0`.
-- Vitest passes.
-- TypeScript typecheck passes.
-- `git diff --check` prints no whitespace errors.
-- `npm run check:wrangler -- --production` passes.
+- The full local stable gate passes, including tests, typecheck, whitespace, local D1 schema, production Wrangler config, and local runtime smoke.
+- Wrangler authentication passes. If `check:production-ready` stops at `check:production-access`, run `wrangler login` or export `CLOUDFLARE_API_TOKEN` before remote migration or deploy.
 
 ## Remote Resource Setup
 
