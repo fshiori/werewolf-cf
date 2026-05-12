@@ -2551,8 +2551,18 @@ async function routeRoomWebSocket(request: Request, env: Env, roomId: string): P
   }
 }
 
-async function leaveLegacyRoomByCookie(request: Request, env: Env, roomId: string): Promise<void> {
-  const playerId = readCookie(request, "werewolf_cf_player_id") ?? readCookie(request, "player_id") ?? readCookie(request, "playerId");
+function legacyPlayerIdFromRequest(request: Request): string | undefined {
+  const url = new URL(request.url);
+  return url.searchParams.get("player_id") ??
+    url.searchParams.get("playerId") ??
+    url.searchParams.get("werewolf_cf_player_id") ??
+    readCookie(request, "werewolf_cf_player_id") ??
+    readCookie(request, "player_id") ??
+    readCookie(request, "playerId");
+}
+
+async function leaveLegacyRoomByRequest(request: Request, env: Env, roomId: string): Promise<void> {
+  const playerId = legacyPlayerIdFromRequest(request);
   if (!playerId) {
     return;
   }
@@ -3089,7 +3099,7 @@ export default {
         if (!(await roomExists(env, roomId))) {
           return new Response("Room not found", { status: 404 });
         }
-        await leaveLegacyRoomByCookie(request, env, roomId);
+        await leaveLegacyRoomByRequest(request, env, roomId);
         const autoReloadQuery = legacyAutoReloadQuery(url);
         const headers = new Headers({ Location: `/game_view.php?room_no=${encodeURIComponent(roomId)}${autoReloadQuery}` });
         for (const cookie of clearPlayerIdCookieHeaders()) {
