@@ -2600,14 +2600,23 @@ function legacyWishRoleParam(value: string | undefined): string | undefined {
   return value ? mapped[value] ?? value : undefined;
 }
 
-async function joinLegacyRoomByForm(request: Request, env: Env, roomId: string, form: FormData): Promise<void> {
+function playerIdCookieHeaders(playerId: string): string[] {
+  const encoded = encodeURIComponent(playerId);
+  return [
+    `werewolf_cf_player_id=${encoded}; Path=/; SameSite=Lax`,
+    `player_id=${encoded}; Path=/; SameSite=Lax`,
+    `playerId=${encoded}; Path=/; SameSite=Lax`
+  ];
+}
+
+async function joinLegacyRoomByForm(request: Request, env: Env, roomId: string, form: FormData): Promise<string> {
   const playerId = validatePlayerId(
     readFormString(form, "playerId") ??
     readFormString(form, "player_id") ??
     readCookie(request, "werewolf_cf_player_id") ??
     readCookie(request, "player_id") ??
     readCookie(request, "playerId") ??
-    ""
+    `player_${crypto.randomUUID().replaceAll("-", "")}`
   );
   const nickname = validateNickname(readFormString(form, "handle_name") ?? readFormString(form, "nickname") ?? "");
   const trip = readFormString(form, "tripn") ?? readFormString(form, "trip");
@@ -2629,6 +2638,7 @@ async function joinLegacyRoomByForm(request: Request, env: Env, roomId: string, 
   if (!response.ok) {
     throw new Error(await response.text());
   }
+  return playerId;
 }
 
 export default {
@@ -3227,9 +3237,13 @@ export default {
         if (!(await roomExists(env, roomId))) {
           return new Response("Room not found", { status: 404 });
         }
-        await joinLegacyRoomByForm(request, env, roomId, form ?? new FormData());
+        const playerId = await joinLegacyRoomByForm(request, env, roomId, form ?? new FormData());
         const autoReloadQuery = legacyAutoReloadQuery(url, form);
-        return new Response(null, { status: 303, headers: { Location: `/login.php?room_no=${encodeURIComponent(roomId)}${autoReloadQuery}` } });
+        const headers = new Headers({ Location: `/login.php?room_no=${encodeURIComponent(roomId)}${autoReloadQuery}` });
+        for (const cookie of playerIdCookieHeaders(playerId)) {
+          headers.append("Set-Cookie", cookie);
+        }
+        return new Response(null, { status: 303, headers });
       } catch (error) {
         return json({ error: error instanceof Error ? error.message : "Invalid user registration" }, { status: 400 });
       }
