@@ -18,6 +18,8 @@ The verified path covers Worker metadata, rendered core/legacy pages, room creat
 
 ## Current External Inputs
 
+As of the latest local handoff pass, `npx wrangler whoami` reports `You are not authenticated. Please run wrangler login.` Remote D1 migration, deploy, and production smoke are therefore blocked until a Cloudflare session or `CLOUDFLARE_API_TOKEN` is available.
+
 Before `npm run check:deploy` can pass in production mode, copy the ignored production config and replace its placeholders:
 
 ```bash

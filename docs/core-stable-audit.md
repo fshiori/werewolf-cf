@@ -19,6 +19,7 @@ Scope: define the minimum stable candidate for the playable Cloudflare port. Thi
 | R2 avatar write/read/delete path works | `scripts/smoke-production-write.mjs`; verifies upload, readback, delete, and 404 after delete | Passed locally |
 | Core rendered pages and legacy room entry pages return usable HTML | `scripts/smoke-local-ui.mjs`; verifies home/list/logs/room/player pages plus `game_frame.php`, `game_up.php`, `game_play.php?frame=bottom`, and `game_vote.php` | Passed locally |
 | Production handoff has deploy and smoke commands | `docs/production-handoff.md`, `docs/deployment-smoke.md` | Present |
+| Cloudflare production authentication | `npx wrangler whoami` currently reports unauthenticated; remote migration/deploy/smoke require a Cloudflare login or `CLOUDFLARE_API_TOKEN` | Blocked externally |
 
 ## Latest Verification Snapshot
 
