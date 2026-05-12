@@ -211,6 +211,14 @@ npm run assets:reference:plan
 npm run assets:reference:upload
 ```
 
+For local visual capture, seed the same priority bitmap assets into local Wrangler R2 storage before taking screenshots:
+
+```bash
+npm run assets:reference:local
+npm run check:visual-prereqs
+npm run capture:visual -- --yes
+```
+
 Deploy:
 
 ```bash

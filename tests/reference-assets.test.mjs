@@ -34,4 +34,13 @@ describe("reference asset inventory", () => {
     expect(plan[0].command).toContain("wrangler.production.toml");
     expect(plan[0].command.join(" ")).toContain("bucket/reference/img/top_title.jpg");
   });
+
+  it("can plan local R2 uploads for visual capture", () => {
+    const plan = plannedReferenceAssetUploads({ bucket: "bucket", prefix: "reference", storageMode: "local", persistTo: ".wrangler/state" });
+
+    expect(plan[0].command).toContain("--local");
+    expect(plan[0].command).toContain("--persist-to");
+    expect(plan[0].command).toContain(".wrangler/state");
+    expect(plan[0].command.join(" ")).toContain("bucket/reference/img/top_title.jpg");
+  });
 });
