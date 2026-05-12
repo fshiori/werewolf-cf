@@ -2,6 +2,20 @@
 
 This project is locally implemented and smoke-testable, but production deployment requires Cloudflare account access and real resource IDs.
 
+## Stable Candidate Snapshot
+
+As of 2026-05-12, `main` has passed the full local deploy gate and local runtime smoke suite for the core playable path:
+
+```bash
+npm run check:deploy
+npm run smoke:local
+npm run smoke:local:ui
+npm run smoke:local:write
+npm run smoke:local:game
+```
+
+The verified path covers Worker metadata, rendered core/legacy pages, room creation, WebSocket join, avatar upload/read/delete through R2, an 8-player game through start, day vote, night actions, second-day execution, ended room status, D1 room records, and winning-player stats/records.
+
 ## Current External Inputs
 
 Before `npm run check:deploy` can pass in production mode, copy the ignored production config and replace its placeholders:
