@@ -2316,7 +2316,7 @@ async function createRoom(request: Request, env: Env): Promise<Response> {
     const roomId = await createRoomFromData(env, body);
     await joinRoomCreatorIfAllowed(env, roomId, playerId, nickname, readRoomOptions(options));
     const headers = new Headers();
-    for (const cookie of playerIdCookieHeaders(playerId)) {
+    for (const cookie of playerIdentityCookieHeaders(playerId, nickname)) {
       headers.append("Set-Cookie", cookie);
     }
     return json({ roomId }, { headers });
@@ -2386,7 +2386,7 @@ async function createLegacyRoom(request: Request, env: Env): Promise<Response> {
     const autoReloadQuery = legacyAutoReloadQuery(new URL(request.url), form);
 
     const headers = new Headers({ Location: `/login.php?room_no=${encodeURIComponent(roomId)}${autoReloadQuery}` });
-    for (const cookie of playerIdCookieHeaders(playerId)) {
+    for (const cookie of playerIdentityCookieHeaders(playerId, nickname)) {
       headers.append("Set-Cookie", cookie);
     }
     return new Response(null, { status: 303, headers });
@@ -2621,6 +2621,13 @@ function playerIdCookieHeaders(playerId: string): string[] {
   ];
 }
 
+function playerIdentityCookieHeaders(playerId: string, nickname: string): string[] {
+  return [
+    ...playerIdCookieHeaders(playerId),
+    `werewolf_cf_nickname=${encodeURIComponent(nickname)}; Path=/; SameSite=Lax`
+  ];
+}
+
 async function joinRoomCreatorIfAllowed(env: Env, roomId: string, playerId: string, nickname: string, options: RoomOptions): Promise<void> {
   if (options.tripRequired) {
     return;
@@ -2636,7 +2643,7 @@ async function joinRoomCreatorIfAllowed(env: Env, roomId: string, playerId: stri
   })).catch(() => undefined);
 }
 
-async function joinLegacyRoomByForm(request: Request, env: Env, roomId: string, form: FormData): Promise<string> {
+async function joinLegacyRoomByForm(request: Request, env: Env, roomId: string, form: FormData): Promise<{ playerId: string; nickname: string }> {
   const playerId = validatePlayerId(
     readFormString(form, "playerId") ??
     readFormString(form, "player_id") ??
@@ -2665,7 +2672,7 @@ async function joinLegacyRoomByForm(request: Request, env: Env, roomId: string, 
   if (!response.ok) {
     throw new Error(await response.text());
   }
-  return playerId;
+  return { playerId, nickname };
 }
 
 export default {
@@ -3264,10 +3271,10 @@ export default {
         if (!(await roomExists(env, roomId))) {
           return new Response("Room not found", { status: 404 });
         }
-        const playerId = await joinLegacyRoomByForm(request, env, roomId, form ?? new FormData());
+        const joined = await joinLegacyRoomByForm(request, env, roomId, form ?? new FormData());
         const autoReloadQuery = legacyAutoReloadQuery(url, form);
         const headers = new Headers({ Location: `/login.php?room_no=${encodeURIComponent(roomId)}${autoReloadQuery}` });
-        for (const cookie of playerIdCookieHeaders(playerId)) {
+        for (const cookie of playerIdentityCookieHeaders(joined.playerId, joined.nickname)) {
           headers.append("Set-Cookie", cookie);
         }
         return new Response(null, { status: 303, headers });
