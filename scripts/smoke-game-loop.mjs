@@ -280,12 +280,23 @@ async function verifyEndedRoom(roomId) {
   console.log("ok GET /api/rooms/:roomId ended");
 }
 
+async function verifyGameRecord(roomId) {
+  const response = await fetch(urlFor(`/api/rooms/${roomId}/records`), { headers: { accept: "application/json" } });
+  const body = await readJson(response, "GET /api/rooms/:roomId/records");
+  const record = Array.isArray(body?.records) ? body.records.find((candidate) => candidate.roomId === roomId) : undefined;
+  if (record?.result?.winner !== "villagers" || record?.result?.day !== 2) {
+    throw new Error("GET /api/rooms/:roomId/records: expected villagers day-2 game record");
+  }
+  console.log("ok GET /api/rooms/:roomId/records");
+}
+
 let clients = [];
 try {
   const roomId = await createRoom();
   clients = await connectPlayers(roomId);
   await runGameLoop(roomId, clients);
   await verifyEndedRoom(roomId);
+  await verifyGameRecord(roomId);
 } catch (error) {
   failures.push(error instanceof Error ? error.message : String(error));
 } finally {
