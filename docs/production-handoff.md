@@ -4,23 +4,21 @@ This project is locally implemented and smoke-testable, but production deploymen
 
 ## Stable Candidate Snapshot
 
-As of 2026-05-12, `main` has passed the full local deploy gate and local runtime smoke suite for the core playable path:
+As of 2026-05-12, `main` has passed the full local stable-candidate gate for the core playable path:
 
 ```bash
-npm run check:deploy
-npm run smoke:local
-npm run smoke:local:ui
-npm run smoke:local:write
-npm run smoke:local:game
+npm run check:stable
 ```
 
-The verified path covers Worker metadata, rendered core/legacy pages, room creation, WebSocket join, avatar upload/read/delete through R2, an 8-player game through start, day vote, night actions, second-day execution, ended room status, D1 room records, winning-player stats/records, and rendered room history pages. See `docs/core-stable-audit.md` for the prompt-to-artifact checklist and non-blocking backlog.
+The latest `check:stable` pass included `npm run check:deploy`, 21 test files / 564 tests, TypeScript checking, whitespace checking, the static PHP reference visual contract, local D1 schema verification, production Wrangler config verification, and a managed local Wrangler runtime smoke suite.
+
+The verified runtime path covers Worker metadata, rendered core/legacy pages, room creation, WebSocket join, avatar upload/read/delete through R2, an 8-player game through start, day vote, night actions, second-day execution, ended room status, D1 room records, winning-player stats/records, and rendered room history pages. See `docs/core-stable-audit.md` for the prompt-to-artifact checklist and non-blocking backlog.
 
 ## Current External Inputs
 
 As of the latest local handoff pass, `npx wrangler whoami` reports `You are not authenticated. Please run wrangler login.` Remote D1 migration, deploy, and production smoke are therefore blocked until a Cloudflare session or `CLOUDFLARE_API_TOKEN` is available.
 
-`npm run check:production-ready` currently passes the local stable gate and reference asset upload dry-run, then stops at this same production authentication blocker.
+`npm run check:production-access` currently stops at this same production authentication blocker. Once authenticated, `npm run check:production-ready` is the next guarded gate; it runs the full local stable gate, confirms the reference asset upload dry-run, and then verifies Cloudflare access before any remote migration or deploy.
 
 Before `npm run check:deploy` can pass in production mode, copy the ignored production config and replace its placeholders:
 
