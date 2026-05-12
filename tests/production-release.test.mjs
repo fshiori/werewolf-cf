@@ -69,6 +69,20 @@ describe("production release script", () => {
     expect(result.stderr).toContain("Set WORKER_HOST");
   });
 
+  it("rejects non-HTTPS production Worker URLs", async () => {
+    const result = await runScript(["http://worker.example.test", "--yes"]);
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("must use https");
+  });
+
+  it("rejects local production Worker URLs", async () => {
+    const result = await runScript(["https://127.0.0.1:8787", "--yes"]);
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("must not point at a local host");
+  });
+
   it("runs the production release steps in order", async () => {
     const { npmPath, logPath } = await createFakeNpm();
     const result = await runScript(["https://worker.example.test", "--yes"], {
