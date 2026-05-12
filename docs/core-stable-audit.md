@@ -59,3 +59,9 @@ npm run smoke:production -- "$WORKER_HOST"
 npm run smoke:production:write -- "$WORKER_HOST" --yes
 npm run smoke:production:game -- "$WORKER_HOST" --yes
 ```
+
+The same production smoke sequence can be run with:
+
+```bash
+npm run smoke:production:stable -- "$WORKER_HOST" --yes
+```

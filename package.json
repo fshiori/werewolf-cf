@@ -20,6 +20,7 @@
     "smoke:production": "node scripts/smoke-production-readonly.mjs",
     "smoke:production:write": "node scripts/smoke-production-write.mjs",
     "smoke:production:game": "node scripts/smoke-game-loop.mjs",
+    "smoke:production:stable": "node scripts/smoke-production-stable.mjs",
     "predeploy": "npm run check:deploy",
     "deploy": "wrangler deploy --config wrangler.production.toml"
   },
