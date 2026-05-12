@@ -10,10 +10,13 @@ Purpose: define the browser/manual screenshot pass required to judge UI parity w
 
 Playwright Chromium is available in the current environment. `npm run check:visual-prereqs` checks system Chromium/Chrome candidates and falls back to Playwright-managed Chromium when it is installed.
 
+`npm run check:reference-visual` performs a static contract check against `ref/diam1.3.61.kz_Build0912` without modifying reference files. It pins key PHP visual markers for top chrome, old-log chrome/colors, legacy frame/up/vote shells, GM action links, and automated screenshot coverage before the browser screenshot pass.
+
 The first automated capture path is available:
 
 ```bash
 npm run assets:reference:local
+npm run check:reference-visual
 npm run capture:visual -- --dry-run
 npm run capture:visual -- --yes
 npm run capture:visual -- --yes --include-game-states
@@ -29,6 +32,7 @@ The local asset seed copies priority reference bitmaps into local Wrangler R2 st
    - `npm run typecheck`
    - `npm run check:wrangler`
    - `npm run check:whitespace`
+   - `npm run check:reference-visual`
    - `npm run check:d1-schema`
 3. Start the local Worker:
    - `npm run dev -- --ip 127.0.0.1 --port 8787`

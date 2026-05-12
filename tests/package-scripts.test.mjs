@@ -44,6 +44,7 @@ describe("package release scripts", () => {
     const scripts = await packageScripts();
 
     expect(scripts["check:visual-prereqs"]).toBe("node scripts/check-visual-parity-prereqs.mjs");
+    expect(scripts["check:reference-visual"]).toBe("node scripts/check-reference-visual-parity.mjs");
     expect(scripts["capture:visual"]).toBe("node scripts/capture-visual-parity.mjs");
   });
 
