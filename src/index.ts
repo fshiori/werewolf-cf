@@ -216,6 +216,14 @@ function readCookie(request: Request, name: string): string | undefined {
   return undefined;
 }
 
+function clearPlayerIdCookieHeaders(): string[] {
+  return [
+    "werewolf_cf_player_id=; Path=/; Max-Age=0; SameSite=Lax",
+    "player_id=; Path=/; Max-Age=0; SameSite=Lax",
+    "playerId=; Path=/; Max-Age=0; SameSite=Lax"
+  ];
+}
+
 async function requireRoomAdmin(request: Request, env: Env): Promise<Response | undefined> {
   const adminToken = await env.CONFIG.get("room_admin_token");
   if (!adminToken) {
@@ -3083,12 +3091,13 @@ export default {
         }
         await leaveLegacyRoomByCookie(request, env, roomId);
         const autoReloadQuery = legacyAutoReloadQuery(url);
+        const headers = new Headers({ Location: `/game_view.php?room_no=${encodeURIComponent(roomId)}${autoReloadQuery}` });
+        for (const cookie of clearPlayerIdCookieHeaders()) {
+          headers.append("Set-Cookie", cookie);
+        }
         return new Response(null, {
           status: 303,
-          headers: {
-            Location: `/game_view.php?room_no=${encodeURIComponent(roomId)}${autoReloadQuery}`,
-            "Set-Cookie": "werewolf_cf_player_id=; Path=/; Max-Age=0; SameSite=Lax"
-          }
+          headers
         });
       } catch (error) {
         return json({ error: error instanceof Error ? error.message : "Invalid room" }, { status: 400 });
