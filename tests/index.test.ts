@@ -1747,6 +1747,9 @@ describe("worker routes", () => {
 
     expect(response.status).toBe(303);
     expect(response.headers.get("Location")).toBe("/login.php?room_no=room_exists");
+    expect(response.headers.get("Set-Cookie")).toContain("werewolf_cf_player_id=player_legacy; Path=/; SameSite=Lax");
+    expect(response.headers.get("Set-Cookie")).toContain("player_id=player_legacy; Path=/; SameSite=Lax");
+    expect(response.headers.get("Set-Cookie")).toContain("playerId=player_legacy; Path=/; SameSite=Lax");
     expect(forwardedRequests).toHaveLength(1);
     expect(new URL(forwardedRequests[0].url).pathname).toBe("/rooms/room_exists/legacy/join");
     await expect(forwardedRequests[0].json()).resolves.toEqual({
@@ -1771,6 +1774,26 @@ describe("worker routes", () => {
     }), env);
     expect(formRoomNo.status).toBe(303);
     expect(formRoomNo.headers.get("Location")).toBe("/login.php?room_no=room_exists&auto_reload=30");
+
+    const generatedPlayerResponse = await worker.fetch(new Request("http://example.test/user_manager.php?room_no=room_exists", {
+      method: "POST",
+      body: new URLSearchParams({ command: "regist", handle_name: "Generated" })
+    }), env);
+    expect(generatedPlayerResponse.status).toBe(303);
+    expect(forwardedRequests).toHaveLength(5);
+    const generatedPayload = await forwardedRequests[4].json() as { playerId: string; nickname: string };
+    expect(generatedPayload.nickname).toBe("Generated");
+    expect(generatedPayload.playerId).toMatch(/^player_[0-9a-f]{32}$/);
+    expect(generatedPlayerResponse.headers.get("Set-Cookie")).toContain(`werewolf_cf_player_id=${generatedPayload.playerId}; Path=/; SameSite=Lax`);
+
+    const cookiePlayerResponse = await worker.fetch(new Request("http://example.test/user_manager.php?room_no=room_exists", {
+      method: "POST",
+      headers: { Cookie: "werewolf_cf_player_id=player_cookie" },
+      body: new URLSearchParams({ command: "regist", handle_name: "Cookie Player" })
+    }), env);
+    expect(cookiePlayerResponse.status).toBe(303);
+    expect(forwardedRequests).toHaveLength(6);
+    await expect(forwardedRequests[5].json()).resolves.toMatchObject({ playerId: "player_cookie", nickname: "Cookie Player" });
 
     const missingRoomNo = await worker.fetch(new Request("http://example.test/user_manager.php", {
       method: "POST",
