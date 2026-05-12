@@ -7,7 +7,7 @@ const scriptPath = join(process.cwd(), "scripts/smoke-local-ui.mjs");
 const servers = [];
 
 function responseFor(path, method = "GET") {
-  if (path === "/" && method === "GET") {
+  if ((path === "/" || path === "/index.php") && method === "GET") {
     return { contentType: "text/html", body: "<!doctype html><title>汝等是人是狼？ 建立村子 戰績排行榜</title>" };
   }
   if (path === "/leaderboard" && method === "GET") {
@@ -16,10 +16,10 @@ function responseFor(path, method = "GET") {
   if (path === "/stats" && method === "GET") {
     return { contentType: "text/html", body: "<!doctype html><title>勝率分析 統計場數</title>" };
   }
-  if (path === "/list" && method === "GET") {
+  if ((path === "/list" || path === "/list.php") && method === "GET") {
     return { contentType: "text/html", body: "<!doctype html><title>聯合遊戲列表 本伺服器</title>" };
   }
-  if (path === "/logs" && method === "GET") {
+  if ((path === "/logs" || path === "/old_log.php") && method === "GET") {
     return { contentType: "text/html", body: "<!doctype html><title>過去紀錄 村No</title>" };
   }
   if (path === "/icons" && method === "GET") {
@@ -52,16 +52,16 @@ function responseFor(path, method = "GET") {
   if (path === "/manual" && method === "GET") {
     return { contentType: "text/html", body: "<!doctype html><title>說明書 登錄入村</title>" };
   }
-  if (path === "/rules" && method === "GET") {
+  if ((path === "/rules" || path === "/rule.php") && method === "GET") {
     return { contentType: "text/html", body: '<!doctype html><title>基本流程 /assets/reference/img/role_human.gif</title>' };
   }
-  if (path === "/script-info" && method === "GET") {
+  if ((path === "/script-info" || path === "/script_info.php") && method === "GET") {
     return { contentType: "text/html", body: "<!doctype html><title>Script Info Cloudflare Workers / TypeScript</title>" };
   }
   if (path === "/protocol" && method === "GET") {
     return { contentType: "text/html", body: "<!doctype html><title>WebSocket 入口 game_state</title>" };
   }
-  if (path === "/version" && method === "GET") {
+  if ((path === "/version" || path === "/version.php") && method === "GET") {
     return { contentType: "text/html", body: "<!doctype html><title>版本資訊 Werewolf Cloudflare Port</title>" };
   }
   if (path === "/assets/room-client.js" && method === "GET") {
@@ -162,6 +162,8 @@ describe("local UI smoke script", () => {
 
     expect(result.status).toBe(0);
     expect(result.stdout).toContain("ok /room/room_ui_smoke");
+    expect(result.stdout).toContain("ok /index.php");
+    expect(result.stdout).toContain("ok /old_log.php");
     expect(result.stdout).toContain("ok /game_frame.php?room_no=room_ui_smoke&auto_reload=20");
     expect(result.stdout).toContain("ok /game_vote.php?room_no=room_ui_smoke&auto_reload=20");
     expect(result.stdout).toContain("Test UI smoke passed");

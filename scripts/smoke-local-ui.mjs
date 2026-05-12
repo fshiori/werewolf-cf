@@ -73,8 +73,11 @@ const playerId = `player_ui_smoke_${Date.now()}_${Math.random().toString(36).sli
 
 try {
   await expectHtml("/", ["汝等是人是狼？", "建立村子", "戰績排行榜"], ["房間 JSON", "排行榜 JSON"]);
+  await expectHtml("/index.php", ["汝等是人是狼？", "建立村子", "戰績排行榜"], ["房間 JSON", "排行榜 JSON"]);
   await expectHtml("/list", ["聯合遊戲列表", "本伺服器"]);
+  await expectHtml("/list.php", ["聯合遊戲列表", "本伺服器"]);
   await expectHtml("/logs", ["過去紀錄", "村No"]);
+  await expectHtml("/old_log.php", ["過去紀錄", "村No"]);
   await expectHtml("/leaderboard", ["戰績排行榜"]);
   await expectHtml("/stats", ["勝率分析", "統計場數"]);
   await expectHtml("/icons", ["頭像一覽", "上傳頭像", "/assets/reference/user_icon/001.gif"]);
@@ -88,10 +91,13 @@ try {
   await expectHtml("/admin/config", ["系統設定管理", "configAdminToken", "werewolf_cf_config_admin_token"]);
   await expectHtml("/admin/bbs", ["討論管理", "BBS 管理密碼", "尚無主題。"]);
   await expectHtml("/rules", ["基本流程", "/assets/reference/img/role_human.gif"]);
+  await expectHtml("/rule.php", ["基本流程", "/assets/reference/img/role_human.gif"]);
   await expectHtml("/manual", ["說明書", "登錄入村"]);
   await expectHtml("/script-info", ["Script Info", "Cloudflare Workers / TypeScript"]);
+  await expectHtml("/script_info.php", ["Script Info", "Cloudflare Workers / TypeScript"]);
   await expectHtml("/protocol", ["WebSocket 入口", "game_state"]);
   await expectHtml("/version", ["版本資訊", "Werewolf Cloudflare Port"]);
+  await expectHtml("/version.php", ["版本資訊", "Werewolf Cloudflare Port"]);
   await expectHtml("/assets/room-client.js", ["new WebSocket", "data-room-id", "投開始遊戲一票", "start_vote", "GAMESTART"]);
 
   const createResult = await expectJson(
