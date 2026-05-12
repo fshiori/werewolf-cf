@@ -70,6 +70,12 @@ Run the full local deploy gate:
 npm run check:deploy
 ```
 
+For the full local stable-candidate gate, including runtime smoke with a managed Wrangler server:
+
+```bash
+npm run check:stable
+```
+
 Apply remote D1 migrations and verify the schema:
 
 ```bash
