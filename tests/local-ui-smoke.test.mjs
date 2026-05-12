@@ -10,6 +10,12 @@ function responseFor(path, method = "GET") {
   if ((path === "/" || path === "/index.php") && method === "GET") {
     return { contentType: "text/html", body: "<!doctype html><title>汝等是人是狼？ 建立村子 戰績排行榜</title>" };
   }
+  if (path === "/announcement.txt" && method === "GET") {
+    return { contentType: "text/plain", body: "目前支援建立村子\n" };
+  }
+  if (path === "/api.php" && method === "GET") {
+    return { contentType: "text/plain", body: "werewolf-cf room_ui_smoke\twaiting\tUI Smoke\twaiting\t8\thttp://example.test/\n" };
+  }
   if (path === "/leaderboard" && method === "GET") {
     return { contentType: "text/html", body: "<!doctype html><title>戰績排行榜</title>" };
   }
@@ -166,6 +172,8 @@ describe("local UI smoke script", () => {
     expect(result.status).toBe(0);
     expect(result.stdout).toContain("ok /room/room_ui_smoke");
     expect(result.stdout).toContain("ok /index.php");
+    expect(result.stdout).toContain("ok /announcement.txt");
+    expect(result.stdout).toContain("ok /api.php");
     expect(result.stdout).toContain("ok /old_log.php");
     expect(result.stdout).toContain("ok /icon_upload.php");
     expect(result.stdout).toContain("ok /lang/cht/version.htm");
