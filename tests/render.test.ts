@@ -683,6 +683,9 @@ describe("render", () => {
     expect(ROOM_CLIENT_SCRIPT).toContain("game.revoteCount");
     expect(ROOM_CLIENT_SCRIPT).toContain("function syncPlayerCookie()");
     expect(ROOM_CLIENT_SCRIPT).toContain("function readCookieValue(name)");
+    expect(ROOM_CLIENT_SCRIPT).toContain("try {");
+    expect(ROOM_CLIENT_SCRIPT).toContain("return decodeURIComponent(value);");
+    expect(ROOM_CLIENT_SCRIPT).toContain("return value;");
     expect(ROOM_CLIENT_SCRIPT).toContain('const cookiePlayerId = readCookieValue("werewolf_cf_player_id") || readCookieValue("player_id") || readCookieValue("playerId");');
     expect(ROOM_CLIENT_SCRIPT).toContain('localStorage.getItem("werewolf_cf_nickname") || readCookieValue("werewolf_cf_nickname") || ""');
     expect(ROOM_CLIENT_SCRIPT).toContain("if (cookiePlayerId) {");

@@ -6,7 +6,14 @@ function readCookieValue(name) {
   const cookies = document.cookie ? document.cookie.split(";") : [];
   for (const cookie of cookies) {
     const [rawKey, ...rawValue] = cookie.trim().split("=");
-    if (rawKey === name) return decodeURIComponent(rawValue.join("="));
+    if (rawKey === name) {
+      const value = rawValue.join("=");
+      try {
+        return decodeURIComponent(value);
+      } catch {
+        return value;
+      }
+    }
   }
   return "";
 }
