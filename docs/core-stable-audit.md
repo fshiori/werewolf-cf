@@ -10,7 +10,7 @@ Scope: define the minimum stable candidate for the playable Cloudflare port. Thi
 | --- | --- | --- |
 | Cloudflare Workers project has deployable bindings for DO, D1, R2, and KV | `wrangler.toml`, `wrangler.production.toml.example`, `worker-configuration.d.ts`, `npm run check:wrangler -- --production --config wrangler.production.toml` through `npm run check:deploy` | Passed locally |
 | D1 schema contains required gameplay, record, Trip, and BBS tables | `migrations/`, `scripts/check-d1-schema.mjs`, `npm run check:d1-schema` through `npm run check:deploy` | Passed locally |
-| TypeScript and unit/integration tests pass | `npm test` through `npm run check:deploy`; 16 files / 539 tests passed on 2026-05-12 | Passed locally |
+| TypeScript and unit/integration tests pass | `npm test` through `npm run check:deploy`; 17 files / 542 tests passed on 2026-05-12 | Passed locally |
 | Room creation works through HTTP | `scripts/smoke-production-write.mjs`, `scripts/smoke-game-loop.mjs`; `POST /api/rooms` returned smoke room ids during local smoke on 2026-05-12 | Passed locally |
 | WebSocket join path works and returns room-scoped state | `scripts/smoke-production-write.mjs`; verifies `joined`, `presence`, and same-room `game_state` | Passed locally |
 | Full 8-player game can start, progress, and end | `scripts/smoke-game-loop.mjs`; verifies 8 WebSocket joins, `start_game`, day-1 execution, night kill plus seer action, day-2 execution, and `ended` game state | Passed locally |
