@@ -644,6 +644,10 @@ describe("render", () => {
     expect(ROOM_CLIENT_SCRIPT).toContain('document.body.classList.toggle("room-gm", isGm);');
     expect(ROOM_CLIENT_SCRIPT).toContain('document.body.classList.toggle("room-non-gm", !isGm);');
     expect(ROOM_CLIENT_SCRIPT).toContain("function appendChatLine(channelLabel, markerColor, nickname, text, rowClass)");
+    expect(ROOM_CLIENT_SCRIPT).toContain("function roomSocketReady()");
+    expect(ROOM_CLIENT_SCRIPT).toContain("function warnRoomSocketNotReady()");
+    expect(ROOM_CLIENT_SCRIPT).toContain("function canSendRoomSocket()");
+    expect(ROOM_CLIENT_SCRIPT).toContain("尚未連線，請稍候重連或按「進入房間」。");
     expect(ROOM_CLIENT_SCRIPT).toContain('messageCell.textContent = text || "";');
     expect(ROOM_CLIENT_SCRIPT).toContain('appendChatLine("(人狼)", "#cc0000", msg.nickname, msg.text, "chat-wolf");');
     expect(ROOM_CLIENT_SCRIPT).toContain('appendChatLine("(天國)", "#666666", msg.nickname, msg.text, "chat-dead");');
@@ -711,6 +715,7 @@ describe("render", () => {
     expect(ROOM_CLIENT_SCRIPT).toContain("if (shouldAutoConnectRoom())");
     expect(ROOM_CLIENT_SCRIPT).toContain("function sendChatMessage(type, extra)");
     expect(ROOM_CLIENT_SCRIPT).toContain("if (!text.trim()) return;");
+    expect(ROOM_CLIENT_SCRIPT).toContain("if (!canSendRoomSocket()) return;");
     expect(ROOM_CLIENT_SCRIPT).toContain('document.querySelector("#chatText").addEventListener("keydown"');
     expect(ROOM_CLIENT_SCRIPT).toContain('event.key === "Enter" && !event.isComposing');
     expect(ROOM_CLIENT_SCRIPT).toContain('sendChatMessage("chat");');
@@ -761,6 +766,8 @@ describe("render", () => {
     expect(ROOM_CLIENT_SCRIPT).toContain("latestGame.players.find((player) => player.playerId === selectedTarget.value)");
     expect(ROOM_CLIENT_SCRIPT).toContain("syncLegacyVoteHiddenFields(legacyVoteCommands[selectedTarget.value], latestGame, targetPlayer);");
     expect(ROOM_CLIENT_SCRIPT).toContain("sendCommand(legacyVoteCommands[selectedTarget.value]);");
+    expect(ROOM_CLIENT_SCRIPT).toContain("function sendCommand(command)");
+    expect(ROOM_CLIENT_SCRIPT).toContain("ws.send(JSON.stringify(command));");
     expect(ROOM_CLIENT_SCRIPT).toContain("function legacySituationForCommand(command)");
     expect(ROOM_CLIENT_SCRIPT).toContain('if (typeof command.situation === "string") return command.situation;');
     expect(ROOM_CLIENT_SCRIPT).toContain('start_vote: "GAMESTART"');
