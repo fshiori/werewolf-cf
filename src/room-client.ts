@@ -248,6 +248,7 @@ let isLover = false;
 let isGm = false;
 let revealedRoles = {};
 let legacyVoteCommands = {};
+let reconnectTimer;
 refreshAuxiliaryPanels();
 configureAutoRefresh();
 document.querySelector("#manualRefresh").addEventListener("click", refreshAuxiliaryPanels);
@@ -256,10 +257,24 @@ document.querySelector("#autoRefresh").addEventListener("change", (event) => {
   configureAutoRefresh();
   if (event.target.checked) refreshAuxiliaryPanels();
 });
+function shouldAutoConnectRoom() {
+  return roomShell instanceof HTMLElement && roomShell.dataset.roomView === "player" && document.querySelector("#nickname").value.trim();
+}
+function scheduleReconnect() {
+  if (reconnectTimer || !shouldAutoConnectRoom()) return;
+  reconnectTimer = setTimeout(() => {
+    reconnectTimer = undefined;
+    connectRoom();
+  }, 3000);
+}
 function connectRoom() {
   if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) return;
   const nickname = document.querySelector("#nickname").value;
   if (!nickname.trim()) return;
+  if (reconnectTimer) {
+    clearTimeout(reconnectTimer);
+    reconnectTimer = undefined;
+  }
   const trip = document.querySelector("#trip").value;
   const wishRole = document.querySelector("#wishRole").value;
   const iconPath = document.querySelector("#defaultIcon").value;
@@ -270,6 +285,14 @@ function connectRoom() {
   refreshAuxiliaryPanels();
   ws = new WebSocket((location.protocol === "https:" ? "wss://" : "ws://") + location.host + "/ws/room/" + roomId);
   ws.addEventListener("open", () => ws.send(JSON.stringify({ type: "join", playerId: localStorage.getItem(playerKey), nickname, trip, wishRole, iconPath })));
+  ws.addEventListener("close", () => {
+    ws = undefined;
+    append("<span class='muted'>連線中斷，將嘗試重新連線。</span>");
+    scheduleReconnect();
+  });
+  ws.addEventListener("error", () => {
+    if (ws) ws.close();
+  });
   ws.addEventListener("message", (event) => {
     const msg = JSON.parse(event.data);
     if (msg.type === "joined") {
@@ -348,7 +371,7 @@ function connectRoom() {
   });
 }
 document.querySelector("#connect").addEventListener("click", connectRoom);
-if (roomShell instanceof HTMLElement && roomShell.dataset.roomView === "player" && document.querySelector("#nickname").value.trim()) {
+if (shouldAutoConnectRoom()) {
   connectRoom();
 }
 function sendChatMessage(type, extra) {
