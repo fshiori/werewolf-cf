@@ -111,6 +111,10 @@ export class RoomDurableObject {
   }
 
   async fetch(request: Request): Promise<Response> {
+    const url = new URL(request.url);
+    if (request.method === "POST" && url.pathname.endsWith("/legacy/leave")) {
+      return this.leaveByHttp(request);
+    }
     if (request.headers.get("Upgrade") !== "websocket") {
       return new Response("Expected WebSocket", { status: 426 });
     }
@@ -121,6 +125,40 @@ export class RoomDurableObject {
     const server = pair[1];
     this.handleSocket(server);
     return new Response(null, { status: 101, webSocket: client });
+  }
+
+  private async leaveByHttp(request: Request): Promise<Response> {
+    try {
+      validateRoomId(this.roomId);
+      const payload = await request.json().catch(() => ({})) as { playerId?: unknown };
+      const playerId = validatePlayerId(typeof payload.playerId === "string" ? payload.playerId : "");
+      const loadedGame = await this.loadGameState();
+      const player = loadedGame.players.find((candidate) => candidate.playerId === playerId);
+      if (!player) {
+        return Response.json({ error: "Leave target not found" }, { status: 404 });
+      }
+      if (loadedGame.phase !== "lobby") {
+        await this.persistRoomEvent(player.playerId, "player_left", { nickname: player.nickname, phase: loadedGame.phase, day: loadedGame.day });
+        this.disconnectPlayer(player.playerId, "You left the room");
+        this.broadcast(buildPresenceMessage(this.members()));
+        return Response.json({ roomId: this.roomId, playerId: player.playerId, status: "logged_out" });
+      }
+      const left = leaveLobbyPlayer(loadedGame, player.playerId);
+      const next = {
+        ...left,
+        lobbyStartVotes: {},
+        lobbyKickVotes: {},
+        log: [...left.log, `${player.nickname} 離開這個村莊了`, "＜投票重新開始 請盡速重新投票＞"]
+      };
+      await this.saveGameState(next);
+      await this.persistRoomEvent(player.playerId, "player_left", { nickname: player.nickname, phase: loadedGame.phase, day: loadedGame.day });
+      this.disconnectPlayer(player.playerId, "You left the room");
+      this.broadcast(buildPresenceMessage(this.members()));
+      await this.broadcastGameState(next);
+      return Response.json({ roomId: this.roomId, playerId: player.playerId, status: "left" });
+    } catch (error) {
+      return Response.json({ error: error instanceof Error ? error.message : "Invalid leave request" }, { status: 400 });
+    }
   }
 
   private handleSocket(socket: WebSocket): void {

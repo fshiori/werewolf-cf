@@ -1532,6 +1532,30 @@ describe("worker routes", () => {
     expect(normalizedReloadResponse.status).toBe(303);
     expect(normalizedReloadResponse.headers.get("Location")).toBe("/game_view.php?room_no=room_exists&auto_reload=15");
 
+    const forwardedRequests: Request[] = [];
+    env.ROOM_DO = {
+      idFromName(name: string) {
+        return { name } as DurableObjectId;
+      },
+      get() {
+        return {
+          async fetch(request: Request) {
+            forwardedRequests.push(request);
+            return Response.json({ status: "left" });
+          }
+        } as unknown as DurableObjectStub;
+      }
+    } as unknown as Env["ROOM_DO"];
+    const cookieResponse = await worker.fetch(new Request("http://example.test/game_play.php?go=out&room_no=room_exists&auto_reload=20", {
+      headers: { Cookie: "werewolf_cf_player_id=player_guest" }
+    }), env);
+    expect(cookieResponse.status).toBe(303);
+    expect(cookieResponse.headers.get("Location")).toBe("/game_view.php?room_no=room_exists&auto_reload=20");
+    expect(cookieResponse.headers.get("Set-Cookie")).toContain("werewolf_cf_player_id=;");
+    expect(forwardedRequests).toHaveLength(1);
+    expect(new URL(forwardedRequests[0].url).pathname).toBe("/rooms/room_exists/legacy/leave");
+    await expect(forwardedRequests[0].json()).resolves.toEqual({ playerId: "player_guest" });
+
     const missingRoomNo = await worker.fetch(new Request("http://example.test/game_play.php?go=out"), env);
     expect(missingRoomNo.status).toBe(400);
     expect(await missingRoomNo.json()).toEqual({ error: "game_play.php out requires room_no" });
