@@ -2310,9 +2310,13 @@ async function createRoom(request: Request, env: Env): Promise<Response> {
   }
 
   try {
+    const playerId = validatePlayerId(body.playerId);
     const roomId = await createRoomFromData(env, body);
-
-    return json({ roomId });
+    const headers = new Headers();
+    for (const cookie of playerIdCookieHeaders(playerId)) {
+      headers.append("Set-Cookie", cookie);
+    }
+    return json({ roomId }, { headers });
   } catch (error) {
     return json({ error: error instanceof Error ? error.message : "Failed to create room" }, { status: 400 });
   }
