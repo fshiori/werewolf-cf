@@ -68,6 +68,12 @@ npm run smoke:production:write -- "$WORKER_HOST" --yes
 npm run smoke:production:game -- "$WORKER_HOST" --yes
 ```
 
+Or run the full production stable smoke suite:
+
+```bash
+npm run smoke:production:stable -- "$WORKER_HOST" --yes
+```
+
 The write and game-loop smokes create temporary room/player/game-record data, so run them only when production writes are acceptable. The write smoke deletes the smoke avatar on the success path and attempts best-effort avatar cleanup after upload failures; smoke room/player/game-record rows remain in D1.
 
 ## Cloudflare Bindings
