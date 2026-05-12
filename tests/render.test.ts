@@ -375,7 +375,7 @@ describe("render", () => {
     expect(html).toContain('<a href="/game_vote.php?room_no=room_abc">game_vote.php</a>');
     expect(html).toContain('<a href="/login.php?room_no=room_abc">login.php</a>');
     expect(html).toContain('<a href="/user_manager.php?room_no=room_abc">user_manager.php</a>');
-    expect(html).toContain('<a href="/game_play.php?go=out&amp;room_no=room_abc" target="_top">[登出]</a>');
+    expect(html).toContain('<a id="legacyLogoutLink" href="/game_play.php?go=out&amp;room_no=room_abc" target="_top">[登出]</a>');
     expect(html).toContain('form id="legacyUserRegisterForm" class="legacy-user-register-form" name="user" action="/user_manager.php?room_no=room_abc" method="POST" enctype="multipart/form-data" onsubmit="return false"');
     expect(html).toContain('<input type="hidden" name="command" value="regist">');
     expect(html).toContain('<input type="hidden" name="room_no" value="room_abc">');
@@ -679,6 +679,10 @@ describe("render", () => {
     expect(ROOM_CLIENT_SCRIPT).toContain("function syncPlayerCookie()");
     expect(ROOM_CLIENT_SCRIPT).toContain('document.cookie = "werewolf_cf_player_id=" + encodeURIComponent(playerId) + "; Path=/; SameSite=Lax";');
     expect(ROOM_CLIENT_SCRIPT).toContain("syncPlayerCookie();");
+    expect(ROOM_CLIENT_SCRIPT).toContain("function clearPlayerIdentity()");
+    expect(ROOM_CLIENT_SCRIPT).toContain('document.querySelector("#legacyLogoutLink")');
+    expect(ROOM_CLIENT_SCRIPT).toContain('logoutUrl.searchParams.set("player_id", playerId);');
+    expect(ROOM_CLIENT_SCRIPT).toContain('document.cookie = "player_id=; Path=/; Max-Age=0; SameSite=Lax";');
     expect(ROOM_CLIENT_SCRIPT).toContain("function setRoomPhaseClass(phase)");
     expect(ROOM_CLIENT_SCRIPT).toContain('document.body.classList.add("room-phase-" + phase);');
     expect(ROOM_CLIENT_SCRIPT).toContain("function phaseLabel(game)");

@@ -10,6 +10,12 @@ function syncPlayerCookie() {
   if (!playerId) return;
   document.cookie = "werewolf_cf_player_id=" + encodeURIComponent(playerId) + "; Path=/; SameSite=Lax";
 }
+function clearPlayerIdentity() {
+  localStorage.removeItem(playerKey);
+  document.cookie = "werewolf_cf_player_id=; Path=/; Max-Age=0; SameSite=Lax";
+  document.cookie = "player_id=; Path=/; Max-Age=0; SameSite=Lax";
+  document.cookie = "playerId=; Path=/; Max-Age=0; SameSite=Lax";
+}
 syncPlayerCookie();
 document.querySelector("#nickname").value = localStorage.getItem("werewolf_cf_nickname") || "";
 document.querySelector("#trip").value = localStorage.getItem("werewolf_cf_trip") || "";
@@ -414,6 +420,18 @@ document.querySelector("#startVote").addEventListener("click", () => {
 document.querySelector("#leaveRoom").addEventListener("click", () => {
   sendCommand({ type: "leave_room" });
 });
+const legacyLogoutLink = document.querySelector("#legacyLogoutLink");
+if (legacyLogoutLink) {
+  legacyLogoutLink.addEventListener("click", () => {
+    const playerId = localStorage.getItem(playerKey);
+    if (playerId) {
+      const logoutUrl = new URL(legacyLogoutLink.href);
+      logoutUrl.searchParams.set("player_id", playerId);
+      legacyLogoutLink.href = logoutUrl.pathname + logoutUrl.search + logoutUrl.hash;
+    }
+    clearPlayerIdentity();
+  });
+}
 const legacyVoteForm = document.querySelector(".legacy-vote-form");
 if (legacyVoteForm) {
   legacyVoteForm.addEventListener("submit", (event) => {
