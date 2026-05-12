@@ -1233,6 +1233,48 @@ describe("RoomDurableObject", () => {
     expect(newPlayerMessages).toEqual([{ type: "error", message: "Game already started" }]);
   });
 
+  it("hydrates missing last words option on legacy stored game states", async () => {
+    const legacyGame = {
+      roomId: "room_abc",
+      phase: "day",
+      day: 1,
+      players: [
+        { playerId: "player_existing", nickname: "Existing", role: "villager", alive: true },
+        { playerId: "player_wolf", nickname: "Wolf", role: "werewolf", alive: true }
+      ],
+      votes: {},
+      openVote: false,
+      commonTalkVisible: false,
+      deadRoleVisible: false,
+      wishRole: false,
+      dummyBoy: false,
+      dayMs: 180_000,
+      nightMs: 90_000,
+      selfVote: false,
+      voteStatus: false,
+      revoteCount: 0,
+      nightKills: {},
+      divinations: {},
+      guards: {},
+      catRevives: {},
+      lastWords: {},
+      log: []
+    } as GameState;
+    delete (legacyGame as Partial<GameState>).lastWordsEnabled;
+    const { room, stored, puts } = observableRoomObject(legacyGame, { option_role: "will" });
+    const messages: SentMessage[] = [];
+
+    await sendRaw(
+      room,
+      fakeSocket(messages),
+      JSON.stringify({ type: "join", playerId: "player_existing", nickname: "Existing" })
+    );
+
+    expect(messages).toContainEqual(expect.objectContaining({ type: "game_state", lastWordsEnabled: true }));
+    expect(stored.get("gameState")).toEqual(expect.objectContaining({ lastWordsEnabled: true }));
+    expect(puts).toContainEqual(expect.objectContaining({ key: "gameState", value: expect.objectContaining({ lastWordsEnabled: true }) }));
+  });
+
   it("rejects unauthorized private channel websocket commands", async () => {
     const game: GameState = {
       roomId: "room_abc",
@@ -3117,7 +3159,11 @@ describe("RoomDurableObject", () => {
 
     await sendRaw(room, guestSocket, JSON.stringify({ type: "leave_room" }));
 
-    expect(stored.get("gameState")).toBe(game);
+    expect(stored.get("gameState")).toEqual(expect.objectContaining({
+      phase: "day",
+      players: game.players,
+      lastWordsEnabled: false
+    }));
     expect(guestMessages).toEqual([{ type: "action_ack", action: "leave_room", targetPlayerId: "player_guest" }]);
     expect(guestCloses).toEqual([{ code: 1000, reason: "You left the room" }]);
     expect(hostMessages).toContainEqual(
