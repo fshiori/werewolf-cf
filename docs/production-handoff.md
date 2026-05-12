@@ -105,6 +105,8 @@ npm run check:d1-schema
 npm run smoke:local:stable
 ```
 
+`smoke:local:stable` uses port `8787` when available and otherwise chooses the next open local port. Pass `-- --port=8787` when a fixed port is required.
+
 To run the local smoke checks against an already-running Worker instead:
 
 ```bash

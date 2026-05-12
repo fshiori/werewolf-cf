@@ -1,20 +1,23 @@
 #!/usr/bin/env node
 
 import { spawn } from "node:child_process";
+import { createServer } from "node:net";
 import { fileURLToPath } from "node:url";
 
 const args = process.argv.slice(2);
 const portArg = args.find((arg) => arg.startsWith("--port="));
-const port = Number(portArg?.slice("--port=".length) ?? process.env.LOCAL_STABLE_SMOKE_PORT ?? "8787");
+const explicitPortValue = portArg?.slice("--port=".length) ?? process.env.LOCAL_STABLE_SMOKE_PORT;
+const defaultPort = 8787;
+let port = Number(explicitPortValue ?? defaultPort);
 
 if (!Number.isInteger(port) || port <= 0 || port > 65535) {
-  console.error(`Invalid --port value: ${portArg?.slice("--port=".length) ?? process.env.LOCAL_STABLE_SMOKE_PORT ?? "8787"}`);
+  console.error(`Invalid --port value: ${explicitPortValue ?? defaultPort}`);
   process.exit(1);
 }
 
-const host = `http://127.0.0.1:${port}`;
-const smokeEnv = { ...process.env, WORKER_HOST: host };
 let server;
+let host;
+let smokeEnv;
 
 function runCommand(command, commandArgs, options = {}) {
   return new Promise((resolve, reject) => {
@@ -31,6 +34,37 @@ function runCommand(command, commandArgs, options = {}) {
       reject(new Error(`${command} ${commandArgs.join(" ")} failed with ${signal ?? `exit ${status}`}`));
     });
   });
+}
+
+function isPortAvailable(candidatePort) {
+  return new Promise((resolve) => {
+    const probe = createServer();
+    probe.once("error", () => {
+      resolve(false);
+    });
+    probe.once("listening", () => {
+      probe.close(() => resolve(true));
+    });
+    probe.listen(candidatePort, "127.0.0.1");
+  });
+}
+
+async function selectPort() {
+  if (explicitPortValue) {
+    if (!(await isPortAvailable(port))) {
+      throw new Error(`Requested port ${port} is already in use`);
+    }
+    return;
+  }
+
+  for (let candidate = defaultPort; candidate < defaultPort + 100; candidate += 1) {
+    if (await isPortAvailable(candidate)) {
+      port = candidate;
+      return;
+    }
+  }
+
+  throw new Error(`No available local port found from ${defaultPort} to ${defaultPort + 99}`);
 }
 
 function startServer() {
@@ -119,6 +153,10 @@ async function runSmoke(name, script, extraArgs = []) {
 }
 
 try {
+  await selectPort();
+  host = `http://127.0.0.1:${port}`;
+  smokeEnv = { ...process.env, WORKER_HOST: host };
+  console.log(`Using local stable smoke port ${port}`);
   startServer();
   await waitForHealth();
   await runSmoke("Read-only smoke", "scripts/smoke-production-readonly.mjs");
