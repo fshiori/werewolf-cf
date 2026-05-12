@@ -121,6 +121,13 @@ export WORKER_HOST="https://<worker-host>"
 npm run smoke:production:stable -- "$WORKER_HOST" --yes
 ```
 
+To run the complete guarded production release sequence from one command:
+
+```bash
+export WORKER_HOST="https://<worker-host>"
+npm run release:production -- "$WORKER_HOST" --yes
+```
+
 If production writes are not acceptable, run only the read-only production smoke:
 
 ```bash

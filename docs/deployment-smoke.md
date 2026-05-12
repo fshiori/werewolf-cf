@@ -114,6 +114,12 @@ Run the read-only, write, and game-loop checks as one stable smoke suite when pr
 npm run smoke:production:stable -- "$WORKER_HOST" --yes
 ```
 
+Or run the complete guarded production release order:
+
+```bash
+npm run release:production -- "$WORKER_HOST" --yes
+```
+
 Or run the write and game-loop checks separately:
 
 ```bash

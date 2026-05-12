@@ -28,8 +28,10 @@
     "migrate:production": "wrangler d1 migrations apply werewolf-cf-db --remote --config wrangler.production.toml",
     "assets:reference:plan": "node scripts/upload-reference-assets.mjs --bucket=werewolf-cf-assets --config=wrangler.production.toml",
     "assets:reference:upload": "node scripts/upload-reference-assets.mjs --bucket=werewolf-cf-assets --config=wrangler.production.toml --yes",
+    "release:production": "node scripts/release-production.mjs",
     "predeploy": "npm run check:production-ready",
-    "deploy": "wrangler deploy --config wrangler.production.toml"
+    "deploy": "wrangler deploy --config wrangler.production.toml",
+    "deploy:production:direct": "wrangler deploy --config wrangler.production.toml"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260423.0",
