@@ -59,6 +59,7 @@ async function runSmoke(name, script, extraArgs = []) {
 
 try {
   await runSmoke("Read-only smoke", "smoke-production-readonly.mjs");
+  await runSmoke("Rendered UI smoke", "smoke-local-ui.mjs");
   await runSmoke("Write smoke", "smoke-production-write.mjs", ["--yes"]);
   await runSmoke("Game-loop smoke", "smoke-game-loop.mjs", ["--yes"]);
   console.log(`\n${smokeLabel} smoke passed`);

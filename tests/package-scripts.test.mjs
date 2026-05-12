@@ -30,6 +30,7 @@ describe("package release scripts", () => {
   it("keeps the production stable smoke suite available after deploy", async () => {
     const scripts = await packageScripts();
 
+    expect(scripts["smoke:production:ui"]).toBe("node scripts/smoke-local-ui.mjs");
     expect(scripts["smoke:production:stable"]).toBe("node scripts/smoke-production-stable.mjs");
   });
 

@@ -22,6 +22,7 @@
     "smoke:local:game": "node scripts/smoke-game-loop.mjs --label=Local http://127.0.0.1:8787 --yes",
     "smoke:local:stable": "node scripts/smoke-local-stable.mjs",
     "smoke:production": "node scripts/smoke-production-readonly.mjs",
+    "smoke:production:ui": "node scripts/smoke-local-ui.mjs",
     "smoke:production:write": "node scripts/smoke-production-write.mjs",
     "smoke:production:game": "node scripts/smoke-game-loop.mjs",
     "smoke:production:stable": "node scripts/smoke-production-stable.mjs",
@@ -35,6 +36,7 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260423.0",
+    "@playwright/test": "^1.60.0",
     "typescript": "^5.9.3",
     "vitest": "^3.2.4",
     "wrangler": "^4.14.4"
