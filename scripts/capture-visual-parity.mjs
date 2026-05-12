@@ -5,6 +5,7 @@ import { dirname, join } from "node:path";
 
 const args = process.argv.slice(2);
 const dryRun = args.includes("--dry-run");
+const includeGameStates = args.includes("--include-game-states");
 const confirmed = args.includes("--yes") || process.env.VISUAL_PARITY_CAPTURE_CONFIRM === "true";
 const host = args.find((arg) => !arg.startsWith("--")) ?? process.env.WORKER_HOST ?? "http://127.0.0.1:8787";
 const date = process.env.VISUAL_PARITY_CAPTURE_DATE ?? new Date().toISOString().slice(0, 10);
@@ -70,8 +71,21 @@ function plannedCaptures(roomId = ":roomId") {
   ];
 }
 
+function plannedGameStateCaptures(roomId = ":roomId") {
+  return [
+    { name: "room-day", path: `/room/${roomId}` },
+    { name: "room-night", path: `/room/${roomId}` },
+    { name: "room-ended", path: `/room/${roomId}` },
+    { name: "old-log-public", path: `/old_log.php?log_mode=on&room_no=${roomId}` }
+  ];
+}
+
 async function createRoom() {
   const smokeId = `visual_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  const players = Array.from({ length: 8 }, (_, index) => ({
+    playerId: `player_${smokeId}_${index + 1}`,
+    nickname: index === 0 ? "VisualHost" : `Visual${index + 1}`
+  }));
   const response = await fetch(urlFor("/api/rooms"), {
     method: "POST",
     headers: { "content-type": "application/json" },
@@ -79,12 +93,15 @@ async function createRoom() {
       name: `Visual ${smokeId}`,
       comment: "visual parity capture",
       maxPlayers: 8,
-      playerId: `player_${smokeId}_host`,
-      nickname: "VisualHost",
+      playerId: players[0].playerId,
+      nickname: players[0].nickname,
       options: {
         realTime: true,
-        dayMinutes: 3,
-        nightMinutes: 1.5
+        dayMinutes: 10,
+        nightMinutes: 10,
+        selfVote: true,
+        voteStatus: true,
+        openVote: true
       }
     })
   });
@@ -97,7 +114,87 @@ async function createRoom() {
   if (typeof body?.roomId !== "string" || !body.roomId.startsWith("room_")) {
     throw new Error("POST /api/rooms: expected roomId");
   }
-  return body.roomId;
+  return { roomId: body.roomId, players };
+}
+
+function websocketUrlFor(path) {
+  const url = new URL(path, baseUrl);
+  url.protocol = url.protocol === "https:" ? "wss:" : "ws:";
+  return url.toString();
+}
+
+class CaptureClient {
+  constructor(roomId, player) {
+    this.player = player;
+    this.messages = [];
+    this.waiters = [];
+    this.latestGameState = undefined;
+    this.ws = new WebSocket(websocketUrlFor(`/ws/room/${roomId}`));
+  }
+
+  async connect() {
+    await new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => reject(new Error(`${this.player.playerId}: websocket open timed out`)), 5000);
+      this.ws.addEventListener("open", () => {
+        clearTimeout(timeout);
+        resolve();
+      }, { once: true });
+      this.ws.addEventListener("error", () => {
+        clearTimeout(timeout);
+        reject(new Error(`${this.player.playerId}: websocket connection failed`));
+      }, { once: true });
+    });
+    this.ws.addEventListener("message", (event) => this.handleMessage(event));
+    this.send({ type: "join", playerId: this.player.playerId, nickname: this.player.nickname });
+    await this.waitFor((message) => message.type === "joined" && message.playerId === this.player.playerId, "joined");
+    await this.waitFor((message) => message.type === "game_state" && message.phase === "lobby", "lobby game_state");
+  }
+
+  handleMessage(event) {
+    let message;
+    try {
+      message = JSON.parse(String(event.data));
+    } catch {
+      return;
+    }
+    if (message.type === "game_state") {
+      this.latestGameState = message;
+    }
+    this.messages.push(message);
+    for (const waiter of [...this.waiters]) {
+      if (waiter.predicate(message)) {
+        this.waiters = this.waiters.filter((candidate) => candidate !== waiter);
+        clearTimeout(waiter.timeout);
+        waiter.resolve(message);
+      }
+    }
+  }
+
+  waitFor(predicate, label, timeoutMs = 10000) {
+    const existing = this.messages.find(predicate);
+    if (existing) {
+      return Promise.resolve(existing);
+    }
+    return new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        this.waiters = this.waiters.filter((waiter) => waiter.timeout !== timeout);
+        reject(new Error(`${this.player.playerId}: timed out waiting for ${label}`));
+      }, timeoutMs);
+      this.waiters.push({ predicate, resolve, timeout });
+    });
+  }
+
+  send(message) {
+    this.ws.send(JSON.stringify(message));
+  }
+
+  close() {
+    try {
+      this.ws.close();
+    } catch {
+      // Best-effort cleanup.
+    }
+  }
 }
 
 async function capturePage(browser, capture, viewport) {
@@ -113,6 +210,90 @@ async function capturePage(browser, capture, viewport) {
     await page.screenshot({ path: screenshotPath(capture.name, viewport.name), fullPage: true });
   } finally {
     await page.close();
+  }
+}
+
+async function captureAllViewports(browser, capture) {
+  for (const viewport of viewports) {
+    await capturePage(browser, capture, viewport);
+    console.log(`ok ${capture.name} ${viewport.name}`);
+  }
+}
+
+async function connectPlayers(roomId, players) {
+  const clients = [];
+  for (const player of players) {
+    const client = new CaptureClient(roomId, player);
+    clients.push(client);
+    await client.connect();
+  }
+  await clients.at(-1).waitFor(
+    (message) => message.type === "game_state" && Array.isArray(message.players) && message.players.length >= players.length,
+    "full lobby game_state"
+  );
+  return clients;
+}
+
+function alivePlayerIds(gameState) {
+  return (gameState?.players ?? [])
+    .filter((player) => player.alive)
+    .map((player) => player.playerId);
+}
+
+function clientById(clients, playerId) {
+  const client = clients.find((candidate) => candidate.player.playerId === playerId);
+  if (!client) {
+    throw new Error(`Missing client for ${playerId}`);
+  }
+  return client;
+}
+
+async function voteAllAlive(clients, targetPlayerId) {
+  for (const playerId of alivePlayerIds(clients[0].latestGameState)) {
+    clientById(clients, playerId).send({ type: "vote", targetPlayerId });
+  }
+}
+
+async function captureGameStates(browser, roomId, players) {
+  if (typeof WebSocket !== "function") {
+    throw new Error("WebSocket global is unavailable in this Node.js runtime");
+  }
+
+  const clients = await connectPlayers(roomId, players);
+  try {
+    clients[0].send({ type: "start_game" });
+    await clients[0].waitFor((message) => message.type === "game_state" && message.phase === "day" && message.day === 1, "day 1");
+    await Promise.all(clients.map((client) => client.waitFor((message) => message.type === "role", "role message")));
+    const roles = new Map(clients.map((client) => [client.player.playerId, client.messages.find((message) => message.type === "role")?.role]));
+    const wolves = [...roles.entries()].filter(([, role]) => role === "werewolf").map(([playerId]) => playerId);
+    const seer = [...roles.entries()].find(([, role]) => role === "seer")?.[0];
+    if (wolves.length !== 2 || !seer) {
+      throw new Error(`Unexpected 8-player role set: wolves=${wolves.length}, seer=${seer ?? "missing"}`);
+    }
+
+    await captureAllViewports(browser, { name: "room-day", path: `/room/${roomId}` });
+    await voteAllAlive(clients, wolves[0]);
+    await clients[0].waitFor((message) => message.type === "game_state" && message.phase === "night" && message.day === 1, "night 1");
+    await captureAllViewports(browser, { name: "room-night", path: `/room/${roomId}` });
+
+    const livingWolf = wolves.find((playerId) => alivePlayerIds(clients[0].latestGameState).includes(playerId));
+    if (!livingWolf) {
+      throw new Error("Expected one living wolf after first execution");
+    }
+    const killTarget = alivePlayerIds(clients[0].latestGameState).find((playerId) => !wolves.includes(playerId) && playerId !== seer);
+    if (alivePlayerIds(clients[0].latestGameState).includes(seer)) {
+      clientById(clients, seer).send({ type: "divine", targetPlayerId: livingWolf });
+    }
+    clientById(clients, livingWolf).send({ type: "night_kill", targetPlayerId: killTarget });
+    await clients[0].waitFor((message) => message.type === "game_state" && message.phase === "day" && message.day === 2, "day 2");
+    await voteAllAlive(clients, livingWolf);
+    await clients[0].waitFor((message) => message.type === "game_state" && message.phase === "ended", "ended");
+    await captureAllViewports(browser, { name: "room-ended", path: `/room/${roomId}` });
+    await captureAllViewports(browser, { name: "old-log-public", path: `/old_log.php?log_mode=on&room_no=${roomId}` });
+  } finally {
+    for (const client of clients) {
+      client.close();
+    }
   }
 }
 
@@ -133,7 +314,7 @@ Worker: ${baseUrl.toString()}
 ## Summary
 
 - Result: Partial
-- Remaining blockers: Day, night, ended, dead/player/GM old-log modes still require stateful browser setup and manual comparison against the PHP reference.
+- Remaining blockers: ${includeGameStates ? "Dead/player/GM old-log modes still require stateful browser setup and manual comparison against the PHP reference." : "Day, night, ended, dead/player/GM old-log modes still require stateful browser setup and manual comparison against the PHP reference."}
 
 ## Screenshot Index
 
@@ -147,6 +328,7 @@ ${rows.join("\n")}
 | --- | --- | --- |
 | Static rendered pages load | Captured | Home, list, icons, Trip, BBS, stats, status |
 | Temporary lobby room renders | Captured | Includes modern room page and PHP-style frame/up/bottom/vote aliases |
+| Stateful game screens | ${includeGameStates ? "Captured" : "Not run"} | ${includeGameStates ? "Day, night, ended, and public old-log captures were generated from an 8-player smoke game" : "Pass --include-game-states to drive an 8-player smoke game"} |
 
 ## Privacy Checks
 
@@ -165,6 +347,13 @@ if (dryRun) {
       console.log(`plan ${capture.name} ${viewport.name} ${capture.path} -> ${screenshotPath(capture.name, viewport.name)}`);
     }
   }
+  if (includeGameStates) {
+    for (const capture of plannedGameStateCaptures()) {
+      for (const viewport of viewports) {
+        console.log(`plan ${capture.name} ${viewport.name} ${capture.path} -> ${screenshotPath(capture.name, viewport.name)}`);
+      }
+    }
+  }
   process.exit(0);
 }
 
@@ -172,15 +361,16 @@ try {
   const { chromium } = await import("playwright");
   await mkdir(outputDir, { recursive: true });
   await mkdir(dirname(reportPath), { recursive: true });
-  const roomId = await createRoom();
+  const { roomId, players } = await createRoom();
   const captures = plannedCaptures(roomId);
   const browser = await chromium.launch();
   try {
     for (const capture of captures) {
-      for (const viewport of viewports) {
-        await capturePage(browser, capture, viewport);
-        console.log(`ok ${capture.name} ${viewport.name}`);
-      }
+      await captureAllViewports(browser, capture);
+    }
+    if (includeGameStates) {
+      await captureGameStates(browser, roomId, players);
+      captures.push(...plannedGameStateCaptures(roomId));
     }
   } finally {
     await browser.close();

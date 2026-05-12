@@ -16,9 +16,10 @@ The first automated capture path is available:
 npm run assets:reference:local
 npm run capture:visual -- --dry-run
 npm run capture:visual -- --yes
+npm run capture:visual -- --yes --include-game-states
 ```
 
-The local asset seed copies priority reference bitmaps into local Wrangler R2 storage so screenshots do not contain broken `/assets/reference/...` images. The capture command then captures static pages, a temporary lobby room, and the PHP-style frame/up/bottom/vote room aliases across the required desktop/tablet/mobile viewports. Day, night, ended, dead/player/GM old-log views still require a stateful capture pass and manual comparison against `ref/diam1.3.61.kz_Build0912`.
+The local asset seed copies priority reference bitmaps into local Wrangler R2 storage so screenshots do not contain broken `/assets/reference/...` images. The capture command then captures static pages, a temporary lobby room, and the PHP-style frame/up/bottom/vote room aliases across the required desktop/tablet/mobile viewports. Passing `--include-game-states` drives an 8-player smoke game and also captures day, night, ended, and public old-log views. Dead/player/GM old-log views still require a stateful capture pass and manual comparison against `ref/diam1.3.61.kz_Build0912`.
 
 ## Prerequisites
 
@@ -37,7 +38,9 @@ The local asset seed copies priority reference bitmaps into local Wrangler R2 st
    - `npm run assets:reference:local`
 6. Run the automated capture for static/lobby/frame pages:
    - `npm run capture:visual -- --yes`
-7. Prepare rooms that cover day, night, ended, spectator/dead, GM, and old-log views.
+7. Run the stateful automated capture for day/night/ended/public old-log pages:
+   - `npm run capture:visual -- --yes --include-game-states`
+8. Prepare rooms that cover spectator/dead, GM, and player/dead/GM old-log views.
 
 ## Evidence Paths
 
@@ -82,11 +85,11 @@ Capture every route at these viewport sizes:
 | `index.php` | `/` | `home` | Top title/background, side menu placement, create-room table, announcement area, room list option/status icons. Automated capture available. |
 | `list.php` | `/list` | `list` | Federated list table structure, local room rows, remote-peer failure text behavior, retro colors. Automated capture available. |
 | `game_view.php` lobby | `/room/:roomId` | `room-lobby` | Room header, participant grid, join form, host controls, lobby vote/kick controls, selected default icons. Automated capture available. |
-| `game_play.php` day | `/room/:roomId` | `room-day`, `room-spectator-dead-votes` | Day body color, player cards, voted-player background, chat, public log, live vote-status panel for allowed viewers. |
-| `game_play.php` night | `/room/:roomId` | `room-night` | Night body color, private-channel controls, night action panel, hidden target/status behavior for unauthorized viewers. |
+| `game_play.php` day | `/room/:roomId` | `room-day`, `room-spectator-dead-votes` | Day body color, player cards, voted-player background, chat, public log, live vote-status panel for allowed viewers. Automated capture available for `room-day`. |
+| `game_play.php` night | `/room/:roomId` | `room-night` | Night body color, private-channel controls, night action panel, hidden target/status behavior for unauthorized viewers. Automated capture available for `room-night`. |
 | `game_play.php` GM paths | `/room/:roomId` | `room-gm-controls` | GM buttons, whisper controls, forced phase/life/role/winner controls, common-channel toggle. |
-| `game_view.php` ended | `/room/:roomId` | `room-ended` | Ended body color, role reveal icons/text, winner result, records/events links. |
-| `old_log.php` | `/logs`, `/room/:roomId/log` | `old-log-public`, `old-log-player`, `old-log-dead`, `old-log-gm` | Ended-room index, normal/reverse/heaven links, day/phase transcript grouping, vote tables, viewer masking. |
+| `game_view.php` ended | `/room/:roomId` | `room-ended` | Ended body color, role reveal icons/text, winner result, records/events links. Automated capture available. |
+| `old_log.php` | `/logs`, `/room/:roomId/log` | `old-log-public`, `old-log-player`, `old-log-dead`, `old-log-gm` | Ended-room index, normal/reverse/heaven links, day/phase transcript grouping, vote tables, viewer masking. Automated capture available for public old-log. |
 | `user_manager.php` icon paths | `/icons`, room join controls | `icons` | Default icon catalog, upload/remove controls, selected icon rendering in room. Automated capture available for `/icons`. |
 | `user_manager.php` Trip paths | `/trip`, `/trips` | `trip` | Registration, claim, exclusion, lookup tables, no Trip hash exposure. Automated capture available for `/trip`. |
 | `bbs.php` | `/bbs`, `/bbs/:id` | `bbs` | Topic list, digest list, detail page, reply form, moderation controls. Automated capture available for `/bbs`. |

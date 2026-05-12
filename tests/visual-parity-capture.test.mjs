@@ -44,6 +44,21 @@ describe("visual parity capture script", () => {
     expect(result.stderr).toContain("Pass --yes");
   });
 
+  it("adds stateful day, night, ended, and old-log captures when requested", async () => {
+    const result = await runScript([
+      "--dry-run",
+      "--include-game-states",
+      "--output-dir=tmp/screens",
+      "http://127.0.0.1:8787"
+    ]);
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("plan room-day desktop /room/:roomId -> tmp/screens/room-day-desktop.png");
+    expect(result.stdout).toContain("plan room-night tablet /room/:roomId -> tmp/screens/room-night-tablet.png");
+    expect(result.stdout).toContain("plan room-ended mobile /room/:roomId -> tmp/screens/room-ended-mobile.png");
+    expect(result.stdout).toContain("plan old-log-public desktop /old_log.php?log_mode=on&room_no=:roomId");
+  });
+
   it("rejects invalid Worker URLs", async () => {
     const result = await runScript(["--dry-run", "ftp://example.test"]);
 

@@ -217,6 +217,7 @@ For local visual capture, seed the same priority bitmap assets into local Wrangl
 npm run assets:reference:local
 npm run check:visual-prereqs
 npm run capture:visual -- --yes
+npm run capture:visual -- --yes --include-game-states
 ```
 
 Deploy:
