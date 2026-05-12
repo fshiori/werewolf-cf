@@ -687,6 +687,11 @@ describe("render", () => {
     expect(ROOM_CLIENT_SCRIPT).toContain('document.querySelector("#legacyUserPlayerId")');
     expect(ROOM_CLIENT_SCRIPT).toContain("if (legacyUserPlayerId) legacyUserPlayerId.value = playerId;");
     expect(ROOM_CLIENT_SCRIPT).toContain("syncPlayerCookie();");
+    expect(ROOM_CLIENT_SCRIPT).toContain("function connectRoom()");
+    expect(ROOM_CLIENT_SCRIPT).toContain("ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING");
+    expect(ROOM_CLIENT_SCRIPT).toContain("if (!nickname.trim()) return;");
+    expect(ROOM_CLIENT_SCRIPT).toContain('document.querySelector("#connect").addEventListener("click", connectRoom);');
+    expect(ROOM_CLIENT_SCRIPT).toContain('roomShell instanceof HTMLElement && roomShell.dataset.roomView === "player" && document.querySelector("#nickname").value.trim()');
     expect(ROOM_CLIENT_SCRIPT).toContain("function clearPlayerIdentity()");
     expect(ROOM_CLIENT_SCRIPT).toContain('document.querySelector("#legacyLogoutLink")');
     expect(ROOM_CLIENT_SCRIPT).toContain('logoutUrl.searchParams.set("player_id", playerId);');
