@@ -62,6 +62,30 @@ async function readJson(response, label) {
   }
 }
 
+async function readHtml(response, label) {
+  if (!response.ok) {
+    throw new Error(`${label}: HTTP ${response.status} ${await response.text()}`);
+  }
+  const contentType = response.headers.get("content-type") ?? "";
+  if (!contentType.includes("text/html")) {
+    throw new Error(`${label}: expected text/html response, got ${contentType || "unknown"}`);
+  }
+  const text = await response.text();
+  if (!text.trim()) {
+    throw new Error(`${label}: empty HTML response`);
+  }
+  return text;
+}
+
+async function expectHtml(path, expectedTexts, label) {
+  const response = await fetch(urlFor(path), { headers: { accept: "text/html" } });
+  const text = await readHtml(response, label);
+  const missingText = expectedTexts.find((expectedText) => !text.includes(expectedText));
+  if (missingText) {
+    throw new Error(`${label}: expected HTML text ${missingText}`);
+  }
+}
+
 async function createRoom() {
   const response = await fetch(urlFor("/api/rooms"), {
     method: "POST",
@@ -315,6 +339,30 @@ async function verifyPlayerPersistence(roomId, playerId) {
   console.log("ok GET /api/players/:playerId stats/records");
 }
 
+async function verifyRenderedHistory(roomId) {
+  await expectHtml(
+    `/room/${encodeURIComponent(roomId)}/records`,
+    ["村子對局紀錄", "村民勝利"],
+    "GET /room/:roomId/records"
+  );
+  await expectHtml(
+    `/room/${encodeURIComponent(roomId)}/events`,
+    ["村子事件履歷", "遊戲結束"],
+    "GET /room/:roomId/events"
+  );
+  await expectHtml(
+    `/room/${encodeURIComponent(roomId)}/log`,
+    ["村子完整紀錄", "村民勝利"],
+    "GET /room/:roomId/log"
+  );
+  await expectHtml(
+    `/old_log.php?log_mode=on&room_no=${encodeURIComponent(roomId)}`,
+    ["村子完整紀錄", "村民勝利"],
+    "GET /old_log.php?log_mode=on&room_no=:roomId"
+  );
+  console.log("ok rendered room history pages");
+}
+
 let clients = [];
 try {
   const roomId = await createRoom();
@@ -323,6 +371,7 @@ try {
   await verifyEndedRoom(roomId);
   await verifyGameRecord(roomId);
   await verifyPlayerPersistence(roomId, winningPlayerId);
+  await verifyRenderedHistory(roomId);
 } catch (error) {
   failures.push(error instanceof Error ? error.message : String(error));
 } finally {

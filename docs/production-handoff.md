@@ -14,7 +14,7 @@ npm run smoke:local:write
 npm run smoke:local:game
 ```
 
-The verified path covers Worker metadata, rendered core/legacy pages, room creation, WebSocket join, avatar upload/read/delete through R2, an 8-player game through start, day vote, night actions, second-day execution, ended room status, D1 room records, and winning-player stats/records. See `docs/core-stable-audit.md` for the prompt-to-artifact checklist and non-blocking backlog.
+The verified path covers Worker metadata, rendered core/legacy pages, room creation, WebSocket join, avatar upload/read/delete through R2, an 8-player game through start, day vote, night actions, second-day execution, ended room status, D1 room records, winning-player stats/records, and rendered room history pages. See `docs/core-stable-audit.md` for the prompt-to-artifact checklist and non-blocking backlog.
 
 ## Current External Inputs
 
@@ -92,7 +92,7 @@ npm run smoke:production:write -- "$WORKER_HOST" --yes
 npm run smoke:production:game -- "$WORKER_HOST" --yes
 ```
 
-The write smoke creates a temporary production room/player row and verifies the WebSocket join path plus avatar upload/read/delete. The game-loop smoke creates a temporary 8-player room, runs a minimal full game through ended status, and confirms the room game record plus winning-player stats/records are readable. Avatar data is deleted on the write-smoke success path; smoke room/player/game-record rows remain in D1.
+The write smoke creates a temporary production room/player row and verifies the WebSocket join path plus avatar upload/read/delete. The game-loop smoke creates a temporary 8-player room, runs a minimal full game through ended status, and confirms the room game record, winning-player stats/records, and rendered room history pages are readable. Avatar data is deleted on the write-smoke success path; smoke room/player/game-record rows remain in D1.
 
 ## Local Verification Reference
 

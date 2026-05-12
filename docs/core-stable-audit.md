@@ -15,6 +15,7 @@ Scope: define the minimum stable candidate for the playable Cloudflare port. Thi
 | WebSocket join path works and returns room-scoped state | `scripts/smoke-production-write.mjs`; verifies `joined`, `presence`, and same-room `game_state` | Passed locally |
 | Full 8-player game can start, progress, and end | `scripts/smoke-game-loop.mjs`; verifies 8 WebSocket joins, `start_game`, day-1 execution, night kill plus seer action, day-2 execution, and `ended` game state | Passed locally |
 | Ended game persists room records and player stats | `scripts/smoke-game-loop.mjs`; verifies `/api/rooms/:roomId/records`, `/api/players/:playerId/stats`, and `/api/players/:playerId/records` | Passed locally |
+| Ended game renders player-facing history pages | `scripts/smoke-game-loop.mjs`; verifies `/room/:roomId/records`, `/room/:roomId/events`, `/room/:roomId/log`, and `old_log.php?log_mode=on&room_no=:roomId` after the smoke game ends | Covered by smoke script |
 | R2 avatar write/read/delete path works | `scripts/smoke-production-write.mjs`; verifies upload, readback, delete, and 404 after delete | Passed locally |
 | Core rendered pages and legacy room entry pages return usable HTML | `scripts/smoke-local-ui.mjs`; verifies home/list/logs/room/player pages plus `game_frame.php`, `game_up.php`, `game_play.php?frame=bottom`, and `game_vote.php` | Passed locally |
 | Production handoff has deploy and smoke commands | `docs/production-handoff.md`, `docs/deployment-smoke.md` | Present |
@@ -31,7 +32,7 @@ npm run smoke:local:write
 npm run smoke:local:game
 ```
 
-The local Wrangler server was shut down after smoke verification. The working tree was clean before this audit file was added.
+The local Wrangler server was shut down after smoke verification. The working tree was clean before this audit file was added. Later smoke-script coverage also verifies rendered room history pages after an ended game.
 
 ## Non-Blocking Backlog
 
@@ -58,4 +59,3 @@ npm run smoke:production -- "$WORKER_HOST"
 npm run smoke:production:write -- "$WORKER_HOST" --yes
 npm run smoke:production:game -- "$WORKER_HOST" --yes
 ```
-
