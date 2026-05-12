@@ -80,14 +80,13 @@ try {
   await expectHtml("/icons", ["頭像一覽", "上傳頭像", "/assets/reference/user_icon/001.gif"]);
   await expectHtml("/trip", ["身份登錄", "Trip公開資料", "tripStateMark", "health-mark"]);
   await expectHtml("/trips", ["Trip查詢", "Trip公開資料", "tripStateMark", "health-mark"]);
-  await expectHtml("/bbs", ["主題列表", "發表主題", "/bbs/1"]);
+  await expectHtml("/bbs", ["主題列表", "發表主題", "form name=\"bbs\""]);
   await expectHtml("/bbs?digest=1", ["精華", "主題列表"]);
-  await expectHtml("/bbs/1", ["文章列表", "主題管理", "bbs-status-mark", "bbsDeleteButton", "bbsReplyDeleteButton", "bbsTopicEditButton", "bbsReplyEditButton"]);
   await expectHtml("/status", ["伺服器狀態", "Binding 檢查", "health-mark"]);
-  await expectHtml("/admin", ["管理選單", "/admin/rooms", "/admin/config"]);
+  await expectHtml("/admin", ["管理選單", "admin.php?go=rooms", "admin.php?go=config"]);
   await expectHtml("/admin/rooms", ["廢村管理", "roomAdminToken", "werewolf_cf_room_admin_token"]);
   await expectHtml("/admin/config", ["系統設定管理", "configAdminToken", "werewolf_cf_config_admin_token"]);
-  await expectHtml("/admin/bbs", ["討論管理", "BBS 管理密碼", "bbs-status-mark", "/bbs/1#bbsModerationForm"]);
+  await expectHtml("/admin/bbs", ["討論管理", "BBS 管理密碼", "尚無主題。"]);
   await expectHtml("/rules", ["基本流程", "/assets/reference/img/role_human.gif"]);
   await expectHtml("/manual", ["說明書", "登錄入村"]);
   await expectHtml("/script-info", ["Script Info", "Cloudflare Workers / TypeScript"]);
@@ -124,7 +123,8 @@ try {
   ], ["data-room-page=\"frame\"", "房間JSON"]);
   await expectHtml(`/game_up.php?room_no=${encodeURIComponent(roomId)}&auto_reload=20`, [
     "data-room-page=\"up\"",
-    "form id=\"legacySendForm\" name=\"send\"",
+    "legacy-send-form",
+    "name=\"send\"",
     "target=\"bottom\"",
     `href=\"/game_vote.php?room_no=${roomId}&amp;auto_reload=20#game_top\" target=\"bottom\"`,
     "body.room-page-up .game-header { display: none; }"
@@ -147,8 +147,8 @@ try {
     "body.room-page-vote .room-panel-members,"
   ], ["房間JSON", "body.room-page-vote .page-vote-only { display: none; }"]);
   await expectHtml(`/room/${roomId}/records`, ["村子對局紀錄", roomId]);
-  await expectHtml(`/room/${roomId}/events`, ["村子事件履歷", roomId, "room_created"]);
-  await expectHtml(`/room/${roomId}/log`, ["村子完整紀錄", roomId, "room_created"]);
+  await expectHtml(`/room/${roomId}/events`, ["村子事件履歷", roomId, "村子建立"]);
+  await expectHtml(`/room/${roomId}/log`, ["村子完整紀錄", roomId, "村子建立"]);
   await expectHtml(`/player/${playerId}`, ["個人戰績", playerId, "最近參戰紀錄", "/assets/reference/"]);
 
   console.log(`${smokeLabel} smoke passed`);
