@@ -224,6 +224,6 @@ npm run smoke:production:stable -- "$WORKER_HOST" --yes
 The production stable smoke creates temporary room/player/game-record rows, verifies read-only metadata and pages, exercises WebSocket join plus R2 avatar upload/read/delete, runs an 8-player game to completion, and verifies D1 records plus rendered room history pages. Use the read-only `npm run smoke:production -- "$WORKER_HOST"` when production writes are not acceptable.
 
 Use `docs/deployment-smoke.md` for the full production checklist, including remote D1 verification, automated read-only/write smoke checks, maintenance mode, and optional manual R2 avatar checks.
-Use `docs/production-handoff.md` when Cloudflare production resource IDs still need to be created or copied into `wrangler.toml`.
+Use `docs/production-handoff.md` when Cloudflare production resource IDs still need to be created or copied into `wrangler.production.toml`.
 Use `docs/ref-port-gap-audit.md` to track remaining UI/rule parity gaps against `ref/diam1.3.61.kz_Build0912`.
 Use `docs/reference-asset-inventory.md` to track which reference bitmap assets should move into R2, regenerate the inventory with `node scripts/inventory-reference-assets.mjs`, and dry-run priority uploads with `node scripts/upload-reference-assets.mjs`.
