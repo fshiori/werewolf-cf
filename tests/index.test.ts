@@ -4992,6 +4992,7 @@ describe("worker routes", () => {
           "channelRestrictions",
           "players",
           "openVote",
+          "lastWordsEnabled",
           "selfVote",
           "voteStatus",
           "votes",

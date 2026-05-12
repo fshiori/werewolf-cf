@@ -22,6 +22,7 @@ function protocolMetadata() {
         "channelRestrictions",
         "players",
         "openVote",
+        "lastWordsEnabled",
         "selfVote",
         "voteStatus",
         "votes",

@@ -1190,7 +1190,7 @@ function renderGame(game) {
   document.querySelector("#gmRestrictLovers").checked = channelRestrictions.lovers === true;
   document.querySelector("#gmRestrictFox").checked = channelRestrictions.fox === true;
   document.querySelector("#gmSetChannelRestrictions").disabled = !isGm || !(game.phase === "day" || game.phase === "night");
-  document.querySelector("#setLastWords").disabled = !(currentPlayerAlive && game.phase !== "lobby" && game.phase !== "ended");
+  document.querySelector("#setLastWords").disabled = !(game.lastWordsEnabled && currentPlayerAlive && game.phase !== "lobby" && game.phase !== "ended");
   const players = document.querySelector("#players");
   const playerGrid = document.querySelector("#playerGrid");
   const gmWhisperTarget = document.querySelector("#gmWhisperTarget");

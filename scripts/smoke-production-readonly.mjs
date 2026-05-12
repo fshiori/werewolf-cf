@@ -49,7 +49,7 @@ const checks = [
     path: "/api/protocol",
     kind: "json",
     validate(value) {
-      const requiredGameStateFields = ["roomId", "phase", "day", "revoteCount", "commonTalkVisible", "channelRestrictions", "players", "openVote", "selfVote", "voteStatus", "votes", "votedPlayerIds", "objectionCounts", "log"];
+      const requiredGameStateFields = ["roomId", "phase", "day", "revoteCount", "commonTalkVisible", "channelRestrictions", "players", "openVote", "lastWordsEnabled", "selfVote", "voteStatus", "votes", "votedPlayerIds", "objectionCounts", "log"];
       const requiredActionAckActions = ["start_game", "vote", "night_kill", "divine", "guard", "child_fox_divine", "cat_revive", "kick_player", "leave_room", "room_end_vote", "gm_advance_phase", "gm_end_game", "gm_set_alive", "gm_set_role", "gm_set_flag", "gm_set_common_voice", "gm_set_channel_restrictions"];
       return value?.websocket?.path === "/ws/room/:roomId"
         && value?.websocket?.firstClientMessage === "join"

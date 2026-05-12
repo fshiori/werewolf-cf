@@ -136,11 +136,12 @@ async function verifyWebSocket(roomId) {
             typeof message.phase !== "string" ||
             typeof message.day !== "number" ||
             typeof message.openVote !== "boolean" ||
+            typeof message.lastWordsEnabled !== "boolean" ||
             typeof message.selfVote !== "boolean" ||
             typeof message.voteStatus !== "boolean"
           )
         ) {
-          throw new Error("WebSocket join smoke: game_state payload must include roomId, phase, day and vote option booleans");
+          throw new Error("WebSocket join smoke: game_state payload must include roomId, phase, day and option booleans");
         }
         if ([...requiredTypes].every((type) => seenTypes.has(type))) {
           clearTimeout(timeout);

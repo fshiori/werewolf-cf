@@ -238,6 +238,7 @@ export interface GameState {
   channelRestrictions?: ChannelRestrictions;
   deadRoleVisible: boolean;
   wishRole: boolean;
+  lastWordsEnabled?: boolean;
   dummyBoy: boolean;
   dayMs: number;
   nightMs: number;
@@ -488,6 +489,7 @@ export type ServerMessage =
       channelRestrictions: ChannelRestrictions;
       players: PublicGamePlayer[];
       openVote: boolean;
+      lastWordsEnabled: boolean;
       selfVote: boolean;
       voteStatus: boolean;
       votes: Record<string, string>;
