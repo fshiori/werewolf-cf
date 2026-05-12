@@ -690,10 +690,18 @@ describe("render", () => {
     expect(ROOM_CLIENT_SCRIPT).toContain("syncPlayerCookie();");
     expect(ROOM_CLIENT_SCRIPT).toContain("function connectRoom()");
     expect(ROOM_CLIENT_SCRIPT).toContain("let reconnectTimer;");
+    expect(ROOM_CLIENT_SCRIPT).toContain("let reconnectSuppressed = false;");
     expect(ROOM_CLIENT_SCRIPT).toContain("function shouldAutoConnectRoom()");
+    expect(ROOM_CLIENT_SCRIPT).toContain("function cancelReconnect()");
     expect(ROOM_CLIENT_SCRIPT).toContain("function scheduleReconnect()");
+    expect(ROOM_CLIENT_SCRIPT).toContain("if (reconnectSuppressed || reconnectTimer || !shouldAutoConnectRoom()) return;");
+    expect(ROOM_CLIENT_SCRIPT).toContain("function isRoomExitClose(reason)");
+    expect(ROOM_CLIENT_SCRIPT).toContain('reason === "You left the room" || reason === "You were kicked from the room"');
+    expect(ROOM_CLIENT_SCRIPT).toContain("reconnectSuppressed = false;");
     expect(ROOM_CLIENT_SCRIPT).toContain("reconnectTimer = setTimeout(() =>");
     expect(ROOM_CLIENT_SCRIPT).toContain('ws.addEventListener("close"');
+    expect(ROOM_CLIENT_SCRIPT).toContain("isRoomExitClose(event.reason)");
+    expect(ROOM_CLIENT_SCRIPT).toContain("已離開房間。");
     expect(ROOM_CLIENT_SCRIPT).toContain("連線中斷，將嘗試重新連線。");
     expect(ROOM_CLIENT_SCRIPT).toContain('ws.addEventListener("error"');
     expect(ROOM_CLIENT_SCRIPT).toContain("ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING");
@@ -709,6 +717,7 @@ describe("render", () => {
     expect(ROOM_CLIENT_SCRIPT).toContain('sendChatMessage("gm_whisper", { targetPlayerId: target });');
     expect(ROOM_CLIENT_SCRIPT).toContain("function clearPlayerIdentity()");
     expect(ROOM_CLIENT_SCRIPT).toContain('document.querySelector("#legacyLogoutLink")');
+    expect(ROOM_CLIENT_SCRIPT).toContain('document.querySelector("#leaveRoom").addEventListener("click"');
     expect(ROOM_CLIENT_SCRIPT).toContain('logoutUrl.searchParams.set("player_id", playerId);');
     expect(ROOM_CLIENT_SCRIPT).toContain('document.cookie = "player_id=; Path=/; Max-Age=0; SameSite=Lax";');
     expect(ROOM_CLIENT_SCRIPT).toContain("function setRoomPhaseClass(phase)");

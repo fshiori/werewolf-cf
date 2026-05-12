@@ -249,6 +249,7 @@ let isGm = false;
 let revealedRoles = {};
 let legacyVoteCommands = {};
 let reconnectTimer;
+let reconnectSuppressed = false;
 refreshAuxiliaryPanels();
 configureAutoRefresh();
 document.querySelector("#manualRefresh").addEventListener("click", refreshAuxiliaryPanels);
@@ -260,15 +261,26 @@ document.querySelector("#autoRefresh").addEventListener("change", (event) => {
 function shouldAutoConnectRoom() {
   return roomShell instanceof HTMLElement && roomShell.dataset.roomView === "player" && document.querySelector("#nickname").value.trim();
 }
+function cancelReconnect() {
+  reconnectSuppressed = true;
+  if (reconnectTimer) {
+    clearTimeout(reconnectTimer);
+    reconnectTimer = undefined;
+  }
+}
 function scheduleReconnect() {
-  if (reconnectTimer || !shouldAutoConnectRoom()) return;
+  if (reconnectSuppressed || reconnectTimer || !shouldAutoConnectRoom()) return;
   reconnectTimer = setTimeout(() => {
     reconnectTimer = undefined;
     connectRoom();
   }, 3000);
 }
+function isRoomExitClose(reason) {
+  return reason === "You left the room" || reason === "You were kicked from the room";
+}
 function connectRoom() {
   if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) return;
+  reconnectSuppressed = false;
   const nickname = document.querySelector("#nickname").value;
   if (!nickname.trim()) return;
   if (reconnectTimer) {
@@ -285,8 +297,13 @@ function connectRoom() {
   refreshAuxiliaryPanels();
   ws = new WebSocket((location.protocol === "https:" ? "wss://" : "ws://") + location.host + "/ws/room/" + roomId);
   ws.addEventListener("open", () => ws.send(JSON.stringify({ type: "join", playerId: localStorage.getItem(playerKey), nickname, trip, wishRole, iconPath })));
-  ws.addEventListener("close", () => {
+  ws.addEventListener("close", (event) => {
     ws = undefined;
+    if (isRoomExitClose(event.reason)) {
+      cancelReconnect();
+      append("<span class='muted'>已離開房間。</span>");
+      return;
+    }
     append("<span class='muted'>連線中斷，將嘗試重新連線。</span>");
     scheduleReconnect();
   });
@@ -439,11 +456,13 @@ document.querySelector("#startVote").addEventListener("click", () => {
   sendCommand({ type: "start_vote" });
 });
 document.querySelector("#leaveRoom").addEventListener("click", () => {
+  cancelReconnect();
   sendCommand({ type: "leave_room" });
 });
 const legacyLogoutLink = document.querySelector("#legacyLogoutLink");
 if (legacyLogoutLink) {
   legacyLogoutLink.addEventListener("click", () => {
+    cancelReconnect();
     const playerId = localStorage.getItem(playerKey);
     if (playerId) {
       const logoutUrl = new URL(legacyLogoutLink.href);
