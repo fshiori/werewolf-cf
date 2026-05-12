@@ -70,15 +70,17 @@ import {
   buildSelfTalkMessage,
   buildWolfChatMessage
 } from "./messages";
-import type { ChannelRestrictions, GameState, RoomMember, RoomOptions } from "./types";
+import type { ChannelRestrictions, GameState, PlayerRole, RoomMember, RoomOptions } from "./types";
 import {
   parseClientMessage,
   validateChatText,
+  validateIconPath,
   validateLastWordsText,
   validateNickname,
   validatePlayerId,
   validateRoomId,
-  validateTrip
+  validateTrip,
+  validateWishRole
 } from "./validation";
 
 type ConnectionState = {
@@ -86,6 +88,22 @@ type ConnectionState = {
   nickname: string;
   tripHash?: string;
   gm?: boolean;
+};
+
+type JoinPayload = {
+  playerId: string;
+  nickname: string;
+  trip?: string;
+  wishRole?: PlayerRole;
+  iconPath?: string;
+};
+
+type JoinResult = {
+  game: GameState;
+  playerId: string;
+  nickname: string;
+  tripHash?: string;
+  gm: boolean;
 };
 
 function parseChannelRestrictions(tokens: string[]): ChannelRestrictions | undefined {
@@ -112,6 +130,9 @@ export class RoomDurableObject {
 
   async fetch(request: Request): Promise<Response> {
     const url = new URL(request.url);
+    if (request.method === "POST" && url.pathname.endsWith("/legacy/join")) {
+      return this.joinByHttp(request);
+    }
     if (request.method === "POST" && url.pathname.endsWith("/legacy/leave")) {
       return this.leaveByHttp(request);
     }
@@ -125,6 +146,37 @@ export class RoomDurableObject {
     const server = pair[1];
     this.handleSocket(server);
     return new Response(null, { status: 101, webSocket: client });
+  }
+
+  private async joinByHttp(request: Request): Promise<Response> {
+    try {
+      validateRoomId(this.roomId);
+      const payload = await request.json().catch(() => ({})) as {
+        playerId?: unknown;
+        nickname?: unknown;
+        trip?: unknown;
+        wishRole?: unknown;
+        iconPath?: unknown;
+      };
+      const result = await this.joinPlayer({
+        playerId: typeof payload.playerId === "string" ? payload.playerId : "",
+        nickname: typeof payload.nickname === "string" ? payload.nickname : "",
+        ...(typeof payload.trip === "string" ? { trip: payload.trip } : {}),
+        ...(typeof payload.wishRole === "string" ? { wishRole: payload.wishRole as PlayerRole } : {}),
+        ...(typeof payload.iconPath === "string" ? { iconPath: payload.iconPath } : {})
+      });
+      this.broadcast(buildPresenceMessage(this.members()));
+      await this.broadcastGameState(result.game);
+      return Response.json({
+        roomId: this.roomId,
+        playerId: result.playerId,
+        nickname: result.nickname,
+        gm: result.gm,
+        players: result.game.players.length
+      });
+    } catch (error) {
+      return Response.json({ error: error instanceof Error ? error.message : "Invalid join request" }, { status: 400 });
+    }
   }
 
   private async leaveByHttp(request: Request): Promise<Response> {
@@ -190,47 +242,20 @@ export class RoomDurableObject {
         if (this.sockets.has(socket)) {
           throw new Error("Socket already joined");
         }
-        const playerId = validatePlayerId(message.playerId);
-        const nickname = validateNickname(message.nickname);
-        const loadedGame = await this.loadGameState();
-        const maxPlayers = await this.loadRoomCapacity();
-        if (!canJoinRoomState(loadedGame, playerId, maxPlayers)) {
-          throw new Error(loadedGame.phase === "lobby" ? "Room is full" : "Game already started");
-        }
-        const roomOptions = await this.loadRoomOptions();
-        if (roomOptions.tripRequired && !message.trip) {
-          throw new Error("Trip is required for this room");
-        }
-        const trip = message.trip ? validateTrip(message.trip) : undefined;
-        if (roomOptions.tripRequired && trip && !(await this.isRegisteredTrip(trip))) {
-          throw new Error("Trip must be registered before joining this room");
-        }
-        if (roomOptions.tripRequired && trip && (await this.isExcludedTrip(trip))) {
-          throw new Error("Trip is excluded from joining this room");
-        }
-        const tripHash = trip ? await tripHashForRoom(this.roomId, trip) : undefined;
-        const isGm = roomOptions.gmEnabled === true && Boolean(tripHash) && tripHash === roomOptions.gmTripHash;
-        if (isGm) {
-          this.sockets.set(socket, { playerId, nickname, tripHash, gm: true });
-          await this.persistJoin(playerId, nickname, tripHash, true);
-          this.send(socket, buildJoinedMessage(this.roomId, playerId, this.members()));
+        const joined = await this.joinPlayer(message);
+        if (joined.gm) {
+          this.sockets.set(socket, { playerId: joined.playerId, nickname: joined.nickname, tripHash: joined.tripHash, gm: true });
+          this.send(socket, buildJoinedMessage(this.roomId, joined.playerId, this.members()));
           this.broadcast(buildPresenceMessage(this.members()));
-          await this.broadcastGameState(loadedGame);
+          await this.broadcastGameState(joined.game);
           return;
         }
-        const game = upsertLobbyPlayer(
-          loadedGame,
-          { playerId, nickname, tripHash, wishRole: roomOptions.wishRole ? message.wishRole : undefined, iconPath: message.iconPath },
-          maxPlayers
-        );
-        this.sockets.set(socket, { playerId, nickname, tripHash });
-        await this.saveGameState(game);
-        await this.persistJoin(playerId, nickname, tripHash);
-        this.send(socket, buildJoinedMessage(this.roomId, playerId, this.members()));
+        this.sockets.set(socket, { playerId: joined.playerId, nickname: joined.nickname, tripHash: joined.tripHash });
+        this.send(socket, buildJoinedMessage(this.roomId, joined.playerId, this.members()));
         this.broadcast(buildPresenceMessage(this.members()));
-        await this.broadcastGameState(game);
-        this.sendRole(socket, game, playerId);
-        this.sendMediumResult(socket, game, playerId);
+        await this.broadcastGameState(joined.game);
+        this.sendRole(socket, joined.game, joined.playerId);
+        this.sendMediumResult(socket, joined.game, joined.playerId);
         return;
       }
 
@@ -1033,6 +1058,43 @@ export class RoomDurableObject {
     for (const reading of mediumReadingsForPlayer(gameState, playerId)) {
       this.send(socket, buildMediumResultMessage(reading));
     }
+  }
+
+  private async joinPlayer(payload: JoinPayload): Promise<JoinResult> {
+    const playerId = validatePlayerId(payload.playerId);
+    const nickname = validateNickname(payload.nickname);
+    const loadedGame = await this.loadGameState();
+    const maxPlayers = await this.loadRoomCapacity();
+    if (!canJoinRoomState(loadedGame, playerId, maxPlayers)) {
+      throw new Error(loadedGame.phase === "lobby" ? "Room is full" : "Game already started");
+    }
+    const roomOptions = await this.loadRoomOptions();
+    if (roomOptions.tripRequired && !payload.trip) {
+      throw new Error("Trip is required for this room");
+    }
+    const trip = payload.trip ? validateTrip(payload.trip) : undefined;
+    if (roomOptions.tripRequired && trip && !(await this.isRegisteredTrip(trip))) {
+      throw new Error("Trip must be registered before joining this room");
+    }
+    if (roomOptions.tripRequired && trip && (await this.isExcludedTrip(trip))) {
+      throw new Error("Trip is excluded from joining this room");
+    }
+    const tripHash = trip ? await tripHashForRoom(this.roomId, trip) : undefined;
+    const isGm = roomOptions.gmEnabled === true && Boolean(tripHash) && tripHash === roomOptions.gmTripHash;
+    if (isGm) {
+      await this.persistJoin(playerId, nickname, tripHash, true);
+      return { game: loadedGame, playerId, nickname, tripHash, gm: true };
+    }
+    const wishRole = roomOptions.wishRole ? validateWishRole(payload.wishRole) : undefined;
+    const iconPath = validateIconPath(payload.iconPath);
+    const game = upsertLobbyPlayer(
+      loadedGame,
+      { playerId, nickname, tripHash, wishRole, iconPath },
+      maxPlayers
+    );
+    await this.saveGameState(game);
+    await this.persistJoin(playerId, nickname, tripHash);
+    return { game, playerId, nickname, tripHash, gm: false };
   }
 
   private async syncRoomStatus(gameState: GameState): Promise<void> {

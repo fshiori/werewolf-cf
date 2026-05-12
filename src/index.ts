@@ -10,12 +10,14 @@ import {
   validateNickname,
   validateOptionalLastWordsText,
   validatePlayerId,
+  validateIconPath,
   validateRoomCapacity,
   validateRoomComment,
   validateRoomId,
   validateRoomName,
   validateTrip,
   validateTripExclusionReason,
+  validateWishRole,
   escapeHtml
 } from "./validation";
 
@@ -2579,6 +2581,56 @@ async function leaveLegacyRoomByRequest(request: Request, env: Env, roomId: stri
   }
 }
 
+function legacyWishRoleParam(value: string | undefined): string | undefined {
+  const mapped = {
+    human: "villager",
+    wolf: "werewolf",
+    wfbig: "big_wolf",
+    mage: "seer",
+    necromancer: "medium",
+    mad: "madman",
+    guard: "guard",
+    common: "common",
+    fox: "fox",
+    poison: "poison",
+    betr: "betrayer",
+    fosi: "child_fox",
+    cat: "cat"
+  } as Record<string, string>;
+  return value ? mapped[value] ?? value : undefined;
+}
+
+async function joinLegacyRoomByForm(request: Request, env: Env, roomId: string, form: FormData): Promise<void> {
+  const playerId = validatePlayerId(
+    readFormString(form, "playerId") ??
+    readFormString(form, "player_id") ??
+    readCookie(request, "werewolf_cf_player_id") ??
+    readCookie(request, "player_id") ??
+    readCookie(request, "playerId") ??
+    ""
+  );
+  const nickname = validateNickname(readFormString(form, "handle_name") ?? readFormString(form, "nickname") ?? "");
+  const trip = readFormString(form, "tripn") ?? readFormString(form, "trip");
+  const wishRole = validateWishRole(legacyWishRoleParam(readFormString(form, "role")));
+  const iconPath = validateIconPath(readFormString(form, "icon_no") ?? readFormString(form, "iconPath"));
+  const validRoomId = validateRoomId(roomId);
+  const id = env.ROOM_DO.idFromName(validRoomId);
+  const response = await env.ROOM_DO.get(id).fetch(new Request(`https://room.internal/rooms/${encodeURIComponent(validRoomId)}/legacy/join`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      playerId,
+      nickname,
+      ...(trip ? { trip } : {}),
+      ...(wishRole ? { wishRole } : {}),
+      ...(iconPath ? { iconPath } : {})
+    })
+  }));
+  if (!response.ok) {
+    throw new Error(await response.text());
+  }
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
@@ -3175,6 +3227,7 @@ export default {
         if (!(await roomExists(env, roomId))) {
           return new Response("Room not found", { status: 404 });
         }
+        await joinLegacyRoomByForm(request, env, roomId, form ?? new FormData());
         const autoReloadQuery = legacyAutoReloadQuery(url, form);
         return new Response(null, { status: 303, headers: { Location: `/login.php?room_no=${encodeURIComponent(roomId)}${autoReloadQuery}` } });
       } catch (error) {

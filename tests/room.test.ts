@@ -461,6 +461,62 @@ describe("RoomDurableObject", () => {
     expect(invalidMessages).toEqual([{ type: "error", message: "Invalid icon path" }]);
   });
 
+  it("supports legacy HTTP resident joins through the room authority", async () => {
+    const { room, stored, batches } = observableRoomObject({
+      roomId: "room_abc",
+      phase: "lobby",
+      day: 0,
+      players: [],
+      hostId: undefined,
+      votes: {},
+      openVote: false,
+      commonTalkVisible: false,
+      deadRoleVisible: false,
+      wishRole: true,
+      dummyBoy: false,
+      dayMs: 300000,
+      nightMs: 180000,
+      selfVote: false,
+      voteStatus: false,
+      revoteCount: 0,
+      nightKills: {},
+      divinations: {},
+      guards: {},
+      catRevives: {},
+      lastWords: {},
+      log: []
+    });
+
+    const response = await room.fetch(new Request("https://room.internal/rooms/room_abc/legacy/join", {
+      method: "POST",
+      body: JSON.stringify({
+        playerId: "player_legacy",
+        nickname: "Legacy",
+        wishRole: "seer",
+        iconPath: "user_icon/001.gif"
+      })
+    }));
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      roomId: "room_abc",
+      playerId: "player_legacy",
+      nickname: "Legacy",
+      gm: false,
+      players: 1
+    });
+    const game = stored.get("gameState") as GameState;
+    expect(game.players).toContainEqual(expect.objectContaining({
+      playerId: "player_legacy",
+      nickname: "Legacy",
+      iconPath: "user_icon/001.gif"
+    }));
+    expect(game.hostId).toBe("player_legacy");
+    expect(batches.at(-1)?.[1]).toMatchObject({
+      binds: ["room_abc", "player_legacy", "player_joined", JSON.stringify({ trip: false, gm: false })]
+    });
+  });
+
   it("reports websocket validation errors without crashing", async () => {
     const invalidPlayerMessages: SentMessage[] = [];
     await sendRaw(

@@ -9,6 +9,8 @@ function syncPlayerCookie() {
   const playerId = localStorage.getItem(playerKey);
   if (!playerId) return;
   document.cookie = "werewolf_cf_player_id=" + encodeURIComponent(playerId) + "; Path=/; SameSite=Lax";
+  const legacyUserPlayerId = document.querySelector("#legacyUserPlayerId");
+  if (legacyUserPlayerId) legacyUserPlayerId.value = playerId;
 }
 function clearPlayerIdentity() {
   localStorage.removeItem(playerKey);
