@@ -7,6 +7,7 @@ const labelArg = args.find((arg) => arg.startsWith("--label="));
 const smokeLabel = labelArg?.slice("--label=".length) || "Production stable";
 const confirmed = args.includes("--yes") || process.env.PRODUCTION_STABLE_SMOKE_CONFIRM === "true";
 const host = args.find((arg) => arg !== "--yes" && !arg.startsWith("--label=")) ?? process.env.WORKER_HOST;
+const scriptDir = process.env.PRODUCTION_STABLE_SMOKE_SCRIPT_DIR ?? "scripts";
 
 if (!confirmed) {
   console.error("Production stable smoke creates temporary room/player/game-record data. Pass --yes or set PRODUCTION_STABLE_SMOKE_CONFIRM=true to continue.");
@@ -47,16 +48,15 @@ function runCommand(command, commandArgs) {
 
 async function runSmoke(name, script, extraArgs = []) {
   console.log(`\n== ${name} ==`);
-  await runCommand(process.execPath, [script, `--label=${smokeLabel}`, baseUrl.toString(), ...extraArgs]);
+  await runCommand(process.execPath, [`${scriptDir}/${script}`, `--label=${smokeLabel}`, baseUrl.toString(), ...extraArgs]);
 }
 
 try {
-  await runSmoke("Read-only smoke", "scripts/smoke-production-readonly.mjs");
-  await runSmoke("Write smoke", "scripts/smoke-production-write.mjs", ["--yes"]);
-  await runSmoke("Game-loop smoke", "scripts/smoke-game-loop.mjs", ["--yes"]);
+  await runSmoke("Read-only smoke", "smoke-production-readonly.mjs");
+  await runSmoke("Write smoke", "smoke-production-write.mjs", ["--yes"]);
+  await runSmoke("Game-loop smoke", "smoke-game-loop.mjs", ["--yes"]);
   console.log(`\n${smokeLabel} smoke passed`);
 } catch (error) {
   console.error(`\n${smokeLabel} smoke failed: ${error instanceof Error ? error.message : String(error)}`);
   process.exitCode = 1;
 }
-
