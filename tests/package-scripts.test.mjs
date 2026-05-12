@@ -13,10 +13,10 @@ describe("package release scripts", () => {
     expect(scripts["check:stable"]).toBe("npm run check:deploy && npm run smoke:local:stable");
   });
 
-  it("keeps the production-ready gate wired to local stable checks and Cloudflare access", async () => {
+  it("keeps the production-ready gate wired to local stable, reference assets, and Cloudflare access", async () => {
     const scripts = await packageScripts();
 
-    expect(scripts["check:production-ready"]).toBe("npm run check:stable && npm run check:production-access");
+    expect(scripts["check:production-ready"]).toBe("npm run check:stable && npm run assets:reference:plan && npm run check:production-access");
   });
 
   it("blocks deploys through the production-ready predeploy gate", async () => {
