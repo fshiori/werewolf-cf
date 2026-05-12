@@ -202,6 +202,13 @@ npm run migrate:production
 npm run check:d1-schema:remote
 ```
 
+Confirm and upload the reference bitmap assets used by the retro UI:
+
+```bash
+npm run assets:reference:plan
+npm run assets:reference:upload
+```
+
 Deploy:
 
 ```bash

@@ -47,6 +47,13 @@ Confirm core D1 tables exist:
 npm run check:d1-schema:remote
 ```
 
+Confirm and upload the reference bitmap assets used by rendered retro UI chrome:
+
+```bash
+npm run assets:reference:plan
+npm run assets:reference:upload
+```
+
 Or run the equivalent manual query:
 
 ```bash

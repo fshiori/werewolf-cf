@@ -13,13 +13,13 @@ node scripts/inventory-reference-assets.mjs
 Priority upload dry-run:
 
 ```bash
-node scripts/upload-reference-assets.mjs
+npm run assets:reference:plan
 ```
 
 Execute the upload only after confirming the target bucket/config:
 
 ```bash
-node scripts/upload-reference-assets.mjs --bucket=werewolf-cf-assets --config=wrangler.production.toml --yes
+npm run assets:reference:upload
 ```
 
 The command reads the reference tree and excludes non-asset metadata such as `Thumbs.db`. It does not modify `ref/`.
