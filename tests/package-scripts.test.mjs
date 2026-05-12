@@ -43,4 +43,11 @@ describe("package release scripts", () => {
 
     expect(scripts["check:visual-prereqs"]).toBe("node scripts/check-visual-parity-prereqs.mjs");
   });
+
+  it("keeps reference asset R2 upload scripts pointed at the production config", async () => {
+    const scripts = await packageScripts();
+
+    expect(scripts["assets:reference:plan"]).toBe("node scripts/upload-reference-assets.mjs --bucket=werewolf-cf-assets --config=wrangler.production.toml");
+    expect(scripts["assets:reference:upload"]).toBe("node scripts/upload-reference-assets.mjs --bucket=werewolf-cf-assets --config=wrangler.production.toml --yes");
+  });
 });

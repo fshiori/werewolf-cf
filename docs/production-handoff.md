@@ -67,6 +67,12 @@ npx wrangler r2 bucket create werewolf-cf-assets --config wrangler.production.to
 
 Copy the D1 database UUID from the `d1 create` output into `database_id`, and copy the KV namespace id from the `kv namespace create` output into the `CONFIG` namespace `id`.
 
+Confirm the reference bitmap asset upload plan before writing to R2:
+
+```bash
+npm run assets:reference:plan
+```
+
 ## Deployment Order
 
 Run the full local deploy gate:
@@ -92,6 +98,12 @@ Apply remote D1 migrations and verify the schema:
 ```bash
 npm run migrate:production
 npm run check:d1-schema:remote
+```
+
+Upload the reference bitmap assets used by the retro UI:
+
+```bash
+npm run assets:reference:upload
 ```
 
 Deploy the Worker:
