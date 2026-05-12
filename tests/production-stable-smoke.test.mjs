@@ -40,6 +40,7 @@ console.log(name + " ok");
 
   await Promise.all([
     writeFile(join(scriptDir, "smoke-production-readonly.mjs"), scriptBody),
+    writeFile(join(scriptDir, "smoke-local-ui.mjs"), scriptBody),
     writeFile(join(scriptDir, "smoke-production-write.mjs"), scriptBody),
     writeFile(join(scriptDir, "smoke-game-loop.mjs"), scriptBody)
   ]);
@@ -81,7 +82,7 @@ describe("production stable smoke script", () => {
     expect(result.stderr).toContain("must not point at a local host");
   });
 
-  it("runs read-only, write, and game smoke scripts in order", async () => {
+  it("runs read-only, UI, write, and game smoke scripts in order", async () => {
     const { scriptDir, logPath } = await createSmokeScriptDir();
     const env = {
       ...process.env,
@@ -96,12 +97,14 @@ describe("production stable smoke script", () => {
     const calls = await readCalls(logPath);
     expect(calls.map((call) => call.name)).toEqual([
       "smoke-production-readonly.mjs",
+      "smoke-local-ui.mjs",
       "smoke-production-write.mjs",
       "smoke-game-loop.mjs"
     ]);
     expect(calls[0].args).toEqual(["--label=Staging", "https://worker.example.test/"]);
-    expect(calls[1].args).toEqual(["--label=Staging", "https://worker.example.test/", "--yes"]);
+    expect(calls[1].args).toEqual(["--label=Staging", "https://worker.example.test/"]);
     expect(calls[2].args).toEqual(["--label=Staging", "https://worker.example.test/", "--yes"]);
+    expect(calls[3].args).toEqual(["--label=Staging", "https://worker.example.test/", "--yes"]);
   });
 
   it("fails when a child smoke script fails", async () => {
@@ -121,6 +124,7 @@ describe("production stable smoke script", () => {
     const calls = await readCalls(logPath);
     expect(calls.map((call) => call.name)).toEqual([
       "smoke-production-readonly.mjs",
+      "smoke-local-ui.mjs",
       "smoke-production-write.mjs"
     ]);
   });
