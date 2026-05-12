@@ -16,6 +16,7 @@
     "smoke:local:ui": "node scripts/smoke-local-ui.mjs --label=Local http://127.0.0.1:8787",
     "smoke:local:write": "node scripts/smoke-production-write.mjs --label=Local http://127.0.0.1:8787 --yes",
     "smoke:local:game": "node scripts/smoke-game-loop.mjs --label=Local http://127.0.0.1:8787 --yes",
+    "smoke:local:stable": "node scripts/smoke-local-stable.mjs",
     "smoke:production": "node scripts/smoke-production-readonly.mjs",
     "smoke:production:write": "node scripts/smoke-production-write.mjs",
     "smoke:production:game": "node scripts/smoke-game-loop.mjs",
