@@ -6,9 +6,19 @@ Reference target: `ref/diam1.3.61.kz_Build0912`
 
 Purpose: define the browser/manual screenshot pass required to judge UI parity with the reference PHP build. This checklist does not modify, copy, or normalize files under `ref/`.
 
-## Current Blocker
+## Current Status
 
-No browser binary is installed in the current environment. `npm run check:visual-prereqs` checks `chromium`, `chromium-browser`, `google-chrome`, and `chrome`, or the executable configured with `VISUAL_PARITY_BROWSER_BIN`; this run cannot produce screenshot evidence until that check passes.
+Playwright Chromium is available in the current environment. `npm run check:visual-prereqs` checks system Chromium/Chrome candidates and falls back to Playwright-managed Chromium when it is installed.
+
+The first automated capture path is available:
+
+```bash
+npm run assets:reference:local
+npm run capture:visual -- --dry-run
+npm run capture:visual -- --yes
+```
+
+The local asset seed copies priority reference bitmaps into local Wrangler R2 storage so screenshots do not contain broken `/assets/reference/...` images. The capture command then captures static pages, a temporary lobby room, and the PHP-style frame/up/bottom/vote room aliases across the required desktop/tablet/mobile viewports. Day, night, ended, dead/player/GM old-log views still require a stateful capture pass and manual comparison against `ref/diam1.3.61.kz_Build0912`.
 
 ## Prerequisites
 
@@ -23,7 +33,11 @@ No browser binary is installed in the current environment. `npm run check:visual
    - `npm run dev -- --ip 127.0.0.1 --port 8787`
 4. Use a browser-capable environment with Chromium, Chrome, or Playwright available.
    - Verify with `npm run check:visual-prereqs`.
-5. Prepare rooms that cover lobby, day, night, ended, spectator/dead, GM, and old-log views.
+5. Seed local reference bitmaps into Wrangler R2:
+   - `npm run assets:reference:local`
+6. Run the automated capture for static/lobby/frame pages:
+   - `npm run capture:visual -- --yes`
+7. Prepare rooms that cover day, night, ended, spectator/dead, GM, and old-log views.
 
 ## Evidence Paths
 
@@ -65,19 +79,19 @@ Capture every route at these viewport sizes:
 
 | Reference screen | Current route | Required captures | Checks |
 | --- | --- | --- | --- |
-| `index.php` | `/` | `home` | Top title/background, side menu placement, create-room table, announcement area, room list option/status icons. |
-| `list.php` | `/list` | `list` | Federated list table structure, local room rows, remote-peer failure text behavior, retro colors. |
-| `game_view.php` lobby | `/room/:roomId` | `room-lobby` | Room header, participant grid, join form, host controls, lobby vote/kick controls, selected default icons. |
+| `index.php` | `/` | `home` | Top title/background, side menu placement, create-room table, announcement area, room list option/status icons. Automated capture available. |
+| `list.php` | `/list` | `list` | Federated list table structure, local room rows, remote-peer failure text behavior, retro colors. Automated capture available. |
+| `game_view.php` lobby | `/room/:roomId` | `room-lobby` | Room header, participant grid, join form, host controls, lobby vote/kick controls, selected default icons. Automated capture available. |
 | `game_play.php` day | `/room/:roomId` | `room-day`, `room-spectator-dead-votes` | Day body color, player cards, voted-player background, chat, public log, live vote-status panel for allowed viewers. |
 | `game_play.php` night | `/room/:roomId` | `room-night` | Night body color, private-channel controls, night action panel, hidden target/status behavior for unauthorized viewers. |
 | `game_play.php` GM paths | `/room/:roomId` | `room-gm-controls` | GM buttons, whisper controls, forced phase/life/role/winner controls, common-channel toggle. |
 | `game_view.php` ended | `/room/:roomId` | `room-ended` | Ended body color, role reveal icons/text, winner result, records/events links. |
 | `old_log.php` | `/logs`, `/room/:roomId/log` | `old-log-public`, `old-log-player`, `old-log-dead`, `old-log-gm` | Ended-room index, normal/reverse/heaven links, day/phase transcript grouping, vote tables, viewer masking. |
-| `user_manager.php` icon paths | `/icons`, room join controls | `icons` | Default icon catalog, upload/remove controls, selected icon rendering in room. |
-| `user_manager.php` Trip paths | `/trip`, `/trips` | `trip` | Registration, claim, exclusion, lookup tables, no Trip hash exposure. |
-| `bbs.php` | `/bbs`, `/bbs/:id` | `bbs` | Topic list, digest list, detail page, reply form, moderation controls. |
-| `stats.php` | `/stats`, `/leaderboard`, `/player/:id` | `stats` | Win-rate tables, leaderboard rows, profile stat layout. |
-| `admin.php` and status pages | `/admin/rooms`, `/status`, `/rules`, `/script-info`, `/protocol`, `/version` | `status` | Management/status tables, menu consistency, reference asset fallbacks. |
+| `user_manager.php` icon paths | `/icons`, room join controls | `icons` | Default icon catalog, upload/remove controls, selected icon rendering in room. Automated capture available for `/icons`. |
+| `user_manager.php` Trip paths | `/trip`, `/trips` | `trip` | Registration, claim, exclusion, lookup tables, no Trip hash exposure. Automated capture available for `/trip`. |
+| `bbs.php` | `/bbs`, `/bbs/:id` | `bbs` | Topic list, digest list, detail page, reply form, moderation controls. Automated capture available for `/bbs`. |
+| `stats.php` | `/stats`, `/leaderboard`, `/player/:id` | `stats` | Win-rate tables, leaderboard rows, profile stat layout. Automated capture available for `/stats`. |
+| `admin.php` and status pages | `/admin/rooms`, `/status`, `/rules`, `/script-info`, `/protocol`, `/version` | `status` | Management/status tables, menu consistency, reference asset fallbacks. Automated capture available for `/status`. |
 
 ## Acceptance Checks
 
