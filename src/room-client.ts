@@ -351,54 +351,41 @@ document.querySelector("#connect").addEventListener("click", connectRoom);
 if (roomShell instanceof HTMLElement && roomShell.dataset.roomView === "player" && document.querySelector("#nickname").value.trim()) {
   connectRoom();
 }
-document.querySelector("#sendChat").addEventListener("click", () => {
+function sendChatMessage(type, extra) {
   const input = document.querySelector("#chatText");
+  const text = input.value;
+  if (!text.trim()) return;
   if (ws && ws.readyState === WebSocket.OPEN) {
-    ws.send(JSON.stringify({ type: "chat", text: input.value }));
+    ws.send(JSON.stringify(Object.assign({ type, text }, extra || {})));
     input.value = "";
   }
+}
+document.querySelector("#chatText").addEventListener("keydown", (event) => {
+  if (event.key === "Enter" && !event.isComposing) {
+    event.preventDefault();
+    sendChatMessage("chat");
+  }
+});
+document.querySelector("#sendChat").addEventListener("click", () => {
+  sendChatMessage("chat");
 });
 document.querySelector("#sendWolfChat").addEventListener("click", () => {
-  const input = document.querySelector("#chatText");
-  if (ws && ws.readyState === WebSocket.OPEN) {
-    ws.send(JSON.stringify({ type: "wolf_chat", text: input.value }));
-    input.value = "";
-  }
+  sendChatMessage("wolf_chat");
 });
 document.querySelector("#sendFoxChat").addEventListener("click", () => {
-  const input = document.querySelector("#chatText");
-  if (ws && ws.readyState === WebSocket.OPEN) {
-    ws.send(JSON.stringify({ type: "fox_chat", text: input.value }));
-    input.value = "";
-  }
+  sendChatMessage("fox_chat");
 });
 document.querySelector("#sendCommonChat").addEventListener("click", () => {
-  const input = document.querySelector("#chatText");
-  if (ws && ws.readyState === WebSocket.OPEN) {
-    ws.send(JSON.stringify({ type: "common_chat", text: input.value }));
-    input.value = "";
-  }
+  sendChatMessage("common_chat");
 });
 document.querySelector("#sendLoversChat").addEventListener("click", () => {
-  const input = document.querySelector("#chatText");
-  if (ws && ws.readyState === WebSocket.OPEN) {
-    ws.send(JSON.stringify({ type: "lovers_chat", text: input.value }));
-    input.value = "";
-  }
+  sendChatMessage("lovers_chat");
 });
 document.querySelector("#sendDeadChat").addEventListener("click", () => {
-  const input = document.querySelector("#chatText");
-  if (ws && ws.readyState === WebSocket.OPEN) {
-    ws.send(JSON.stringify({ type: "dead_chat", text: input.value }));
-    input.value = "";
-  }
+  sendChatMessage("dead_chat");
 });
 document.querySelector("#sendSelfTalk").addEventListener("click", () => {
-  const input = document.querySelector("#chatText");
-  if (ws && ws.readyState === WebSocket.OPEN) {
-    ws.send(JSON.stringify({ type: "self_talk", text: input.value }));
-    input.value = "";
-  }
+  sendChatMessage("self_talk");
 });
 document.querySelector("#sendObjection").addEventListener("click", () => {
   sendCommand({ type: "objection" });
@@ -410,19 +397,11 @@ document.querySelector("#soundNotify").addEventListener("change", (event) => {
   localStorage.setItem("werewolf_cf_sound", event.target.checked ? "on" : "off");
 });
 document.querySelector("#sendGmChat").addEventListener("click", () => {
-  const input = document.querySelector("#chatText");
-  if (ws && ws.readyState === WebSocket.OPEN) {
-    ws.send(JSON.stringify({ type: "gm_chat", text: input.value }));
-    input.value = "";
-  }
+  sendChatMessage("gm_chat");
 });
 document.querySelector("#sendGmWhisper").addEventListener("click", () => {
-  const input = document.querySelector("#chatText");
   const target = document.querySelector("#gmWhisperTarget").value;
-  if (ws && ws.readyState === WebSocket.OPEN && target) {
-    ws.send(JSON.stringify({ type: "gm_whisper", targetPlayerId: target, text: input.value }));
-    input.value = "";
-  }
+  if (target) sendChatMessage("gm_whisper", { targetPlayerId: target });
 });
 document.querySelector("#setLastWords").addEventListener("click", () => {
   const input = document.querySelector("#lastWordsText");
