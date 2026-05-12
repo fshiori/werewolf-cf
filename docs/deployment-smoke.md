@@ -38,7 +38,7 @@ Expected:
 Apply remote D1 migrations:
 
 ```bash
-npx wrangler d1 migrations apply werewolf-cf-db --remote --config wrangler.production.toml
+npm run migrate:production
 ```
 
 Confirm core D1 tables exist:
