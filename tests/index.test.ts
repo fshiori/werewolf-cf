@@ -610,6 +610,9 @@ describe("worker routes", () => {
     const eventInsert = batches[0].find((statement) => statement.query.includes("room_created"));
 
     expect(response.status).toBe(200);
+    expect(response.headers.get("Set-Cookie")).toContain("werewolf_cf_player_id=player_owner; Path=/; SameSite=Lax");
+    expect(response.headers.get("Set-Cookie")).toContain("player_id=player_owner; Path=/; SameSite=Lax");
+    expect(response.headers.get("Set-Cookie")).toContain("playerId=player_owner; Path=/; SameSite=Lax");
     expect(roomInsert?.query).toContain("option_role");
     expect(roomInsert?.query).toContain("room_comment");
     expect(roomInsert?.query).toContain("max_user");
