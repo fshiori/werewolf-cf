@@ -10,9 +10,11 @@ function readCookieValue(name) {
   }
   return "";
 }
-if (!localStorage.getItem(playerKey)) {
-  const cookiePlayerId = readCookieValue("werewolf_cf_player_id") || readCookieValue("player_id") || readCookieValue("playerId");
-  localStorage.setItem(playerKey, cookiePlayerId || "player_" + crypto.randomUUID().replaceAll("-", ""));
+const cookiePlayerId = readCookieValue("werewolf_cf_player_id") || readCookieValue("player_id") || readCookieValue("playerId");
+if (cookiePlayerId) {
+  localStorage.setItem(playerKey, cookiePlayerId);
+} else if (!localStorage.getItem(playerKey)) {
+  localStorage.setItem(playerKey, "player_" + crypto.randomUUID().replaceAll("-", ""));
 }
 function syncPlayerCookie() {
   const playerId = localStorage.getItem(playerKey);
