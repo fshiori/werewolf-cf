@@ -36,8 +36,12 @@ function isPlaceholder(value) {
 }
 
 if (production) {
+  const accountId = configValue("account_id");
   const databaseId = configValue("database_id");
   const kvId = configValue("id");
+  if (isPlaceholder(accountId)) {
+    failures.push("Production account_id must be set to a real Cloudflare account id");
+  }
   if (isPlaceholder(databaseId)) {
     failures.push("Production D1 database_id must be set to a real resource id");
   }
