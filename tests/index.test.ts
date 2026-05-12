@@ -743,6 +743,9 @@ describe("worker routes", () => {
 
     expect(response.status).toBe(303);
     expect(response.headers.get("Location")).toBe(`/login.php?room_no=${roomId}`);
+    expect(response.headers.get("Set-Cookie")).toContain("werewolf_cf_player_id=player_legacy_owner; Path=/; SameSite=Lax");
+    expect(response.headers.get("Set-Cookie")).toContain("player_id=player_legacy_owner; Path=/; SameSite=Lax");
+    expect(response.headers.get("Set-Cookie")).toContain("playerId=player_legacy_owner; Path=/; SameSite=Lax");
     expect(roomId).toMatch(/^room_[0-9a-f]{16}$/);
     expect(playerInsert?.values).toContain("player_legacy_owner");
     expect(playerInsert?.values).toContain("Legacy Owner");
@@ -788,6 +791,27 @@ describe("worker routes", () => {
     }), env);
     expect(invalidCommand.status).toBe(400);
     expect(await invalidCommand.json()).toEqual({ error: "Invalid room_manager.php command" });
+  });
+
+  it("generates a persistent legacy room owner player id when the create form omits one", async () => {
+    const env = envWithRooms([]);
+    const response = await worker.fetch(new Request("http://example.test/room_manager.php", {
+      method: "POST",
+      body: new URLSearchParams({
+        command: "CREATE_ROOM",
+        nickname: "Generated Owner",
+        room_name: "Generated Room",
+        max_user: "16"
+      })
+    }), env);
+    const batches = (env as unknown as { batches: Array<Array<{ query: string; values: unknown[] }>> }).batches;
+    const playerInsert = batches[0].find((statement) => statement.query.includes("INSERT INTO players"));
+    const generatedPlayerId = String(playerInsert?.values[0]);
+
+    expect(response.status).toBe(303);
+    expect(generatedPlayerId).toMatch(/^player_[0-9a-f]{32}$/);
+    expect(playerInsert?.values).toContain("Generated Owner");
+    expect(response.headers.get("Set-Cookie")).toContain(`werewolf_cf_player_id=${generatedPlayerId}; Path=/; SameSite=Lax`);
   });
 
   it("preserves legacy room creation reload redirects", async () => {
