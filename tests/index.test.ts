@@ -613,6 +613,7 @@ describe("worker routes", () => {
     expect(response.headers.get("Set-Cookie")).toContain("werewolf_cf_player_id=player_owner; Path=/; SameSite=Lax");
     expect(response.headers.get("Set-Cookie")).toContain("player_id=player_owner; Path=/; SameSite=Lax");
     expect(response.headers.get("Set-Cookie")).toContain("playerId=player_owner; Path=/; SameSite=Lax");
+    expect(response.headers.get("Set-Cookie")).toContain("werewolf_cf_nickname=Owner; Path=/; SameSite=Lax");
     expect(roomInsert?.query).toContain("option_role");
     expect(roomInsert?.query).toContain("room_comment");
     expect(roomInsert?.query).toContain("max_user");
@@ -822,6 +823,7 @@ describe("worker routes", () => {
     expect(response.headers.get("Set-Cookie")).toContain("werewolf_cf_player_id=player_legacy_owner; Path=/; SameSite=Lax");
     expect(response.headers.get("Set-Cookie")).toContain("player_id=player_legacy_owner; Path=/; SameSite=Lax");
     expect(response.headers.get("Set-Cookie")).toContain("playerId=player_legacy_owner; Path=/; SameSite=Lax");
+    expect(response.headers.get("Set-Cookie")).toContain("werewolf_cf_nickname=Legacy%20Owner; Path=/; SameSite=Lax");
     expect(roomId).toMatch(/^room_[0-9a-f]{16}$/);
     expect(playerInsert?.values).toContain("player_legacy_owner");
     expect(playerInsert?.values).toContain("Legacy Owner");
@@ -1850,6 +1852,7 @@ describe("worker routes", () => {
     expect(response.headers.get("Set-Cookie")).toContain("werewolf_cf_player_id=player_legacy; Path=/; SameSite=Lax");
     expect(response.headers.get("Set-Cookie")).toContain("player_id=player_legacy; Path=/; SameSite=Lax");
     expect(response.headers.get("Set-Cookie")).toContain("playerId=player_legacy; Path=/; SameSite=Lax");
+    expect(response.headers.get("Set-Cookie")).toContain("werewolf_cf_nickname=Alice; Path=/; SameSite=Lax");
     expect(forwardedRequests).toHaveLength(1);
     expect(new URL(forwardedRequests[0].url).pathname).toBe("/rooms/room_exists/legacy/join");
     await expect(forwardedRequests[0].json()).resolves.toEqual({
@@ -1885,6 +1888,7 @@ describe("worker routes", () => {
     expect(generatedPayload.nickname).toBe("Generated");
     expect(generatedPayload.playerId).toMatch(/^player_[0-9a-f]{32}$/);
     expect(generatedPlayerResponse.headers.get("Set-Cookie")).toContain(`werewolf_cf_player_id=${generatedPayload.playerId}; Path=/; SameSite=Lax`);
+    expect(generatedPlayerResponse.headers.get("Set-Cookie")).toContain("werewolf_cf_nickname=Generated; Path=/; SameSite=Lax");
 
     const cookiePlayerResponse = await worker.fetch(new Request("http://example.test/user_manager.php?room_no=room_exists", {
       method: "POST",
@@ -1892,6 +1896,7 @@ describe("worker routes", () => {
       body: new URLSearchParams({ command: "regist", handle_name: "Cookie Player" })
     }), env);
     expect(cookiePlayerResponse.status).toBe(303);
+    expect(cookiePlayerResponse.headers.get("Set-Cookie")).toContain("werewolf_cf_nickname=Cookie%20Player; Path=/; SameSite=Lax");
     expect(forwardedRequests).toHaveLength(6);
     await expect(forwardedRequests[5].json()).resolves.toMatchObject({ playerId: "player_cookie", nickname: "Cookie Player" });
 

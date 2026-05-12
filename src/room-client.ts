@@ -30,7 +30,7 @@ function clearPlayerIdentity() {
   document.cookie = "playerId=; Path=/; Max-Age=0; SameSite=Lax";
 }
 syncPlayerCookie();
-document.querySelector("#nickname").value = localStorage.getItem("werewolf_cf_nickname") || "";
+document.querySelector("#nickname").value = localStorage.getItem("werewolf_cf_nickname") || readCookieValue("werewolf_cf_nickname") || "";
 document.querySelector("#trip").value = localStorage.getItem("werewolf_cf_trip") || "";
 document.querySelector("#defaultIcon").value = localStorage.getItem("werewolf_cf_default_icon") || "";
 document.querySelector("#soundNotify").checked = localStorage.getItem("werewolf_cf_sound") === "on";
