@@ -25,5 +25,10 @@ describe("package release scripts", () => {
     expect(scripts.predeploy).toBe("npm run check:production-ready");
     expect(scripts.deploy).toBe("wrangler deploy --config wrangler.production.toml");
   });
-});
 
+  it("keeps the production stable smoke suite available after deploy", async () => {
+    const scripts = await packageScripts();
+
+    expect(scripts["smoke:production:stable"]).toBe("node scripts/smoke-production-stable.mjs");
+  });
+});
