@@ -11,6 +11,7 @@
     "check:wrangler": "node scripts/check-wrangler-config.mjs",
     "check:d1-schema": "node scripts/check-d1-schema.mjs",
     "check:d1-schema:remote": "node scripts/check-d1-schema.mjs --remote --config wrangler.production.toml",
+    "check:production-access": "node scripts/check-production-access.mjs",
     "check:deploy": "npm test && npm run typecheck && npm run check:whitespace && npm run check:d1-schema && npm run check:wrangler -- --production --config wrangler.production.toml",
     "check:stable": "npm run check:deploy && npm run smoke:local:stable",
     "smoke:local": "node scripts/smoke-production-readonly.mjs --label=Local http://127.0.0.1:8787",
