@@ -2543,6 +2543,24 @@ async function routeRoomWebSocket(request: Request, env: Env, roomId: string): P
   }
 }
 
+async function leaveLegacyRoomByCookie(request: Request, env: Env, roomId: string): Promise<void> {
+  const playerId = readCookie(request, "werewolf_cf_player_id") ?? readCookie(request, "player_id") ?? readCookie(request, "playerId");
+  if (!playerId) {
+    return;
+  }
+  const validRoomId = validateRoomId(roomId);
+  const validPlayerId = validatePlayerId(playerId);
+  const id = env.ROOM_DO.idFromName(validRoomId);
+  const response = await env.ROOM_DO.get(id).fetch(new Request(`https://room.internal/rooms/${encodeURIComponent(validRoomId)}/legacy/leave`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ playerId: validPlayerId })
+  }));
+  if (!response.ok && response.status !== 404) {
+    throw new Error(await response.text());
+  }
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
@@ -3063,8 +3081,15 @@ export default {
         if (!(await roomExists(env, roomId))) {
           return new Response("Room not found", { status: 404 });
         }
+        await leaveLegacyRoomByCookie(request, env, roomId);
         const autoReloadQuery = legacyAutoReloadQuery(url);
-        return new Response(null, { status: 303, headers: { Location: `/game_view.php?room_no=${encodeURIComponent(roomId)}${autoReloadQuery}` } });
+        return new Response(null, {
+          status: 303,
+          headers: {
+            Location: `/game_view.php?room_no=${encodeURIComponent(roomId)}${autoReloadQuery}`,
+            "Set-Cookie": "werewolf_cf_player_id=; Path=/; Max-Age=0; SameSite=Lax"
+          }
+        });
       } catch (error) {
         return json({ error: error instanceof Error ? error.message : "Invalid room" }, { status: 400 });
       }
