@@ -52,6 +52,7 @@ Authenticate Wrangler first. For local deployment, export a rotated API token in
 CLOUDFLARE_API_TOKEN="<rotated-api-token>"
 export CLOUDFLARE_API_TOKEN
 npx wrangler whoami
+npm run check:production-access
 ```
 
 Create or inspect the required production resources:
