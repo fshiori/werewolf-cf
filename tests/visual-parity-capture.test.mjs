@@ -54,6 +54,7 @@ describe("visual parity capture script", () => {
 
     expect(result.status).toBe(0);
     expect(result.stdout).toContain("plan room-day desktop /room/:roomId -> tmp/screens/room-day-desktop.png");
+    expect(result.stdout).toContain("plan room-gm-controls desktop /room/:roomId -> tmp/screens/room-gm-controls-desktop.png");
     expect(result.stdout).toContain("plan room-night tablet /room/:roomId -> tmp/screens/room-night-tablet.png");
     expect(result.stdout).toContain("plan room-ended mobile /room/:roomId -> tmp/screens/room-ended-mobile.png");
     expect(result.stdout).toContain("plan old-log-public desktop /old_log.php?log_mode=on&room_no=:roomId");

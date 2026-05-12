@@ -19,7 +19,7 @@ npm run capture:visual -- --yes
 npm run capture:visual -- --yes --include-game-states
 ```
 
-The local asset seed copies priority reference bitmaps into local Wrangler R2 storage so screenshots do not contain broken `/assets/reference/...` images. The capture command then captures static pages, a temporary lobby room, and the PHP-style frame/up/bottom/vote room aliases across the required desktop/tablet/mobile viewports. Passing `--include-game-states` drives an 8-player smoke game and also captures day, night, ended, and public/player/dead/GM old-log views. GM live-control captures and manual comparison against `ref/diam1.3.61.kz_Build0912` remain.
+The local asset seed copies priority reference bitmaps into local Wrangler R2 storage so screenshots do not contain broken `/assets/reference/...` images. The capture command then captures static pages, a temporary lobby room, and the PHP-style frame/up/bottom/vote room aliases across the required desktop/tablet/mobile viewports. Passing `--include-game-states` drives an 8-player smoke game and also captures day, GM live controls, night, ended, and public/player/dead/GM old-log views. Manual comparison against `ref/diam1.3.61.kz_Build0912` remains.
 
 ## Prerequisites
 
@@ -38,9 +38,9 @@ The local asset seed copies priority reference bitmaps into local Wrangler R2 st
    - `npm run assets:reference:local`
 6. Run the automated capture for static/lobby/frame pages:
    - `npm run capture:visual -- --yes`
-7. Run the stateful automated capture for day/night/ended/public old-log pages:
+7. Run the stateful automated capture for day/GM-controls/night/ended/public old-log pages:
    - `npm run capture:visual -- --yes --include-game-states`
-8. Prepare rooms that cover GM live controls and any manual reference-comparison variants not covered by the automated capture.
+8. Prepare any manual reference-comparison variants not covered by the automated capture.
 
 ## Evidence Paths
 
@@ -87,7 +87,7 @@ Capture every route at these viewport sizes:
 | `game_view.php` lobby | `/room/:roomId` | `room-lobby` | Room header, participant grid, join form, host controls, lobby vote/kick controls, selected default icons. Automated capture available. |
 | `game_play.php` day | `/room/:roomId` | `room-day`, `room-spectator-dead-votes` | Day body color, player cards, voted-player background, chat, public log, live vote-status panel for allowed viewers. Automated capture available for `room-day`. |
 | `game_play.php` night | `/room/:roomId` | `room-night` | Night body color, private-channel controls, night action panel, hidden target/status behavior for unauthorized viewers. Automated capture available for `room-night`. |
-| `game_play.php` GM paths | `/room/:roomId` | `room-gm-controls` | GM buttons, whisper controls, forced phase/life/role/winner controls, common-channel toggle. |
+| `game_play.php` GM paths | `/room/:roomId` | `room-gm-controls` | GM buttons, whisper controls, forced phase/life/role/winner controls, common-channel toggle. Automated capture available. |
 | `game_view.php` ended | `/room/:roomId` | `room-ended` | Ended body color, role reveal icons/text, winner result, records/events links. Automated capture available. |
 | `old_log.php` | `/logs`, `/room/:roomId/log` | `old-log-public`, `old-log-player`, `old-log-dead`, `old-log-gm` | Ended-room index, normal/reverse/heaven links, day/phase transcript grouping, vote tables, viewer masking. Automated capture available for public/player/dead/GM old-log. |
 | `user_manager.php` icon paths | `/icons`, room join controls | `icons` | Default icon catalog, upload/remove controls, selected icon rendering in room. Automated capture available for `/icons`. |
