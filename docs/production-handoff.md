@@ -20,7 +20,7 @@ The verified path covers Worker metadata, rendered core/legacy pages, room creat
 
 As of the latest local handoff pass, `npx wrangler whoami` reports `You are not authenticated. Please run wrangler login.` Remote D1 migration, deploy, and production smoke are therefore blocked until a Cloudflare session or `CLOUDFLARE_API_TOKEN` is available.
 
-`npm run check:production-ready` currently passes the local stable gate and then stops at this same production authentication blocker.
+`npm run check:production-ready` currently passes the local stable gate and reference asset upload dry-run, then stops at this same production authentication blocker.
 
 Before `npm run check:deploy` can pass in production mode, copy the ignored production config and replace its placeholders:
 
@@ -87,7 +87,7 @@ For the full local stable-candidate gate, including runtime smoke with a managed
 npm run check:stable
 ```
 
-Before remote migration or deploy, run the production-ready gate. It includes the full local stable gate and then verifies Cloudflare authentication:
+Before remote migration or deploy, run the production-ready gate. It includes the full local stable gate, the reference asset upload dry-run, and then verifies Cloudflare authentication:
 
 ```bash
 npm run check:production-ready

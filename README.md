@@ -195,6 +195,8 @@ Run the production-ready gate before deploying:
 npm run check:production-ready
 ```
 
+This runs the local stable gate, confirms the reference asset R2 upload plan, and then verifies Cloudflare access before any remote migration or deploy.
+
 Apply remote D1 migrations before deploying code that depends on new columns or tables:
 
 ```bash

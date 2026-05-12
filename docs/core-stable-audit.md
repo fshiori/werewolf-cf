@@ -19,7 +19,7 @@ Scope: define the minimum stable candidate for the playable Cloudflare port. Thi
 | R2 avatar write/read/delete path works | `scripts/smoke-production-write.mjs`; verifies upload, readback, delete, and 404 after delete | Passed locally |
 | Core rendered pages and legacy room entry pages return usable HTML | `scripts/smoke-local-ui.mjs`; verifies home/list/logs/room/player pages plus `game_frame.php`, `game_up.php`, `game_play.php?frame=bottom`, and `game_vote.php` | Passed locally |
 | Production handoff has deploy and smoke commands | `docs/production-handoff.md`, `docs/deployment-smoke.md` | Present |
-| Cloudflare production authentication | `npx wrangler whoami` currently reports unauthenticated; `npm run check:production-access` and `npm run check:production-ready` verify this before remote migration/deploy/smoke | Blocked externally |
+| Cloudflare production authentication | `npx wrangler whoami` currently reports unauthenticated; `npm run check:production-access` and `npm run check:production-ready` verify this after local stable checks and reference asset upload dry-run, before remote migration/deploy/smoke | Blocked externally |
 
 ## Latest Verification Snapshot
 
@@ -36,7 +36,7 @@ npm run smoke:local:game
 
 The local Wrangler server was shut down after smoke verification. The working tree was clean before this audit file was added. Later smoke-script coverage also verifies rendered room history pages after an ended game, and `npm run smoke:local:stable` now starts Wrangler locally, waits for `/api/health`, runs the full local smoke suite, and shuts the server down.
 
-`npm run check:production-ready` was also exercised on 2026-05-12. It passed the full local stable gate, then failed at `npm run check:production-access` because Wrangler is not authenticated in this environment. That is the expected external blocker before remote D1 migration, deploy, or production smoke.
+`npm run check:production-ready` was also exercised on 2026-05-12. It passed the full local stable gate and reference asset upload dry-run, then failed at `npm run check:production-access` because Wrangler is not authenticated in this environment. That is the expected external blocker before remote D1 migration, deploy, or production smoke.
 
 ## Non-Blocking Backlog
 
