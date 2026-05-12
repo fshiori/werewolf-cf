@@ -49,7 +49,7 @@ npm run smoke:local:write
 npm run smoke:local:game
 ```
 
-The read-only smoke checks local Worker metadata and HTML pages at `http://127.0.0.1:8787`. The UI smoke creates a temporary local room and verifies the rendered room, record, and event pages. The write smoke creates a temporary local room, verifies WebSocket join, and checks avatar upload/read/delete against the local R2 binding. The game-loop smoke creates an 8-player room, runs a minimal WebSocket game through day vote, night action, second-day execution, and verifies the room ends.
+The read-only smoke checks local Worker metadata and HTML pages at `http://127.0.0.1:8787`. The UI smoke creates a temporary local room and verifies the rendered room, record, and event pages. The write smoke creates a temporary local room, verifies WebSocket join, and checks avatar upload/read/delete against the local R2 binding. The game-loop smoke creates an 8-player room, runs a minimal WebSocket game through day vote, night action, second-day execution, verifies the room ends, and confirms the D1 game record is readable.
 
 Run production smoke checks after deployment:
 

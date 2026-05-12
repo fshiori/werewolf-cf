@@ -113,7 +113,7 @@ npm run smoke:production:write -- "$WORKER_HOST" --yes
 npm run smoke:production:game -- "$WORKER_HOST" --yes
 ```
 
-The automated write smoke creates a temporary room, verifies `GET /api/rooms/:roomId`, confirms the WebSocket `join` path returns `joined`, `presence`, and a same-room `game_state`, then uploads, reads, and deletes an R2 avatar. The game-loop smoke creates a temporary 8-player room, starts a game, executes one werewolf, resolves a night kill plus seer action, executes the final werewolf, and verifies the room reaches `ended`. If the avatar round trip fails after upload, the write smoke still attempts a best-effort avatar cleanup before exiting. The smoke room, player, and game-record rows remain in D1 as short-lived production smoke data because there is no production room-delete endpoint.
+The automated write smoke creates a temporary room, verifies `GET /api/rooms/:roomId`, confirms the WebSocket `join` path returns `joined`, `presence`, and a same-room `game_state`, then uploads, reads, and deletes an R2 avatar. The game-loop smoke creates a temporary 8-player room, starts a game, executes one werewolf, resolves a night kill plus seer action, executes the final werewolf, verifies the room reaches `ended`, and confirms `/api/rooms/:roomId/records` exposes the D1 game record. If the avatar round trip fails after upload, the write smoke still attempts a best-effort avatar cleanup before exiting. The smoke room, player, and game-record rows remain in D1 as short-lived production smoke data because there is no production room-delete endpoint.
 
 Or run the equivalent manual checks:
 
