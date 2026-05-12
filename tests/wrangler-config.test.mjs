@@ -6,10 +6,11 @@ import { describe, expect, it } from "vitest";
 
 const scriptPath = join(process.cwd(), "scripts/check-wrangler-config.mjs");
 
-function wranglerConfig(databaseId, kvId) {
+function wranglerConfig(databaseId, kvId, accountId = "prod-account-id") {
   return `name = "werewolf-cf"
 main = "src/index.ts"
 compatibility_date = "2026-05-03"
+account_id = "${accountId}"
 
 [[durable_objects.bindings]]
 name = "ROOM_DO"
@@ -57,36 +58,41 @@ describe("wrangler config verifier", () => {
   });
 
   it("rejects production configs with placeholder resource ids", () => {
-    const result = runVerifier(wranglerConfig("local-dev-placeholder", "local-dev-placeholder"), ["--production"]);
+    const result = runVerifier(wranglerConfig("local-dev-placeholder", "local-dev-placeholder", "local-dev-placeholder"), ["--production"]);
 
     expect(result.status).toBe(1);
+    expect(result.stderr).toContain("Production account_id must be set to a real Cloudflare account id");
     expect(result.stderr).toContain("Production D1 database_id must be set to a real resource id");
     expect(result.stderr).toContain("Production KV id must be set to a real resource id");
   });
 
   it("rejects production configs with missing resource ids", () => {
     const config = wranglerConfig("prod-d1-id", "prod-kv-id")
+      .replace('account_id = "prod-account-id"\n', "")
       .replace('database_id = "prod-d1-id"\n', "")
       .replace('id = "prod-kv-id"\n', "");
     const result = runVerifier(config, ["--production"]);
 
     expect(result.status).toBe(1);
+    expect(result.stderr).toContain("Production account_id must be set to a real Cloudflare account id");
     expect(result.stderr).toContain("Production D1 database_id must be set to a real resource id");
     expect(result.stderr).toContain("Production KV id must be set to a real resource id");
   });
 
   it("rejects production configs with empty resource ids", () => {
-    const result = runVerifier(wranglerConfig("", ""), ["--production"]);
+    const result = runVerifier(wranglerConfig("", "", ""), ["--production"]);
 
     expect(result.status).toBe(1);
+    expect(result.stderr).toContain("Production account_id must be set to a real Cloudflare account id");
     expect(result.stderr).toContain("Production D1 database_id must be set to a real resource id");
     expect(result.stderr).toContain("Production KV id must be set to a real resource id");
   });
 
   it("rejects production configs with example placeholder resource ids", () => {
-    const result = runVerifier(wranglerConfig("<production-d1-database-id>", "<production-kv-namespace-id>"), ["--production"]);
+    const result = runVerifier(wranglerConfig("<production-d1-database-id>", "<production-kv-namespace-id>", "<cloudflare-account-id>"), ["--production"]);
 
     expect(result.status).toBe(1);
+    expect(result.stderr).toContain("Production account_id must be set to a real Cloudflare account id");
     expect(result.stderr).toContain("Production D1 database_id must be set to a real resource id");
     expect(result.stderr).toContain("Production KV id must be set to a real resource id");
   });
