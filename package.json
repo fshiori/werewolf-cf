@@ -24,6 +24,7 @@
     "smoke:production:write": "node scripts/smoke-production-write.mjs",
     "smoke:production:game": "node scripts/smoke-game-loop.mjs",
     "smoke:production:stable": "node scripts/smoke-production-stable.mjs",
+    "migrate:production": "wrangler d1 migrations apply werewolf-cf-db --remote --config wrangler.production.toml",
     "predeploy": "npm run check:production-ready",
     "deploy": "wrangler deploy --config wrangler.production.toml"
   },

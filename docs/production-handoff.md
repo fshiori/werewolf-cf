@@ -90,7 +90,7 @@ npm run check:production-ready
 Apply remote D1 migrations and verify the schema:
 
 ```bash
-npx wrangler d1 migrations apply werewolf-cf-db --remote --config wrangler.production.toml
+npm run migrate:production
 npm run check:d1-schema:remote
 ```
 

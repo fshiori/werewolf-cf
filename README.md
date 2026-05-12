@@ -198,7 +198,7 @@ npm run check:production-ready
 Apply remote D1 migrations before deploying code that depends on new columns or tables:
 
 ```bash
-npx wrangler d1 migrations apply werewolf-cf-db --remote --config wrangler.production.toml
+npm run migrate:production
 npm run check:d1-schema:remote
 ```
 

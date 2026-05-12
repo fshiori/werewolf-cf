@@ -31,4 +31,10 @@ describe("package release scripts", () => {
 
     expect(scripts["smoke:production:stable"]).toBe("node scripts/smoke-production-stable.mjs");
   });
+
+  it("keeps production D1 migration pointed at the production config", async () => {
+    const scripts = await packageScripts();
+
+    expect(scripts["migrate:production"]).toBe("wrangler d1 migrations apply werewolf-cf-db --remote --config wrangler.production.toml");
+  });
 });
