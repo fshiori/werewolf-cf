@@ -698,6 +698,79 @@ describe("worker routes", () => {
     }
   });
 
+  it("auto-joins non-trip room creators through the room Durable Object", async () => {
+    const env = envWithRooms([]);
+    const forwardedRequests: Request[] = [];
+    env.ROOM_DO = {
+      idFromName(name: string) {
+        return { name } as DurableObjectId;
+      },
+      get() {
+        return {
+          async fetch(request: Request) {
+            forwardedRequests.push(request);
+            return Response.json({ status: "joined" });
+          }
+        } as unknown as DurableObjectStub;
+      }
+    } as unknown as Env["ROOM_DO"];
+
+    const apiResponse = await worker.fetch(new Request("http://example.test/api/rooms", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        name: "Auto Join",
+        maxPlayers: 16,
+        playerId: "player_owner",
+        nickname: "Owner"
+      })
+    }), env);
+    const batches = (env as unknown as { batches: Array<Array<{ query: string; values: unknown[] }>> }).batches;
+    const roomId = String(batches[0].find((statement) => statement.query.includes("INSERT INTO rooms"))?.values[0]);
+
+    expect(apiResponse.status).toBe(200);
+    expect(forwardedRequests).toHaveLength(1);
+    expect(new URL(forwardedRequests[0].url).pathname).toBe(`/rooms/${roomId}/legacy/join`);
+    await expect(forwardedRequests[0].json()).resolves.toEqual({
+      playerId: "player_owner",
+      nickname: "Owner"
+    });
+
+    const tripRequiredResponse = await worker.fetch(new Request("http://example.test/api/rooms", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        name: "Trip Required",
+        maxPlayers: 16,
+        playerId: "player_trip_owner",
+        nickname: "Trip Owner",
+        options: { tripRequired: true }
+      })
+    }), env);
+    expect(tripRequiredResponse.status).toBe(200);
+    expect(forwardedRequests).toHaveLength(1);
+
+    const legacyResponse = await worker.fetch(new Request("http://example.test/room_manager.php", {
+      method: "POST",
+      body: new URLSearchParams({
+        command: "CREATE_ROOM",
+        player_id: "player_legacy_owner",
+        nickname: "Legacy Owner",
+        room_name: "Legacy Auto Join",
+        max_user: "16"
+      })
+    }), env);
+    const legacyRoomId = String(batches[2].find((statement) => statement.query.includes("INSERT INTO rooms"))?.values[0]);
+
+    expect(legacyResponse.status).toBe(303);
+    expect(forwardedRequests).toHaveLength(2);
+    expect(new URL(forwardedRequests[1].url).pathname).toBe(`/rooms/${legacyRoomId}/legacy/join`);
+    await expect(forwardedRequests[1].json()).resolves.toEqual({
+      playerId: "player_legacy_owner",
+      nickname: "Legacy Owner"
+    });
+  });
+
   it("creates rooms from the legacy room_manager.php form fields", async () => {
     const env = envWithRooms([]);
     const response = await worker.fetch(
