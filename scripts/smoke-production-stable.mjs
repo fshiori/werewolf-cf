@@ -27,8 +27,14 @@ try {
   process.exit(1);
 }
 
-if (baseUrl.protocol !== "https:" && baseUrl.protocol !== "http:") {
-  console.error(`Worker URL must use http or https: ${host}`);
+if (baseUrl.protocol !== "https:") {
+  console.error(`Production stable smoke Worker URL must use https: ${host}`);
+  process.exit(1);
+}
+
+const blockedProductionHosts = new Set(["localhost", "127.0.0.1", "0.0.0.0", "::1", "[::1]"]);
+if (blockedProductionHosts.has(baseUrl.hostname)) {
+  console.error(`Production stable smoke Worker URL must not point at a local host: ${host}`);
   process.exit(1);
 }
 
