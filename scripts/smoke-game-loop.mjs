@@ -235,8 +235,12 @@ async function runGameLoop(roomId, clients) {
   const roles = new Map(clients.map((client) => [client.player.playerId, client.messages.find((message) => message.type === "role")?.role]));
   const wolves = [...roles.entries()].filter(([, role]) => role === "werewolf").map(([playerId]) => playerId);
   const seer = [...roles.entries()].find(([, role]) => role === "seer")?.[0];
+  const winningPlayerId = [...roles.entries()].find(([, role]) => role !== "werewolf")?.[0];
   if (wolves.length !== 2 || !seer) {
     throw new Error(`Unexpected 8-player role set: wolves=${wolves.length}, seer=${seer ?? "missing"}`);
+  }
+  if (!winningPlayerId) {
+    throw new Error("Expected at least one non-werewolf player");
   }
   await waitForPhase(clients[0], "day", 1);
   console.log("ok start_game day 1");
@@ -269,6 +273,7 @@ async function runGameLoop(roomId, clients) {
     throw new Error(`Expected villagers winner, got ${ended.winner ?? "none"}`);
   }
   console.log("ok day 2 vote ends game");
+  return { winningPlayerId };
 }
 
 async function verifyEndedRoom(roomId) {
@@ -290,13 +295,34 @@ async function verifyGameRecord(roomId) {
   console.log("ok GET /api/rooms/:roomId/records");
 }
 
+async function verifyPlayerPersistence(roomId, playerId) {
+  const statsResponse = await fetch(urlFor(`/api/players/${playerId}/stats`), { headers: { accept: "application/json" } });
+  const statsBody = await readJson(statsResponse, "GET /api/players/:playerId/stats");
+  if (
+    statsBody?.stats?.playerId !== playerId ||
+    statsBody.stats.gamesPlayed < 1 ||
+    statsBody.stats.wins < 1
+  ) {
+    throw new Error("GET /api/players/:playerId/stats: expected winning player stats");
+  }
+
+  const recordsResponse = await fetch(urlFor(`/api/players/${playerId}/records`), { headers: { accept: "application/json" } });
+  const recordsBody = await readJson(recordsResponse, "GET /api/players/:playerId/records");
+  const record = Array.isArray(recordsBody?.records) ? recordsBody.records.find((candidate) => candidate.roomId === roomId) : undefined;
+  if (record?.winner !== "villagers" || record?.playerId !== playerId) {
+    throw new Error("GET /api/players/:playerId/records: expected winning player room record");
+  }
+  console.log("ok GET /api/players/:playerId stats/records");
+}
+
 let clients = [];
 try {
   const roomId = await createRoom();
   clients = await connectPlayers(roomId);
-  await runGameLoop(roomId, clients);
+  const { winningPlayerId } = await runGameLoop(roomId, clients);
   await verifyEndedRoom(roomId);
   await verifyGameRecord(roomId);
+  await verifyPlayerPersistence(roomId, winningPlayerId);
 } catch (error) {
   failures.push(error instanceof Error ? error.message : String(error));
 } finally {
