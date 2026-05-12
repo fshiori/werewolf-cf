@@ -62,6 +62,17 @@ function append(line) {
   div.innerHTML = line;
   document.querySelector("#chatLog").appendChild(div);
 }
+function roomSocketReady() {
+  return Boolean(ws && ws.readyState === WebSocket.OPEN);
+}
+function warnRoomSocketNotReady() {
+  append("<span class='muted'>尚未連線，請稍候重連或按「進入房間」。</span>");
+}
+function canSendRoomSocket() {
+  if (roomSocketReady()) return true;
+  warnRoomSocketNotReady();
+  return false;
+}
 function appendChatLine(channelLabel, markerColor, nickname, text, rowClass) {
   const table = document.createElement("table");
   table.border = "0";
@@ -395,10 +406,9 @@ function sendChatMessage(type, extra) {
   const input = document.querySelector("#chatText");
   const text = input.value;
   if (!text.trim()) return;
-  if (ws && ws.readyState === WebSocket.OPEN) {
-    ws.send(JSON.stringify(Object.assign({ type, text }, extra || {})));
-    input.value = "";
-  }
+  if (!canSendRoomSocket()) return;
+  ws.send(JSON.stringify(Object.assign({ type, text }, extra || {})));
+  input.value = "";
 }
 document.querySelector("#chatText").addEventListener("keydown", (event) => {
   if (event.key === "Enter" && !event.isComposing) {
@@ -445,9 +455,8 @@ document.querySelector("#sendGmWhisper").addEventListener("click", () => {
 });
 document.querySelector("#setLastWords").addEventListener("click", () => {
   const input = document.querySelector("#lastWordsText");
-  if (ws && ws.readyState === WebSocket.OPEN) {
-    ws.send(JSON.stringify({ type: "set_last_words", text: input.value }));
-  }
+  if (!canSendRoomSocket()) return;
+  ws.send(JSON.stringify({ type: "set_last_words", text: input.value }));
 });
 document.querySelector("#startGame").addEventListener("click", () => {
   sendCommand({ type: "start_game" });
@@ -558,9 +567,8 @@ document.querySelector("#removeAvatar").addEventListener("click", async () => {
   if (latestGame) renderGame(latestGame);
 });
 function sendCommand(command) {
-  if (ws && ws.readyState === WebSocket.OPEN) {
-    ws.send(JSON.stringify(command));
-  }
+  if (!canSendRoomSocket()) return;
+  ws.send(JSON.stringify(command));
 }
 function roleLabel(value) {
   return {
