@@ -8,6 +8,7 @@ const args = process.argv.slice(2);
 const portArg = args.find((arg) => arg.startsWith("--port="));
 const explicitPortValue = portArg?.slice("--port=".length) ?? process.env.LOCAL_STABLE_SMOKE_PORT;
 const defaultPort = 8787;
+const smokeScriptDir = process.env.LOCAL_STABLE_SMOKE_SCRIPT_DIR ?? "scripts";
 let port = Number(explicitPortValue ?? defaultPort);
 
 if (!Number.isInteger(port) || port <= 0 || port > 65535) {
@@ -68,7 +69,7 @@ async function selectPort() {
 }
 
 function startServer() {
-  const wranglerBin = fileURLToPath(new URL("../node_modules/.bin/wrangler", import.meta.url));
+  const wranglerBin = process.env.LOCAL_STABLE_SMOKE_WRANGLER_BIN ?? fileURLToPath(new URL("../node_modules/.bin/wrangler", import.meta.url));
   server = spawn(process.execPath, [wranglerBin, "dev", "--local", "--port", String(port)], {
     env: process.env,
     detached: process.platform !== "win32",
@@ -149,7 +150,7 @@ async function stopServer() {
 
 async function runSmoke(name, script, extraArgs = []) {
   console.log(`\n== ${name} ==`);
-  await runCommand(process.execPath, [script, "--label=Local", host, ...extraArgs], { env: smokeEnv });
+  await runCommand(process.execPath, [`${smokeScriptDir}/${script}`, "--label=Local", host, ...extraArgs], { env: smokeEnv });
 }
 
 try {
@@ -159,10 +160,10 @@ try {
   console.log(`Using local stable smoke port ${port}`);
   startServer();
   await waitForHealth();
-  await runSmoke("Read-only smoke", "scripts/smoke-production-readonly.mjs");
-  await runSmoke("Rendered UI smoke", "scripts/smoke-local-ui.mjs");
-  await runSmoke("Write smoke", "scripts/smoke-production-write.mjs", ["--yes"]);
-  await runSmoke("Game-loop smoke", "scripts/smoke-game-loop.mjs", ["--yes"]);
+  await runSmoke("Read-only smoke", "smoke-production-readonly.mjs");
+  await runSmoke("Rendered UI smoke", "smoke-local-ui.mjs");
+  await runSmoke("Write smoke", "smoke-production-write.mjs", ["--yes"]);
+  await runSmoke("Game-loop smoke", "smoke-game-loop.mjs", ["--yes"]);
   console.log("\nLocal stable smoke passed");
 } catch (error) {
   console.error(`\nLocal stable smoke failed: ${error instanceof Error ? error.message : String(error)}`);
