@@ -22,6 +22,12 @@ Run typecheck:
 npm run typecheck
 ```
 
+Run the full stable candidate gate:
+
+```bash
+npm run check:stable
+```
+
 Check local Cloudflare binding configuration:
 
 ```bash
