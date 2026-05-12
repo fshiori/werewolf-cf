@@ -379,6 +379,7 @@ describe("render", () => {
     expect(html).toContain('form id="legacyUserRegisterForm" class="legacy-user-register-form" name="user" action="/user_manager.php?room_no=room_abc" method="POST" enctype="multipart/form-data" onsubmit="return false"');
     expect(html).toContain('<input type="hidden" name="command" value="regist">');
     expect(html).toContain('<input type="hidden" name="room_no" value="room_abc">');
+    expect(html).toContain('<input id="legacyUserPlayerId" type="hidden" name="player_id" value="">');
     expect(html).toContain('<input id="nickname" name="handle_name" form="legacyUserRegisterForm" maxlength="32" size="28">');
     expect(html).toContain('<input id="trip" name="tripn" form="legacyUserRegisterForm" maxlength="32" size="28">');
     expect(html).toContain('<select id="wishRole" name="role" form="legacyUserRegisterForm">');
@@ -678,6 +679,8 @@ describe("render", () => {
     expect(ROOM_CLIENT_SCRIPT).toContain("game.revoteCount");
     expect(ROOM_CLIENT_SCRIPT).toContain("function syncPlayerCookie()");
     expect(ROOM_CLIENT_SCRIPT).toContain('document.cookie = "werewolf_cf_player_id=" + encodeURIComponent(playerId) + "; Path=/; SameSite=Lax";');
+    expect(ROOM_CLIENT_SCRIPT).toContain('document.querySelector("#legacyUserPlayerId")');
+    expect(ROOM_CLIENT_SCRIPT).toContain("if (legacyUserPlayerId) legacyUserPlayerId.value = playerId;");
     expect(ROOM_CLIENT_SCRIPT).toContain("syncPlayerCookie();");
     expect(ROOM_CLIENT_SCRIPT).toContain("function clearPlayerIdentity()");
     expect(ROOM_CLIENT_SCRIPT).toContain('document.querySelector("#legacyLogoutLink")');

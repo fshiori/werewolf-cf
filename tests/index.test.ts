@@ -1721,17 +1721,41 @@ describe("worker routes", () => {
 
   it("supports the legacy user_manager.php registration POST alias", async () => {
     const env = envWithRooms(["room_exists"]);
+    const forwardedRequests: Request[] = [];
+    env.ROOM_DO = {
+      idFromName(name: string) {
+        return { name } as DurableObjectId;
+      },
+      get() {
+        return {
+          async fetch(request: Request) {
+            forwardedRequests.push(request);
+            return Response.json({ status: "joined" });
+          }
+        } as unknown as DurableObjectStub;
+      }
+    } as unknown as Env["ROOM_DO"];
     const form = new URLSearchParams({
       command: "regist",
+      player_id: "player_legacy",
       handle_name: "Alice",
-      tripn: "trip",
-      role: "seer",
+      tripn: "ab12CD",
+      role: "mage",
       icon_no: "user_icon/001.gif"
     });
     const response = await worker.fetch(new Request("http://example.test/user_manager.php?room_no=room_exists", { method: "POST", body: form }), env);
 
     expect(response.status).toBe(303);
     expect(response.headers.get("Location")).toBe("/login.php?room_no=room_exists");
+    expect(forwardedRequests).toHaveLength(1);
+    expect(new URL(forwardedRequests[0].url).pathname).toBe("/rooms/room_exists/legacy/join");
+    await expect(forwardedRequests[0].json()).resolves.toEqual({
+      playerId: "player_legacy",
+      nickname: "Alice",
+      trip: "ab12CD",
+      wishRole: "seer",
+      iconPath: "user_icon/001.gif"
+    });
 
     const reloadResponse = await worker.fetch(new Request("http://example.test/user_manager.php?room_no=room_exists&auto_reload=20", { method: "POST", body: form }), env);
     expect(reloadResponse.status).toBe(303);
@@ -1743,7 +1767,7 @@ describe("worker routes", () => {
 
     const formRoomNo = await worker.fetch(new Request("http://example.test/user_manager.php", {
       method: "POST",
-      body: new URLSearchParams({ command: "regist", room_no: "room_exists", auto_reload: "30", handle_name: "Alice" })
+      body: new URLSearchParams({ command: "regist", room_no: "room_exists", auto_reload: "30", player_id: "player_legacy", handle_name: "Alice" })
     }), env);
     expect(formRoomNo.status).toBe(303);
     expect(formRoomNo.headers.get("Location")).toBe("/login.php?room_no=room_exists&auto_reload=30");
