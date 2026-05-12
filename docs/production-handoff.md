@@ -88,8 +88,11 @@ npm run check:stable
 Before remote migration or deploy, run the production-ready gate. It includes the full local stable gate, the reference asset upload dry-run, and then verifies Cloudflare authentication:
 
 ```bash
+npm run check:production-preflight
 npm run check:production-ready
 ```
+
+Use `check:production-preflight` before Cloudflare credentials are available. It exercises the same local stable gate and reference asset upload plan, but intentionally skips the authentication check and all remote writes.
 
 Apply remote D1 migrations and verify the schema:
 
