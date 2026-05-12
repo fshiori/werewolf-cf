@@ -46,9 +46,10 @@ Smoke check the local Worker:
 npm run smoke:local
 npm run smoke:local:ui
 npm run smoke:local:write
+npm run smoke:local:game
 ```
 
-The read-only smoke checks local Worker metadata and HTML pages at `http://127.0.0.1:8787`. The UI smoke creates a temporary local room and verifies the rendered room, record, and event pages. The write smoke creates a temporary local room, verifies WebSocket join, and checks avatar upload/read/delete against the local R2 binding.
+The read-only smoke checks local Worker metadata and HTML pages at `http://127.0.0.1:8787`. The UI smoke creates a temporary local room and verifies the rendered room, record, and event pages. The write smoke creates a temporary local room, verifies WebSocket join, and checks avatar upload/read/delete against the local R2 binding. The game-loop smoke creates an 8-player room, runs a minimal WebSocket game through day vote, night action, second-day execution, and verifies the room ends.
 
 Run production smoke checks after deployment:
 
@@ -56,9 +57,10 @@ Run production smoke checks after deployment:
 export WORKER_HOST="https://<worker-host>"
 npm run smoke:production -- "$WORKER_HOST"
 npm run smoke:production:write -- "$WORKER_HOST" --yes
+npm run smoke:production:game -- "$WORKER_HOST" --yes
 ```
 
-The write smoke creates temporary room/player/avatar data, so run it only when production writes are acceptable. It deletes the smoke avatar on the success path and attempts best-effort avatar cleanup after upload failures; smoke room/player rows remain in D1.
+The write and game-loop smokes create temporary room/player/game-record data, so run them only when production writes are acceptable. The write smoke deletes the smoke avatar on the success path and attempts best-effort avatar cleanup after upload failures; smoke room/player/game-record rows remain in D1.
 
 ## Cloudflare Bindings
 
