@@ -979,7 +979,14 @@ export class RoomDurableObject {
     if (this.gameState) {
       return this.gameState;
     }
-    this.gameState = (await this.state.storage.get<GameState>("gameState")) ?? createLobbyState(this.roomId);
+    const storedGameState = (await this.state.storage.get<GameState>("gameState")) ?? createLobbyState(this.roomId);
+    if (storedGameState.lastWordsEnabled === undefined) {
+      const roomOptions = await this.loadRoomOptions();
+      this.gameState = { ...storedGameState, lastWordsEnabled: roomOptions.lastWords };
+      await this.state.storage.put("gameState", this.gameState);
+      return this.gameState;
+    }
+    this.gameState = storedGameState;
     return this.gameState;
   }
 
