@@ -4361,6 +4361,14 @@ describe("worker routes", () => {
     expect(playerBody).toContain('<input type="hidden" name="reverse_log" value="on">');
     expect(playerBody).toContain('<input type="hidden" name="heaven_talk" value="on">');
     expect(playerBody).toContain('<option value="player_wolf" selected>Wolf (player_wolf)</option>');
+
+    const implicitPlayerView = await worker.fetch(new Request("http://example.test/game_log.php?room_no=room_log&viewer_player_id=player_wolf&heaven_talk=on"), env);
+    const implicitPlayerBody = await implicitPlayerView.text();
+    expect(implicitPlayerView.status).toBe(200);
+    expect(implicitPlayerBody).toContain("玩家 Wolf (player_wolf)");
+    expect(implicitPlayerBody).toContain("howl");
+    expect(implicitPlayerBody).not.toContain("內容:heaven");
+    expect(implicitPlayerBody).toContain("/game_log.php?room_no=room_log&amp;log_mode=on&amp;heaven_talk=on&amp;viewer=player&amp;viewer_player_id=player_wolf");
   });
 
   it("applies old-log heaven filters on room transcript page", async () => {
@@ -4475,6 +4483,14 @@ describe("worker routes", () => {
     expect(playerBody).toContain("/room/room_log/log?heaven_talk=on&amp;viewer=player&amp;viewer_player_id=player_wolf");
     expect(playerBody).toContain("howl");
     expect(playerBody).not.toContain("mutter");
+
+    const implicitPlayerView = await worker.fetch(new Request("http://example.test/room/room_log/log?viewer_player_id=player_wolf&heaven_talk=on"), env);
+    const implicitPlayerBody = await implicitPlayerView.text();
+    expect(implicitPlayerView.status).toBe(200);
+    expect(implicitPlayerBody).toContain("玩家 Wolf (player_wolf)");
+    expect(implicitPlayerBody).toContain("howl");
+    expect(implicitPlayerBody).not.toContain("mutter");
+    expect(implicitPlayerBody).toContain("/room/room_log/log?heaven_talk=on&amp;viewer=player&amp;viewer_player_id=player_wolf");
 
     const cookiePlayerView = await worker.fetch(new Request("http://example.test/room/room_log/log?viewer=player&heaven_talk=on", {
       headers: { Cookie: "werewolf_cf_player_id=player_wolf" }

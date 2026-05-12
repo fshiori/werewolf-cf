@@ -2208,7 +2208,8 @@ async function getRoomTranscriptPage(request: Request, env: Env, roomIdParam: st
   }
   const [records, events] = await Promise.all([listRoomRecords(env, roomId), listRoomEvents(env, roomId, { fullHistory: true })]);
   const viewerModeParam = url.searchParams.get("viewer");
-  const viewerMode = viewerModeParam === "public" || viewerModeParam === "player" || viewerModeParam === "dead" || viewerModeParam === "gm" ? viewerModeParam : "legacy";
+  const explicitViewerMode = viewerModeParam === "public" || viewerModeParam === "player" || viewerModeParam === "dead" || viewerModeParam === "gm" ? viewerModeParam : undefined;
+  const viewerMode = explicitViewerMode ?? (url.searchParams.has("viewer_player_id") ? "player" : "legacy");
   const viewerPlayerIdParam = viewerMode === "player" ? roomTranscriptViewerPlayerId(request, url) : null;
   if (viewerMode === "player" && !viewerPlayerIdParam) {
     throw new Error("Player transcript viewer requires viewer_player_id");
