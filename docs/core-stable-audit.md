@@ -21,6 +21,7 @@ Scope: define the minimum stable candidate for the playable Cloudflare port. Thi
 | Core rendered pages and legacy room entry pages return usable HTML | `scripts/smoke-local-ui.mjs`; verifies home/list/logs/room/player pages, plain-text legacy endpoints `announcement.txt` and `api.php`, PHP aliases such as `index.php`, `list.php`, `old_log.php`, `stats.php`, `trip.php`, `icon_view.php`, `icon_upload.php`, `rule.php`, `lang/jpn/rule.php`, `script_info.php`, `lang/jpn/script_info.php`, `version.php`, `lang/cht/version.htm`, plus `game_frame.php`, `game_up.php`, `game_play.php?frame=bottom`, and `game_vote.php`; `smoke:production:stable` now includes this rendered UI smoke before write/game-loop checks | Passed locally |
 | Static reference visual contract is pinned | `scripts/check-reference-visual-parity.mjs`; compares key visual markers from `ref/diam1.3.61.kz_Build0912` against `src/render.ts` and `scripts/capture-visual-parity.mjs`, covering top chrome, old-log chrome/colors, legacy frame/up/vote shells, GM action markers, and automated screenshot coverage; included in `npm run check:deploy` | Passed locally |
 | Browser screenshot capture exists for static/lobby/frame, core game-state UI, GM live controls, and old-log viewer modes | `scripts/capture-visual-parity.mjs`; captures home/list/icons/trip/BBS/stats/status plus temporary room lobby/spectator, `game_frame.php`/`game_up.php`/bottom/`game_vote.php`, and with `--include-game-states` day/GM-controls/night/ended/public/player/dead/GM old-log pages across desktop/tablet/mobile; fails on broken `<img>` assets | Partial browser evidence |
+| Production preflight is runnable without Cloudflare credentials | `npm run check:production-preflight`; runs the full local stable gate plus production reference asset upload dry-run while intentionally skipping auth checks and remote writes | Passed locally |
 | Production handoff has deploy and smoke commands | `docs/production-handoff.md`, `docs/deployment-smoke.md` | Present |
 | Cloudflare production authentication | `npx wrangler whoami` currently reports unauthenticated; `npm run check:production-access` and `npm run check:production-ready` verify this after local stable checks and reference asset upload dry-run, before remote migration/deploy/smoke | Blocked externally |
 
@@ -31,6 +32,7 @@ The following commands were run successfully on 2026-05-12:
 ```bash
 npm run check:deploy
 npm run check:stable
+npm run check:production-preflight
 npm run smoke:local
 npm run smoke:local:ui
 npm run smoke:local:write
@@ -43,7 +45,7 @@ npm run capture:visual -- --yes --include-game-states --output-dir=/tmp/werewolf
 
 The local Wrangler server was shut down after smoke verification. The working tree was clean before this audit file was added. Later smoke-script coverage also verifies rendered room history pages after an ended game, and `npm run smoke:local:stable` now starts Wrangler locally, waits for `/api/health`, runs the full local smoke suite, and shuts the server down.
 
-`npm run check:production-ready` was also exercised on 2026-05-12. It passed the full local stable gate and reference asset upload dry-run, then failed at `npm run check:production-access` because Wrangler is not authenticated in this environment. That is the expected external blocker before remote D1 migration, deploy, or production smoke.
+`npm run check:production-preflight` was also exercised on 2026-05-12 and passed the full local stable gate plus production reference asset upload dry-run without requiring Cloudflare credentials. `npm run check:production-ready` reaches the same local preflight coverage and then fails at `npm run check:production-access` because Wrangler is not authenticated in this environment. That is the expected external blocker before remote D1 migration, deploy, or production smoke.
 
 ## Non-Blocking Backlog
 
@@ -62,6 +64,7 @@ These items remain useful, but they should not block the core stable candidate:
 Before calling a production deployment stable, run the remote-only steps that cannot be verified without Cloudflare account access:
 
 ```bash
+npm run check:production-preflight
 npm run check:production-ready
 npm run migrate:production
 npm run check:d1-schema:remote
