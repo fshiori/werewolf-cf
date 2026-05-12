@@ -214,16 +214,14 @@ npm run deploy
 
 The `predeploy` script also runs `check:production-ready`, so `npm run deploy` stops before deployment if the local stable gate fails or Wrangler is not authenticated.
 
-After deploy, smoke check the production Worker:
+After deploy, run the production stable smoke suite:
 
 ```bash
-curl -i https://<worker-host>/api/health
-curl -i https://<worker-host>/api/version
-curl -i https://<worker-host>/api/protocol
-curl -i https://<worker-host>/api/config
+export WORKER_HOST="https://<worker-host>"
+npm run smoke:production:stable -- "$WORKER_HOST" --yes
 ```
 
-`/api/health` should return HTTP 200 with `ok: true`. `/api/version` should return the expected `appVersion` and bindings list. If `maintenance_mode` is set to `true` in KV, new room creation is blocked with HTTP 503 while existing rooms and read APIs remain available.
+The production stable smoke creates temporary room/player/game-record rows, verifies read-only metadata and pages, exercises WebSocket join plus R2 avatar upload/read/delete, runs an 8-player game to completion, and verifies D1 records plus rendered room history pages. Use the read-only `npm run smoke:production -- "$WORKER_HOST"` when production writes are not acceptable.
 
 Use `docs/deployment-smoke.md` for the full production checklist, including remote D1 verification, automated read-only/write smoke checks, maintenance mode, and optional manual R2 avatar checks.
 Use `docs/production-handoff.md` when Cloudflare production resource IDs still need to be created or copied into `wrangler.toml`.
