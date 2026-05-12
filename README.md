@@ -191,10 +191,10 @@ Private channel delivery is enforced inside the Durable Object. Werewolf, fox, c
 
 ## Deployment
 
-Run the same checks used for local development:
+Run the production-ready gate before deploying:
 
 ```bash
-npm run check:deploy
+npm run check:production-ready
 ```
 
 Apply remote D1 migrations before deploying code that depends on new columns or tables:
@@ -211,6 +211,8 @@ npm run deploy
 ```
 
 `npm run deploy` uses `wrangler.production.toml`, which is intentionally ignored by git. Copy `wrangler.production.toml.example` to `wrangler.production.toml`, fill in the Cloudflare account id plus D1/KV resource ids, and keep the API token in `CLOUDFLARE_API_TOKEN` or CI secrets.
+
+The `predeploy` script also runs `check:production-ready`, so `npm run deploy` stops before deployment if the local stable gate fails or Wrangler is not authenticated.
 
 After deploy, smoke check the production Worker:
 
