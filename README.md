@@ -69,15 +69,13 @@ Run production smoke checks after deployment:
 
 ```bash
 export WORKER_HOST="https://<worker-host>"
-npm run smoke:production -- "$WORKER_HOST"
-npm run smoke:production:write -- "$WORKER_HOST" --yes
-npm run smoke:production:game -- "$WORKER_HOST" --yes
+npm run smoke:production:stable -- "$WORKER_HOST" --yes
 ```
 
-Or run the full production stable smoke suite:
+If production writes are not acceptable, run only the read-only smoke:
 
 ```bash
-npm run smoke:production:stable -- "$WORKER_HOST" --yes
+npm run smoke:production -- "$WORKER_HOST"
 ```
 
 The write and game-loop smokes create temporary room/player/game-record data, so run them only when production writes are acceptable. The write smoke deletes the smoke avatar on the success path and attempts best-effort avatar cleanup after upload failures; smoke room/player/game-record rows remain in D1.
