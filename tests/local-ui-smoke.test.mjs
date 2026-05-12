@@ -13,7 +13,7 @@ function responseFor(path, method = "GET") {
   if (path === "/leaderboard" && method === "GET") {
     return { contentType: "text/html", body: "<!doctype html><title>戰績排行榜</title>" };
   }
-  if (path === "/stats" && method === "GET") {
+  if ((path === "/stats" || path === "/stats.php") && method === "GET") {
     return { contentType: "text/html", body: "<!doctype html><title>勝率分析 統計場數</title>" };
   }
   if ((path === "/list" || path === "/list.php") && method === "GET") {
@@ -22,13 +22,16 @@ function responseFor(path, method = "GET") {
   if ((path === "/logs" || path === "/old_log.php") && method === "GET") {
     return { contentType: "text/html", body: "<!doctype html><title>過去紀錄 村No</title>" };
   }
-  if (path === "/icons" && method === "GET") {
+  if ((path === "/icons" || path === "/icon_view.php") && method === "GET") {
     return { contentType: "text/html", body: '<!doctype html><title>頭像一覽 上傳頭像 /assets/reference/user_icon/001.gif</title>' };
+  }
+  if (path === "/icon_upload.php" && method === "GET") {
+    return { contentType: "text/html", body: '<!doctype html><title>用戶圖像上傳 頭像上傳 icon_file</title>' };
   }
   if (path === "/trips" && method === "GET") {
     return { contentType: "text/html", body: "<!doctype html><title>Trip查詢 Trip公開資料 tripStateMark health-mark</title>" };
   }
-  if (path === "/trip" && method === "GET") {
+  if ((path === "/trip" || path === "/trip.php") && method === "GET") {
     return { contentType: "text/html", body: "<!doctype html><title>身份登錄 Trip公開資料 tripStateMark health-mark</title>" };
   }
   if (path === "/bbs" && method === "GET") {
@@ -52,16 +55,16 @@ function responseFor(path, method = "GET") {
   if (path === "/manual" && method === "GET") {
     return { contentType: "text/html", body: "<!doctype html><title>說明書 登錄入村</title>" };
   }
-  if ((path === "/rules" || path === "/rule.php") && method === "GET") {
+  if ((path === "/rules" || path === "/rule.php" || path === "/lang/jpn/rule.php") && method === "GET") {
     return { contentType: "text/html", body: '<!doctype html><title>基本流程 /assets/reference/img/role_human.gif</title>' };
   }
-  if ((path === "/script-info" || path === "/script_info.php") && method === "GET") {
+  if ((path === "/script-info" || path === "/script_info.php" || path === "/lang/jpn/script_info.php") && method === "GET") {
     return { contentType: "text/html", body: "<!doctype html><title>Script Info Cloudflare Workers / TypeScript</title>" };
   }
   if (path === "/protocol" && method === "GET") {
     return { contentType: "text/html", body: "<!doctype html><title>WebSocket 入口 game_state</title>" };
   }
-  if ((path === "/version" || path === "/version.php") && method === "GET") {
+  if ((path === "/version" || path === "/version.php" || path === "/lang/cht/version.htm") && method === "GET") {
     return { contentType: "text/html", body: "<!doctype html><title>版本資訊 Werewolf Cloudflare Port</title>" };
   }
   if (path === "/assets/room-client.js" && method === "GET") {
@@ -164,6 +167,8 @@ describe("local UI smoke script", () => {
     expect(result.stdout).toContain("ok /room/room_ui_smoke");
     expect(result.stdout).toContain("ok /index.php");
     expect(result.stdout).toContain("ok /old_log.php");
+    expect(result.stdout).toContain("ok /icon_upload.php");
+    expect(result.stdout).toContain("ok /lang/cht/version.htm");
     expect(result.stdout).toContain("ok /game_frame.php?room_no=room_ui_smoke&auto_reload=20");
     expect(result.stdout).toContain("ok /game_vote.php?room_no=room_ui_smoke&auto_reload=20");
     expect(result.stdout).toContain("Test UI smoke passed");
