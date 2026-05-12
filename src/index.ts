@@ -193,6 +193,18 @@ function adminRoomStatusFilter(value: string | null): "active" | "ended" | "all"
   return value === "ended" || value === "all" ? value : "active";
 }
 
+function legacyGmActionParam(value: string | undefined | null): string | undefined {
+  return value === "GM_KILL" ||
+    value === "GM_RESU" ||
+    value === "GM_CHROLE" ||
+    value === "GM_MARK" ||
+    value === "GM_DEMARK" ||
+    value === "GM_CHANNEL" ||
+    value === "GM_DECL"
+    ? value
+    : undefined;
+}
+
 function readCookie(request: Request, name: string): string | undefined {
   const cookie = request.headers.get("Cookie") ?? request.headers.get("cookie") ?? "";
   for (const part of cookie.split(";")) {
@@ -3072,7 +3084,11 @@ export default {
           return new Response("Room not found", { status: 404 });
         }
         const autoReloadQuery = legacyAutoReloadQuery(url, form);
-        return new Response(null, { status: 303, headers: { Location: `/game_vote.php?room_no=${encodeURIComponent(roomId)}${autoReloadQuery}#game_top` } });
+        const gmAction = legacyGmActionParam(url.searchParams.get("aid"))
+          ?? legacyGmActionParam(url.searchParams.get("actid"))
+          ?? legacyGmActionParam(form ? readFormString(form, "actid") : undefined);
+        const gmActionQuery = gmAction ? `&actid=${encodeURIComponent(gmAction)}` : "";
+        return new Response(null, { status: 303, headers: { Location: `/game_vote.php?room_no=${encodeURIComponent(roomId)}${autoReloadQuery}${gmActionQuery}#game_top` } });
       } catch (error) {
         return json({ error: error instanceof Error ? error.message : "Invalid vote" }, { status: 400 });
       }
@@ -3143,7 +3159,7 @@ export default {
           viewMode,
           pageMode,
           legacyPath: isLegacyLiveRoomPage ? url.pathname as LegacyRoomPath : undefined,
-          legacyGmActionId: url.pathname === "/game_vote.php" ? url.searchParams.get("aid") : undefined
+          legacyGmActionId: url.pathname === "/game_vote.php" ? url.searchParams.get("aid") ?? url.searchParams.get("actid") : undefined
         }));
       } catch (error) {
         return json({ error: error instanceof Error ? error.message : "Invalid room" }, { status: 400 });

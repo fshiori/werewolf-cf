@@ -1503,6 +1503,12 @@ describe("worker routes", () => {
     expect(gmVoteBody).toContain('<input type="hidden" name="actid" value="GM_CHANNEL">');
     expect(gmVoteBody).toContain('name="ch_lovers" value="ch_lovers"');
 
+    const gmVoteActidResponse = await worker.fetch(new Request("http://example.test/game_vote.php?room_no=room_exists&auto_reload=20&actid=GM_DECL"), env);
+    expect(gmVoteActidResponse.status).toBe(200);
+    const gmVoteActidBody = await gmVoteActidResponse.text();
+    expect(gmVoteActidBody).toContain("GM行動 - 宣告勝利");
+    expect(gmVoteActidBody).toContain('<input type="hidden" name="actid" value="GM_DECL">');
+
     const missingRoomNo = await worker.fetch(new Request("http://example.test/game_view.php"), env);
     expect(missingRoomNo.status).toBe(400);
     expect(await missingRoomNo.json()).toEqual({ error: "game_view.php requires room_no" });
@@ -1637,6 +1643,27 @@ describe("worker routes", () => {
     }), env);
     expect(formRoomNo.status).toBe(303);
     expect(formRoomNo.headers.get("Location")).toBe("/game_vote.php?room_no=room_exists&auto_reload=30#game_top");
+
+    const gmActionFromForm = await worker.fetch(new Request("http://example.test/game_vote.php", {
+      method: "POST",
+      body: new URLSearchParams({ command: "vote", room_no: "room_exists", auto_reload: "30", actid: "GM_DECL", situation: "GM_DECL" })
+    }), env);
+    expect(gmActionFromForm.status).toBe(303);
+    expect(gmActionFromForm.headers.get("Location")).toBe("/game_vote.php?room_no=room_exists&auto_reload=30&actid=GM_DECL#game_top");
+
+    const gmActionFromQuery = await worker.fetch(new Request("http://example.test/game_vote.php?room_no=room_exists&auto_reload=20&aid=GM_CHANNEL", {
+      method: "POST",
+      body: form
+    }), env);
+    expect(gmActionFromQuery.status).toBe(303);
+    expect(gmActionFromQuery.headers.get("Location")).toBe("/game_vote.php?room_no=room_exists&auto_reload=20&actid=GM_CHANNEL#game_top");
+
+    const invalidGmAction = await worker.fetch(new Request("http://example.test/game_vote.php", {
+      method: "POST",
+      body: new URLSearchParams({ command: "vote", room_no: "room_exists", actid: "BAD_GM", situation: "BAD_GM" })
+    }), env);
+    expect(invalidGmAction.status).toBe(303);
+    expect(invalidGmAction.headers.get("Location")).toBe("/game_vote.php?room_no=room_exists#game_top");
 
     const missingRoomNo = await worker.fetch(new Request("http://example.test/game_vote.php", {
       method: "POST",
