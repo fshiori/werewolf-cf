@@ -74,6 +74,7 @@ function plannedCaptures(roomId = ":roomId") {
 function plannedGameStateCaptures(roomId = ":roomId") {
   return [
     { name: "room-day", path: `/room/${roomId}` },
+    { name: "room-gm-controls", path: `/room/${roomId}` },
     { name: "room-night", path: `/room/${roomId}` },
     { name: "room-ended", path: `/room/${roomId}` },
     { name: "old-log-public", path: `/old_log.php?log_mode=on&room_no=${roomId}` },
@@ -96,6 +97,11 @@ async function createRoom() {
     playerId: `player_${smokeId}_${index + 1}`,
     nickname: index === 0 ? "VisualHost" : `Visual${index + 1}`
   }));
+  const gmPlayer = {
+    playerId: `player_${smokeId}_gm`,
+    nickname: "VisualGM",
+    trip: `gm${Date.now()}${Math.random().toString(36).slice(2, 8)}`
+  };
   const response = await fetch(urlFor("/api/rooms"), {
     method: "POST",
     headers: { "content-type": "application/json" },
@@ -111,7 +117,9 @@ async function createRoom() {
         nightMinutes: 10,
         selfVote: true,
         voteStatus: true,
-        openVote: true
+        openVote: true,
+        gmEnabled: true,
+        gmTrip: gmPlayer.trip
       }
     })
   });
@@ -124,7 +132,7 @@ async function createRoom() {
   if (typeof body?.roomId !== "string" || !body.roomId.startsWith("room_")) {
     throw new Error("POST /api/rooms: expected roomId");
   }
-  return { roomId: body.roomId, players };
+  return { roomId: body.roomId, players, gmPlayer };
 }
 
 function websocketUrlFor(path) {
@@ -155,7 +163,7 @@ class CaptureClient {
       }, { once: true });
     });
     this.ws.addEventListener("message", (event) => this.handleMessage(event));
-    this.send({ type: "join", playerId: this.player.playerId, nickname: this.player.nickname });
+    this.send({ type: "join", playerId: this.player.playerId, nickname: this.player.nickname, trip: this.player.trip });
     await this.waitFor((message) => message.type === "joined" && message.playerId === this.player.playerId, "joined");
     await this.waitFor((message) => message.type === "game_state" && message.phase === "lobby", "lobby game_state");
   }
@@ -207,16 +215,26 @@ class CaptureClient {
   }
 }
 
-async function capturePage(browser, capture, viewport) {
+async function assertNoBrokenImages(page, capture, viewport) {
+  const brokenImages = await page.locator("img").evaluateAll((images) => images
+    .filter((image) => !image.complete || image.naturalWidth === 0)
+    .map((image) => image.getAttribute("src") || image.getAttribute("alt") || "<unknown image>"));
+  if (brokenImages.length > 0) {
+    throw new Error(`${capture.name} ${viewport.name}: broken images: ${brokenImages.slice(0, 5).join(", ")}`);
+  }
+}
+
+async function capturePage(browser, capture, viewport, options = {}) {
   const page = await browser.newPage({ viewport: { width: viewport.width, height: viewport.height } });
   try {
-    await page.goto(urlFor(capture.path), { waitUntil: "networkidle" });
-    const brokenImages = await page.locator("img").evaluateAll((images) => images
-      .filter((image) => !image.complete || image.naturalWidth === 0)
-      .map((image) => image.getAttribute("src") || image.getAttribute("alt") || "<unknown image>"));
-    if (brokenImages.length > 0) {
-      throw new Error(`${capture.name} ${viewport.name}: broken images: ${brokenImages.slice(0, 5).join(", ")}`);
+    if (options.setup) {
+      await options.setup(page);
     }
+    await page.goto(urlFor(capture.path), { waitUntil: "networkidle" });
+    if (options.waitForSelector) {
+      await page.locator(options.waitForSelector).waitFor({ timeout: 10000 });
+    }
+    await assertNoBrokenImages(page, capture, viewport);
     await page.screenshot({ path: screenshotPath(capture.name, viewport.name), fullPage: true });
   } finally {
     await page.close();
@@ -226,6 +244,32 @@ async function capturePage(browser, capture, viewport) {
 async function captureAllViewports(browser, capture) {
   for (const viewport of viewports) {
     await capturePage(browser, capture, viewport);
+    console.log(`ok ${capture.name} ${viewport.name}`);
+  }
+}
+
+async function openGmControlPages(browser, roomId, gmPlayer) {
+  const pages = [];
+  const capture = { name: "room-gm-controls", path: `/room/${roomId}` };
+  for (const viewport of viewports) {
+    const page = await browser.newPage({ viewport: { width: viewport.width, height: viewport.height } });
+    await page.addInitScript(({ playerId, nickname, trip }) => {
+      localStorage.setItem("werewolf_cf_player_id", playerId);
+      localStorage.setItem("werewolf_cf_nickname", nickname);
+      localStorage.setItem("werewolf_cf_trip", trip);
+    }, gmPlayer);
+    await page.goto(urlFor(capture.path), { waitUntil: "networkidle" });
+    await page.locator("body.room-gm").waitFor({ timeout: 10000 });
+    pages.push({ page, viewport, capture });
+  }
+  return pages;
+}
+
+async function captureGmControlPages(openPages) {
+  for (const { page, viewport, capture } of openPages) {
+    await page.locator("#gmAdvancePhase:not([disabled])").waitFor({ timeout: 10000 });
+    await assertNoBrokenImages(page, capture, viewport);
+    await page.screenshot({ path: screenshotPath(capture.name, viewport.name), fullPage: true });
     console.log(`ok ${capture.name} ${viewport.name}`);
   }
 }
@@ -264,13 +308,16 @@ async function voteAllAlive(clients, targetPlayerId) {
   }
 }
 
-async function captureGameStates(browser, roomId, players) {
+async function captureGameStates(browser, roomId, players, gmPlayer) {
   if (typeof WebSocket !== "function") {
     throw new Error("WebSocket global is unavailable in this Node.js runtime");
   }
 
-  const clients = await connectPlayers(roomId, players);
+  const clients = [];
+  const gmPages = [];
   try {
+    gmPages.push(...(await openGmControlPages(browser, roomId, gmPlayer)));
+    clients.push(...(await connectPlayers(roomId, players)));
     clients[0].send({ type: "start_game" });
     await clients[0].waitFor((message) => message.type === "game_state" && message.phase === "day" && message.day === 1, "day 1");
     await Promise.all(clients.map((client) => client.waitFor((message) => message.type === "role", "role message")));
@@ -286,6 +333,7 @@ async function captureGameStates(browser, roomId, players) {
     }
 
     await captureAllViewports(browser, { name: "room-day", path: `/room/${roomId}` });
+    await captureGmControlPages(gmPages);
     await voteAllAlive(clients, wolves[0]);
     await clients[0].waitFor((message) => message.type === "game_state" && message.phase === "night" && message.day === 1, "night 1");
     await captureAllViewports(browser, { name: "room-night", path: `/room/${roomId}` });
@@ -308,6 +356,9 @@ async function captureGameStates(browser, roomId, players) {
     }
     return { playerViewerId };
   } finally {
+    for (const { page } of gmPages) {
+      await page.close();
+    }
     for (const client of clients) {
       client.close();
     }
@@ -331,7 +382,7 @@ Worker: ${baseUrl.toString()}
 ## Summary
 
 - Result: Partial
-- Remaining blockers: ${includeGameStates ? "Manual comparison against the PHP reference and GM live-control captures remain." : "Day, night, ended, and old-log viewer modes require --include-game-states plus manual comparison against the PHP reference."}
+- Remaining blockers: ${includeGameStates ? "Manual comparison against the PHP reference remains." : "Day, night, ended, GM live-control, and old-log viewer modes require --include-game-states plus manual comparison against the PHP reference."}
 
 ## Screenshot Index
 
@@ -345,7 +396,7 @@ ${rows.join("\n")}
 | --- | --- | --- |
 | Static rendered pages load | Captured | Home, list, icons, Trip, BBS, stats, status |
 | Temporary lobby room renders | Captured | Includes modern room page and PHP-style frame/up/bottom/vote aliases |
-| Stateful game screens | ${includeGameStates ? "Captured" : "Not run"} | ${includeGameStates ? "Day, night, ended, and public/player/dead/GM old-log captures were generated from an 8-player smoke game" : "Pass --include-game-states to drive an 8-player smoke game"} |
+| Stateful game screens | ${includeGameStates ? "Captured" : "Not run"} | ${includeGameStates ? "Day, GM live controls, night, ended, and public/player/dead/GM old-log captures were generated from an 8-player smoke game" : "Pass --include-game-states to drive an 8-player smoke game"} |
 
 ## Privacy Checks
 
@@ -378,7 +429,7 @@ try {
   const { chromium } = await import("playwright");
   await mkdir(outputDir, { recursive: true });
   await mkdir(dirname(reportPath), { recursive: true });
-  const { roomId, players } = await createRoom();
+  const { roomId, players, gmPlayer } = await createRoom();
   const captures = plannedCaptures(roomId);
   const browser = await chromium.launch();
   try {
@@ -386,7 +437,7 @@ try {
       await captureAllViewports(browser, capture);
     }
     if (includeGameStates) {
-      const { playerViewerId } = await captureGameStates(browser, roomId, players);
+      const { playerViewerId } = await captureGameStates(browser, roomId, players, gmPlayer);
       captures.push(...resolvedGameStateCaptures(roomId, playerViewerId));
     }
   } finally {
