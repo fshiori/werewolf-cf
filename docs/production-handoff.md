@@ -14,7 +14,7 @@ npm run smoke:local:write
 npm run smoke:local:game
 ```
 
-The verified path covers Worker metadata, rendered core/legacy pages, room creation, WebSocket join, avatar upload/read/delete through R2, an 8-player game through start, day vote, night actions, second-day execution, ended room status, D1 room records, and winning-player stats/records.
+The verified path covers Worker metadata, rendered core/legacy pages, room creation, WebSocket join, avatar upload/read/delete through R2, an 8-player game through start, day vote, night actions, second-day execution, ended room status, D1 room records, and winning-player stats/records. See `docs/core-stable-audit.md` for the prompt-to-artifact checklist and non-blocking backlog.
 
 ## Current External Inputs
 
