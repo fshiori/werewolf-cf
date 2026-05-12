@@ -37,4 +37,10 @@ describe("package release scripts", () => {
 
     expect(scripts["migrate:production"]).toBe("wrangler d1 migrations apply werewolf-cf-db --remote --config wrangler.production.toml");
   });
+
+  it("keeps the visual parity prerequisite check available", async () => {
+    const scripts = await packageScripts();
+
+    expect(scripts["check:visual-prereqs"]).toBe("node scripts/check-visual-parity-prereqs.mjs");
+  });
 });
