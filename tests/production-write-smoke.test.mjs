@@ -16,10 +16,19 @@ function websocketAccept(key) {
 
 function textFrame(value) {
   const payload = Buffer.from(value);
-  if (payload.length >= 126) {
+  if (payload.length < 126) {
+    return Buffer.concat([Buffer.from([0x81, payload.length]), payload]);
+  }
+  if (payload.length <= 0xffff) {
+    const header = Buffer.alloc(4);
+    header[0] = 0x81;
+    header[1] = 126;
+    header.writeUInt16BE(payload.length, 2);
+    return Buffer.concat([header, payload]);
+  }
+  if (payload.length > 0xffff) {
     throw new Error("Test websocket frame payload is too large");
   }
-  return Buffer.concat([Buffer.from([0x81, payload.length]), payload]);
 }
 
 async function readBody(request) {
@@ -36,7 +45,7 @@ async function startServer(overrides = {}) {
   const websocketMessages = overrides.websocketMessages ?? [
     { type: "joined", roomId, playerId: "player_smoke_host" },
     { type: "presence", members: [] },
-    { type: "game_state", roomId, phase: "lobby", day: 0, openVote: false, selfVote: false, voteStatus: false }
+    { type: "game_state", roomId, phase: "lobby", day: 0, openVote: false, lastWordsEnabled: false, selfVote: false, voteStatus: false }
   ];
   let avatarDeleted = false;
   const sockets = new Set();
@@ -215,7 +224,7 @@ describe("production write smoke script", () => {
       websocketMessages: [
         { type: "joined", roomId: "room_other", playerId: "player_smoke_host" },
         { type: "presence", members: [] },
-        { type: "game_state", roomId: "room_smoke", phase: "lobby", day: 0, openVote: false, selfVote: false, voteStatus: false }
+        { type: "game_state", roomId: "room_smoke", phase: "lobby", day: 0, openVote: false, lastWordsEnabled: false, selfVote: false, voteStatus: false }
       ]
     });
     const result = await runScript([host, "--yes"]);
@@ -235,7 +244,7 @@ describe("production write smoke script", () => {
     const result = await runScript([host, "--yes"]);
 
     expect(result.status).toBe(1);
-    expect(result.stderr).toContain("game_state payload must include roomId, phase, day and vote option booleans");
+    expect(result.stderr).toContain("game_state payload must include roomId, phase, day and option booleans");
   });
 
   it("fails when websocket game state room does not match the smoke room", async () => {
@@ -243,13 +252,13 @@ describe("production write smoke script", () => {
       websocketMessages: [
         { type: "joined", roomId: "room_smoke", playerId: "player_smoke_host" },
         { type: "presence", members: [] },
-        { type: "game_state", roomId: "room_other", phase: "lobby", day: 0, openVote: false, selfVote: false, voteStatus: false }
+        { type: "game_state", roomId: "room_other", phase: "lobby", day: 0, openVote: false, lastWordsEnabled: false, selfVote: false, voteStatus: false }
       ]
     });
     const result = await runScript([host, "--yes"]);
 
     expect(result.status).toBe(1);
-    expect(result.stderr).toContain("game_state payload must include roomId, phase, day and vote option booleans");
+    expect(result.stderr).toContain("game_state payload must include roomId, phase, day and option booleans");
   });
 
   it("fails when room creation does not return a room id", async () => {

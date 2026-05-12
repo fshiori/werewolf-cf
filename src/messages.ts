@@ -237,6 +237,7 @@ export function buildGameStateMessage(state: GameState, viewerPlayerId?: string)
     channelRestrictions: channelRestrictionsForState(state),
     players: publicPlayers(state.players).map((player) => ({ ...player, nickname: escapeHtml(player.nickname) })),
     openVote: state.openVote,
+    lastWordsEnabled: state.lastWordsEnabled === true,
     selfVote: state.selfVote,
     voteStatus: state.voteStatus,
     votes: votesForState(state, viewerPlayerId),

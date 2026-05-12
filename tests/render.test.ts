@@ -883,6 +883,7 @@ describe("render", () => {
     expect(ROOM_CLIENT_SCRIPT).toContain("revealed_roles");
     expect(ROOM_CLIENT_SCRIPT).toContain("set_last_words");
     expect(ROOM_CLIENT_SCRIPT).toContain("last_words_ack");
+    expect(ROOM_CLIENT_SCRIPT).toContain("game.lastWordsEnabled && currentPlayerAlive");
     expect(ROOM_CLIENT_SCRIPT).toContain("isLover");
     expect(ROOM_CLIENT_SCRIPT).toContain("action_ack");
     expect(ROOM_CLIENT_SCRIPT).toContain("divination_result");
@@ -3456,6 +3457,7 @@ describe("render", () => {
     expect(html).toContain("game_state");
     expect(html).toContain("房間 <code>roomId</code>");
     expect(html).toContain("<code>openVote</code>/<code>selfVote</code>/<code>voteStatus</code>");
+    expect(html).toContain("<code>lastWordsEnabled</code>");
     expect(html).toContain("<code>openVote</code> 公開白天投票對應與已投票者");
     expect(html).toContain("<code>voteStatus</code> 在非公開票時只公開已投票者");
     expect(html).toContain("<code>gameStateFields</code>");

@@ -317,6 +317,36 @@ describe("game", () => {
     ]);
   });
 
+  it("carries the last words room option into active game state", () => {
+    const game = startGame(numberedLobby(8), 0, () => 0, {
+      poison: false,
+      bigWolf: false,
+      authority: false,
+      decider: false,
+      lovers: false,
+      betrayer: false,
+      childFox: false,
+      twoFoxes: false,
+      cat: false,
+      lastWords: true,
+      openVote: false,
+      commonTalkVisible: false,
+      deadRoleVisible: false,
+      wishRole: false,
+      dummyBoy: false,
+      customDummy: false,
+      dummyName: "替身君",
+      dummyLastWords: "",
+      realTime: false,
+      dayMinutes: 3,
+      nightMinutes: 1.5,
+      selfVote: false,
+      voteStatus: false
+    });
+
+    expect(game.lastWordsEnabled).toBe(true);
+  });
+
   it("applies the poison room option in twenty-player games", () => {
     const normal = startGame(numberedLobby(20), 0, () => 0);
     const withPoison = startGame(numberedLobby(20), 0, () => 0, {

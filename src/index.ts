@@ -823,6 +823,7 @@ function getProtocol(): Response {
         "channelRestrictions",
         "players",
         "openVote",
+        "lastWordsEnabled",
         "selfVote",
         "voteStatus",
         "votes",

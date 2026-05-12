@@ -263,6 +263,7 @@ describe("messages", () => {
       revoteCount: 0,
       commonTalkVisible: false,
       openVote: false,
+      lastWordsEnabled: false,
       selfVote: false,
       voteStatus: false,
       objectionCounts: {},
