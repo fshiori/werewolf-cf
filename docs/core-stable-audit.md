@@ -17,7 +17,7 @@ Scope: define the minimum stable candidate for the playable Cloudflare port. Thi
 | Ended game persists room records and player stats | `scripts/smoke-game-loop.mjs`; verifies `/api/rooms/:roomId/records`, `/api/players/:playerId/stats`, and `/api/players/:playerId/records` | Passed locally |
 | Ended game renders player-facing history pages | `scripts/smoke-game-loop.mjs`; verifies `/room/:roomId/records`, `/room/:roomId/events`, `/room/:roomId/log`, and `old_log.php?log_mode=on&room_no=:roomId` after the smoke game ends | Covered by smoke script |
 | R2 avatar write/read/delete path works | `scripts/smoke-production-write.mjs`; verifies upload, readback, delete, and 404 after delete | Passed locally |
-| Core rendered pages and legacy room entry pages return usable HTML | `scripts/smoke-local-ui.mjs`; verifies home/list/logs/room/player pages plus `game_frame.php`, `game_up.php`, `game_play.php?frame=bottom`, and `game_vote.php` | Passed locally |
+| Core rendered pages and legacy room entry pages return usable HTML | `scripts/smoke-local-ui.mjs`; verifies home/list/logs/room/player pages, PHP aliases such as `index.php`, `list.php`, `old_log.php`, `rule.php`, `script_info.php`, `version.php`, plus `game_frame.php`, `game_up.php`, `game_play.php?frame=bottom`, and `game_vote.php` | Passed locally |
 | Production handoff has deploy and smoke commands | `docs/production-handoff.md`, `docs/deployment-smoke.md` | Present |
 | Cloudflare production authentication | `npx wrangler whoami` currently reports unauthenticated; `npm run check:production-access` and `npm run check:production-ready` verify this after local stable checks and reference asset upload dry-run, before remote migration/deploy/smoke | Blocked externally |
 
