@@ -2311,7 +2311,10 @@ async function createRoom(request: Request, env: Env): Promise<Response> {
 
   try {
     const playerId = validatePlayerId(body.playerId);
+    const nickname = validateNickname(body.nickname);
+    const options = readRoomOptions(body.options);
     const roomId = await createRoomFromData(env, body);
+    await joinRoomCreatorIfAllowed(env, roomId, playerId, nickname, readRoomOptions(options));
     const headers = new Headers();
     for (const cookie of playerIdCookieHeaders(playerId)) {
       headers.append("Set-Cookie", cookie);
@@ -2379,6 +2382,7 @@ async function createLegacyRoom(request: Request, env: Env): Promise<Response> {
       nickname,
       options
     });
+    await joinRoomCreatorIfAllowed(env, roomId, playerId, nickname, readRoomOptions(options));
     const autoReloadQuery = legacyAutoReloadQuery(new URL(request.url), form);
 
     const headers = new Headers({ Location: `/login.php?room_no=${encodeURIComponent(roomId)}${autoReloadQuery}` });
@@ -2615,6 +2619,21 @@ function playerIdCookieHeaders(playerId: string): string[] {
     `player_id=${encoded}; Path=/; SameSite=Lax`,
     `playerId=${encoded}; Path=/; SameSite=Lax`
   ];
+}
+
+async function joinRoomCreatorIfAllowed(env: Env, roomId: string, playerId: string, nickname: string, options: RoomOptions): Promise<void> {
+  if (options.tripRequired) {
+    return;
+  }
+  const validRoomId = validateRoomId(roomId);
+  const validPlayerId = validatePlayerId(playerId);
+  const validNickname = validateNickname(nickname);
+  const id = env.ROOM_DO.idFromName(validRoomId);
+  await env.ROOM_DO.get(id).fetch(new Request(`https://room.internal/rooms/${encodeURIComponent(validRoomId)}/legacy/join`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ playerId: validPlayerId, nickname: validNickname })
+  })).catch(() => undefined);
 }
 
 async function joinLegacyRoomByForm(request: Request, env: Env, roomId: string, form: FormData): Promise<string> {
