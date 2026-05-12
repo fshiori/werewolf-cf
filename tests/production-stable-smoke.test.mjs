@@ -67,6 +67,20 @@ describe("production stable smoke script", () => {
     expect(result.stderr).toContain("Set WORKER_HOST");
   });
 
+  it("rejects non-HTTPS Worker URLs", async () => {
+    const result = await runScript(["http://worker.example.test", "--yes"]);
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("must use https");
+  });
+
+  it("rejects local Worker URLs", async () => {
+    const result = await runScript(["https://127.0.0.1:8787", "--yes"]);
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("must not point at a local host");
+  });
+
   it("runs read-only, write, and game smoke scripts in order", async () => {
     const { scriptDir, logPath } = await createSmokeScriptDir();
     const env = {
@@ -111,4 +125,3 @@ describe("production stable smoke script", () => {
     ]);
   });
 });
-
