@@ -102,7 +102,14 @@ For local validation before production access is available:
 npx wrangler d1 migrations apply werewolf-cf-db --local
 npm run check:wrangler
 npm run check:d1-schema
+npm run smoke:local:stable
+```
+
+To run the local smoke checks against an already-running Worker instead:
+
+```bash
 npm run smoke:local
+npm run smoke:local:ui
 npm run smoke:local:write
 npm run smoke:local:game
 ```

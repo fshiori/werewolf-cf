@@ -32,7 +32,7 @@ npm run smoke:local:write
 npm run smoke:local:game
 ```
 
-The local Wrangler server was shut down after smoke verification. The working tree was clean before this audit file was added. Later smoke-script coverage also verifies rendered room history pages after an ended game.
+The local Wrangler server was shut down after smoke verification. The working tree was clean before this audit file was added. Later smoke-script coverage also verifies rendered room history pages after an ended game, and `npm run smoke:local:stable` now starts Wrangler locally, waits for `/api/health`, runs the full local smoke suite, and shuts the server down.
 
 ## Non-Blocking Backlog
 
