@@ -256,8 +256,10 @@ document.querySelector("#autoRefresh").addEventListener("change", (event) => {
   configureAutoRefresh();
   if (event.target.checked) refreshAuxiliaryPanels();
 });
-document.querySelector("#connect").addEventListener("click", () => {
+function connectRoom() {
+  if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) return;
   const nickname = document.querySelector("#nickname").value;
+  if (!nickname.trim()) return;
   const trip = document.querySelector("#trip").value;
   const wishRole = document.querySelector("#wishRole").value;
   const iconPath = document.querySelector("#defaultIcon").value;
@@ -344,7 +346,11 @@ document.querySelector("#connect").addEventListener("click", () => {
       append("<span class='muted'>" + msg.message + "</span>");
     }
   });
-});
+}
+document.querySelector("#connect").addEventListener("click", connectRoom);
+if (roomShell instanceof HTMLElement && roomShell.dataset.roomView === "player" && document.querySelector("#nickname").value.trim()) {
+  connectRoom();
+}
 document.querySelector("#sendChat").addEventListener("click", () => {
   const input = document.querySelector("#chatText");
   if (ws && ws.readyState === WebSocket.OPEN) {
