@@ -16,6 +16,7 @@ describe("package release scripts", () => {
   it("keeps the production-ready gate wired to local stable, reference assets, and Cloudflare access", async () => {
     const scripts = await packageScripts();
 
+    expect(scripts["check:production-preflight"]).toBe("npm run check:stable && npm run assets:reference:plan");
     expect(scripts["check:production-ready"]).toBe("npm run check:stable && npm run assets:reference:plan && npm run check:production-access");
   });
 

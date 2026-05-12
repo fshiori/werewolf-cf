@@ -192,10 +192,11 @@ Private channel delivery is enforced inside the Durable Object. Werewolf, fox, c
 Run the production-ready gate before deploying:
 
 ```bash
+npm run check:production-preflight
 npm run check:production-ready
 ```
 
-This runs the local stable gate, confirms the reference asset R2 upload plan, and then verifies Cloudflare access before any remote migration or deploy.
+The preflight command runs the local stable gate and confirms the reference asset R2 upload plan without requiring Cloudflare authentication. The production-ready gate runs the same checks and then verifies Cloudflare access before any remote migration or deploy.
 
 Apply remote D1 migrations before deploying code that depends on new columns or tables:
 
