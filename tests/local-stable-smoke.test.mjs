@@ -46,6 +46,10 @@ async function createRunnerFixtures() {
 
 const name = new URL(import.meta.url).pathname.split("/").at(-1);
 await appendFile(process.env.CALL_LOG, JSON.stringify({ name, args: process.argv.slice(2), workerHost: process.env.WORKER_HOST }) + "\\n");
+if (process.env.FAIL_ON === name) {
+  console.error(name + " failed intentionally");
+  process.exit(7);
+}
 console.log(name + " ok");
 `;
   const wranglerBody = `import { createServer } from "node:http";
@@ -135,5 +139,27 @@ describe("local stable smoke script", () => {
     expect(calls[2].args).toEqual(["--label=Local", "http://127.0.0.1:8788", "--yes"]);
     expect(calls[3].args).toEqual(["--label=Local", "http://127.0.0.1:8788", "--yes"]);
   });
-});
 
+  it("fails when a child smoke script fails", async () => {
+    const { scriptDir, logPath, wranglerPath } = await createRunnerFixtures();
+    const env = {
+      ...process.env,
+      LOCAL_STABLE_SMOKE_SCRIPT_DIR: scriptDir,
+      LOCAL_STABLE_SMOKE_WRANGLER_BIN: wranglerPath,
+      CALL_LOG: logPath,
+      FAIL_ON: "smoke-production-write.mjs"
+    };
+    const result = await runScript(["--port=8797"], env);
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("smoke-production-write.mjs failed intentionally");
+    expect(result.stderr).toContain("Local stable smoke failed");
+
+    const calls = await readCalls(logPath);
+    expect(calls.map((call) => call.name)).toEqual([
+      "smoke-production-readonly.mjs",
+      "smoke-local-ui.mjs",
+      "smoke-production-write.mjs"
+    ]);
+  });
+});
