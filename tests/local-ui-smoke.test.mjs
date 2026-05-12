@@ -32,16 +32,13 @@ function responseFor(path, method = "GET") {
     return { contentType: "text/html", body: "<!doctype html><title>身份登錄 Trip公開資料 tripStateMark health-mark</title>" };
   }
   if (path === "/bbs" && method === "GET") {
-    return { contentType: "text/html", body: '<!doctype html><title>主題列表 發表主題 精華 /bbs/1</title>' };
-  }
-  if (path === "/bbs/1" && method === "GET") {
-    return { contentType: "text/html", body: "<!doctype html><title>文章列表 主題管理 bbs-status-mark bbsDeleteButton bbsReplyDeleteButton bbsTopicEditButton bbsReplyEditButton</title>" };
+    return { contentType: "text/html", body: '<!doctype html><title>主題列表 發表主題 精華 form name="bbs"</title>' };
   }
   if (path === "/status" && method === "GET") {
     return { contentType: "text/html", body: "<!doctype html><title>伺服器狀態 Binding 檢查 health-mark</title>" };
   }
   if (path === "/admin" && method === "GET") {
-    return { contentType: "text/html", body: '<!doctype html><title>管理選單 /admin/rooms /admin/config</title>' };
+    return { contentType: "text/html", body: '<!doctype html><title>管理選單 admin.php?go=rooms admin.php?go=config</title>' };
   }
   if (path === "/admin/rooms" && method === "GET") {
     return { contentType: "text/html", body: "<!doctype html><title>廢村管理 roomAdminToken werewolf_cf_room_admin_token</title>" };
@@ -50,7 +47,7 @@ function responseFor(path, method = "GET") {
     return { contentType: "text/html", body: "<!doctype html><title>系統設定管理 configAdminToken werewolf_cf_config_admin_token</title>" };
   }
   if (path === "/admin/bbs" && method === "GET") {
-    return { contentType: "text/html", body: '<!doctype html><title>討論管理 BBS 管理密碼 bbs-status-mark /bbs/1#bbsModerationForm</title>' };
+    return { contentType: "text/html", body: "<!doctype html><title>討論管理 BBS 管理密碼 尚無主題。</title>" };
   }
   if (path === "/manual" && method === "GET") {
     return { contentType: "text/html", body: "<!doctype html><title>說明書 登錄入村</title>" };
@@ -85,7 +82,7 @@ function responseFor(path, method = "GET") {
   if (path === "/game_up.php" && method === "GET") {
     return {
       contentType: "text/html",
-      body: '<!doctype html><title>上方更新</title><style>body.room-page-up .game-header { display: none; }</style><table data-room-page="up"><form id="legacySendForm" name="send" target="bottom"><a href="/game_vote.php?room_no=room_ui_smoke&amp;auto_reload=20#game_top" target="bottom">投票/能力</a></form></table>'
+      body: '<!doctype html><title>上方更新</title><style>body.room-page-up .game-header { display: none; }</style><table data-room-page="up"><form class="legacy-send-form" name="send" target="bottom"><a href="/game_vote.php?room_no=room_ui_smoke&amp;auto_reload=20#game_top" target="bottom">投票/能力</a></form></table>'
     };
   }
   if (path === "/game_play.php" && method === "GET") {
@@ -104,10 +101,10 @@ function responseFor(path, method = "GET") {
     return { contentType: "text/html", body: "<!doctype html><title>村子對局紀錄 room_ui_smoke</title>" };
   }
   if (path === "/room/room_ui_smoke/events" && method === "GET") {
-    return { contentType: "text/html", body: "<!doctype html><title>村子事件履歷 room_ui_smoke room_created</title>" };
+    return { contentType: "text/html", body: "<!doctype html><title>村子事件履歷 room_ui_smoke 村子建立</title>" };
   }
   if (path === "/room/room_ui_smoke/log" && method === "GET") {
-    return { contentType: "text/html", body: "<!doctype html><title>村子完整紀錄 room_ui_smoke room_created</title>" };
+    return { contentType: "text/html", body: "<!doctype html><title>村子完整紀錄 room_ui_smoke 村子建立</title>" };
   }
   if (path.startsWith("/player/player_ui_smoke_") && method === "GET") {
     return { contentType: "text/html", body: `<!doctype html><title>個人戰績 ${path.slice("/player/".length)} 最近參戰紀錄 /assets/reference/</title>` };
