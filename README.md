@@ -226,6 +226,13 @@ export WORKER_HOST="https://<worker-host>"
 npm run smoke:production:stable -- "$WORKER_HOST" --yes
 ```
 
+To run the complete production release order from one guarded command:
+
+```bash
+export WORKER_HOST="https://<worker-host>"
+npm run release:production -- "$WORKER_HOST" --yes
+```
+
 The production stable smoke creates temporary room/player/game-record rows, verifies read-only metadata and pages, exercises WebSocket join plus R2 avatar upload/read/delete, runs an 8-player game to completion, and verifies D1 records plus rendered room history pages. Use the read-only `npm run smoke:production -- "$WORKER_HOST"` when production writes are not acceptable.
 
 Use `docs/deployment-smoke.md` for the full production checklist, including remote D1 verification, automated read-only/write smoke checks, maintenance mode, and optional manual R2 avatar checks.

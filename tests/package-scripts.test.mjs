@@ -24,6 +24,7 @@ describe("package release scripts", () => {
 
     expect(scripts.predeploy).toBe("npm run check:production-ready");
     expect(scripts.deploy).toBe("wrangler deploy --config wrangler.production.toml");
+    expect(scripts["deploy:production:direct"]).toBe("wrangler deploy --config wrangler.production.toml");
   });
 
   it("keeps the production stable smoke suite available after deploy", async () => {
@@ -49,5 +50,11 @@ describe("package release scripts", () => {
 
     expect(scripts["assets:reference:plan"]).toBe("node scripts/upload-reference-assets.mjs --bucket=werewolf-cf-assets --config=wrangler.production.toml");
     expect(scripts["assets:reference:upload"]).toBe("node scripts/upload-reference-assets.mjs --bucket=werewolf-cf-assets --config=wrangler.production.toml --yes");
+  });
+
+  it("keeps the production release orchestrator available", async () => {
+    const scripts = await packageScripts();
+
+    expect(scripts["release:production"]).toBe("node scripts/release-production.mjs");
   });
 });
