@@ -100,6 +100,8 @@ Deploy the Worker:
 npm run deploy
 ```
 
+`npm run deploy` runs `check:production-ready` through `predeploy`, so it will stop before deployment when local stable checks fail or Wrangler is not authenticated.
+
 Run production smoke tests:
 
 ```bash
