@@ -80,8 +80,12 @@ try {
   await expectHtml("/old_log.php", ["過去紀錄", "村No"]);
   await expectHtml("/leaderboard", ["戰績排行榜"]);
   await expectHtml("/stats", ["勝率分析", "統計場數"]);
+  await expectHtml("/stats.php", ["勝率分析", "統計場數"]);
   await expectHtml("/icons", ["頭像一覽", "上傳頭像", "/assets/reference/user_icon/001.gif"]);
+  await expectHtml("/icon_view.php", ["頭像一覽", "上傳頭像", "/assets/reference/user_icon/001.gif"]);
+  await expectHtml("/icon_upload.php", ["用戶圖像上傳", "頭像上傳", "icon_file"]);
   await expectHtml("/trip", ["身份登錄", "Trip公開資料", "tripStateMark", "health-mark"]);
+  await expectHtml("/trip.php", ["身份登錄", "Trip公開資料", "tripStateMark", "health-mark"]);
   await expectHtml("/trips", ["Trip查詢", "Trip公開資料", "tripStateMark", "health-mark"]);
   await expectHtml("/bbs", ["主題列表", "發表主題", "form name=\"bbs\""]);
   await expectHtml("/bbs?digest=1", ["精華", "主題列表"]);
@@ -92,12 +96,15 @@ try {
   await expectHtml("/admin/bbs", ["討論管理", "BBS 管理密碼", "尚無主題。"]);
   await expectHtml("/rules", ["基本流程", "/assets/reference/img/role_human.gif"]);
   await expectHtml("/rule.php", ["基本流程", "/assets/reference/img/role_human.gif"]);
+  await expectHtml("/lang/jpn/rule.php", ["基本流程", "/assets/reference/img/role_human.gif"]);
   await expectHtml("/manual", ["說明書", "登錄入村"]);
   await expectHtml("/script-info", ["Script Info", "Cloudflare Workers / TypeScript"]);
   await expectHtml("/script_info.php", ["Script Info", "Cloudflare Workers / TypeScript"]);
+  await expectHtml("/lang/jpn/script_info.php", ["Script Info", "Cloudflare Workers / TypeScript"]);
   await expectHtml("/protocol", ["WebSocket 入口", "game_state"]);
   await expectHtml("/version", ["版本資訊", "Werewolf Cloudflare Port"]);
   await expectHtml("/version.php", ["版本資訊", "Werewolf Cloudflare Port"]);
+  await expectHtml("/lang/cht/version.htm", ["版本資訊", "Werewolf Cloudflare Port"]);
   await expectHtml("/assets/room-client.js", ["new WebSocket", "data-room-id", "投開始遊戲一票", "start_vote", "GAMESTART"]);
 
   const createResult = await expectJson(
