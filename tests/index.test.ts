@@ -1551,7 +1551,10 @@ describe("worker routes", () => {
     }), env);
     expect(cookieResponse.status).toBe(303);
     expect(cookieResponse.headers.get("Location")).toBe("/game_view.php?room_no=room_exists&auto_reload=20");
-    expect(cookieResponse.headers.get("Set-Cookie")).toContain("werewolf_cf_player_id=;");
+    const setCookie = cookieResponse.headers.get("Set-Cookie") ?? "";
+    expect(setCookie).toContain("werewolf_cf_player_id=; Path=/; Max-Age=0; SameSite=Lax");
+    expect(setCookie).toContain("player_id=; Path=/; Max-Age=0; SameSite=Lax");
+    expect(setCookie).toContain("playerId=; Path=/; Max-Age=0; SameSite=Lax");
     expect(forwardedRequests).toHaveLength(1);
     expect(new URL(forwardedRequests[0].url).pathname).toBe("/rooms/room_exists/legacy/leave");
     await expect(forwardedRequests[0].json()).resolves.toEqual({ playerId: "player_guest" });
