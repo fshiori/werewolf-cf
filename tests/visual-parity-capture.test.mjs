@@ -57,6 +57,9 @@ describe("visual parity capture script", () => {
     expect(result.stdout).toContain("plan room-night tablet /room/:roomId -> tmp/screens/room-night-tablet.png");
     expect(result.stdout).toContain("plan room-ended mobile /room/:roomId -> tmp/screens/room-ended-mobile.png");
     expect(result.stdout).toContain("plan old-log-public desktop /old_log.php?log_mode=on&room_no=:roomId");
+    expect(result.stdout).toContain("plan old-log-player tablet /old_log.php?log_mode=on&room_no=:roomId&viewer=player&viewer_player_id=:playerId&heaven_talk=on");
+    expect(result.stdout).toContain("plan old-log-dead mobile /old_log.php?log_mode=on&room_no=:roomId&viewer=dead&heaven_talk=on");
+    expect(result.stdout).toContain("plan old-log-gm desktop /old_log.php?log_mode=on&room_no=:roomId&viewer=gm&heaven_talk=on");
   });
 
   it("rejects invalid Worker URLs", async () => {

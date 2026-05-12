@@ -76,8 +76,18 @@ function plannedGameStateCaptures(roomId = ":roomId") {
     { name: "room-day", path: `/room/${roomId}` },
     { name: "room-night", path: `/room/${roomId}` },
     { name: "room-ended", path: `/room/${roomId}` },
-    { name: "old-log-public", path: `/old_log.php?log_mode=on&room_no=${roomId}` }
+    { name: "old-log-public", path: `/old_log.php?log_mode=on&room_no=${roomId}` },
+    { name: "old-log-player", path: `/old_log.php?log_mode=on&room_no=${roomId}&viewer=player&viewer_player_id=:playerId&heaven_talk=on` },
+    { name: "old-log-dead", path: `/old_log.php?log_mode=on&room_no=${roomId}&viewer=dead&heaven_talk=on` },
+    { name: "old-log-gm", path: `/old_log.php?log_mode=on&room_no=${roomId}&viewer=gm&heaven_talk=on` }
   ];
+}
+
+function resolvedGameStateCaptures(roomId, playerId) {
+  return plannedGameStateCaptures(roomId).map((capture) => ({
+    ...capture,
+    path: capture.path.replace(":playerId", encodeURIComponent(playerId))
+  }));
 }
 
 async function createRoom() {
@@ -267,8 +277,12 @@ async function captureGameStates(browser, roomId, players) {
     const roles = new Map(clients.map((client) => [client.player.playerId, client.messages.find((message) => message.type === "role")?.role]));
     const wolves = [...roles.entries()].filter(([, role]) => role === "werewolf").map(([playerId]) => playerId);
     const seer = [...roles.entries()].find(([, role]) => role === "seer")?.[0];
+    const playerViewerId = [...roles.entries()].find(([, role]) => role !== "werewolf")?.[0];
     if (wolves.length !== 2 || !seer) {
       throw new Error(`Unexpected 8-player role set: wolves=${wolves.length}, seer=${seer ?? "missing"}`);
+    }
+    if (!playerViewerId) {
+      throw new Error("Expected at least one non-werewolf player for old-log player capture");
     }
 
     await captureAllViewports(browser, { name: "room-day", path: `/room/${roomId}` });
@@ -289,7 +303,10 @@ async function captureGameStates(browser, roomId, players) {
     await voteAllAlive(clients, livingWolf);
     await clients[0].waitFor((message) => message.type === "game_state" && message.phase === "ended", "ended");
     await captureAllViewports(browser, { name: "room-ended", path: `/room/${roomId}` });
-    await captureAllViewports(browser, { name: "old-log-public", path: `/old_log.php?log_mode=on&room_no=${roomId}` });
+    for (const capture of resolvedGameStateCaptures(roomId, playerViewerId).filter((capture) => capture.name.startsWith("old-log-"))) {
+      await captureAllViewports(browser, capture);
+    }
+    return { playerViewerId };
   } finally {
     for (const client of clients) {
       client.close();
@@ -314,7 +331,7 @@ Worker: ${baseUrl.toString()}
 ## Summary
 
 - Result: Partial
-- Remaining blockers: ${includeGameStates ? "Dead/player/GM old-log modes still require stateful browser setup and manual comparison against the PHP reference." : "Day, night, ended, dead/player/GM old-log modes still require stateful browser setup and manual comparison against the PHP reference."}
+- Remaining blockers: ${includeGameStates ? "Manual comparison against the PHP reference and GM live-control captures remain." : "Day, night, ended, and old-log viewer modes require --include-game-states plus manual comparison against the PHP reference."}
 
 ## Screenshot Index
 
@@ -328,13 +345,13 @@ ${rows.join("\n")}
 | --- | --- | --- |
 | Static rendered pages load | Captured | Home, list, icons, Trip, BBS, stats, status |
 | Temporary lobby room renders | Captured | Includes modern room page and PHP-style frame/up/bottom/vote aliases |
-| Stateful game screens | ${includeGameStates ? "Captured" : "Not run"} | ${includeGameStates ? "Day, night, ended, and public old-log captures were generated from an 8-player smoke game" : "Pass --include-game-states to drive an 8-player smoke game"} |
+| Stateful game screens | ${includeGameStates ? "Captured" : "Not run"} | ${includeGameStates ? "Day, night, ended, and public/player/dead/GM old-log captures were generated from an 8-player smoke game" : "Pass --include-game-states to drive an 8-player smoke game"} |
 
 ## Privacy Checks
 
 | Check | Result | Notes |
 | --- | --- | --- |
-| Private live channels | Not run | Requires multi-player in-game browser setup |
+| Saved transcript viewer modes | ${includeGameStates ? "Captured" : "Not run"} | ${includeGameStates ? "Public, player, dead, and GM old-log viewer modes captured after game end" : "Requires --include-game-states"} |
 `;
 }
 
@@ -369,8 +386,8 @@ try {
       await captureAllViewports(browser, capture);
     }
     if (includeGameStates) {
-      await captureGameStates(browser, roomId, players);
-      captures.push(...plannedGameStateCaptures(roomId));
+      const { playerViewerId } = await captureGameStates(browser, roomId, players);
+      captures.push(...resolvedGameStateCaptures(roomId, playerViewerId));
     }
   } finally {
     await browser.close();
