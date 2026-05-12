@@ -8,7 +8,7 @@ Purpose: define the browser/manual screenshot pass required to judge UI parity w
 
 ## Current Blocker
 
-No browser binary is installed in the current environment. `chromium`, `chromium-browser`, `google-chrome`, and `chrome` were not found, so this run cannot produce screenshot evidence yet.
+No browser binary is installed in the current environment. `npm run check:visual-prereqs` checks `chromium`, `chromium-browser`, `google-chrome`, and `chrome`, or the executable configured with `VISUAL_PARITY_BROWSER_BIN`; this run cannot produce screenshot evidence until that check passes.
 
 ## Prerequisites
 
@@ -22,6 +22,7 @@ No browser binary is installed in the current environment. `chromium`, `chromium
 3. Start the local Worker:
    - `npm run dev -- --ip 127.0.0.1 --port 8787`
 4. Use a browser-capable environment with Chromium, Chrome, or Playwright available.
+   - Verify with `npm run check:visual-prereqs`.
 5. Prepare rooms that cover lobby, day, night, ended, spectator/dead, GM, and old-log views.
 
 ## Evidence Paths
