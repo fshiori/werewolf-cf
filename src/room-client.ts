@@ -2,8 +2,17 @@ export const ROOM_CLIENT_SCRIPT = String.raw`(() => {
 const roomShell = document.querySelector("[data-room-id]");
 const roomId = roomShell instanceof HTMLElement ? roomShell.dataset.roomId || "" : "";
 const playerKey = "werewolf_cf_player_id";
+function readCookieValue(name) {
+  const cookies = document.cookie ? document.cookie.split(";") : [];
+  for (const cookie of cookies) {
+    const [rawKey, ...rawValue] = cookie.trim().split("=");
+    if (rawKey === name) return decodeURIComponent(rawValue.join("="));
+  }
+  return "";
+}
 if (!localStorage.getItem(playerKey)) {
-  localStorage.setItem(playerKey, "player_" + crypto.randomUUID().replaceAll("-", ""));
+  const cookiePlayerId = readCookieValue("werewolf_cf_player_id") || readCookieValue("player_id") || readCookieValue("playerId");
+  localStorage.setItem(playerKey, cookiePlayerId || "player_" + crypto.randomUUID().replaceAll("-", ""));
 }
 function syncPlayerCookie() {
   const playerId = localStorage.getItem(playerKey);

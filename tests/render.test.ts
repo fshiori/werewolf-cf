@@ -678,6 +678,8 @@ describe("render", () => {
     expect(ROOM_CLIENT_SCRIPT).toContain("game.hostId !== currentPlayerId");
     expect(ROOM_CLIENT_SCRIPT).toContain("game.revoteCount");
     expect(ROOM_CLIENT_SCRIPT).toContain("function syncPlayerCookie()");
+    expect(ROOM_CLIENT_SCRIPT).toContain("function readCookieValue(name)");
+    expect(ROOM_CLIENT_SCRIPT).toContain('readCookieValue("werewolf_cf_player_id") || readCookieValue("player_id") || readCookieValue("playerId")');
     expect(ROOM_CLIENT_SCRIPT).toContain('document.cookie = "werewolf_cf_player_id=" + encodeURIComponent(playerId) + "; Path=/; SameSite=Lax";');
     expect(ROOM_CLIENT_SCRIPT).toContain('document.querySelector("#legacyUserPlayerId")');
     expect(ROOM_CLIENT_SCRIPT).toContain("if (legacyUserPlayerId) legacyUserPlayerId.value = playerId;");
