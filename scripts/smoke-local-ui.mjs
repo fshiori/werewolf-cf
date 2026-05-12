@@ -69,6 +69,24 @@ async function expectHtml(path, expectedTexts, forbiddenTexts = []) {
   return text;
 }
 
+async function expectText(path, expectedTexts) {
+  const response = await fetch(urlFor(path), { headers: { accept: "text/plain" } });
+  if (!response.ok) {
+    throw new Error(`${path}: HTTP ${response.status}`);
+  }
+  const text = await response.text();
+  if (!text.trim()) {
+    throw new Error(`${path}: empty text response`);
+  }
+  for (const expectedText of expectedTexts) {
+    if (!text.includes(expectedText)) {
+      throw new Error(`${path}: expected text ${expectedText}`);
+    }
+  }
+  console.log(`ok ${path}`);
+  return text;
+}
+
 const playerId = `player_ui_smoke_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
 try {
@@ -106,6 +124,8 @@ try {
   await expectHtml("/version.php", ["版本資訊", "Werewolf Cloudflare Port"]);
   await expectHtml("/lang/cht/version.htm", ["版本資訊", "Werewolf Cloudflare Port"]);
   await expectHtml("/assets/room-client.js", ["new WebSocket", "data-room-id", "投開始遊戲一票", "start_vote", "GAMESTART"]);
+  await expectText("/announcement.txt", ["目前支援建立村子"]);
+  await expectText("/api.php", ["werewolf-cf"]);
 
   const createResult = await expectJson(
     "/api/rooms",
