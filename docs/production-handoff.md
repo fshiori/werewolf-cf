@@ -78,7 +78,7 @@ npm run smoke:production:write -- "$WORKER_HOST" --yes
 npm run smoke:production:game -- "$WORKER_HOST" --yes
 ```
 
-The write smoke creates a temporary production room/player row and verifies the WebSocket join path plus avatar upload/read/delete. The game-loop smoke creates a temporary 8-player room, runs a minimal full game through ended status, and confirms the room game record is readable. Avatar data is deleted on the write-smoke success path; smoke room/player/game-record rows remain in D1.
+The write smoke creates a temporary production room/player row and verifies the WebSocket join path plus avatar upload/read/delete. The game-loop smoke creates a temporary 8-player room, runs a minimal full game through ended status, and confirms the room game record plus winning-player stats/records are readable. Avatar data is deleted on the write-smoke success path; smoke room/player/game-record rows remain in D1.
 
 ## Local Verification Reference
 
